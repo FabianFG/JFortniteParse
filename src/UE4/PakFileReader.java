@@ -26,8 +26,8 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.FileUtils;
 
-import Compression.OodleKrakenInterface;
 import EncryptionHandler.Aes;
+import Oodle.OodleKrakenInterface;
 import UE4_Packages.FArchive;
 import UE4_Packages.FPakArchive;
 import UE4_Packages.ReadException;
@@ -54,6 +54,10 @@ public class PakFileReader {
 	}
 	public byte[] getStoredIndexHash() {
 		return pakInfo.indexHash;
+	}
+	
+	public static void main(String[] args) {
+		
 	}
 	
 	public byte[] calculateIndexHash() throws NoSuchAlgorithmException, ReadException {
