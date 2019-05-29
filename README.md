@@ -11,10 +11,6 @@ These instructions will get you a copy of the project up and running on your loc
 * [DDSUtil](https://www65.zippyshare.com/v/UGKKwijC/file.html) - A java library for decompression DXT Textures, needed for Texture Conversion
 * [GLM](https://www65.zippyshare.com/v/oD9j9MIj/file.html) - A java library for the OpenGL bindings, needed for meshes
 
-```
-Give examples
-```
-
 ### Building the source
 
 Clone this project in any folder
@@ -39,4 +35,4 @@ pom.xml should be included in the downloaded sources
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
+* **FunGamesLeaks** - [FunGamesLeaks](https://github.com/FunGamesLeaks)
