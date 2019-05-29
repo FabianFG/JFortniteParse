@@ -63,7 +63,7 @@ if(testPackage.hasUbulk()) {
 }
 ```
 
-Some examples
+Some examples for parsing packages
 ```
 //You can create a package from files and byte[]
 //Note: If you don't have a ubulk simply use null as ubulk;
