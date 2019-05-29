@@ -6,16 +6,11 @@ A java based Unreal Engine Resource Packages parser
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
-### Prerequisites
-
-* [DDSUtil](https://www65.zippyshare.com/v/UGKKwijC/file.html) - A java library for decompression DXT Textures, needed for Texture Conversion
-* [GLM](https://www65.zippyshare.com/v/oD9j9MIj/file.html) - A java library for the OpenGL bindings, needed for meshes
-
 ### Building the source
 
-* Clone this project in any folder
-* Download the libraries given above
-* Create a new Maven Project based on the cloned sources and add the libraries to your project
+* This project was made with eclipse so if you use eclipse you can simply import the project
+* If you use an different IDE you need to create a project based on the source and add all jars from the /lib/ folder as dependencies
+* Also this project needs to be a maven project
 
 pom.xml should be included in the downloaded sources
 
@@ -34,6 +29,7 @@ Some examples for pak files
 ```
 //Create the reader by giving it a pak file
 //Note: This will only read the pak header, **not the file list**
+
 PakFileReader reader = new PakFileReader(String pakFilePath);
 
 //Test whether the pak is encrypted and load the index
