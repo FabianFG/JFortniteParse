@@ -13,9 +13,9 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Building the source
 
-*Clone this project in any folder
-*Download the libraries given above
-*Create a new Maven Project based on the cloned sources and add the libraries to your project
+* Clone this project in any folder
+* Download the libraries given above
+* Create a new Maven Project based on the cloned sources and add the libraries to your project
 
 pom.xml should be included in the downloaded sources
 
