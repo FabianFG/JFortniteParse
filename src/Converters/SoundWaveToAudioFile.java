@@ -9,12 +9,12 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import UE4_Packages.FByteBulkData;
-import UE4_Packages.FSoundFormatData;
-import UE4_Packages.FStreamedAudioChunk;
-import UE4_Packages.Package;
-import UE4_Packages.ReadException;
-import UE4_Packages.USoundWave;
+import UE4_Assets.FByteBulkData;
+import UE4_Assets.FSoundFormatData;
+import UE4_Assets.FStreamedAudioChunk;
+import UE4_Assets.Package;
+import UE4_Assets.ReadException;
+import UE4_Assets.USoundWave;
 
 /**
  * @author FunGames

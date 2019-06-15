@@ -26,11 +26,11 @@ import com.tomgibara.bits.BitReader;
 import com.tomgibara.bits.Bits;
 
 import ASTC.ASTC;
-import UE4_Packages.FTexture2DMipMap;
-import UE4_Packages.Float8;
-import UE4_Packages.Package;
-import UE4_Packages.ReadException;
-import UE4_Packages.UTexture2D;
+import UE4_Assets.FTexture2DMipMap;
+import UE4_Assets.Float8;
+import UE4_Assets.Package;
+import UE4_Assets.ReadException;
+import UE4_Assets.UTexture2D;
 import ddsutil.DDSUtil;
 import gr.zdimensions.jsquish.Squish;
 
@@ -48,6 +48,8 @@ public class Texture2DToBufferedImage {
 		formats.put("PF_ASTC_8x8", new PixelFormatInfo(0, (byte)8, (byte)8, (byte)16, 0, 0, (byte)0, "ATC_8x8"));
 		formats.put("PF_ASTC_10x10", new PixelFormatInfo(0, (byte)10, (byte)10, (byte)16, 0, 0, (byte)0, "ATC_10x10"));
 		formats.put("PF_ASTC_12x12", new PixelFormatInfo(0, (byte)12, (byte)12, (byte)16, 0, 0, (byte)0, "ATC_12x12"));
+		formats.put("PF_B8G8R8A8", new PixelFormatInfo(0, (byte)1, (byte)1, (byte)4, 32, 32, (byte)0, "BGRA8"));
+		formats.put("PF_R8G8B8A8", new PixelFormatInfo(0, (byte)1, (byte)1, (byte)4, 32, 32, (byte)0, "RGBA8"));
 		//TODO Implement more formats
 	}
 
@@ -95,20 +97,43 @@ public class Texture2DToBufferedImage {
 		case "PF_BC5":
 			BufferedImage res2 = readBC5(data, width, height);
 			return res2;
+		case "PF_B8G8R8A8":
+			PixelFormatInfo info = formats.get(pixelFormat);
+			int pixelSize = info.Float != 0 ? 16 : 4;
+			int size = width * height * pixelSize;
+			BufferedImage res3 = bgraBufferToImage(data, width, height, size);
+			return res3;
+		case "PF_R8G8B8A8":
+			BufferedImage res4 = rgbaBufferToImage(data, width, height);
+			return res4;
 		case "PF_ASTC_4x4":
 		case "PF_ASTC_6x6":
 		case "PF_ASTC_8x8":
 		case "PF_ASTC_10x10":
 		case "PF_ASTC_12x12":
 		{
-			BufferedImage res3 = readASCT(pixelFormat, data, width, height);
-			return res3;
+			BufferedImage res5 = readASCT(pixelFormat, data, width, height);
+			return res5;
 		}
 		default:
 			System.err.println("Unknown Pixelformat: " + pixelFormat);
 		}
 		return null;
 
+	}
+	
+	private static BufferedImage bgraBufferToImage(byte[] data, int width, int height, int dst_size) {
+		int s = 0;
+		byte[] dst = new byte[dst_size];
+		for(int i=0; i<width * height; i++) {
+			//BGRA to RGBA
+			byte b = data[s];
+			byte r = data[s+2];
+			data[s] = r;
+			data[s+2] = b;
+			s+=4;
+		}
+		return rgbaBufferToImage(data, width, height);
 	}
 	
 	private static BufferedImage readASCT(String format, byte[] data, int width, int height) throws IOException {

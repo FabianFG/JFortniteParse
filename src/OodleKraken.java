@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
-import UE4_Packages.FArchive;
-import UE4_Packages.ReadException;
+import UE4.FArchive;
+import UE4_Assets.ReadException;
 
 
 /**

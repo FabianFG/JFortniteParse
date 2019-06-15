@@ -8,6 +8,7 @@ import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -17,15 +18,15 @@ import java.util.Locale;
 import java.util.Map;
 
 import Enums.RarityEnum;
-import UE4.GameFile;
-import UE4.PakFileReader;
-import UE4_Packages.AthenaItemDefinition;
-import UE4_Packages.DisplayAssetPath;
-import UE4_Packages.FortHeroType;
-import UE4_Packages.FortWeaponMeleeItemDefinition;
-import UE4_Packages.Package;
-import UE4_Packages.ReadException;
-import UE4_Packages.UTexture2D;
+import UE4_Assets.AthenaItemDefinition;
+import UE4_Assets.DisplayAssetPath;
+import UE4_Assets.FortHeroType;
+import UE4_Assets.FortWeaponMeleeItemDefinition;
+import UE4_Assets.Package;
+import UE4_Assets.ReadException;
+import UE4_Assets.UTexture2D;
+import UE4_PakFile.GameFile;
+import UE4_PakFile.PakFileReader;
 import res.Resources;
 
 /**
@@ -50,6 +51,10 @@ public class ItemDefinitionToBufferedImage {
 		String rarity = itemDefinition.getRarity();
 		BufferedImage rarityBackground = RarityEnum.getRarityBackground(rarity);
 		Graphics2D g = result.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING,
+                RenderingHints.VALUE_RENDER_QUALITY);
 		g.drawImage(rarityBackground, 0, 0, null);
 		g.drawImage(icon, 5, 5, null);
 
@@ -162,6 +167,10 @@ public class ItemDefinitionToBufferedImage {
 		String rarity = itemDefinition.getRarity();
 		BufferedImage rarityBackground = RarityEnum.getRarityBackground(rarity);
 		Graphics2D g = result.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING,
+                RenderingHints.VALUE_RENDER_QUALITY);
 		g.drawImage(rarityBackground, 0, 0, null);
 		g.drawImage(icon, 5, 5, null);
 
@@ -233,6 +242,10 @@ public class ItemDefinitionToBufferedImage {
 		BufferedImage result = new BufferedImage(background.getWidth(), background.getHeight(),
 				BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g = result.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING,
+                RenderingHints.VALUE_RENDER_QUALITY);
 		g.drawImage(background, 0, 0, null);
 		g.drawImage(cutIcon(icon, background.getWidth() - 22), 11, 11, null);
 
@@ -338,6 +351,10 @@ public class ItemDefinitionToBufferedImage {
 		
 		int additionalHeight = 160;
 		Graphics2D g = result.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING,
+                RenderingHints.VALUE_RENDER_QUALITY);
 		g.drawImage(background, 0, 0, null);
 		g.drawImage(icon, 5, 5, null);
 
