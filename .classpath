@@ -16,7 +16,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="lib/glm-all.jar"/>
 	<classpathentry kind="lib" path="lib/DDSUtil.jar"/>
 	<classpathentry kind="lib" path="lib/JOodle.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
