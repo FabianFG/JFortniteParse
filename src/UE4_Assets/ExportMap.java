@@ -15,6 +15,7 @@ import UE4.FArchive;
 public class ExportMap {
 	private int itemCount;
 	private List<FObjectExport> entrys;
+	private int uassetSize;
 
 	/**
 	 * @param uassetAr
@@ -43,6 +44,16 @@ public class ExportMap {
 	public FObjectExport get(int index) {
 		return entrys.get(index);
 	}
+	
+	public void setUassetSize(int uassetSize) {
+		this.uassetSize = uassetSize;
+	}
+
+	public int getUassetSize() {
+		return uassetSize;
+	}
+	
+	
 	
 	
 	

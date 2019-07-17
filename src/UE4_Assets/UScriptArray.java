@@ -3,11 +3,14 @@
  */
 package UE4_Assets;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import org.json.simple.JSONArray;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import UE4.FArchive;
 
@@ -54,15 +57,24 @@ public class UScriptArray {
 	public List<FPropertyTagType> getData() {
 		return contents;
 	}
+	
+	public static class UScriptArraySerializer implements JsonSerializer<UScriptArray> {
+
+		@Override
+		public JsonElement serialize(UScriptArray src, Type typeOfSrc, JsonSerializationContext context) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		
+	}
 
 	/**
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public JSONArray jsonify() {
-		JSONArray a = new JSONArray();
+	public JsonArray jsonify(JsonSerializationContext context) {
+		JsonArray a = new JsonArray();
 		for(FPropertyTagType tagType : this.contents) {
-			a.add(tagType.jsonify());
+			a.add(tagType.jsonify(context));
 		}
 		return a;
 	}

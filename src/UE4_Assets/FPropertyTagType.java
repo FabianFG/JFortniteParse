@@ -4,12 +4,13 @@
 package UE4_Assets;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import javax.xml.bind.DatatypeConverter;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
 
 import UE4.FArchive;
 
@@ -330,94 +331,89 @@ public class FPropertyTagType {
 		}
 	}
 
-
 	/**
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public Object jsonify() {
+	public JsonElement jsonify(JsonSerializationContext context) {
 		// TODO Auto-generated method stub
-		Object json = new JSONObject();
+		JsonElement json = new JsonObject();
 		switch(this.propertyType) {
 		case "ArrayProperty":
-			json = new JSONArray();
 			UScriptArray array = ((FPropertyTagType.ArrayProperty) this).getNumber();
-			json = array.jsonify();
+			json = array.jsonify(context);
 			break;
 		case "StructProperty":
-			json = new JSONObject();
 			UScriptStruct struct = ((FPropertyTagType.StructProperty) this).getStruct();
-			json = struct.jsonify();
+			json = struct.jsonify(context);
 			break;
 		case "MapProperty":
-			json = new JSONObject();
 			UScriptMap map = ((FPropertyTagType.MapProperty) this).map;
-			json = map.jsonify();
+			json = map.jsonify(context);
 			break;
 		case "TextProperty":
-			json = new String();
 			FText text = ((FPropertyTagType.TextProperty) this).getText();
-			json = text.getString();
+			json = new JsonPrimitive(text.getString());
 			break;
 		case "SoftObjectProperty":
-			json = new JSONObject();
+			JsonObject softObjectProperty = new JsonObject();
 			FSoftObjectPath path = ((FPropertyTagType.SoftObjectProperty) this).getText();
-			((JSONObject) json).put("asset_path", path.getAssetPathName());
-			((JSONObject) json).put("sub_path", path.getSubPathString());
+			softObjectProperty.add("asset_path", new JsonPrimitive(path.getAssetPathName()));
+			softObjectProperty.add("sub_path", new JsonPrimitive(path.getSubPathString()));
+			json = softObjectProperty;
 			break;
 		case "BoolProperty":
 			boolean b = ((FPropertyTagType.BoolProperty) this).getBool();
-			json = new Boolean(b);
+			json = new JsonPrimitive(b);
 			break;
 		case "ObjectProperty":
 			FPackageIndex index = ((FPropertyTagType.ObjectProperty) this).getStruct();
-			json = index.getImportName();
+			json = new JsonPrimitive(index.getImportName());
 			break;
 		case "InterfaceProperty":
 			UInterfaceProperty interfaceP = ((FPropertyTagType.InterfaceProperty) this).getStruct();
-			json = interfaceP.getInterfaceNumber();
+			json = new JsonPrimitive(interfaceP.getInterfaceNumber());
 			break;
 		case "FloatProperty":
 			float floatP = ((FPropertyTagType.FloatProperty) this).getFloat();
-			json = floatP;
+			json = new JsonPrimitive(floatP);
 			break;
 		case "StrProperty":
 			String str = ((FPropertyTagType.StrProperty) this).getText();
-			json = str;
+			json = new JsonPrimitive(str);
 			break;
 		case "NameProperty":
 			String string = ((FPropertyTagType.NameProperty) this).getText();
-			json = string;
+			json = new JsonPrimitive(string);
 			break;
 		case "IntProperty":
 			int intP = ((FPropertyTagType.IntProperty) this).getNumber();
-			json = intP;
+			json = new JsonPrimitive(intP);
 			break;
 		case "UInt16Property":
 			int uint16P = ((FPropertyTagType.UInt16Property) this).getNumber();
-			json = uint16P;
+			json = new JsonPrimitive(uint16P);
 			break;
 		case "UInt32Property":
 			long uint32P = ((FPropertyTagType.UInt32Property) this).getNumber();
-			json = uint32P;
+			json = new JsonPrimitive(uint32P);
 			break;
 		case "UInt64Property":
 			BigInteger uint64P = ((FPropertyTagType.UInt64Property) this).getNumber();
-			json = uint64P.longValue();
+			json = new JsonPrimitive(uint64P.longValue());
 			break;
 		case "ByteProperty":
 			if(this instanceof FPropertyTagType.ByteProperty) {
 				byte uint8P = ((FPropertyTagType.ByteProperty) this).getByteValue();
-				json = DatatypeConverter.printByte(uint8P);
+				json = new JsonPrimitive(DatatypeConverter.printByte(uint8P));
 			}
 			else if(this instanceof FPropertyTagType.NameProperty) {
 				String string2 = ((FPropertyTagType.NameProperty) this).getText();
-				json = string2;
+				json = new JsonPrimitive(string2);
 			}
 			break;
 		case "EnumProperty":
 			String enumP = ((FPropertyTagType.EnumProperty) this).getText();
-			json = enumP;
+			json = new JsonPrimitive(enumP);
 			break;
 		}
 		return json;

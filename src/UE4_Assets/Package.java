@@ -6,14 +6,20 @@ package UE4_Assets;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Future;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import UE4.FArchive;
 import UE4.PackageLogger;
@@ -27,13 +33,16 @@ import UE4_PakFile.PakFileReader;
  */
 public class Package {
 
-	public static final int uassetMagic = 0x9E2A83C1;
+	public final int uassetMagic = 0x9E2A83C1;
 
 	private String name;
 	private FPackageFileSummary info;
 	private NameMap nameMap;
 	private ImportMap importMap;
 	private String packagePath;
+	
+	public final Gson gson;
+	private JsonObject packageInfo;
 
 	public String getPackagePath() {
 		if (packagePath != null) {
@@ -86,14 +95,17 @@ public class Package {
 			FileInputStream uassetIn = new FileInputStream(uassetFile);
 			byte[] uasset = new byte[uassetIn.available()];
 			uassetIn.read(uasset);
+			uassetIn.close();
 			FileInputStream uexpIn = new FileInputStream(uexpFile);
 			byte[] uexp = new byte[uexpIn.available()];
 			uexpIn.read(uexp);
+			uexpIn.close();
 			byte[] ubulk = null;
 			if (ubulkFile != null) {
 				FileInputStream ubulkIn = new FileInputStream(ubulkFile);
 				ubulk = new byte[ubulkIn.available()];
 				ubulkIn.read(ubulk);
+				ubulkIn.close();
 			}
 			return new Package(name, uasset, uexp, ubulk);
 		} else {
@@ -103,6 +115,13 @@ public class Package {
 
 	public Package(String name, byte[] uasset, byte[] uexp, byte[] ubulk, Optional<Locres> locres)
 			throws ReadException {
+		GsonBuilder builder = new GsonBuilder();
+		builder.registerTypeAdapter(Package.class, new PackageSerializer());
+		builder.registerTypeAdapter(NameMap.class, new PackageSerializer.NameMapSerializer());
+		builder.registerTypeAdapter(ImportMap.class, new PackageSerializer.ImportMapSerializer());
+		builder.registerTypeAdapter(ExportMap.class, new PackageSerializer.ExportMapSerializer());
+		builder.registerTypeAdapter(UObject.class, new UObject.UObjectSerializer());
+		gson = builder.create();
 		this.uasset = uasset;
 		this.uexp = uexp;
 		this.ubulk = ubulk;
@@ -129,11 +148,11 @@ public class Package {
 			// Read ExportMap
 			this.uassetAr.Seek(this.info.exportOffset);
 			this.exportMap = new ExportMap(this.uassetAr, this.info.exportCount, nameMap, importMap);
+			this.exportMap.setUassetSize(info.totalHeaderSize);
 
 			int assetLength = info.totalHeaderSize;
 			exports = new ArrayList<>();
 			uObjects = new ArrayList<>();
-			int index = 0;
 
 			int exportSize = 0;
 			for (FObjectExport export : exportMap.getEntrys()) {
@@ -240,7 +259,6 @@ public class Package {
 						// System.err.println("Skipped unknown export '" + exportType + "' at " +
 						// export.getSerialOffset()
 						// + " with length " + export.getSerialSize());
-						index += export.getSerialSize();
 						exports.add(baseObject);
 						uObjects.add(baseObject);
 					}
@@ -269,6 +287,7 @@ public class Package {
 			Optional<Object> ob = exports.stream().filter(o -> {
 				return o.getClass().equals(exportClass);
 			}).findFirst();
+			@SuppressWarnings("unchecked")
 			T res = (T) ob.get();
 			return res;
 		} catch (Exception e) {
@@ -301,57 +320,82 @@ public class Package {
 	public List<UObject> getuObjects() {
 		return uObjects;
 	}
+	
+	public static class PackageSerializer implements JsonSerializer<Package> {
 
-	@SuppressWarnings("unchecked")
-	public String toJSON() {
-		// Create root object
-		JSONObject root = new JSONObject();
-
-		// Add NameMap as JSONArray
-		JSONArray nameMapData = new JSONArray();
-		for (FNameEntry nameMapEntry : nameMap.getEntrys()) {
-			nameMapData.add(nameMapEntry.getName());
+		@Override
+		public JsonElement serialize(Package src, Type typeOfSrc, JsonSerializationContext context) {
+			JsonObject ob = new JsonObject();
+			
+			ob.add("name_map", context.serialize(src.nameMap));
+			ob.add("import_map", context.serialize(src.importMap));
+			ob.add("export_map", context.serialize(src.importMap));
+			
+			JsonArray exportProperties = new JsonArray();
+			src.uObjects.forEach(uObject -> exportProperties.add(context.serialize(uObject)));
+			ob.add("export_properties", exportProperties);
+			
+			return ob;
 		}
-		root.put("name_map", nameMapData);
+		
+		
+		public static class NameMapSerializer implements JsonSerializer<NameMap> {
 
-		// Add ImportMap as JSONArray
-		JSONArray importMapData = new JSONArray();
-		for (FObjectImport oImport : importMap.getEntrys()) {
-			JSONObject importO = new JSONObject();
-			importO.put("class_name", oImport.getClassName());
-			importO.put("class_package", oImport.getClassPackage());
-			importO.put("object_name", oImport.getObjectName());
-			importMapData.add(importO);
-		}
-		root.put("import_map", importMapData);
-
-		// Add ExportMap as JSONArray
-		int assetLength = info.totalHeaderSize;
-		JSONArray exportMapData = new JSONArray();
-		for (FObjectExport oExport : exportMap.getEntrys()) {
-			JSONObject exportO = new JSONObject();
-			exportO.put("export_type", oExport.getClassIndex().getImportName());
-			exportO.put("export_offset", oExport.getSerialOffset() - assetLength);
-			exportO.put("export_length", oExport.getSerialSize());
-			exportMapData.add(exportO);
-		}
-		root.put("export_map", exportMapData);
-
-		// Add all UObjects data
-		JSONArray exportProperties = new JSONArray();
-		for (UObject uobject : uObjects) {
-			JSONObject uobjectO = new JSONObject();
-			uobjectO.put("export_type", uobject.getExportType());
-			JSONArray propertyTags = new JSONArray();
-			for (FPropertyTag propertyTag : uobject.getProperties()) {
-				propertyTags.add(propertyTag.jsonify());
+			@Override
+			public JsonElement serialize(NameMap src, Type typeOfSrc, JsonSerializationContext context) {
+				JsonArray nameMapData = new JsonArray();
+				src.getEntrys().forEach(entry -> {
+					nameMapData.add(entry.getName());
+				});
+				return nameMapData;
 			}
-			uobjectO.put("property_tags", propertyTags);
-			exportProperties.add(uobjectO);
+			
 		}
-		root.put("export_properties", exportProperties);
+		
+		public static class ImportMapSerializer implements JsonSerializer<ImportMap> {
 
-		return root.toJSONString();
+			@Override
+			public JsonElement serialize(ImportMap src, Type typeOfSrc, JsonSerializationContext context) {
+				JsonArray importMapData = new JsonArray();
+				src.getEntrys().forEach(entry -> {
+					JsonObject importObject = new JsonObject();
+					importObject.addProperty("class_name", entry.getClassName());
+					importObject.addProperty("class_package", entry.getClassPackage());
+					importObject.addProperty("object_name", entry.getObjectName());
+					importMapData.add(importObject);
+				});
+				return importMapData;
+			}
+			
+		}
+		
+		public static class ExportMapSerializer implements JsonSerializer<ExportMap> {
+
+			@Override
+			public JsonElement serialize(ExportMap src, Type typeOfSrc, JsonSerializationContext context) {
+				JsonArray exportMapData = new JsonArray();
+				src.getEntrys().forEach(entry -> {
+					JsonObject exportObject = new JsonObject();
+					exportObject.addProperty("export_type", entry.getClassIndex().getImportName());
+					exportObject.addProperty("export_offset", entry.getSerialOffset() - src.getUassetSize());
+					exportObject.addProperty("export_length", entry.getSerialSize());
+					exportMapData.add(exportObject);
+				});
+				return exportMapData;
+			}
+			
+		}
+		
+	}
+	
+	public JsonObject toJSON() {
+		if(this.packageInfo == null)
+			this.packageInfo = (JsonObject) this.gson.toJsonTree(this);
+		return this.packageInfo;
+	}
+
+	public String toJSONString() {
+		return this.gson.toJson(toJSON());
 
 	}
 

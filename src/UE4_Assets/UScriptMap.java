@@ -6,8 +6,9 @@ package UE4_Assets;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
 
 import UE4.FArchive;
 
@@ -70,13 +71,12 @@ public class UScriptMap {
 	/**
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public JSONArray jsonify() {
-		JSONArray result = new JSONArray();
+	public JsonArray jsonify(JsonSerializationContext context) {
+		JsonArray result = new JsonArray();
 		for(FPropertyTagType tag : mapData.keySet()) {
-			JSONObject mapEntry = new JSONObject();
-			mapEntry.put("key", tag.jsonify());
-			mapEntry.put("value", mapData.get(tag).jsonify());
+			JsonObject mapEntry = new JsonObject();
+			mapEntry.add("key", tag.jsonify(context));
+			mapEntry.add("value", mapData.get(tag).jsonify(context));
 			result.add(mapEntry);
 			
 		}

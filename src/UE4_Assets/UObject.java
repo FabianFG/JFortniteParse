@@ -3,12 +3,14 @@
  */
 package UE4_Assets;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import UE4.FArchive;
 
@@ -40,6 +42,7 @@ public class UObject {
 		properties = serializeProperties(Ar, nameMap, importMap);
 		boolean serializeGUID = Ar.readBoolean();
 		if(serializeGUID) {
+			@SuppressWarnings("unused")
 			FGUID _objectGUID = new FGUID(Ar);
 		}
 	}
@@ -71,13 +74,20 @@ public class UObject {
 		
 	}
 	
-	public JSONArray jsonify() {
-		JSONArray propertyTags = new JSONArray();
-		for (FPropertyTag propertyTag : this.getProperties()) {
-			propertyTags.add(propertyTag.jsonify());
-		}
-		return propertyTags;
+	public static class UObjectSerializer implements JsonSerializer<UObject> {
 
+
+		@Override
+		public JsonElement serialize(UObject src, Type typeOfSrc, JsonSerializationContext context) {
+			JsonObject ob = new JsonObject();
+			
+			src.properties.forEach(tag -> {
+				tag.serializeInto(ob, context);
+			});
+			
+			return ob;
+		}
+		
 	}
 	
 	

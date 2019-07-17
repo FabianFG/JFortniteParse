@@ -3,12 +3,9 @@
  */
 package UE4_Assets;
 
-import java.util.Arrays;
-
-import javax.xml.bind.DatatypeConverter;
-
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
 
 import UE4.FArchive;
 
@@ -53,16 +50,10 @@ public class FPropertyTag {
 		return tag;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public JSONObject jsonify() {
-		JSONObject res = new JSONObject();
+	public void serializeInto(JsonObject ob, JsonSerializationContext context) {
+		JsonElement json = tag.jsonify(context);
 		
-		Object json = this.tag.jsonify();
-		
-		
-		res.put(this.name, json);
-		
-		return res;
+		ob.add(name, json);
 	}
 	
 	public FPropertyTag(FArchive Ar, NameMap nameMap, ImportMap importMap, boolean readData) throws ReadException {
@@ -117,6 +108,7 @@ public class FPropertyTag {
 				propertyGUID = null;
 			}
 			
+			@SuppressWarnings("unused")
 			String propertyDesc = "Property Tag: " + name + " (" + propertyType + ")";
 			//System.out.println(propertyDesc);
 			

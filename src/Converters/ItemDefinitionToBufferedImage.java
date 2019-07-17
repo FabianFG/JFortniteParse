@@ -22,12 +22,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.Optional;
 
 import Enums.RarityEnum;
 import UE4_Assets.AthenaItemDefinition;
@@ -61,8 +61,8 @@ import res.Resources;
  */
 public class ItemDefinitionToBufferedImage {
 
-	public static Map<String, FText> sets = new HashMap<>();
-	public static Map<String, BufferedImage> userFacingFlags = new HashMap<>();
+	public static Map<String, FText> sets = new ConcurrentHashMap<>();
+	public static Map<String, BufferedImage> userFacingFlags = new ConcurrentHashMap<>();
 
 	public static final String partOfSetTemplateDEFAULT = "Part of the <SetName>{0}</> set.";
 

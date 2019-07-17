@@ -3,7 +3,6 @@
  */
 package UE4_Assets;
 
-import java.util.Arrays;
 import java.util.List;
 
 import UE4.FArchive;

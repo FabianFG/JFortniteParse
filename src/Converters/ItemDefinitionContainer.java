@@ -4,25 +4,15 @@
 package Converters;
 
 import java.awt.image.BufferedImage;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import UE4_Assets.AthenaItemDefinition;
 import UE4_Assets.FText;
-import UE4_Assets.FortCosmeticVariant;
-import UE4_Assets.CosmeticVariantContainer;
 import UE4_Localization.Locres;
-import json.tools.JSONTools;
-import util.StaticFiles;
 
 /**
  * @author FunGames
@@ -54,59 +44,7 @@ public class ItemDefinitionContainer implements Cloneable {
 		return c;
 	}
 	
-	public ItemDefinitionContainer(JSONObject apiEntry) {
-		AthenaItemDefinition fakeDef = new AthenaItemDefinition();
-		fakeDef.setDisplayName(apiEntry.optString("displayName"));
-		fakeDef.setDescription(apiEntry.optString("description"));
-		fakeDef.setShortDescription(apiEntry.optString("type"));
-		fakeDef.setRarity(apiEntry.optString("backendRarity", null));
-		fakeDef.setDisplayName(apiEntry.optString("displayName"));
-		fakeDef.setGameplayTags(JSONTools.jsonArrayToList(apiEntry.optJSONArray("gameplay_tags")));
-		
-		if(apiEntry.has("icon")) {
-			try {
-				this.icon = StaticFiles.loadStaticImage(new URL(apiEntry.getString("icon")));
-			} catch (MalformedURLException | JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		if(apiEntry.has("featured_icon")) {
-			try {
-				this.featuredIcon = Optional.ofNullable(StaticFiles.loadStaticImage(new URL(apiEntry.getString("featured_icon"))));
-			} catch (MalformedURLException | JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
-		
-		List<FortCosmeticVariant> variants = new ArrayList<>();
-		apiEntry.optJSONObject("variants").keys().forEachRemaining(name -> {
-			JSONArray variantArray = apiEntry.optJSONObject("variants").getJSONArray(name);
-			FortCosmeticVariant var = new FortCosmeticVariant();
-			var.setVariantChannelName(new FText(name));
-			var.setVariantChannelTag(name);
-			List<CosmeticVariantContainer> containers = new ArrayList<>();
-			variantArray.forEach(ob -> {
-				JSONObject jsonVariant = (JSONObject) ob;
-				CosmeticVariantContainer c = new CosmeticVariantContainer();
-				c.setVariantName(new FText(jsonVariant.optString("name", null)));
-				try {
-					c.setPreviewIcon(StaticFiles.loadStaticImage(new URL(jsonVariant.getString("icon"))));
-				} catch (MalformedURLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				containers.add(c);
-			});
-			var.setVariants(containers);
-			variants.add(var);
-		});
-		fakeDef.setVariants(variants);
-		fakeDef.setVariantsLoaded(variants.size() > 0);
-		this.itemDefinition = fakeDef;
-	}
+	
 	
 	public ItemDefinitionContainer(BufferedImage icon, AthenaItemDefinition itemDefinition) {
 		this(icon, itemDefinition, new HashMap<>());
@@ -126,6 +64,7 @@ public class ItemDefinitionContainer implements Cloneable {
 
 		this.additionalIcons = new ArrayList<>();
 	}
+	
 	
 	/**
 	 * 

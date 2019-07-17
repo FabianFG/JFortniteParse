@@ -3,8 +3,11 @@
  */
 package UE4_Assets;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
 
 import UE4.FArchive;
 
@@ -83,87 +86,116 @@ public class UScriptStruct {
 	/**
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
-	public Object jsonify() {
-		Object json = new JSONObject();
+	public JsonElement jsonify(JsonSerializationContext context) {
+		JsonElement json = new JsonObject();
 		if (this.structType instanceof FIntPoint) {
 			FIntPoint intPoint = (FIntPoint) structType;
-			((JSONObject)json).put("X", intPoint.getX());
-			((JSONObject)json).put("Y", intPoint.getY());
+			JsonObject ob = new JsonObject();
+			ob.addProperty("X", intPoint.getX());
+			ob.addProperty("Y", intPoint.getY());
+			json = ob;
 			
 		} else if (this.structType instanceof FGUID) {
 			FGUID guid = (FGUID) structType;
-			json = guid.getString();
+			json = new JsonPrimitive(guid.getString());
 			
 		} else if (this.structType instanceof FGameplayTagContainer) {
-			json = new JSONArray();
+			JsonArray ar = new JsonArray();
 			FGameplayTagContainer container = (FGameplayTagContainer) structType;
 			for(String s : container.getGameplayTags()) {
-				((JSONArray) json).add(s);
+				ar.add(s);
 			}
+			json = ar;
 		} else if (this.structType instanceof FColor) {
 			FColor color = (FColor) structType;
-			((JSONObject)json).put("R", color.getR());
-			((JSONObject)json).put("G", color.getG());
-			((JSONObject)json).put("B", color.getB());
-			((JSONObject)json).put("A", color.getA());
+			JsonObject ob = new JsonObject();
+			ob.addProperty("R", color.getR());
+			ob.addProperty("G", color.getG());
+			ob.addProperty("B", color.getB());
+			ob.addProperty("A", color.getA());
+			json = ob;
 			
 		} else if (this.structType instanceof FLinearColor) {
 			FLinearColor linearColor = (FLinearColor) structType;
-			((JSONObject)json).put("R", linearColor.getR());
-			((JSONObject)json).put("G", linearColor.getG());
-			((JSONObject)json).put("B", linearColor.getB());
-			((JSONObject)json).put("A", linearColor.getA());
+			JsonObject ob = new JsonObject();
+			ob.addProperty("R", linearColor.getR());
+			ob.addProperty("G", linearColor.getG());
+			ob.addProperty("B", linearColor.getB());
+			ob.addProperty("A", linearColor.getA());
+			json = ob;
 			
 		} else if (this.structType instanceof FSoftObjectPath) {
 			FSoftObjectPath objectPath = (FSoftObjectPath) structType;
-			((JSONObject) json).put("asset_path", objectPath.getAssetPathName());
-			((JSONObject) json).put("sub_path", objectPath.getSubPathString());
+			JsonObject ob = new JsonObject();
+			ob.addProperty("asset_path", objectPath.getAssetPathName());
+			ob.addProperty("sub_path", objectPath.getSubPathString());
+			json = ob;
 			
 		} else if (this.structType instanceof FStructFallback) {
-			json = new JSONArray();
+			JsonObject ob = new JsonObject();
 			FStructFallback structFallback = (FStructFallback) structType;
 			for(FPropertyTag tag : structFallback.getProperties()) {
-				((JSONArray) json).add(tag.jsonify());
+				ob.add(tag.getName(), tag.getTag().jsonify(context));
 			}
+			json = ob;
 		} else if (this.structType instanceof FVector2D) {
 			FVector2D vector2D = (FVector2D) structType;
-			((JSONObject)json).put("X", vector2D.getX());
-			((JSONObject)json).put("Y", vector2D.getY());
+			JsonObject ob = new JsonObject();
+			ob.addProperty("X", vector2D.getX());
+			ob.addProperty("Y", vector2D.getY());
+			json = ob;
 			
 		} else if (this.structType instanceof FQuat) {
 			FQuat quat = (FQuat) structType;
-			((JSONObject)json).put("X", quat.getX());
-			((JSONObject)json).put("Y", quat.getY());
-			((JSONObject)json).put("Z", quat.getZ());
-			((JSONObject)json).put("W", quat.getW());
+			JsonObject ob = new JsonObject();
+			ob.addProperty("X", quat.getX());
+			ob.addProperty("Y", quat.getY());
+			ob.addProperty("Z", quat.getZ());
+			ob.addProperty("W", quat.getW());
+			json = ob;
 			
 		} else if (this.structType instanceof FVector) {
 			FVector quat = (FVector) structType;
-			((JSONObject)json).put("X", quat.getX());
-			((JSONObject)json).put("Y", quat.getY());
-			((JSONObject)json).put("Z", quat.getZ());
+			JsonObject ob = new JsonObject();
+			ob.addProperty("X", quat.getX());
+			ob.addProperty("Y", quat.getY());
+			ob.addProperty("Z", quat.getZ());
+			json = ob;
 			
 		} else if (this.structType instanceof FRotator) {
 			FRotator quat = (FRotator) structType;
-			((JSONObject)json).put("Pitch", quat.getPitch());
-			((JSONObject)json).put("Yaw", quat.getYaw());
-			((JSONObject)json).put("Roll", quat.getRoll());
+			JsonObject ob = new JsonObject();
+			ob.addProperty("Pitch", quat.getPitch());
+			ob.addProperty("Yaw", quat.getYaw());
+			ob.addProperty("Roll", quat.getRoll());
+			json = ob;
 			
 		} else if (this.structType instanceof FPerPlatformFloat) {
 			FPerPlatformFloat perPlatformFloat = (FPerPlatformFloat) structType;
-			json = perPlatformFloat.getValue();
+			json = new JsonPrimitive(perPlatformFloat.getValue());
 			
 		} else if (this.structType instanceof FPerPlatformInt) {
 			FPerPlatformInt perPlatformInt = (FPerPlatformInt) structType;
-			json = perPlatformInt.getValue();
+			json = new JsonPrimitive(perPlatformInt.getValue());
 			
 		} else if (this.structType instanceof FWeightedRandomSampler) {
-			FWeightedRandomSampler perPlatformInt = (FWeightedRandomSampler) structType;
-			//TODO Parse Data
-			
+			FWeightedRandomSampler weightRandomSampler = (FWeightedRandomSampler) structType;
+			JsonObject ob = new JsonObject();
+			JsonArray alias = new JsonArray();
+			weightRandomSampler.getAlias().forEach(i -> alias.add(i));
+			ob.add("alias", alias);
+			JsonArray prob = new JsonArray();
+			weightRandomSampler.getProb().forEach(i -> prob.add(i));
+			ob.add("prob", prob);
+			ob.addProperty("totalWeight", weightRandomSampler.getTotalWeight());
+			json = ob;
 		} else if (this.structType instanceof FLevelSequenceLegacyObjectReference) {
 			FLevelSequenceLegacyObjectReference objectReference = (FLevelSequenceLegacyObjectReference) structType;
+			JsonObject ob = new JsonObject();
+			ob.addProperty("key_guid", objectReference.getKeyGUID().getString());
+			ob.addProperty("object_id", objectReference.getObjectID().getString());
+			ob.addProperty("object_path", objectReference.getObjectPath());
+			json = ob;
 			//TODO Parse Data
 			
 		}
