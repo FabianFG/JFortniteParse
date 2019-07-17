@@ -329,7 +329,7 @@ public class Package {
 			
 			ob.add("name_map", context.serialize(src.nameMap));
 			ob.add("import_map", context.serialize(src.importMap));
-			ob.add("export_map", context.serialize(src.importMap));
+			ob.add("export_map", context.serialize(src.exportMap));
 			
 			JsonArray exportProperties = new JsonArray();
 			src.uObjects.forEach(uObject -> exportProperties.add(context.serialize(uObject)));
