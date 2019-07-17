@@ -39,6 +39,7 @@ public class UScriptStruct {
 			structType = new FSoftObjectPath(Ar, nameMap);
 			break;
 		case "Vector2D":
+		case "Box2D":
 			structType = new FVector2D(Ar);
 			break;
 		case "Quat":

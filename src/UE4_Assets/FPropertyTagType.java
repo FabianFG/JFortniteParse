@@ -357,7 +357,7 @@ public class FPropertyTagType {
 		case "TextProperty":
 			json = new String();
 			FText text = ((FPropertyTagType.TextProperty) this).getText();
-			json = text.getSourceString();
+			json = text.getString();
 			break;
 		case "SoftObjectProperty":
 			json = new JSONObject();

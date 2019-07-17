@@ -8,14 +8,18 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 
 import UE4.FArchive;
+import UE4.PackageLogger;
 import UE4_Assets.ReadException;
 
 /**
@@ -24,14 +28,12 @@ import UE4_Assets.ReadException;
  */
 public class Locres {
 	private String name;
-	private FTextLocalizationResource locresData;
+	private Map<String, Map<String, String>> texts;
 	
 	public static void main(String[] args) throws ReadException {
 		long time = System.currentTimeMillis();
-		Locres lOLD = Locres.fromFile(new File("D:\\Fabian\\Desktop\\Game_BR(1).locres"));
 		Locres lNEW = Locres.fromFile(new File("D:\\Fabian\\WORKSPACE\\PakBrowserAES\\Output\\FortniteGame\\Content\\Localization\\Game_BR\\en\\Game_BR.locres"));
-		System.out.println(lNEW.find("Bao Bros"));
-		lNEW.compareTo(lOLD);
+		System.out.println(lNEW.getKey("Part of the <SetName>{0}</> set"));
 		long timediff = System.currentTimeMillis() - time;
 		System.out.println("Time to load locres file : " + timediff + "ms");
 	}
@@ -39,11 +41,23 @@ public class Locres {
 	public Locres(byte[] locres, String filename) throws ReadException {
 		this.name = filename;
 		FArchive locresAr = new FArchive(locres);
-		this.locresData = new FTextLocalizationResource(locresAr);
+		FTextLocalizationResource locresData = new FTextLocalizationResource(locresAr);
+		this.texts = new HashMap<>();
+		locresData.getStringData().forEach(nameSpace -> {
+			Map<String, String> text = new HashMap<>();
+			nameSpace.data.forEach(entry -> {
+				text.put(entry.key, entry.data);
+			});
+			texts.put(nameSpace.namespace, text);
+		});
 		
-		System.out.println("Successfully parsed locres package: " + name);
+		PackageLogger.log.println("Successfully parsed locres package: " + name);
 	}
 	
+	public Map<String, String> getTexts(String nameSpace) {
+		return texts.get(nameSpace);
+	}
+
 	public static Locres fromFile(File locresFile) throws ReadException {
 		try {
 			FileInputStream fin = new FileInputStream(locresFile);
@@ -61,41 +75,54 @@ public class Locres {
 	public String getName() {
 		return name;
 	}
-
-	public FTextLocalizationResource getLocresData() {
-		return locresData;
-	}
 	
 	public List<String> compareTo(Locres old) {
 		List<String> res = new ArrayList<>();
-		LocaleNamespace oldNS = findDefault(old);
-		LocaleNamespace newNS = findDefault(this);
 		
 		Set<String> oldSet = new HashSet<>();
-		oldNS.data.forEach(entry -> oldSet.add(entry.key));
+		old.texts.get("").keySet().forEach(entry -> oldSet.add(entry));
 		
-		newNS.data.forEach(entry -> {
-			if(!oldSet.contains(entry.key)) {
-				res.add(entry.data);
+		this.texts.keySet().forEach(entry -> {
+			if(!oldSet.contains(entry)) {
+				res.add(texts.get("").get(entry));
 			}
 		});
 		
 		return res;
 	}
 	
-	public boolean find(String value) {
-		return findDefault(this).data.stream().anyMatch(entry -> entry.data.equals(value));
+	private String searchTemp = null;
+	
+	public String getNamespaceKey(String search) {
+		searchTemp = null;
+		this.texts.forEach((key, value) -> {
+			value.forEach((innerKey, innerValue) -> {
+				if(org.apache.commons.lang3.StringUtils.containsIgnoreCase(innerValue, search)) {
+					searchTemp = key;
+					return;
+				}
+			});
+		});
+		return searchTemp;
 	}
 	
-	public LocaleNamespace findDefault(Locres locres) {
-		Optional<LocaleNamespace> lns = locres.getLocresData().getStringData().stream().filter(s -> {
-			return s.namespace.equals("");
+	public String getKeyInNameSpace(String search, Map<String,String> nameSpace) {
+		Optional<Entry<String,String>> res = nameSpace.entrySet().stream().filter(entry -> {
+			
+			return org.apache.commons.lang3.StringUtils.containsIgnoreCase(entry.getValue(), search);
 		}).findFirst();
-		if(lns.isPresent()) {
-			LocaleNamespace ns = lns.get();
-			return ns;
-		}
-		return null;
+		return res.isPresent() ? res.get().getKey() : null;
+	}
+	
+	public String getKey(String search) {
+		String nameSpace = getNamespaceKey(search);
+		if(nameSpace == null) 
+			return null;
+		return getKeyInNameSpace(search, this.texts.get(nameSpace));
+	}
+	
+	public boolean contains(String value) {
+		return this.texts.entrySet().stream().anyMatch(entry -> entry.getValue().equals(value));
 	}
 }
 

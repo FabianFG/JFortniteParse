@@ -3,7 +3,6 @@
  */
 package UE4;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -12,6 +11,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import UE4_Assets.ExportMap;
 import UE4_Assets.FCompressedChunk;
@@ -20,12 +20,13 @@ import UE4_Assets.FGenerationInfo;
 import UE4_Assets.ImportMap;
 import UE4_Assets.NameMap;
 import UE4_Assets.ReadException;
+import UE4_Localization.Locres;
 
 /**
  * @author FunGames
  *
  */
-public class FArchive {
+public class FArchive implements Cloneable {
 	public boolean LittleEndian;
 
 	private int ArPos;
@@ -40,12 +41,32 @@ public class FArchive {
 	private Map<String, FArchive> payloads;
 	public int uassetSize;
 	public int uexpSize;
+	public Optional<Locres> locres;
+	
+	@Override
+	public FArchive clone() {
+		FArchive c = new FArchive();
+		c.LittleEndian = LittleEndian;
+		c.ArPos = ArPos;
+		c.ArStopper = ArStopper;
+		c.data = data;
+		c.nameMap = nameMap;
+		c.importMap = importMap;
+		c.exportMap = exportMap;
+		c.payloads = payloads;
+		c.uassetSize = uassetSize;
+		c.uexpSize = uexpSize;
+		c.locres = locres;
+		return c;
+	}
+	
 
 	public FArchive() {
 		this.ArPos = 0;
 		this.ArStopper = 0;
 		this.LittleEndian = true;
 		this.payloads = new HashMap<>();
+		this.locres = Optional.empty();
 	}
 	
 	public FArchive(byte[] data) {
@@ -54,6 +75,7 @@ public class FArchive {
 		this.ArStopper = data.length;
 		this.LittleEndian = true;
 		this.payloads = new HashMap<>();
+		this.locres = Optional.empty();
 	}
 
 	public boolean IsCompressed() {

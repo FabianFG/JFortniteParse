@@ -25,7 +25,7 @@ public class FPakEntry {
 	public int compressionBlockSize;
 
 	public int binaryLength; // computed value
-
+	
 	public FPakEntry(FArchive Ar, FPakInfo info, boolean inIndex) throws ReadException {
 		if (inIndex) {
 			name = Ar.readString();
@@ -61,6 +61,5 @@ public class FPakEntry {
 				compressionBlocks.set(i, b);
 			}
 		}
-
 	}
 }

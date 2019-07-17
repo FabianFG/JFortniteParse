@@ -132,6 +132,85 @@ public class Resources {
 		return null;
 	}
 	
+	public static BufferedImage getCommonVariantBackground() {
+		InputStream in = Resources.class.getResourceAsStream("vC512.png");
+		if(in != null) {
+			try {
+				BufferedImage vbucks = ImageIO.read(in);
+				return vbucks;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	public static BufferedImage getEpicVariantBackground() {
+		InputStream in = Resources.class.getResourceAsStream("vE512.png");
+		if(in != null) {
+			try {
+				BufferedImage vbucks = ImageIO.read(in);
+				return vbucks;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	public static BufferedImage getLegendaryVariantBackground() {
+		InputStream in = Resources.class.getResourceAsStream("vL512.png");
+		if(in != null) {
+			try {
+				BufferedImage vbucks = ImageIO.read(in);
+				return vbucks;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	public static BufferedImage getMarvelVariantBackground() {
+		InputStream in = Resources.class.getResourceAsStream("vMarvel512.png");
+		if(in != null) {
+			try {
+				BufferedImage vbucks = ImageIO.read(in);
+				return vbucks;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	public static BufferedImage getRareVariantBackground() {
+		InputStream in = Resources.class.getResourceAsStream("vR512.png");
+		if(in != null) {
+			try {
+				BufferedImage vbucks = ImageIO.read(in);
+				return vbucks;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	public static BufferedImage getUncommonVariantBackground() {
+		InputStream in = Resources.class.getResourceAsStream("vU512.png");
+		if(in != null) {
+			try {
+				BufferedImage vbucks = ImageIO.read(in);
+				return vbucks;
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+	
 	
 	
 	

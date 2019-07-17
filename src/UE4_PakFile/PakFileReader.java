@@ -18,6 +18,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -27,10 +31,10 @@ import javax.xml.bind.DatatypeConverter;
 import org.apache.commons.io.FileUtils;
 
 import EncryptionHandler.Aes;
-import Oodle.OodleKrakenInterface;
 import UE4.FArchive;
 import UE4_Assets.FPakArchive;
 import UE4_Assets.ReadException;
+import oodle.Oodle;
 
 public class PakFileReader {
 	private String pakFilePath;
@@ -153,103 +157,121 @@ public class PakFileReader {
 		System.out.println("Successfully extracted to " + outFile.getAbsolutePath());
 		return outFile.getAbsolutePath();
 	}
+	
+	private class Extractor implements Callable<byte[]> {
+		
+		private GameFile gameFile;
+		private boolean async;
 
-	public byte[] extractSelectedToBuffer(GameFile gameFile) throws ReadException {
-		try {
-			Ar.Seek64(gameFile.getOffset());
-			FPakEntry entry = new FPakEntry(Ar, this.pakInfo, false);
-			GameFile tempFile = new GameFile(entry, null, 0, null);
-			ByteArrayOutputStream fos = new ByteArrayOutputStream();
-			if (gameFile.isEncrypted()) {
-				//System.out.println("Selected File is encrypted. Attempting to decrypt with given key...");
-				int fixedFileLength = gameFile.getLength();
-				while (fixedFileLength % 16 != 0) {
-					fixedFileLength++;
-				}
-				byte[] encryptedData = Ar.serialize(fixedFileLength);
-				try {
-					byte[] decryptedData = Aes.decryptToByteArray(encryptedData,
-							DatatypeConverter.parseHexBinary(this.key.substring(2)));
-					//System.out.println("Decryption finished successfully");
-					decryptedData = Arrays.copyOfRange(decryptedData, 0, gameFile.getLength());
-					fos.write(decryptedData);
-				} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
-						| IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		public Extractor(GameFile gameFile, boolean async) {
+			this.gameFile = gameFile;
+			this.async = async;
+		}
 
-			} else {
-				byte[] data = Ar.serialize(gameFile.getLength());
-				fos.write(data);
-			}
-			if (tempFile.isCompressed()) {
-
-				if (tempFile.getCompressionMethod() == PAK.CompressionMethod.COMPRESS_OODLE.m) {
-
-					// Compressed with oodle
-					ByteArrayOutputStream fos2 = new ByteArrayOutputStream();
-					int blockIndex = 0;
-					System.out.println("Attempting to decompress " + tempFile.getCompressionBlocks().size()
-							+ " oodle compressed block(s)");
-					for (FPakCompressedBlock block : tempFile.getCompressionBlocks()) {
-						Ar.Seek64(block.compressedStart);
-						byte[] src = Ar.serialize((int) (block.compressedEnd - block.compressedStart));
-						assert (src.length == tempFile.getLength());
-						byte[] dst = new byte[tempFile.getCompressionBlockSize()];
-						Class<?> calcClass = Class.forName("OodleKraken");
-						OodleKrakenInterface api = (OodleKrakenInterface) calcClass.newInstance();
-						int result = api.oodleDecompress(src, dst);
-
-						if (result >= 0) {
-							System.out.println("Successfully decompressed block " + blockIndex + " from "
-									+ gameFile.getActualName());
-							fos2.write(dst);
-						} else {
-							throw new ReadException("Oodle Decompression failed, Decompressed Bytes: " + result
-									+ ", Expected Bytes: " + tempFile.getCompressionBlockSize(), -1);
-						}
-						blockIndex++;
-
+		@Override
+		public byte[] call() throws Exception {
+			try {
+				FPakArchive cAr = async ? Ar.clone() : Ar;
+				cAr.Seek64(gameFile.getOffset());
+				FPakEntry entry = new FPakEntry(cAr, pakInfo, false);
+				GameFile tempFile = new GameFile(entry, null, 0, null);
+				ByteArrayOutputStream fos = new ByteArrayOutputStream();
+				if (gameFile.isEncrypted()) {
+					//System.out.println("Selected File is encrypted. Attempting to decrypt with given key...");
+					int fixedFileLength = gameFile.getLength();
+					while (fixedFileLength % 16 != 0) {
+						fixedFileLength++;
 					}
-					byte[] resTemp = fos2.toByteArray();
-					if (resTemp.length >= gameFile.getUncompressedlength()) {
-						System.out.println("Successfully decompressed " + gameFile.getActualName());
-						return Arrays.copyOfRange(resTemp, 0, tempFile.getUncompressedlength()); // Delete empty data to
-																									// prevent parse
-																									// errors
-					} else {
-						throw new ReadException("Oodle Decompression failed: Total decompressed bytes: "
-								+ resTemp.length + ", must be atleast " + tempFile.getUncompressedlength() + " bytes",
+					byte[] encryptedData = cAr.serialize(fixedFileLength);
+					try {
+						byte[] decryptedData = Aes.decryptToByteArray(encryptedData,
+								DatatypeConverter.parseHexBinary(key.substring(2)));
+						//System.out.println("Decryption finished successfully");
+						decryptedData = Arrays.copyOfRange(decryptedData, 0, gameFile.getLength());
+						fos.write(decryptedData);
+					} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
+							| IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+
+				} else {
+					byte[] data = cAr.serialize(gameFile.getLength());
+					fos.write(data);
+				}
+				if (gameFile.isCompressed()) {
+
+					if (gameFile.getCompressionMethod() == PAK.CompressionMethod.COMPRESS_OODLE.m) {
+
+						// Compressed with oodle
+						ByteArrayOutputStream fos2 = new ByteArrayOutputStream();
+						int blockIndex = 0;
+						System.out.println("Attempting to decompress " + gameFile.getCompressionBlocks().size()
+								+ " oodle compressed block(s)");
+						for (FPakCompressedBlock block : gameFile.getCompressionBlocks()) {
+							cAr.Seek64(block.compressedStart);
+							byte[] src = cAr.serialize((int) (block.compressedEnd - block.compressedStart));
+							assert (src.length == gameFile.getLength());
+							System.out.print("Block " + blockIndex + ": ");
+							byte[] dst = null;
+							if(gameFile.getCompressionBlocks().size() - 1 == blockIndex) {
+								int decompressedSize = gameFile.getUncompressedlength() -(blockIndex) * gameFile.getCompressionBlockSize();
+								dst = Oodle.oodleDecompress(src, decompressedSize);
+							} else {
+								 dst = Oodle.oodleDecompress(src, gameFile.getCompressionBlockSize());
+							}
+							
+
+							if (dst != null) {
+								fos2.write(dst);
+							} else {
+								throw new ReadException("Oodle Decompression failed, Expected Bytes: " + gameFile.getCompressionBlockSize(), -1);
+							}
+							blockIndex++;
+
+						}
+						byte[] resTemp = fos2.toByteArray();
+						if (resTemp.length >= gameFile.getUncompressedlength()) {
+							System.out.println("Successfully decompressed " + gameFile.getActualName());
+							return Arrays.copyOfRange(resTemp, 0, gameFile.getUncompressedlength()); // Delete empty data to
+																										// prevent parse
+																										// errors
+						} else {
+							throw new ReadException("Oodle Decompression failed: Total decompressed bytes: "
+									+ resTemp.length + ", must be atleast " + gameFile.getUncompressedlength() + " bytes",
+									-1);
+						}
+					}
+
+					else {
+						throw new ReadException(
+								"File is compressed with an unknown compression method: " + gameFile.getCompressionMethod(),
 								-1);
 					}
 				}
+				return fos.toByteArray();
 
-				else {
-					throw new ReadException(
-							"File is compressed with an unknown compression method: " + tempFile.getCompressionMethod(),
-							-1);
-				}
-
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
 			}
-			return fos.toByteArray();
+		}
+		
+	}
+	
+	public Future<byte[]> extractSelectedToBufferAsync(GameFile gameFile) {
+		ExecutorService ex = Executors.newSingleThreadExecutor();
+		Future<byte[]> result = ex.submit(new Extractor(gameFile, true));
+		ex.shutdown();
+		return result;
+	}
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
-		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+	public byte[] extractSelectedToBuffer(GameFile gameFile) throws ReadException {
+		try {
+			return new Extractor(gameFile, true).call();
+		} catch (Exception e) {
+			throw new ReadException(e.getMessage());
 		}
 	}
 	/*

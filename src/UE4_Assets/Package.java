@@ -9,11 +9,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Future;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import UE4.FArchive;
+import UE4.PackageLogger;
+import UE4_Localization.Locres;
 import UE4_PakFile.GameFile;
 import UE4_PakFile.PakFileReader;
 
@@ -97,7 +101,8 @@ public class Package {
 		}
 	}
 
-	public Package(String name, byte[] uasset, byte[] uexp, byte[] ubulk) throws ReadException, IOException {
+	public Package(String name, byte[] uasset, byte[] uexp, byte[] ubulk, Optional<Locres> locres)
+			throws ReadException {
 		this.uasset = uasset;
 		this.uexp = uexp;
 		this.ubulk = ubulk;
@@ -141,6 +146,7 @@ public class Package {
 			this.uexpAr.Seek(0);
 			this.uexpAr.uassetSize = assetLength;
 			this.uexpAr.uexpSize = exportSize;
+			this.uexpAr.locres = locres;
 
 			if (ubulk != null) {
 				FArchive ubulkAr = new FArchive();
@@ -149,7 +155,9 @@ public class Package {
 				ubulkAr.Seek(0);
 				uexpAr.addPayload("UBULK", ubulkAr);
 			}
-			
+
+			AthenaItemDefinition previousItemDef = null;
+
 			for (FObjectExport export : exportMap.getEntrys()) {
 				String exportType = export.getClassIndex().getImportName();
 				if (exportType.equals("0")) {
@@ -202,26 +210,36 @@ public class Package {
 					break;
 				default:
 					if (exportType.startsWith("Athena") && exportType.endsWith("Definition")) {
-						// Cannot check
-						// that in the
-						// switch
+						// Cannot check that in the switch
 						AthenaItemDefinition item = new AthenaItemDefinition(this.uexpAr, nameMap, importMap,
 								exportType);
 						exports.add(item);
 						uObjects.add(item.getBaseObject());
+						previousItemDef = item;
+					} else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
+						// Cannot check that in the switch
+						FortCosmeticVariant charVariant = new FortCosmeticVariant(this.uexpAr, nameMap, importMap,
+								exportType);
+						if (previousItemDef != null)
+							previousItemDef.addVariants(charVariant);
+						exports.add(charVariant);
+						uObjects.add(charVariant.getBaseObject());
 					} else {
 
 						UObject baseObject = new UObject(this.uexpAr, nameMap, importMap, exportType);
 						int validPos = (int) (position + export.getSerialSize());
 						if (validPos != export.getSerialSize()) {
-							//System.out.println(String.format(
-							//		"WARNING: Unknown export has unread data beside the uobject, Read bytes: %d Export Length: %d",
-							//		this.uexpAr.Tell() - position, export.getSerialSize()));
+							// System.out.println(String.format(
+							// "WARNING: Unknown export has unread data beside the uobject, Read bytes: %d
+							// Export Length: %d",
+							// this.uexpAr.Tell() - position, export.getSerialSize()));
 						} else {
-							//System.out.println("INFO: Unknown Export has no more data beside the uobject");
+							// System.out.println("INFO: Unknown Export has no more data beside the
+							// uobject");
 						}
-						//System.err.println("Skipped unknown export '" + exportType + "' at " + export.getSerialOffset()
-						//		+ " with length " + export.getSerialSize());
+						// System.err.println("Skipped unknown export '" + exportType + "' at " +
+						// export.getSerialOffset()
+						// + " with length " + export.getSerialSize());
 						index += export.getSerialSize();
 						exports.add(baseObject);
 						uObjects.add(baseObject);
@@ -229,19 +247,38 @@ public class Package {
 				}
 				int validPos = (int) (position + export.getSerialSize());
 				if (this.uexpAr.Tell() != validPos) {
-					//System.out.println(
-					//		String.format("Did not read '%s' correctly. Current Position: %d, Bytes Remaining: %d",
-					//				exportType, this.uexpAr.Tell(), validPos - this.uexpAr.Tell()));
+					// System.out.println(
+					// String.format("Did not read '%s' correctly. Current Position: %d, Bytes
+					// Remaining: %d",
+					// exportType, this.uexpAr.Tell(), validPos - this.uexpAr.Tell()));
 				} else {
-					//System.out.println(String.format("Successfully read export '%s' at offset %d with length %d",
-					//		exportType, export.getSerialOffset() - assetLength, export.getSerialSize()));
+					// System.out.println(String.format("Successfully read export '%s' at offset %d
+					// with length %d",
+					// exportType, export.getSerialOffset() - assetLength, export.getSerialSize()));
 				}
 			}
-			System.out.println("Successfully parsed package: " + name);
+			PackageLogger.log.println("Successfully parsed package: " + name);
 
 		} else {
 			throw new ReadException("Given uasset file is not an uasset. Wrong package tag", 0);
 		}
+	}
+
+	public <T> T getExportAs(Class<T> exportClass) throws ReadException {
+		try {
+			Optional<Object> ob = exports.stream().filter(o -> {
+				return o.getClass().equals(exportClass);
+			}).findFirst();
+			T res = (T) ob.get();
+			return res;
+		} catch (Exception e) {
+			throw new ReadException("Package does not have any export with class " + exportClass.getSimpleName());
+		}
+
+	}
+
+	public Package(String name, byte[] uasset, byte[] uexp, byte[] ubulk) throws ReadException {
+		this(name, uasset, uexp, ubulk, Optional.empty());
 
 	}
 
@@ -325,19 +362,30 @@ public class Package {
 			if (gameFile.isUE4Package()) {
 				PakFileReader pFR = loadedPaks[pakFileReaderIndices.get(gameFile.getPakFilePath())];
 				if (pFR != null) {
-					byte[] uasset = pFR.extractSelectedToBuffer(gameFile);
-					byte[] uexp = null;
-					byte[] ubulk = null;
-					if (gameFile.hasUexp()) {
-						uexp = pFR.extractSelectedToBuffer(gameFile.getUexp());
-					}
-					if (gameFile.hasUbulk()) {
-						ubulk = pFR.extractSelectedToBuffer(gameFile.getUbulk());
-					}
 					try {
-						Package uePackage = new Package(gameFile.getNameWithoutExtension(), uasset, uexp, ubulk);
+						Future<byte[]> uasset = pFR.extractSelectedToBufferAsync(gameFile);
+						Future<byte[]> uexp = null;
+						if (gameFile.hasUexp()) {
+							uexp = pFR.extractSelectedToBufferAsync(gameFile.getUexp());
+						}
+						Future<byte[]> ubulk = null;
+						if (gameFile.hasUbulk()) {
+							ubulk = pFR.extractSelectedToBufferAsync(gameFile.getUbulk());
+						}
+
+						byte[] uassetA = uasset.get();
+						byte[] uexpA = null;
+						if (gameFile.hasUexp()) {
+							uexpA = uexp.get();
+						}
+						byte[] ubulkA = null;
+						if (gameFile.hasUbulk()) {
+							ubulkA = ubulk.get();
+						}
+
+						Package uePackage = new Package(gameFile.getNameWithoutExtension(), uassetA, uexpA, ubulkA);
 						return uePackage;
-					} catch (ReadException | IOException e1) {
+					} catch (Exception e1) {
 						// TODO Auto-generated catch block
 						System.err.println("Failed to load Package: " + gameFile.getNameWithoutExtension());
 						return null;

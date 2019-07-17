@@ -3,6 +3,7 @@
  */
 package UE4_Assets;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -15,13 +16,24 @@ import UE4.FArchive;
 public class FPakArchive extends FArchive {
 
 	private RandomAccessFile file;
+	private String fileName;
 
 	protected long ArPos;
 	protected long ArStopper;
+	
+	@Override
+	public FPakArchive clone() {
+		FPakArchive c = new FPakArchive();
+		c.file = file;
+		c.ArPos = ArPos;
+		c.ArStopper = ArStopper;
+		return c;
+	}
 
 	public FPakArchive(RandomAccessFile file) throws IOException, ReadException {
 		super();
 		this.file = file;
+		
 		this.SetStopper64(file.length());
 		this.Seek64(0);
 	}

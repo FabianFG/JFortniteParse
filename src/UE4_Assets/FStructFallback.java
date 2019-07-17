@@ -5,6 +5,7 @@ package UE4_Assets;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import UE4.FArchive;
 
@@ -25,6 +26,12 @@ public class FStructFallback {
 				break;
 			}
 		}
+	}
+	
+	public Optional<FPropertyTag> getPropertyByName(String tagName) {
+		return properties.stream().filter(tag -> {
+			return tag.getName().equals(tagName);
+		}).findFirst();
 	}
 
 	public List<FPropertyTag> getProperties() {
