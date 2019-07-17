@@ -80,7 +80,7 @@ public class UObject {
 		@Override
 		public JsonElement serialize(UObject src, Type typeOfSrc, JsonSerializationContext context) {
 			JsonObject ob = new JsonObject();
-			
+			ob.addProperty("export_type", src.exportType);
 			src.properties.forEach(tag -> {
 				tag.serializeInto(ob, context);
 			});
