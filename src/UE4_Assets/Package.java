@@ -228,7 +228,7 @@ public class Package {
 					uObjects.add(cm.getBaseObject());
 					break;
 				default:
-					if (exportType.startsWith("Athena") && exportType.endsWith("Definition")) {
+					if ((exportType.startsWith("Athena") && exportType.endsWith("Definition")) || exportType.contains("FortBannerTokenType")) {
 						// Cannot check that in the switch
 						AthenaItemDefinition item = new AthenaItemDefinition(this.uexpAr, nameMap, importMap,
 								exportType);
@@ -416,7 +416,6 @@ public class Package {
 						if (gameFile.hasUbulk()) {
 							ubulk = pFR.extractSelectedToBufferAsync(gameFile.getUbulk());
 						}
-
 						byte[] uassetA = uasset.get();
 						byte[] uexpA = null;
 						if (gameFile.hasUexp()) {
