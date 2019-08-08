@@ -22,15 +22,16 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import UE4.FArchive;
-import UE4.PackageLogger;
 import UE4_Localization.Locres;
 import UE4_PakFile.GameFile;
 import UE4_PakFile.PakFileReader;
+import lombok.extern.log4j.Log4j;
 
 /**
  * @author FunGames
  *
  */
+@Log4j(topic = "PackageParser")
 public class Package {
 
 	public final int uassetMagic = 0x9E2A83C1;
@@ -275,7 +276,7 @@ public class Package {
 					// exportType, export.getSerialOffset() - assetLength, export.getSerialSize()));
 				}
 			}
-			PackageLogger.log.println("Successfully parsed package: " + name);
+			log.info("Successfully parsed package: " + name);
 
 		} else {
 			throw new ReadException("Given uasset file is not an uasset. Wrong package tag", 0);

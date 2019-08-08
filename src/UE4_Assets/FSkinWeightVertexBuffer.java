@@ -4,7 +4,6 @@
 package UE4_Assets;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import UE4.FArchive;
@@ -26,6 +25,7 @@ public class FSkinWeightVertexBuffer {
 		return numVertices;
 	}
 	
+	@SuppressWarnings("unused")
 	public FSkinWeightVertexBuffer(FArchive Ar) throws ReadException {
 		FStripDataFlags flags = new FStripDataFlags(Ar);
 		boolean extraBoneInfluences = Ar.readBoolean();

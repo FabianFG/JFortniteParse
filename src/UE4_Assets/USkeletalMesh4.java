@@ -4,7 +4,6 @@
 package UE4_Assets;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import UE4.FArchive;
@@ -75,6 +74,7 @@ public class USkeletalMesh4 {
 		}
 		
 		if(lodModels.get(lodModels.size()-1) != null) {
+			@SuppressWarnings("unused")
 			long _serializeGUID = Ar.readUInt32();
 		}
 		

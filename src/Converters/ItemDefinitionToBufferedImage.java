@@ -65,11 +65,18 @@ public class ItemDefinitionToBufferedImage {
 	public static Map<String, BufferedImage> userFacingFlags = new ConcurrentHashMap<>();
 
 	public static final String partOfSetTemplateDEFAULT = "Part of the <SetName>{0}</> set.";
+	
+	private static boolean firstRun = true;
 
 	public static ItemDefinitionContainer createContainer(AthenaItemDefinition itemDefinition,
 			Map<String, Integer> pakFileReaderIndices, PakFileReader[] loadedPaks, Map<String, GameFile> gameFiles,
 			String mountPrefix, Optional<BufferedImage> overrideIcon, boolean loadVariants)
 			throws ReadException, IOException {
+		if(firstRun) {
+			firstRun = false;
+			loadSets(pakFileReaderIndices, loadedPaks, gameFiles);
+			loadUserFacingFlags(pakFileReaderIndices, loadedPaks, gameFiles, mountPrefix);	
+		}
 		BufferedImage icon = overrideIcon
 				.orElse(loadIcon(itemDefinition, pakFileReaderIndices, loadedPaks, gameFiles, mountPrefix));
 
@@ -118,7 +125,7 @@ public class ItemDefinitionToBufferedImage {
 			}
 		});
 	}
-
+	
 	public static void loadSets(Map<String, Integer> pakFileReaderIndices, PakFileReader[] loadedPaks,
 			Map<String, GameFile> gameFiles) {
 		if (!sets.isEmpty()) {
@@ -156,7 +163,9 @@ public class ItemDefinitionToBufferedImage {
 		}
 	}
 
-	public static void loadUserFacingFlags(Map<String, Integer> pakFileReaderIndices, PakFileReader[] loadedPaks,
+	
+	@SuppressWarnings("unused")
+	private static void loadUserFacingFlags(Map<String, Integer> pakFileReaderIndices, PakFileReader[] loadedPaks,
 			Map<String, GameFile> gameFiles, String mountPrefix) {
 		if (!userFacingFlags.isEmpty()) {
 			return;
@@ -452,6 +461,7 @@ public class ItemDefinitionToBufferedImage {
 	 * @param partOfSetTemplateOverride
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	public static BufferedImage getImageWithVariants(ItemDefinitionContainer container,
 			Optional<String> partOfSetTemplateOverride) {
 		BufferedImage icon = container.getIcon();
@@ -595,12 +605,12 @@ public class ItemDefinitionToBufferedImage {
 			g.setFont(burbank.deriveFont(Font.PLAIN, 50));
 			FontMetrics fm = g.getFontMetrics();
 			int fontSize = 50;
-			while (fm.stringWidth(itemDefinition.getDisplayName().toUpperCase()) > result.getWidth() - 10) {
+			while (fm.stringWidth(itemDefinition.getDisplayName().toUpperCase()) > result.getWidth() - iconS - 40) {
 				fontSize -= 1;
 				g.setFont(burbank.deriveFont(Font.PLAIN, fontSize));
 				fm = g.getFontMetrics();
 			}
-			int x = result.getWidth() - 5 - iconS - fm.stringWidth(itemDefinition.getDisplayName());
+			int x = result.getWidth() - 40 - iconS - fm.stringWidth(itemDefinition.getDisplayName());
 			int y = result.getHeight() - 52;
 			g.drawString(itemDefinition.getDisplayName().toUpperCase(), x, y);
 		}
@@ -627,12 +637,12 @@ public class ItemDefinitionToBufferedImage {
 				fontSize = 15;
 				g.setFont(notoSans.deriveFont(Font.PLAIN, fontSize));
 				fm = g.getFontMetrics();
-				while (fm.stringWidth(line) > result.getWidth()) {
+				while (fm.stringWidth(line) > result.getWidth() - iconS - 30) {
 					fontSize -= 1;
 					g.setFont(notoSans.deriveFont(Font.PLAIN, fontSize));
 					fm = g.getFontMetrics();
 				}
-				int x = result.getWidth() - 5 - iconS - fm.stringWidth(line);
+				int x = result.getWidth() - 30 - iconS - fm.stringWidth(line);
 				g.drawString(line, x, y);
 				y += 18;
 			}
@@ -680,6 +690,7 @@ public class ItemDefinitionToBufferedImage {
 		return icon;
 	}
 
+	@SuppressWarnings("unused")
 	public static BufferedImage getImageNoDesc(ItemDefinitionContainer container) throws IOException, ReadException {
 		BufferedImage icon = container.getIcon();
 		AthenaItemDefinition itemDefinition = container.getItemDefinition();
@@ -1004,6 +1015,7 @@ public class ItemDefinitionToBufferedImage {
 		return icon.getSubimage(startX, 0, targetX, icon.getHeight());
 	}
 
+	@SuppressWarnings("unused")
 	public static BufferedImage getAsShopImage(ItemDefinitionContainer container, BufferedImage vbucksIcon, int price,
 			boolean featured) throws IOException, ReadException {
 		BufferedImage icon = container.getIcon();

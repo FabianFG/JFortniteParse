@@ -21,6 +21,7 @@ public class FTextLocalizationResource {
 	public static final FGUID LOCRES_MAGIC = new FGUID("1970541582-4228074087-2643465546-461322179");
 	private static final int INDEX_NONE = -1;
 
+	@SuppressWarnings("unused")
 	public FTextLocalizationResource(FArchive Ar) throws ReadException {
 		FGUID magic = new FGUID(Ar);
 

@@ -26,6 +26,7 @@ public class FPakEntry {
 
 	public int binaryLength; // computed value
 	
+	@SuppressWarnings("unused")
 	public FPakEntry(FArchive Ar, FPakInfo info, boolean inIndex) throws ReadException {
 		if (inIndex) {
 			name = Ar.readString();

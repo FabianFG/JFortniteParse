@@ -38,6 +38,7 @@ public class FPakInfo {
 		return 4 * 2 + 8 * 2 + 20 + /* new fields */ 1 + 16;
 	}
 	
+	@SuppressWarnings("unused")
 	public static void main(String[] args) throws IOException, ReadException {
 		RandomAccessFile f = new RandomAccessFile("D:\\Fabian\\Desktop\\Mobile v8\\pakchunk2-Android_ASTCClient.pak", "r");
 		FPakInfo headerOffset = readPakInfo(new FPakArchive(f));

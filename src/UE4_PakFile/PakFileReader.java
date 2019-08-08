@@ -5,10 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -34,14 +30,17 @@ import EncryptionHandler.Aes;
 import UE4.FArchive;
 import UE4_Assets.FPakArchive;
 import UE4_Assets.ReadException;
+import lombok.extern.log4j.Log4j;
 import oodle.Oodle;
 
+@Log4j(topic = "PakFile")
 public class PakFileReader {
 	private String pakFilePath;
 	private List<GameFile> fileList = new ArrayList<>();
 	//private Map<String, UE4Package> packages = new HashMap<String, UE4Package>();
 	private File pakFile;
 	private FPakArchive Ar;
+	@SuppressWarnings("unused")
 	private long fileLength;
 	private long indexOffset;
 	private long indexLength;
@@ -49,6 +48,9 @@ public class PakFileReader {
 	private String key;
 	private String outputPath = System.getProperty("user.dir") + "/Output/";
 	
+	private static final ExecutorService ex = Executors.newCachedThreadPool();
+	
+	@SuppressWarnings("unused")
 	public boolean isIndexChecksumValid() throws ReadException, NoSuchAlgorithmException {
 		byte[] storedHash = getStoredIndexHash();
 		Ar.Seek64(pakInfo.indexOffset);
@@ -93,24 +95,7 @@ public class PakFileReader {
 	private int encryptedFileCount;
 
 	public PakFileReader(String pakFilePath) throws IOException, ReadException {
-		this.pakFilePath = pakFilePath;
-		this.pakFile = new File(pakFilePath);
-		this.Ar = new FPakArchive(new RandomAccessFile(pakFile, "r"));
-		this.fileLength = Ar.GetStopper64();
-
-		this.pakInfo = FPakInfo.readPakInfo(Ar);
-		if (this.pakInfo == null) {
-			throw new ReadException(String.format("File '%s' has an unknown format", pakFile.getName()), -1);
-		}
-		this.indexOffset = pakInfo.indexOffset;
-		this.indexLength = pakInfo.indexSize;
-
-		this.bIndexEncrypted = pakInfo.bEncryptedIndex;
-
-		if (pakInfo.version > PAK.PakVersion.PAK_LATEST.v) {
-			System.err.println(String.format("WARNING: Pak file \"%s\" has unsupported version %d",
-					new File(pakFilePath).getName(), pakInfo.version));
-		}
+		this(new FPakArchive(new RandomAccessFile(new File(pakFilePath), "r")), new File(pakFilePath));
 	}
 	public PakFileReader(FPakArchive Ar, File pakFile) throws ReadException {
 		this.pakFile = pakFile;
@@ -127,7 +112,7 @@ public class PakFileReader {
 		this.bIndexEncrypted = pakInfo.bEncryptedIndex;
 
 		if (pakInfo.version > PAK.PakVersion.PAK_LATEST.v) {
-			System.err.println(String.format("WARNING: Pak file \"%s\" has unsupported version %d",
+			log.warn(String.format("WARNING: Pak file \"%s\" has unsupported version %d",
 					new File(pakFilePath).getName(), pakInfo.version));
 		}
 		
@@ -154,7 +139,7 @@ public class PakFileReader {
 		FileOutputStream fos = new FileOutputStream(outFile);
 		fos.write(data);
 		fos.close();
-		System.out.println("Successfully extracted to " + outFile.getAbsolutePath());
+		log.info("Successfully extracted to " + outFile.getAbsolutePath());
 		return outFile.getAbsolutePath();
 	}
 	
@@ -168,6 +153,7 @@ public class PakFileReader {
 			this.async = async;
 		}
 
+		@SuppressWarnings("unused")
 		@Override
 		public byte[] call() throws Exception {
 			try {
@@ -206,13 +192,13 @@ public class PakFileReader {
 						// Compressed with oodle
 						ByteArrayOutputStream fos2 = new ByteArrayOutputStream();
 						int blockIndex = 0;
-						System.out.println("Attempting to decompress " + gameFile.getCompressionBlocks().size()
+						log.info("Attempting to decompress " + gameFile.getCompressionBlocks().size()
 								+ " oodle compressed block(s)");
 						for (FPakCompressedBlock block : gameFile.getCompressionBlocks()) {
 							cAr.Seek64(block.compressedStart);
 							byte[] src = cAr.serialize((int) (block.compressedEnd - block.compressedStart));
 							assert (src.length == gameFile.getLength());
-							System.out.print("Block " + blockIndex + ": ");
+							log.info("Block " + blockIndex + ": ");
 							byte[] dst = null;
 							if(gameFile.getCompressionBlocks().size() - 1 == blockIndex) {
 								int decompressedSize = gameFile.getUncompressedlength() -(blockIndex) * gameFile.getCompressionBlockSize();
@@ -232,7 +218,7 @@ public class PakFileReader {
 						}
 						byte[] resTemp = fos2.toByteArray();
 						if (resTemp.length >= gameFile.getUncompressedlength()) {
-							System.out.println("Successfully decompressed " + gameFile.getActualName());
+							log.info("Successfully decompressed " + gameFile.getActualName());
 							return Arrays.copyOfRange(resTemp, 0, gameFile.getUncompressedlength()); // Delete empty data to
 																										// prevent parse
 																										// errors
@@ -261,9 +247,7 @@ public class PakFileReader {
 	}
 	
 	public Future<byte[]> extractSelectedToBufferAsync(GameFile gameFile) {
-		ExecutorService ex = Executors.newSingleThreadExecutor();
 		Future<byte[]> result = ex.submit(new Extractor(gameFile, true));
-		ex.shutdown();
 		return result;
 	}
 
@@ -591,8 +575,7 @@ public class PakFileReader {
 
 		} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
 				| BadPaddingException | InvalidAlgorithmParameterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Failed to test key", e);
 		}
 		return false;
 	}
@@ -690,88 +673,19 @@ public class PakFileReader {
 				}
 				
 			}
-			System.out.println(String.format("Pak %s: %d files (%d encrypted), mount point: \"%s\", version %d",
+			log.info(String.format("Pak %s: %d files (%d encrypted), mount point: \"%s\", version %d",
 					new File(this.pakFilePath).getName(), this.fileCount, this.encryptedFileCount, this.mountPrefix,
 					this.pakInfo.version));
 
 		} catch (IOException | InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
 				| IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Failed to mount pak file", e);
 		} catch (ReadException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Failed to mount pak file", e);
 		}
 		return fileList;
 	}
 
-	// Private Methods
-
-	public static long readToLong(byte[] buffer, int index) {
-		byte[] lengthBytes = Arrays.copyOfRange(buffer, index, index + 8);
-		long length = batol(lengthBytes, true);
-		return length;
-
-	}
-
-	private int readToInt(byte[] buffer, int index) {
-		byte[] lengthBytes = Arrays.copyOfRange(buffer, index, index + 4);
-		int length = batol4(lengthBytes, true);
-		return length;
-
-	}
-
-	private String readString(byte[] buffer, int index) {
-		String res = "";
-		for (int i = index; i < buffer.length; i++) {
-			if (buffer[i] != 0x00) {
-				res += (char) buffer[i];
-			} else {
-				break;
-			}
-		}
-		return res;
-
-	}
-
-	private static long batol(byte[] buff, boolean littleEndian) {
-		assert (buff.length == 8);
-		ByteBuffer bb = ByteBuffer.wrap(buff);
-		if (littleEndian)
-			bb.order(ByteOrder.LITTLE_ENDIAN);
-		return bb.getLong();
-	}
-
-	private static int batol4(byte[] buff, boolean littleEndian) {
-		assert (buff.length == 4);
-		ByteBuffer bb = ByteBuffer.wrap(buff);
-		if (littleEndian)
-			bb.order(ByteOrder.LITTLE_ENDIAN);
-		return bb.getInt();
-	}
-
-	public static double round(double value, int places) {
-		if (places < 0)
-			throw new IllegalArgumentException();
-
-		BigDecimal bd = new BigDecimal(value);
-		bd = bd.setScale(places, RoundingMode.HALF_UP);
-		return bd.doubleValue();
-	}
-
-	private static byte[] longToLittleEndian(long numero) {
-		ByteBuffer bb = ByteBuffer.allocate(8);
-		bb.order(ByteOrder.LITTLE_ENDIAN);
-		bb.putLong(numero);
-		return bb.array();
-	}
-
-	private static byte[] intToLittleEndian(int numero) {
-		ByteBuffer bb = ByteBuffer.allocate(4);
-		bb.order(ByteOrder.LITTLE_ENDIAN);
-		bb.putInt(numero);
-		return bb.array();
-	}
 
 	private byte[] fillByteArrayToLength(byte[] oldData, int newLength) {
 		byte[] result = new byte[newLength];
@@ -786,6 +700,7 @@ public class PakFileReader {
 		return result;
 	}
 
+	@SuppressWarnings("unused")
 	private void insert(String filename, long offset, byte[] content) throws IOException {
 
 		RandomAccessFile r = new RandomAccessFile(filename, "rw");
@@ -807,6 +722,7 @@ public class PakFileReader {
 		FileUtils.forceDelete(new File(filename + "Temp"));
 	}
 
+	@SuppressWarnings("unused")
 	private byte[] bringByteArrayToMultipleOf16Bytes(byte[] oldData) {
 		int fLength = oldData.length;
 		while (fLength % 16 != 0) {

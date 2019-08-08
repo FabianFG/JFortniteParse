@@ -4,7 +4,6 @@
 package UE4_Assets;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import UE4.FArchive;
@@ -30,6 +29,7 @@ public class UTexture2D {
 		return textures;
 	}
 
+	@SuppressWarnings("unused")
 	public UTexture2D(FArchive Ar, NameMap nameMap, ImportMap importMap) throws ReadException {
 		baseObject = new UObject(Ar, nameMap, importMap, "Texture2D");
 		textures = new ArrayList<>();

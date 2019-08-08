@@ -19,13 +19,14 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 
 import UE4.FArchive;
-import UE4.PackageLogger;
 import UE4_Assets.ReadException;
+import lombok.extern.log4j.Log4j;
 
 /**
  * @author FunGames
  *
  */
+@Log4j(topic = "PackageParser")
 public class Locres {
 	private String name;
 	private Map<String, Map<String, String>> texts;
@@ -51,7 +52,7 @@ public class Locres {
 			texts.put(nameSpace.namespace, text);
 		});
 		
-		PackageLogger.log.println("Successfully parsed locres package: " + name);
+		log.info("Successfully parsed locres package: " + name);
 	}
 	
 	public Map<String, String> getTexts(String nameSpace) {
@@ -121,8 +122,5 @@ public class Locres {
 		return getKeyInNameSpace(search, this.texts.get(nameSpace));
 	}
 	
-	public boolean contains(String value) {
-		return this.texts.entrySet().stream().anyMatch(entry -> entry.getValue().equals(value));
-	}
 }
 

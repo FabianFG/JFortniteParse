@@ -3,8 +3,6 @@
  */
 package UE4_Assets;
 
-import java.util.Arrays;
-
 import UE4.FArchive;
 
 /**
@@ -36,6 +34,7 @@ public class FStaticMeshVertexBuffer {
 		return uvs;
 	}
 
+	@SuppressWarnings("unused")
 	public FStaticMeshVertexBuffer(FArchive Ar) throws ReadException {
 		FStripDataFlags flags = new FStripDataFlags(Ar);
 		numTexCoords = Ar.readInt32();

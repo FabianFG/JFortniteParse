@@ -3,7 +3,6 @@
  */
 package UE4_Assets;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -16,6 +15,7 @@ import UE4.FArchive;
 public class FPakArchive extends FArchive {
 
 	private RandomAccessFile file;
+	@SuppressWarnings("unused")
 	private String fileName;
 
 	protected long ArPos;

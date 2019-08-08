@@ -66,6 +66,7 @@ public class FSkelMeshRenderSection {
 		return disabled;
 	}
 	
+	@SuppressWarnings("unused")
 	public FSkelMeshRenderSection(FArchive Ar) throws ReadException {
 		FStripDataFlags flags = new FStripDataFlags(Ar);
 		materialIndex = Ar.readInt16();

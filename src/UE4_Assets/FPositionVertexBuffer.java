@@ -30,6 +30,7 @@ public class FPositionVertexBuffer {
 		return numVerts;
 	}
 
+	@SuppressWarnings("unused")
 	public FPositionVertexBuffer(FArchive Ar) throws ReadException {
 		stride = Ar.readInt32();
 		numVerts = Ar.readInt32();

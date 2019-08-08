@@ -16,8 +16,9 @@ public class FMultisizeIndexContainer {
 	
 	
 	private byte dataSize;
-	private List indices; //Of either UInt16 or UInt32, depending on dataSize
+	private List<?> indices; //Of either UInt16 or UInt32, depending on dataSize
 	
+	@SuppressWarnings("unused")
 	public FMultisizeIndexContainer(FArchive Ar) throws ReadException {
 		dataSize = Ar.readUInt8();
 		int _elementSize = Ar.readInt32();
@@ -40,7 +41,7 @@ public class FMultisizeIndexContainer {
 		return dataSize;
 	}
 
-	public List getIndices() {
+	public List<?> getIndices() {
 		return indices;
 	}
 }

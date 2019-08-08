@@ -17,6 +17,7 @@ public class DisplayAssetPath {
 
 	private UObject baseObject;
 	private String detailsImage;
+	@SuppressWarnings("unused")
 	private String tileImage;
 
 

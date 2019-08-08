@@ -77,7 +77,7 @@ public class Texture2DToBufferedImage {
 
 	}
 
-	public static BufferedImage readTexture(UTexture2D texture) throws ReadException, IOException {
+	public static synchronized BufferedImage readTexture(UTexture2D texture) throws ReadException, IOException {
 		String pixelFormat = texture.getPixelFormat();
 		FTexture2DMipMap textureMipMap = texture.getTexture();
 
@@ -124,7 +124,6 @@ public class Texture2DToBufferedImage {
 	
 	private static BufferedImage bgraBufferToImage(byte[] data, int width, int height, int dst_size) {
 		int s = 0;
-		byte[] dst = new byte[dst_size];
 		for(int i=0; i<width * height; i++) {
 			//BGRA to RGBA
 			byte b = data[s];
@@ -148,13 +147,8 @@ public class Texture2DToBufferedImage {
 		int size = USize * VSize * pixelSize;
 		byte[] dst = new byte[size];
 		
-		if(formatInfo != null) {
-			ASTC.decompressASTC(data, dst, USize, VSize, blockSizeX, blockSizeY, false/*isNormalMap*/);
-			return rgbaBufferToImage(dst, width, height);
-		}
-		else {
-			return null;
-		}
+		ASTC.decompressASTC(data, dst, USize, VSize, blockSizeX, blockSizeY, false/*isNormalMap*/);
+		return rgbaBufferToImage(dst, width, height);
 	}
 
 	/**
@@ -221,6 +215,7 @@ public class Texture2DToBufferedImage {
 		return image;
 	}
 
+	@SuppressWarnings("unused")
 	private static int getColorValue(byte[] data) {
 		int sum = 0;
 		for (byte d : data) {

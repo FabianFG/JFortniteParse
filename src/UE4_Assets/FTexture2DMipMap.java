@@ -3,8 +3,6 @@
  */
 package UE4_Assets;
 
-import java.util.Arrays;
-
 import UE4.FArchive;
 
 /**
@@ -24,6 +22,7 @@ public class FTexture2DMipMap {
 		sizeY = Ar.readInt32();
 		sizeZ = Ar.readInt32();
 		if(!cooked) {
+			@SuppressWarnings("unused")
 			String u = Ar.readString();
 		}
 	}

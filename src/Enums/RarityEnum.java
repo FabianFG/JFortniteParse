@@ -199,7 +199,7 @@ public class RarityEnum {
 	}
 	
 	private static Map<String, Color> addRarities() {
-		Map<String, Color> rarities = new HashMap();
+		Map<String, Color> rarities = new HashMap<>();
 		//rarities.put("EFortRarity::Legendary", new Color(255,153,000)); //Impossible (T9)
 		rarities.put("EFortRarity::Masterwork", new Color(255,000,000)); // Transcendent
 		rarities.put("EFortRarity::Elegant", Color.decode("#ae9131")); //Mythic
@@ -227,7 +227,7 @@ public class RarityEnum {
 		  return "#" + hexColour;
 	}
 	private static Map<String, String> addRaritiyNames() {
-		Map<String, String> rarityNames = new HashMap();
+		Map<String, String> rarityNames = new HashMap<>();
 		rarityNames.put("EFortRarity::Quality", "Epic"); //Epic
 		//raritiyNames.put("EFortRarity::Legendary", "Impossible (T9)"); //Impossible (T9)
 		rarityNames.put("EFortRarity::Masterwork", "Transcendent"); // Transcendent
@@ -249,7 +249,7 @@ public class RarityEnum {
 	}
 	
 	private static Map<String, Integer> addRarityNums() {
-		Map<String, Integer> rarityNums = new HashMap();
+		Map<String, Integer> rarityNums = new HashMap<>();
 		rarityNums.put("EFortRarity::Quality", 400); //Epic
 		//raritiyNames.put("EFortRarity::Legendary", "Impossible (T9)"); //Impossible (T9)
 		rarityNums.put("EFortRarity::Masterwork", 700000); // Transcendent
