@@ -6,31 +6,23 @@ package UE4_Assets;
 import java.util.ArrayList;
 import java.util.List;
 
-import UE4.FArchive;
+import annotation.Float32;
+import annotation.Serializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FVector2D {
-	private float x;
-	private float y;
+	@Float32 private float x;
+	@Float32 private float y;
 	
 	public FVector2D(float x, float y) {
 		this.x = x;
 		this.y = y;
-	}
-
-	public FVector2D(FArchive Ar) throws ReadException {
-		x = Ar.readFloat32();
-		y = Ar.readFloat32();
-	}
-	public float getX() {
-		return x;
-	}
-
-	public float getY() {
-		return y;
 	}
 	
 	public List<Float> getTuple() {

@@ -3,6 +3,8 @@ package UE4_Assets;
 import javax.xml.bind.DatatypeConverter;
 
 import UE4.FArchive;
+import annotation.CustomSerializable;
+import lombok.Data;
 
 /**
  * 
@@ -12,13 +14,24 @@ import UE4.FArchive;
  * @author FunGames
  *
  */
+@Data
+@CustomSerializable
 public class FGUID {
 
+	private long part1;
+	private long part2;
+	private long part3;
+	private long part4;
+	
 	private String guid;
 	private String hexString;
 
 	public FGUID(String guid) {
 		this.guid = guid;
+	}
+	
+	public FGUID(FArchive Ar) throws ReadException {
+		this(Ar.serialize(16));
 	}
 
 	public FGUID(byte[] bytes) {
@@ -50,36 +63,6 @@ public class FGUID {
 		guid += part4;
 	}
 	
-	
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((guid == null) ? 0 : guid.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		FGUID other = (FGUID) obj;
-		if (guid == null) {
-			if (other.guid != null)
-				return false;
-		} else if (!guid.equals(other.guid))
-			return false;
-		return true;
-	}
-
-	public FGUID(FArchive Ar) throws ReadException {
-		this(Ar.serialize(16));
-	}
 
 	public String getString() {
 		return guid;

@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import UE4_Assets.AthenaItemDefinition;
 import UE4_Assets.FText;
+import UE4_Assets.exports.AthenaItemDefinition;
 import UE4_Localization.Locres;
 
 /**

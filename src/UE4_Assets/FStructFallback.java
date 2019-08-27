@@ -8,23 +8,27 @@ import java.util.List;
 import java.util.Optional;
 
 import UE4.FArchive;
+import UE4.deserialize.exception.DeserializationException;
+import annotation.CustomSerializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@CustomSerializable
 public class FStructFallback {
 	private List<FPropertyTag> properties;
-
-	public FStructFallback(FArchive Ar, NameMap nameMap, ImportMap importMap) throws ReadException {
+	
+	public FStructFallback(FArchive Ar) throws DeserializationException {
 		properties = new ArrayList<>();
 		while(true) {
-			FPropertyTag tag = new FPropertyTag(Ar, nameMap, importMap, true);
-			if(!tag.getName().equals("None")) {
-				properties.add(tag);
-			} else {
+			FPropertyTag tag = Ar.read(FPropertyTag.class, true);
+			if(tag.getName().equals("None")) {
 				break;
 			}
+			properties.add(tag);
 		}
 	}
 	
@@ -33,9 +37,4 @@ public class FStructFallback {
 			return tag.getName().equals(tagName);
 		}).findFirst();
 	}
-
-	public List<FPropertyTag> getProperties() {
-		return properties;
-	}
-
 }

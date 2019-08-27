@@ -7,30 +7,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 import UE4.FArchive;
+import UE4.deserialize.exception.DeserializationException;
 import UE4_Assets.FGUID;
 import UE4_Assets.ReadException;
+import annotation.CustomSerializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@CustomSerializable
 public class FTextLocalizationResource {
 	private byte version;
 	private List<LocaleNamespace> stringData;
+	private long strArrayOffset;
 
 	public static final FGUID LOCRES_MAGIC = new FGUID("1970541582-4228074087-2643465546-461322179");
 	private static final int INDEX_NONE = -1;
 
 	@SuppressWarnings("unused")
-	public FTextLocalizationResource(FArchive Ar) throws ReadException {
-		FGUID magic = new FGUID(Ar);
+	public FTextLocalizationResource(FArchive Ar) throws ReadException, DeserializationException {
+		FGUID magic = Ar.read(FGUID.class);
 
-		if (!magic.equals(LOCRES_MAGIC)) {
+		if (!magic.getString().equals(LOCRES_MAGIC.getString())) {
 			throw new ReadException("Wrong locres guid");
 		}
 
-		this.version = Ar.readUInt8();
-		long strArrayOffset = Ar.readInt64();
+		version = Ar.readUInt8();
+		strArrayOffset = Ar.readInt64();
 		if (strArrayOffset == INDEX_NONE) {
 			throw new ReadException("No offset found");
 		}
@@ -42,7 +48,7 @@ public class FTextLocalizationResource {
 		List<FTextLocalizationResourceString> localizedStrings = new ArrayList<>();
 		long localizedStringCount = Ar.readUInt32();
 		for (int i = 0; i < localizedStringCount; i++) {
-			localizedStrings.add(new FTextLocalizationResourceString(Ar));
+			localizedStrings.add(Ar.read(FTextLocalizationResourceString.class));
 		}
 
 		Ar.Seek(currentOffset);
@@ -51,13 +57,13 @@ public class FTextLocalizationResource {
 		long namespaceCount = Ar.readUInt32();
 		this.stringData = new ArrayList<>();
 		for (int i = 0; i < namespaceCount; i++) {
-			FTextKey namespace = new FTextKey(Ar);
+			FTextKey namespace = Ar.read(FTextKey.class);
 			long keyCount = Ar.readUInt32();
 
 			List<FEntry> strings = new ArrayList<>();
 			
 			for(int j = 0; j < keyCount; j++) {
-				FTextKey textKey = new FTextKey(Ar);
+				FTextKey textKey = Ar.read(FTextKey.class);
 				long _sourceHash = Ar.readUInt32();
 				int stringIndex = Ar.readInt32();
 				if(stringIndex > 0 && stringIndex < localizedStrings.size()) {
@@ -67,13 +73,5 @@ public class FTextLocalizationResource {
 			
 			stringData.add(new LocaleNamespace(namespace.getText(), strings));
 		}
-	}
-
-	public byte getVersion() {
-		return version;
-	}
-
-	public List<LocaleNamespace> getStringData() {
-		return stringData;
 	}
 }

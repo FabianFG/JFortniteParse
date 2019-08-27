@@ -1,35 +1,33 @@
 /**
  * 
  */
-package UE4_Assets;
+package UE4_Assets.exports;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import UE4.FArchive;
+import com.google.gson.Gson;
+
+import UE4.deserialize.NewableWithUObject;
+import UE4_Assets.FPropertyTagType;
 import UE4_Assets.FPropertyTagType.MapProperty;
 import UE4_Assets.FPropertyTagType.StrProperty;
 import UE4_Assets.FPropertyTagType.TextProperty;
+import UE4_Assets.ImportMap;
+import UE4_Assets.UScriptMap;
 import UE4_Localization.Locres;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
-public class FNCatalogMessaging {
-	public UObject getBaseObject() {
-		return baseObject;
-	}
+@Data
+public class FNCatalogMessaging implements NewableWithUObject {
 
 	private UObject baseObject;
 	private UScriptMap messageMap;
-	
-	public FNCatalogMessaging(FArchive Ar, NameMap nameMap, ImportMap importMap) throws ReadException {
-		baseObject = new UObject(Ar, nameMap, importMap, "CatalogMessaging");
-		FPropertyTagType.MapProperty tag = (MapProperty) baseObject.getPropertyByName("Banners");
-		messageMap = tag.getNumber();
-	}
 	
 	public Map<String, String> getMessagesForLocres(Optional<Locres> locres) {
 		Map<String, String> messages = new HashMap<>();
@@ -50,5 +48,11 @@ public class FNCatalogMessaging {
 			}
 		}
 		return messages;
+	}
+
+	@Override
+	public void init(UObject uObject, Gson gson, ImportMap importMap) {
+		FPropertyTagType.MapProperty tag = (MapProperty) uObject.getPropertyByName("Banners");
+		messageMap = tag.getMap();
 	}
 }

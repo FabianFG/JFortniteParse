@@ -30,7 +30,7 @@ import UE4_Assets.FTexture2DMipMap;
 import UE4_Assets.Float8;
 import UE4_Assets.Package;
 import UE4_Assets.ReadException;
-import UE4_Assets.UTexture2D;
+import UE4_Assets.exports.UTexture2D;
 import ddsutil.DDSUtil;
 import gr.zdimensions.jsquish.Squish;
 
@@ -67,8 +67,7 @@ public class Texture2DToBufferedImage {
 			if (export instanceof UTexture2D) {
 				UTexture2D texture = (UTexture2D) export;
 				BufferedImage result = readTexture(texture);
-				File out = new File(uasset.getParent() + "\\"
-						+ uasset.getName().substring(0, uasset.getName().length() - 7) + ".png");
+				File out = new File(uasset.getName().substring(0, uasset.getName().length() - 7) + ".png");
 				FileOutputStream fos = new FileOutputStream(out);
 				ImageIO.write(result, "png", fos);
 				fos.close();

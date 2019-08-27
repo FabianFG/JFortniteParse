@@ -8,11 +8,15 @@ import java.util.Optional;
 
 import UE4.FArchive;
 import UE4_Localization.Locres;
+import annotation.CustomSerializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@CustomSerializable
 public class FText {
 	private long flags;
 	private byte historyType;
@@ -24,15 +28,9 @@ public class FText {
 	
 	private boolean fake;
 	
-	public FText(String s) {
-		this.fake = true;
-		this.sourceString = s;
-		this.finalString = s;
-	}
-
 	public FText(FArchive Ar) throws ReadException {
 		flags = Ar.readUInt32();
-		historyType = (byte) Ar.readInt8();
+		historyType = Ar.readUInt8();
 		switch(historyType) {
 		case -1:
 			nameSpace = "";
@@ -54,6 +52,14 @@ public class FText {
 		default:
 			throw new ReadException("Could not read history type: " + historyType, Ar.Tell()-1);
 		}
+	}
+	
+	
+	
+	public FText(String s) {
+		this.fake = true;
+		this.sourceString = s;
+		this.finalString = s;
 	}
 	
 	private String tempTranslate = null;
@@ -83,30 +89,17 @@ public class FText {
 		return this;
 	}
 
-	public long getFlags() {
-		return flags;
-	}
-
-	public byte getHistoryType() {
-		return historyType;
-	}
-
-	public String getNameSpace() {
-		return nameSpace;
-	}
-
-	public String getKey() {
-		return key;
-	}
-	
-	public String getSourceString() {
-		
-		return sourceString;
-	}
-
 	public String getString() {
 		
 		return finalString != null ? finalString : sourceString;
+	}
+
+
+
+	public FText(String nameSpace, String key, String sourceString) {
+		this.nameSpace = nameSpace;
+		this.key = key;
+		this.sourceString = sourceString;
 	}
 	
 }

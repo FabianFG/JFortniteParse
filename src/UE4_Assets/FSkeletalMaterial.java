@@ -3,38 +3,22 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.BooleanZ;
+import annotation.FName;
+import annotation.OnlyIf;
+import annotation.Serializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FSkeletalMaterial {
 
 	private FPackageIndex materialInterface;
-	private String materialSlotName;
-	private FMeshUVChannelInfo uvChannelData;
-
-	public FPackageIndex getMaterialInterface() {
-		return materialInterface;
-	}
-
-	public String getMaterialSlotName() {
-		return materialSlotName;
-	}
-
-	public FMeshUVChannelInfo getUvChannelData() {
-		return uvChannelData;
-	}
-	
-	public String getInterface() {
-		return this.materialInterface.getImportName();
-	}
-
-	public FSkeletalMaterial(FArchive Ar, NameMap nameMap, ImportMap importMap) throws ReadException {
-		materialInterface = new FPackageIndex(Ar, importMap);
-		boolean serializeSlotName = Ar.readBoolean();
-		materialSlotName = serializeSlotName ? Ar.readFName(nameMap) : "";
-		uvChannelData = new FMeshUVChannelInfo(Ar);
-	}
+	@BooleanZ private boolean serializeSlotName;
+	@OnlyIf("serializeSlotName") @FName private String materialSlotName;
+	private FMeshUVChannelInfo uvChannelData;	
 }

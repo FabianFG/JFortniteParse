@@ -28,6 +28,7 @@ import org.apache.commons.io.FileUtils;
 
 import EncryptionHandler.Aes;
 import UE4.FArchive;
+import UE4.deserialize.exception.DeserializationException;
 import UE4_Assets.FPakArchive;
 import UE4_Assets.ReadException;
 import lombok.extern.log4j.Log4j;
@@ -159,7 +160,7 @@ public class PakFileReader {
 			try {
 				FPakArchive cAr = async ? Ar.clone() : Ar;
 				cAr.Seek64(gameFile.getOffset());
-				FPakEntry entry = new FPakEntry(cAr, pakInfo, false);
+				FPakEntry entry = cAr.read(FPakEntry.class, pakInfo, false);
 				GameFile tempFile = new GameFile(entry, null, 0, null);
 				ByteArrayOutputStream fos = new ByteArrayOutputStream();
 				if (gameFile.isEncrypted()) {
@@ -177,8 +178,7 @@ public class PakFileReader {
 						fos.write(decryptedData);
 					} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException
 							| IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						log.error("Failed to decrypt data", e);
 					}
 
 				} else {
@@ -195,8 +195,8 @@ public class PakFileReader {
 						log.info("Attempting to decompress " + gameFile.getCompressionBlocks().size()
 								+ " oodle compressed block(s)");
 						for (FPakCompressedBlock block : gameFile.getCompressionBlocks()) {
-							cAr.Seek64(block.compressedStart);
-							byte[] src = cAr.serialize((int) (block.compressedEnd - block.compressedStart));
+							cAr.Seek64(block.getCompressedStart());
+							byte[] src = cAr.serialize((int) (block.getCompressedEnd() - block.getCompressedStart()));
 							assert (src.length == gameFile.getLength());
 							log.info("Block " + blockIndex + ": ");
 							byte[] dst = null;
@@ -238,8 +238,7 @@ public class PakFileReader {
 				return fos.toByteArray();
 
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("Failed to extract file", e);
 				return null;
 			}
 		}
@@ -638,7 +637,7 @@ public class PakFileReader {
 			Map<String, GameFile> tempFileList = new HashMap<>();
 			for (int indexCount = 0; indexCount < fileCount; indexCount++) {
 				long cIndexOffset = indexOffset;
-				FPakEntry entry = new FPakEntry(indexAr, this.pakInfo, true);
+				FPakEntry entry = indexAr.read(FPakEntry.class, this.pakInfo, true);
 
 				long encryptionBoolOffset = this.indexOffset + indexOffset;
 				GameFile c = new GameFile(entry, this.mountPrefix, indexCount, this.pakFilePath);
@@ -681,6 +680,8 @@ public class PakFileReader {
 				| IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
 			log.error("Failed to mount pak file", e);
 		} catch (ReadException e) {
+			log.error("Failed to mount pak file", e);
+		} catch (DeserializationException e) {
 			log.error("Failed to mount pak file", e);
 		}
 		return fileList;

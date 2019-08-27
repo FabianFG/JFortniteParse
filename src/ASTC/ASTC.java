@@ -14,7 +14,7 @@ import javax.imageio.ImageIO;
 import Converters.Texture2DToBufferedImage;
 import UE4_Assets.Package;
 import UE4_Assets.ReadException;
-import UE4_Assets.UTexture2D;
+import UE4_Assets.exports.UTexture2D;
 
 /**
  * @author FunGames

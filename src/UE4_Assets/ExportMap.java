@@ -7,56 +7,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 import UE4.FArchive;
+import UE4.deserialize.exception.DeserializationException;
+import annotation.CustomSerializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@CustomSerializable
 public class ExportMap {
 	private int itemCount;
-	private List<FObjectExport> entrys;
+	private List<FObjectExport> entries;
 	private int uassetSize;
-
-	/**
-	 * @param uassetAr
-	 * @param nameMap
-	 * @param importMap
-	 * @throws ReadException 
-	 */
-	public ExportMap(FArchive Ar, int exportCount, NameMap nameMap, ImportMap importMap) throws ReadException {
-		this.itemCount = exportCount;
-		this.entrys = new ArrayList<>();
-		for(int i=0; i<itemCount; i++) {
-			FObjectExport entry = new FObjectExport(Ar, importMap, nameMap);
-			entrys.add(entry);
-		}
-	}
-
-	public int getItemCount() {
-		return itemCount;
-	}
-
-	public List<FObjectExport> getEntrys() {
-		return entrys;
-	}
-
 	
+	public ExportMap(FArchive Ar) throws DeserializationException {
+		if (Ar.packageFileSummary == null || Ar.nameMap == null || Ar.importMap == null)
+			throw new DeserializationException(
+					"Deserializing the ExportMap needs the PackageFileSummary, the NameMap and the ImportMap to be not null");
+		Ar.exportMap = this;
+		itemCount = Ar.packageFileSummary.getExportCount();
+		entries = new ArrayList<>();
+		for (int i = 0; i < itemCount; i++) {
+			entries.add(Ar.read(FObjectExport.class));
+		}	
+		
+	}
+
 	public FObjectExport get(int index) {
-		return entrys.get(index);
+		return entries.get(index);
 	}
-	
-	public void setUassetSize(int uassetSize) {
-		this.uassetSize = uassetSize;
-	}
-
-	public int getUassetSize() {
-		return uassetSize;
-	}
-	
-	
-	
-	
-	
-	
-	
 }

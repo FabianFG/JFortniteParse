@@ -30,27 +30,27 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import Enums.RarityEnum;
-import UE4_Assets.AthenaItemDefinition;
-import UE4_Assets.CosmeticVariantContainer;
-import UE4_Assets.DisplayAssetPath;
 import UE4_Assets.FGameplayTagContainer;
 import UE4_Assets.FPropertyTag;
 import UE4_Assets.FPropertyTagType;
 import UE4_Assets.FPropertyTagType.ArrayProperty;
 import UE4_Assets.FPropertyTagType.ObjectProperty;
 import UE4_Assets.FPropertyTagType.TextProperty;
+import UE4_Assets.exports.AthenaItemDefinition;
+import UE4_Assets.exports.CosmeticVariantContainer;
+import UE4_Assets.exports.DisplayAssetPath;
+import UE4_Assets.exports.FortCosmeticVariant;
+import UE4_Assets.exports.FortHeroType;
+import UE4_Assets.exports.FortWeaponMeleeItemDefinition;
+import UE4_Assets.exports.UDataTable;
+import UE4_Assets.exports.UObject;
+import UE4_Assets.exports.UTexture2D;
 import UE4_Assets.FStructFallback;
 import UE4_Assets.FText;
-import UE4_Assets.FortCosmeticVariant;
-import UE4_Assets.FortHeroType;
-import UE4_Assets.FortWeaponMeleeItemDefinition;
 import UE4_Assets.Package;
 import UE4_Assets.ReadException;
-import UE4_Assets.UDataTable;
-import UE4_Assets.UObject;
 import UE4_Assets.UScriptArray;
 import UE4_Assets.UScriptStruct;
-import UE4_Assets.UTexture2D;
 import UE4_PakFile.GameFile;
 import UE4_PakFile.PakFileReader;
 import res.Resources;
@@ -180,8 +180,8 @@ public class ItemDefinitionToBufferedImage {
 						FPropertyTagType tertiaryCategories = uObject.getPropertyByName("TertiaryCategories");
 						if (tertiaryCategories instanceof FPropertyTagType.ArrayProperty) {
 							FPropertyTagType.ArrayProperty categories = (ArrayProperty) tertiaryCategories;
-							UScriptArray array = categories.getNumber();
-							for (FPropertyTagType entry : array.getData()) {
+							UScriptArray array = categories.getArray();
+							for (FPropertyTagType entry : array.getContents()) {
 								if (entry instanceof FPropertyTagType.StructProperty) {
 									Object structEntry = ((FPropertyTagType.StructProperty) entry).getStruct()
 											.getStructType();
@@ -260,7 +260,7 @@ public class ItemDefinitionToBufferedImage {
 																		.getTag() instanceof FPropertyTagType.ObjectProperty) {
 																	FPropertyTagType.ObjectProperty object = (ObjectProperty) resourceObjectTag
 																			.get().getTag();
-																	Optional<String> packagePath = object.getStruct()
+																	Optional<String> packagePath = object.getObject()
 																			.getPackagePath(
 																					itemsPackage.getImportMap());
 																	packagePath.ifPresent(iconPath -> {
@@ -1058,7 +1058,7 @@ public class ItemDefinitionToBufferedImage {
 			String mountPrefix) throws ReadException, IOException {
 		BufferedImage icon = null;
 		// Load icon from SoftObjectProperty
-		if (itemDefinition.usesDisplayPath()) {
+		if (itemDefinition.isBUsesDisplayPath()) {
 			String displayAssetName = Package.toGameSpecificName(itemDefinition.getDisplayAssetPath(), mountPrefix);
 			Package displayAssetPath = Package.loadPackageByName(displayAssetName, pakFileReaderIndices, loadedPaks,
 					gameFiles);
@@ -1097,7 +1097,7 @@ public class ItemDefinitionToBufferedImage {
 			String mountPrefix) throws ReadException, IOException {
 		BufferedImage icon = null;
 		boolean iconLoaded = false;
-		if (itemDefinition.hasIcons() && !iconLoaded) {
+		if (itemDefinition.isBHasIcons() && !iconLoaded) {
 			String fileName = Package.toGameSpecificName(itemDefinition.getLargePreviewImage(), mountPrefix);
 			Package largePreviewImage = Package.loadPackageByName(fileName, pakFileReaderIndices, loadedPaks,
 					gameFiles);
@@ -1116,7 +1116,7 @@ public class ItemDefinitionToBufferedImage {
 				}
 			}
 		}
-		if (itemDefinition.usesHeroDefinition() && !iconLoaded) {
+		if (itemDefinition.isBUsesHeroDefinition() && !iconLoaded) {
 			String heroDefinitionfileName = Package.toGameSpecificName(itemDefinition.getHeroDefinitionPackage(),
 					mountPrefix);
 			Package heroDefinition = Package.loadPackageByName(heroDefinitionfileName, pakFileReaderIndices, loadedPaks,
@@ -1144,7 +1144,7 @@ public class ItemDefinitionToBufferedImage {
 			}
 
 		}
-		if (itemDefinition.usesWeaponDefinition() && !iconLoaded) {
+		if (itemDefinition.isBUsesWeaponDefinition() && !iconLoaded) {
 			String weaponDefinitionfileName = Package.toGameSpecificName(itemDefinition.getWeaponDefinitionPackage(),
 					mountPrefix);
 			Package weaponDefinition = Package.loadPackageByName(weaponDefinitionfileName, pakFileReaderIndices,
@@ -1204,7 +1204,7 @@ public class ItemDefinitionToBufferedImage {
 		Map<IconType, BufferedImage> icon = new LinkedHashMap<>();
 		boolean iconLoaded = false;
 		// Load icon from SoftObjectProperty
-		if (itemDefinition.usesDisplayPath() && !iconLoaded) {
+		if (itemDefinition.isBUsesDisplayPath() && !iconLoaded) {
 			String displayAssetName = Package.toGameSpecificName(itemDefinition.getDisplayAssetPath(), mountPrefix);
 			Package displayAssetPath = Package.loadPackageByName(displayAssetName, pakFileReaderIndices, loadedPaks,
 					gameFiles);
@@ -1234,7 +1234,7 @@ public class ItemDefinitionToBufferedImage {
 
 			}
 		}
-		if (itemDefinition.hasIcons() && !iconLoaded) {
+		if (itemDefinition.isBHasIcons() && !iconLoaded) {
 			String fileName = Package.toGameSpecificName(itemDefinition.getLargePreviewImage(), mountPrefix);
 			Package largePreviewImage = Package.loadPackageByName(fileName, pakFileReaderIndices, loadedPaks,
 					gameFiles);
@@ -1253,7 +1253,7 @@ public class ItemDefinitionToBufferedImage {
 				}
 			}
 		}
-		if (itemDefinition.usesHeroDefinition() && !iconLoaded) {
+		if (itemDefinition.isBUsesHeroDefinition() && !iconLoaded) {
 			String heroDefinitionfileName = Package.toGameSpecificName(itemDefinition.getHeroDefinitionPackage(),
 					mountPrefix);
 			Package heroDefinition = Package.loadPackageByName(heroDefinitionfileName, pakFileReaderIndices, loadedPaks,
@@ -1281,7 +1281,7 @@ public class ItemDefinitionToBufferedImage {
 			}
 
 		}
-		if (itemDefinition.usesWeaponDefinition() && !iconLoaded) {
+		if (itemDefinition.isBUsesWeaponDefinition() && !iconLoaded) {
 			String weaponDefinitionfileName = Package.toGameSpecificName(itemDefinition.getWeaponDefinitionPackage(),
 					mountPrefix);
 			Package weaponDefinition = Package.loadPackageByName(weaponDefinitionfileName, pakFileReaderIndices,

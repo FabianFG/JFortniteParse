@@ -3,27 +3,18 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.FName;
+import annotation.Int32;
+import annotation.Serializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FMeshBoneInfo {
-	private String name;
-	private int parentIndex;
-
-	public String getName() {
-		return name;
-	}
-
-	public int getParentIndex() {
-		return parentIndex;
-	}
-	
-	public FMeshBoneInfo(FArchive Ar, NameMap nameMap) throws ReadException {
-		name = Ar.readFName(nameMap);
-		parentIndex = Ar.readInt32();
-	}
-	
+	@FName private String name;
+	@Int32 private int parentIndex;
 }

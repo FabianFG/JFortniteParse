@@ -3,33 +3,25 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.Serializable;
+import annotation.Stringz;
+import annotation.UInt16;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
-public class FNameEntry {
+@Data
+@Serializable
+public class FNameEntry {	
+	@Stringz private String name;
+	@UInt16 private int nonCasePreservingHash;
+	@UInt16 private int casePreservingHash;
 	
-	private String name;
-	private int nonCasePreservingHash;
-	private int casePreservingHash;
-	
-	public FNameEntry(FArchive Ar) throws ReadException {
-		name = Ar.readString();
-		nonCasePreservingHash = Ar.readUInt16();
-		casePreservingHash = Ar.readUInt16();
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public int getNonCasePreservingHash() {
-		return nonCasePreservingHash;
-	}
-
-	public int getCasePreservingHash() {
-		return casePreservingHash;
+	public FNameEntry(String name) {
+		this.name = name;
+		this.nonCasePreservingHash = 0;
+		this.casePreservingHash = 0;
 	}
 }

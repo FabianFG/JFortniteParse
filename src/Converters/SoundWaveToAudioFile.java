@@ -14,7 +14,7 @@ import UE4_Assets.FSoundFormatData;
 import UE4_Assets.FStreamedAudioChunk;
 import UE4_Assets.Package;
 import UE4_Assets.ReadException;
-import UE4_Assets.USoundWave;
+import UE4_Assets.exports.USoundWave;
 
 /**
  * @author FunGames
@@ -33,8 +33,7 @@ public class SoundWaveToAudioFile {
 			if (export instanceof USoundWave) {
 				USoundWave sound = (USoundWave) export;
 				byte[] result = readSound(sound);
-				File out = new File(uasset.getParent() + "\\"
-						+ uasset.getName().substring(0, uasset.getName().length() - 7) + "."
+				File out = new File(uasset.getName().substring(0, uasset.getName().length() - 7) + "."
 						+ format);
 				FileOutputStream fos = new FileOutputStream(out);
 				fos.write(result);
@@ -45,18 +44,14 @@ public class SoundWaveToAudioFile {
 	}
 	
 	public static File readSoundToFile(USoundWave sound) throws IOException {
-		if (!sound.isStreaming()) {
+		if (!sound.isBStreaming()) {
 			//Not Streamed
-			if (sound.isCooked()) {
+			if (sound.isBCooked()) {
 				//Cooked
 				if (sound.getCompressedFormatData().size() > 0) {
-					System.out
-							.println("Cooked USoundWave with " + sound.getCompressedFormatData().size() + " sounds");
 					FSoundFormatData data = ((FSoundFormatData) sound.getCompressedFormatData().get(0));
-					System.out.println("Format: " + data.getFormatName());
 					format = data.getFormatName();
 					byte[] res = data.getData().getData();
-					System.out.println("Successfully exported SoundWave");
 					File temp = File.createTempFile("SoundWave", "." + format);
 					temp.deleteOnExit();
 					FileOutputStream fos = new FileOutputStream(temp);
@@ -71,10 +66,8 @@ public class SoundWaveToAudioFile {
 				//Uncooked
 				if(sound.getRawData() != null) {
 					FByteBulkData soundData = sound.getRawData();
-					System.out.println(String.format("Uncooked USoundWave with length %d", soundData.getData().length));
 					format = "ogg";
 					byte[] res = soundData.getData();
-					System.out.println("Successfully exported SoundWave");
 					File temp = File.createTempFile("SoundWave", "." + format);
 					temp.deleteOnExit();
 					FileOutputStream fos = new FileOutputStream(temp);
@@ -90,7 +83,6 @@ public class SoundWaveToAudioFile {
 			//Streamed
 			if(sound.getStreamedAudioChunks() !=null && sound.getFormat() != null) {
 				format = sound.getFormat();
-				System.out.println(String.format("Streamed USoundWave with format '%s' and  %d chunks", format, sound.getStreamedAudioChunks().size()));
 				List<Byte> bytes = new ArrayList<>();
 				for(FStreamedAudioChunk chunk : sound.getStreamedAudioChunks()) {
 					for(int i=0;i<chunk.getAudioDataSize(); i++) {
@@ -98,7 +90,6 @@ public class SoundWaveToAudioFile {
 					}
 				}
 				byte[] res = listToArray(bytes);
-				System.out.println("Successfully exported SoundWave");
 				File temp = File.createTempFile("SoundWave", "." + format);
 				temp.deleteOnExit();
 				FileOutputStream fos = new FileOutputStream(temp);
@@ -114,18 +105,14 @@ public class SoundWaveToAudioFile {
 	}
 
 	public static byte[] readSound(USoundWave sound) throws ReadException {
-		if (!sound.isStreaming()) {
+		if (!sound.isBStreaming()) {
 			//Not Streamed
-			if (sound.isCooked()) {
+			if (sound.isBCooked()) {
 				//Cooked
 				if (sound.getCompressedFormatData().size() > 0) {
-					System.out
-							.println("Cooked USoundWave with " + sound.getCompressedFormatData().size() + " sounds");
 					FSoundFormatData data = ((FSoundFormatData) sound.getCompressedFormatData().get(0));
-					System.out.println("Format: " + data.getFormatName());
 					format = data.getFormatName();
 					byte[] res = data.getData().getData();
-					System.out.println("Successfully exported SoundWave");
 					return res;
 				} else {
 					System.err.println("No Sound Data is part of the cooked USoundWave");
@@ -135,10 +122,8 @@ public class SoundWaveToAudioFile {
 				//Uncooked
 				if(sound.getRawData() != null) {
 					FByteBulkData soundData = sound.getRawData();
-					System.out.println(String.format("Uncooked USoundWave with length %d", soundData.getData()));
 					format = "ogg";
 					byte[] res = soundData.getData();
-					System.out.println("Successfully exported SoundWave");
 					return res;
 				} else {
 					System.err.println("No Sound Data is part of the uncooked USoundWave");
@@ -149,7 +134,6 @@ public class SoundWaveToAudioFile {
 			//Streamed
 			if(sound.getStreamedAudioChunks() !=null && sound.getFormat() != null) {
 				format = sound.getFormat();
-				System.out.println(String.format("Streamed USoundWave with format '%s' and  %d chunks", format, sound.getStreamedAudioChunks().size()));
 				List<Byte> bytes = new ArrayList<>();
 				for(FStreamedAudioChunk chunk : sound.getStreamedAudioChunks()) {
 					for(int i=0;i<chunk.getAudioDataSize(); i++) {
@@ -157,7 +141,6 @@ public class SoundWaveToAudioFile {
 					}
 				}
 				byte[] res = listToArray(bytes);
-				System.out.println("Successfully exported SoundWave");
 				return res;
 			} else {
 				System.err.println("No Sound Data is part of the streamed USoundWave");

@@ -3,13 +3,17 @@
  */
 package UE4_PakFile;
 
-import UE4_Assets.FPakArchive;
+import UE4.FArchive;
 import UE4_Assets.ReadException;
+import annotation.CustomSerializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@CustomSerializable
 public class FPakCompressionMethod {
 	//This class does not exist in the UE4. Just here to handle it easier
 	public static final int binaryLength = 32;
@@ -18,14 +22,13 @@ public class FPakCompressionMethod {
 	private byte[] compressionNameBytes;
 
 	public FPakCompressionMethod(String name) {
-		
 		this.compressionNameBytes = new byte[32];
 		this.compressionName = name;
 	}
-
-	public FPakCompressionMethod(FPakArchive Ar) throws ReadException {
+	
+	public FPakCompressionMethod(FArchive Ar) throws ReadException {
 		this.compressionNameBytes = Ar.serialize(32);
-		this.compressionName = readNullTerminatedString(this.compressionNameBytes);
+		this.compressionName = readNullTerminatedString(this.compressionNameBytes);		
 	}
 
 	private String readNullTerminatedString(byte[] compressionNameBytes) {
@@ -39,15 +42,6 @@ public class FPakCompressionMethod {
 			}
 		}
 		return res;
-	}
-
-	public String getCompressionName() {
-		return compressionName;
-	}
-
-	public byte[] getCompressionNameBytes() {
-		return compressionNameBytes;
-	}
-	
+	}	
 	
 }

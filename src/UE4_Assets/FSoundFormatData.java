@@ -3,26 +3,18 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.FName;
+import annotation.Serializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FSoundFormatData {
-	private String formatName; //FName
+	@FName private String formatName;
 	private FByteBulkData data;
 
-	public FSoundFormatData(FArchive Ar, NameMap nameMap) throws ReadException {
-		formatName = Ar.readFName(nameMap);
-		data = new FByteBulkData(Ar);
-	}
-
-	public String getFormatName() {
-		return formatName;
-	}
-
-	public FByteBulkData getData() {
-		return data;
-	}
 }

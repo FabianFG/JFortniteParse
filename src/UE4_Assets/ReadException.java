@@ -3,6 +3,8 @@
  */
 package UE4_Assets;
 
+import UE4.deserialize.exception.DeserializationException;
+
 /**
  * @author FunGames
  *
@@ -18,5 +20,12 @@ public class ReadException extends Exception {
 	public ReadException(String errorMessage) {
 		super(errorMessage);  
 }
+	/**
+	 * @param errorMessage
+	 * @param e
+	 */
+	public ReadException(String errorMessage, DeserializationException e) {
+		super(errorMessage, e);
+	}
 	
 }

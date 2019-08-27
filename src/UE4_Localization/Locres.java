@@ -19,6 +19,7 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 
 import UE4.FArchive;
+import UE4.deserialize.exception.DeserializationException;
 import UE4_Assets.ReadException;
 import lombok.extern.log4j.Log4j;
 
@@ -30,29 +31,25 @@ import lombok.extern.log4j.Log4j;
 public class Locres {
 	private String name;
 	private Map<String, Map<String, String>> texts;
-	
-	public static void main(String[] args) throws ReadException {
-		long time = System.currentTimeMillis();
-		Locres lNEW = Locres.fromFile(new File("D:\\Fabian\\WORKSPACE\\PakBrowserAES\\Output\\FortniteGame\\Content\\Localization\\Game_BR\\en\\Game_BR.locres"));
-		System.out.println(lNEW.getKey("Part of the <SetName>{0}</> set"));
-		long timediff = System.currentTimeMillis() - time;
-		System.out.println("Time to load locres file : " + timediff + "ms");
-	}
 
 	public Locres(byte[] locres, String filename) throws ReadException {
+		try {
 		this.name = filename;
 		FArchive locresAr = new FArchive(locres);
-		FTextLocalizationResource locresData = new FTextLocalizationResource(locresAr);
+		FTextLocalizationResource locresData = locresAr.read(FTextLocalizationResource.class);
 		this.texts = new HashMap<>();
 		locresData.getStringData().forEach(nameSpace -> {
 			Map<String, String> text = new HashMap<>();
-			nameSpace.data.forEach(entry -> {
-				text.put(entry.key, entry.data);
+			nameSpace.getData().forEach(entry -> {
+				text.put(entry.getKey(), entry.getData());
 			});
-			texts.put(nameSpace.namespace, text);
+			texts.put(nameSpace.getNamespace(), text);
 		});
 		
 		log.info("Successfully parsed locres package: " + name);
+		} catch(DeserializationException e) {
+			throw new ReadException("Failed to deserialize locres", e);
+		}
 	}
 	
 	public Map<String, String> getTexts(String nameSpace) {

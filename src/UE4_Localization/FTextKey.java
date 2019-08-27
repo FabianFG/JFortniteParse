@@ -3,27 +3,18 @@
  */
 package UE4_Localization;
 
-import UE4.FArchive;
-import UE4_Assets.ReadException;
+import annotation.Serializable;
+import annotation.Stringz;
+import annotation.UInt32;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FTextKey {
-	private long stringHash;
-	private String text;
-	
-	public FTextKey(FArchive Ar) throws ReadException {
-		this.stringHash = Ar.readUInt32();
-		this.text = Ar.readString();
-	}
-
-	public long getStringHash() {
-		return stringHash;
-	}
-
-	public String getText() {
-		return text;
-	}
+	@UInt32 private long stringHash;
+	@Stringz private String text;
 }

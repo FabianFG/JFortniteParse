@@ -3,40 +3,22 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.Int32;
+import annotation.Int64;
+import annotation.Serializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FByteBulkDataHeader {
 	
-	private int bulkDataFlags;
-	private int elementCount;
-	private int sizeOnDisk;
-	private long offsetInFile;
-
-	public FByteBulkDataHeader(FArchive Ar) throws ReadException {
-		bulkDataFlags = Ar.readInt32();
-		elementCount = Ar.readInt32();
-		sizeOnDisk = Ar.readInt32();
-		offsetInFile = Ar.readInt64();
-	}
-
-	public int getBulkDataFlags() {
-		return bulkDataFlags;
-	}
-
-	public int getElementCount() {
-		return elementCount;
-	}
-
-	public int getSizeOnDisk() {
-		return sizeOnDisk;
-	}
-
-	public long getOffsetInFile() {
-		return offsetInFile;
-	}
+	@Int32 private int bulkDataFlags;
+	@Int32 private int elementCount;
+	@Int32 private int sizeOnDisk;
+	@Int64 private long offsetInFile;
 
 }

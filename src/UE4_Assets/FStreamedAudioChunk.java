@@ -3,38 +3,20 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.BooleanZ;
+import annotation.Int32;
+import annotation.Serializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FStreamedAudioChunk {
+	@BooleanZ private boolean bCooked;
 	private FByteBulkData data;
-	private int dataSize;
-	private int audioDataSize;
-
-	public FByteBulkData getData() {
-		return data;
-	}
-
-	public int getDataSize() {
-		return dataSize;
-	}
-
-	public int getAudioDataSize() {
-		return audioDataSize;
-	}
-
-	public FStreamedAudioChunk(FArchive Ar) throws ReadException {
-		boolean bCooked = Ar.readBoolean();
-		if(bCooked) {
-			data = new FByteBulkData(Ar);
-			dataSize = Ar.readInt32();
-			audioDataSize = Ar.readInt32();
-		} else {
-			throw new ReadException("StreamedAudioChunks must be cooked", Ar.Tell() -4);
-		}
-	}
-	
+	@Int32 private int dataSize;
+	@Int32 private int audioDataSize;
 }

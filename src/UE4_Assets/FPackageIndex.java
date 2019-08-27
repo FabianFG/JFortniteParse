@@ -6,18 +6,22 @@ package UE4_Assets;
 import java.util.Optional;
 
 import UE4.FArchive;
+import annotation.CustomSerializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@CustomSerializable
 public class FPackageIndex {
 	private int index;
 	private String importName;
-
-	public FPackageIndex(FArchive Ar, ImportMap importMap) throws ReadException {
+	
+	public FPackageIndex(FArchive Ar) throws ReadException {
 		index = Ar.readInt32();
-		FObjectImport importObject = getPackage(index, importMap);
+		FObjectImport importObject = getPackage(index, Ar.importMap);
 		if (importObject != null) {
 			importName = importObject.getObjectName();
 		} else {
@@ -37,7 +41,7 @@ public class FPackageIndex {
 	}
 
 	public Optional<String> getPackagePath(ImportMap importMap) {
-		for (FObjectImport importObject : importMap.getEntrys()) {
+		for (FObjectImport importObject : importMap.getEntries()) {
 			if (importObject.getClassName().equals("Package")) {
 				if (importObject.getObjectName().endsWith(importName)) {
 					return Optional.of(importObject.getObjectName());
@@ -45,14 +49,6 @@ public class FPackageIndex {
 			}
 		}
 		return Optional.empty();
-	}
-
-	public int getIndex() {
-		return index;
-	}
-
-	public String getImportName() {
-		return importName;
 	}
 
 }

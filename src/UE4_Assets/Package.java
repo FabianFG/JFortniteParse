@@ -3,15 +3,22 @@
  */
 package UE4_Assets;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+
+import org.objenesis.Objenesis;
+import org.objenesis.ObjenesisStd;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -22,6 +29,20 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import UE4.FArchive;
+import UE4.FArchiveWriter;
+import UE4.deserialize.NewableWithUObject;
+import UE4.deserialize.exception.DeserializationException;
+import UE4.serialize.exception.SerializationException;
+import UE4_Assets.exports.AthenaItemDefinition;
+import UE4_Assets.exports.DisplayAssetPath;
+import UE4_Assets.exports.FNCatalogMessaging;
+import UE4_Assets.exports.FortCosmeticVariant;
+import UE4_Assets.exports.FortHeroType;
+import UE4_Assets.exports.FortWeaponMeleeItemDefinition;
+import UE4_Assets.exports.UDataTable;
+import UE4_Assets.exports.UObject;
+import UE4_Assets.exports.USoundWave;
+import UE4_Assets.exports.UTexture2D;
 import UE4_Localization.Locres;
 import UE4_PakFile.GameFile;
 import UE4_PakFile.PakFileReader;
@@ -41,9 +62,26 @@ public class Package {
 	private NameMap nameMap;
 	private ImportMap importMap;
 	private String packagePath;
-	
-	public final Gson gson;
+
+	public static final Gson gson;
 	private JsonObject packageInfo;
+
+	public static final Map<String, Class<? extends NewableWithUObject>> structs = new ConcurrentHashMap<>();
+	public static final Objenesis objenesis = new ObjenesisStd();
+
+	static {
+		GsonBuilder builder = new GsonBuilder();
+		builder.registerTypeAdapter(Package.class, new PackageSerializer());
+		builder.registerTypeAdapter(NameMap.class, new PackageSerializer.NameMapSerializer());
+		builder.registerTypeAdapter(ImportMap.class, new PackageSerializer.ImportMapSerializer());
+		builder.registerTypeAdapter(ExportMap.class, new PackageSerializer.ExportMapSerializer());
+		builder.registerTypeAdapter(UObject.class, new UObject.UObjectJsonSerializer());
+		gson = builder.create();
+		structs.put("CatalogMessaging", FNCatalogMessaging.class);
+		structs.put("FortMtxOfferData", DisplayAssetPath.class);
+		structs.put("FortHeroType", FortHeroType.class);
+		structs.put("FortWeaponMeleeItemDefinition", FortWeaponMeleeItemDefinition.class);
+	}
 
 	public String getPackagePath() {
 		if (packagePath != null) {
@@ -113,173 +151,178 @@ public class Package {
 			throw new ReadException("Uasset File: doesn't exist");
 		}
 	}
+	
+	public void write() throws SerializationException, IOException {
+		FileOutputStream fos = new FileOutputStream("testSerialization.uasset");
+		FArchiveWriter Ar = new FArchiveWriter(fos);
+		Ar.nameMap = this.nameMap;
+		Ar.importMap = this.importMap;
+		Ar.exportMap = this.exportMap;
+		Ar.write(info);
+		fos.close();
+	}
+	
+	public static void main(String[] args) throws ReadException, IOException, SerializationException {
+		Package p = Package.fromFiles(new File("D:\\Fabian\\WORKSPACE\\JFortniteParser\\CID_170_Athena_Commando_F_Luchador.uasset"), new File("D:\\Fabian\\WORKSPACE\\JFortniteParser\\CID_170_Athena_Commando_F_Luchador.uexp"), null);
+		p.write();
+		String s = p.toJSONString();
+		System.out.println(s);
+	}
 
 	public Package(String name, byte[] uasset, byte[] uexp, byte[] ubulk, Optional<Locres> locres)
 			throws ReadException {
-		GsonBuilder builder = new GsonBuilder();
-		builder.registerTypeAdapter(Package.class, new PackageSerializer());
-		builder.registerTypeAdapter(NameMap.class, new PackageSerializer.NameMapSerializer());
-		builder.registerTypeAdapter(ImportMap.class, new PackageSerializer.ImportMapSerializer());
-		builder.registerTypeAdapter(ExportMap.class, new PackageSerializer.ExportMapSerializer());
-		builder.registerTypeAdapter(UObject.class, new UObject.UObjectSerializer());
-		gson = builder.create();
+
 		this.uasset = uasset;
 		this.uexp = uexp;
 		this.ubulk = ubulk;
 		this.name = name;
 
 		// Load uasset
-		this.uassetAr = new FArchive();
-		this.uassetAr.data = uasset;
+		try {
+			this.uassetAr = new FArchive();
+			this.uassetAr.data = uasset;
 
-		this.uassetAr.SetStopper(uasset.length);
-		this.uassetAr.Seek(0);
+			this.uassetAr.SetStopper(uasset.length);
+			this.uassetAr.Seek(0);
 
-		this.info = new FPackageFileSummary(this.uassetAr);
+			this.info = this.uassetAr.read(FPackageFileSummary.class);
+			this.uassetAr.packageFileSummary = this.info;
 
-		if (this.info.tag == this.uassetMagic) {
-			// Read NameMap
-			this.uassetAr.Seek(this.info.nameOffset);
-			this.nameMap = new NameMap(this.uassetAr, this.info.nameCount);
+			if (this.info.getTag() == this.uassetMagic) {
+				// Read NameMap
+				this.uassetAr.Seek(this.info.getNameOffset());
+				this.nameMap = this.uassetAr.read(NameMap.class);
 
-			// Read ImportMap
-			this.uassetAr.Seek(this.info.importOffset);
-			this.importMap = new ImportMap(uassetAr, this.info.importCount, nameMap);
+				// Read ImportMap
+				this.uassetAr.Seek(this.info.getImportOffset());
+				this.importMap = this.uassetAr.read(ImportMap.class);
 
-			// Read ExportMap
-			this.uassetAr.Seek(this.info.exportOffset);
-			this.exportMap = new ExportMap(this.uassetAr, this.info.exportCount, nameMap, importMap);
-			this.exportMap.setUassetSize(info.totalHeaderSize);
+				// Read ExportMap
+				this.uassetAr.Seek(this.info.getExportOffset());
+				this.exportMap = this.uassetAr.read(ExportMap.class);
+				this.exportMap.setUassetSize(info.getTotalHeaderSize());
 
-			int assetLength = info.totalHeaderSize;
-			exports = new ArrayList<>();
-			uObjects = new ArrayList<>();
+				int assetLength = info.getTotalHeaderSize();
+				exports = new ArrayList<>();
+				uObjects = new ArrayList<>();
 
-			int exportSize = 0;
-			for (FObjectExport export : exportMap.getEntrys()) {
-				exportSize += export.getSerialSize();
-			}
-
-			this.uexpAr = new FArchive();
-			this.uexpAr.data = uexp;
-			this.uexpAr.SetStopper(exportSize);
-			this.uexpAr.Seek(0);
-			this.uexpAr.uassetSize = assetLength;
-			this.uexpAr.uexpSize = exportSize;
-			this.uexpAr.locres = locres;
-
-			if (ubulk != null) {
-				FArchive ubulkAr = new FArchive();
-				ubulkAr.data = ubulk;
-				ubulkAr.SetStopper(ubulk.length);
-				ubulkAr.Seek(0);
-				uexpAr.addPayload("UBULK", ubulkAr);
-			}
-
-			AthenaItemDefinition previousItemDef = null;
-
-			for (FObjectExport export : exportMap.getEntrys()) {
-				String exportType = export.getClassIndex().getImportName();
-				if (exportType.equals("0")) {
-					exports.add(null);
-					break;
+				int exportSize = 0;
+				for (FObjectExport export : exportMap.getEntries()) {
+					exportSize += export.getSerialSize();
 				}
-				int position = (int) (export.getSerialOffset() - uexpAr.getUexpOffset());
-				this.uexpAr.Seek(position);
-				switch (exportType) {
-				case "Texture2D":
-					UTexture2D t = new UTexture2D(this.uexpAr, nameMap, importMap);
-					exports.add(t);
-					uObjects.add(t.getBaseObject());
-					break;
-				case "SoundWave":
-					USoundWave s = new USoundWave(this.uexpAr, nameMap, importMap);
-					exports.add(s);
-					uObjects.add(s.getBaseObject());
-					break;
-				case "FortMtxOfferData":
-					DisplayAssetPath p = new DisplayAssetPath(this.uexpAr, nameMap, importMap);
-					exports.add(p);
-					uObjects.add(p.getBaseObject());
-					break;
-				case "FortHeroType":
-					FortHeroType ht = new FortHeroType(this.uexpAr, nameMap, importMap);
-					exports.add(ht);
-					uObjects.add(ht.getBaseObject());
-					break;
-				case "DataTable":
-					UDataTable d = new UDataTable(this.uexpAr, nameMap, importMap);
-					exports.add(d);
-					uObjects.add(d.getBaseObject());
-					break;
-				case "FortWeaponMeleeItemDefinition":
-					FortWeaponMeleeItemDefinition fD = new FortWeaponMeleeItemDefinition(this.uexpAr, nameMap,
-							importMap);
-					exports.add(fD);
-					uObjects.add(fD.getBaseObject());
-					break;
-				case "SkeletalMesh":
-					USkeletalMesh4 sm = new USkeletalMesh4(this.uexpAr, nameMap, importMap);
-					exports.add(sm);
-					uObjects.add(sm.getSuperObject());
-					break;
-				case "CatalogMessaging":
-					FNCatalogMessaging cm = new FNCatalogMessaging(this.uexpAr, nameMap, importMap);
-					exports.add(cm);
-					uObjects.add(cm.getBaseObject());
-					break;
-				default:
-					if ((exportType.startsWith("Athena") && exportType.endsWith("Definition")) || exportType.contains("FortBannerTokenType")) {
-						// Cannot check that in the switch
-						AthenaItemDefinition item = new AthenaItemDefinition(this.uexpAr, nameMap, importMap,
-								exportType);
-						exports.add(item);
-						uObjects.add(item.getBaseObject());
-						previousItemDef = item;
-					} else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
-						// Cannot check that in the switch
-						FortCosmeticVariant charVariant = new FortCosmeticVariant(this.uexpAr, nameMap, importMap,
-								exportType);
-						if (previousItemDef != null)
-							previousItemDef.addVariants(charVariant);
-						exports.add(charVariant);
-						uObjects.add(charVariant.getBaseObject());
-					} else {
 
-						UObject baseObject = new UObject(this.uexpAr, nameMap, importMap, exportType);
-						int validPos = (int) (position + export.getSerialSize());
-						if (validPos != export.getSerialSize()) {
-							// System.out.println(String.format(
-							// "WARNING: Unknown export has unread data beside the uobject, Read bytes: %d
-							// Export Length: %d",
-							// this.uexpAr.Tell() - position, export.getSerialSize()));
+				this.uexpAr = new FArchive();
+				this.uexpAr.data = uexp;
+				this.uexpAr.SetStopper(exportSize);
+				this.uexpAr.Seek(0);
+				this.uexpAr.uassetSize = assetLength;
+				this.uexpAr.uexpSize = exportSize;
+				this.uexpAr.locres = locres;
+				this.uexpAr.nameMap = nameMap;
+				this.uexpAr.importMap = importMap;
+				this.uexpAr.exportMap = exportMap;
+
+				if (ubulk != null) {
+					FArchive ubulkAr = new FArchive();
+					ubulkAr.data = ubulk;
+					ubulkAr.SetStopper(ubulk.length);
+					ubulkAr.Seek(0);
+					uexpAr.addPayload("UBULK", ubulkAr);
+				}
+
+				AthenaItemDefinition previousItemDef = null;
+
+				for (FObjectExport export : exportMap.getEntries()) {
+					String exportType = export.getClassIndex().getImportName();
+					if (exportType.equals("0")) {
+						exports.add(null);
+						break;
+					}
+					int position = (int) (export.getSerialOffset() - uexpAr.getUexpOffset());
+					this.uexpAr.Seek(position);
+					switch (exportType) {
+					case "Texture2D":
+						UTexture2D t = this.uexpAr.read(UTexture2D.class);
+						exports.add(t);
+						uObjects.add(t.getBaseObject());
+						break;
+					case "SoundWave":
+						USoundWave s = this.uexpAr.read(USoundWave.class);
+						exports.add(s);
+						uObjects.add(s.getBaseObject());
+						break;
+					case "DataTable":
+						UDataTable d = this.uexpAr.read(UDataTable.class);
+						exports.add(d);
+						uObjects.add(d.getBaseObject());
+						break;
+					default:
+						if ((exportType.startsWith("Athena") && exportType.endsWith("Definition"))
+								|| exportType.contains("FortBannerTokenType")) {
+							// Cannot check that in the switch
+							UObject baseObject = this.uexpAr.read(UObject.class, exportType);
+							AthenaItemDefinition item = objenesis.newInstance(AthenaItemDefinition.class);	
+							item.init(baseObject, gson, importMap);
+							item.setBaseObject(baseObject);
+							exports.add(item);
+							uObjects.add(item.getBaseObject());
+							previousItemDef = item;
+						} else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
+							// Cannot check that in the switch
+							UObject baseObject = this.uexpAr.read(UObject.class, exportType);
+							FortCosmeticVariant charVariant = objenesis.newInstance(FortCosmeticVariant.class);
+							charVariant.init(baseObject, gson, importMap);
+							charVariant.setBaseObject(baseObject);
+							if (previousItemDef != null)
+								previousItemDef.addVariants(charVariant);
+							exports.add(charVariant);
+							uObjects.add(charVariant.getBaseObject());
 						} else {
-							// System.out.println("INFO: Unknown Export has no more data beside the
-							// uobject");
+
+							UObject baseObject = this.uexpAr.read(UObject.class, exportType);
+							int validPos = (int) (position + export.getSerialSize());
+							if (validPos != export.getSerialSize()) {
+								// System.out.println(String.format(
+								// "WARNING: Unknown export has unread data beside the uobject, Read bytes: %d
+								// Export Length: %d",
+								// this.uexpAr.Tell() - position, export.getSerialSize()));
+							} else {
+								// System.out.println("INFO: Unknown Export has no more data beside the
+								// uobject");
+							}
+							// System.err.println("Skipped unknown export '" + exportType + "' at " +
+							// export.getSerialOffset()
+							// + " with length " + export.getSerialSize());
+							if(structs.containsKey(exportType)) {
+								NewableWithUObject n = objenesis.newInstance(structs.get(exportType));
+								n.init(baseObject, gson, importMap);
+								n.setBaseObject(baseObject);
+								exports.add(n);
+							} else {
+								exports.add(baseObject);
+							}
+							uObjects.add(baseObject);
 						}
-						// System.err.println("Skipped unknown export '" + exportType + "' at " +
-						// export.getSerialOffset()
-						// + " with length " + export.getSerialSize());
-						exports.add(baseObject);
-						uObjects.add(baseObject);
+					}
+					int validPos = (int) (position + export.getSerialSize());
+					if (this.uexpAr.Tell() != validPos) {
+						// System.out.println(
+						// String.format("Did not read '%s' correctly. Current Position: %d, Bytes
+						// Remaining: %d",
+						// exportType, this.uexpAr.Tell(), validPos - this.uexpAr.Tell()));
+					} else {
+						// System.out.println(String.format("Successfully read export '%s' at offset %d
+						// with length %d",
+						// exportType, export.getSerialOffset() - assetLength, export.getSerialSize()));
 					}
 				}
-				int validPos = (int) (position + export.getSerialSize());
-				if (this.uexpAr.Tell() != validPos) {
-					// System.out.println(
-					// String.format("Did not read '%s' correctly. Current Position: %d, Bytes
-					// Remaining: %d",
-					// exportType, this.uexpAr.Tell(), validPos - this.uexpAr.Tell()));
-				} else {
-					// System.out.println(String.format("Successfully read export '%s' at offset %d
-					// with length %d",
-					// exportType, export.getSerialOffset() - assetLength, export.getSerialSize()));
-				}
-			}
-			log.info("Successfully parsed package: " + name);
+				log.info("Successfully parsed package: " + name);
 
-		} else {
-			throw new ReadException("Given uasset file is not an uasset. Wrong package tag", 0);
+			} else {
+				throw new ReadException("Given uasset file is not an uasset. Wrong package tag", 0);
+			}
+		} catch (DeserializationException e) {
+			throw new ReadException("Reading failed", e);
 		}
 	}
 
@@ -321,44 +364,43 @@ public class Package {
 	public List<UObject> getuObjects() {
 		return uObjects;
 	}
-	
+
 	public static class PackageSerializer implements JsonSerializer<Package> {
 
 		@Override
 		public JsonElement serialize(Package src, Type typeOfSrc, JsonSerializationContext context) {
 			JsonObject ob = new JsonObject();
-			
+
 			ob.add("name_map", context.serialize(src.nameMap));
 			ob.add("import_map", context.serialize(src.importMap));
 			ob.add("export_map", context.serialize(src.exportMap));
-			
+
 			JsonArray exportProperties = new JsonArray();
 			src.uObjects.forEach(uObject -> exportProperties.add(context.serialize(uObject)));
 			ob.add("export_properties", exportProperties);
-			
+
 			return ob;
 		}
-		
-		
+
 		public static class NameMapSerializer implements JsonSerializer<NameMap> {
 
 			@Override
 			public JsonElement serialize(NameMap src, Type typeOfSrc, JsonSerializationContext context) {
 				JsonArray nameMapData = new JsonArray();
-				src.getEntrys().forEach(entry -> {
+				src.getEntries().forEach(entry -> {
 					nameMapData.add(entry.getName());
 				});
 				return nameMapData;
 			}
-			
+
 		}
-		
+
 		public static class ImportMapSerializer implements JsonSerializer<ImportMap> {
 
 			@Override
 			public JsonElement serialize(ImportMap src, Type typeOfSrc, JsonSerializationContext context) {
 				JsonArray importMapData = new JsonArray();
-				src.getEntrys().forEach(entry -> {
+				src.getEntries().forEach(entry -> {
 					JsonObject importObject = new JsonObject();
 					importObject.addProperty("class_name", entry.getClassName());
 					importObject.addProperty("class_package", entry.getClassPackage());
@@ -367,15 +409,15 @@ public class Package {
 				});
 				return importMapData;
 			}
-			
+
 		}
-		
+
 		public static class ExportMapSerializer implements JsonSerializer<ExportMap> {
 
 			@Override
 			public JsonElement serialize(ExportMap src, Type typeOfSrc, JsonSerializationContext context) {
 				JsonArray exportMapData = new JsonArray();
-				src.getEntrys().forEach(entry -> {
+				src.getEntries().forEach(entry -> {
 					JsonObject exportObject = new JsonObject();
 					exportObject.addProperty("export_type", entry.getClassIndex().getImportName());
 					exportObject.addProperty("export_offset", entry.getSerialOffset() - src.getUassetSize());
@@ -384,19 +426,19 @@ public class Package {
 				});
 				return exportMapData;
 			}
-			
+
 		}
-		
+
 	}
-	
+
 	public JsonObject toJSON() {
-		if(this.packageInfo == null)
-			this.packageInfo = (JsonObject) this.gson.toJsonTree(this);
+		if (this.packageInfo == null)
+			this.packageInfo = (JsonObject) gson.toJsonTree(this);
 		return this.packageInfo;
 	}
 
 	public String toJSONString() {
-		return this.gson.toJson(toJSON());
+		return gson.toJson(toJSON());
 
 	}
 
@@ -479,7 +521,7 @@ public class Package {
 
 	public Object getExport(FObjectExport export) {
 		int exportIndex = -1;
-		for (int i = 0; i < exportMap.getEntrys().size(); i++) {
+		for (int i = 0; i < exportMap.getEntries().size(); i++) {
 			if (export.equals(exportMap.get(i))) {
 				exportIndex = i;
 				break;

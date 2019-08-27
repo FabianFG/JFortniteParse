@@ -3,24 +3,18 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.Serializable;
+import annotation.UInt32;
+import annotation.UInt8Boolean;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FPerPlatformInt {
-	private boolean cooked;
-	private long value;
-
-	public FPerPlatformInt(FArchive Ar) throws ReadException {
-		cooked = Ar.readBooleanFromUInt8();
-		value = Ar.readUInt32();
-	}
-	public boolean getCooked() {
-		return cooked;
-	}
-	public long getValue() {
-		return value;
-	}
+	@UInt8Boolean private boolean cooked;
+	@UInt32 private long value;
 }

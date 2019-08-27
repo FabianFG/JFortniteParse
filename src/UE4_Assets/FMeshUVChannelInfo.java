@@ -4,32 +4,26 @@
 package UE4_Assets;
 
 import UE4.FArchive;
+import annotation.FixedArraySize;
+import annotation.BooleanZ;
+import annotation.Float32;
+import annotation.Serializable;
+import annotation.UeExclude;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FMeshUVChannelInfo {
 
-	public static final int TEXSTREAM_MAX_NUM_UVCHANNELS = 4;
+	@UeExclude public static final int TEXSTREAM_MAX_NUM_UVCHANNELS = 4;
 
-	private boolean bInitialized;
-	private boolean bOverrideDensities;
-	private float[] localUVDensities;
-
-	
-
-	public boolean getbInitialized() {
-		return bInitialized;
-	}
-
-	public boolean getbOverrideDensities() {
-		return bOverrideDensities;
-	}
-
-	public float[] getLocalUVDensities() {
-		return localUVDensities;
-	}
+	@BooleanZ private boolean bInitialized;
+	@BooleanZ private boolean bOverrideDensities;
+	@FixedArraySize(TEXSTREAM_MAX_NUM_UVCHANNELS) @Float32 private float[] localUVDensities;
 	
 	public FMeshUVChannelInfo(FArchive Ar) throws ReadException {
 		bInitialized = Ar.readBoolean();

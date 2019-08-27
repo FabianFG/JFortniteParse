@@ -10,77 +10,74 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 
 import UE4.FArchive;
+import UE4.deserialize.exception.DeserializationException;
+import annotation.CustomSerializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@CustomSerializable
 public class UScriptStruct {
 	private String structName;
 	private Object structType;
-
-
-	public UScriptStruct(FArchive Ar, NameMap nameMap, ImportMap importMap, String structName) throws ReadException {
+	
+	public UScriptStruct(FArchive Ar, String structName) throws DeserializationException {
 		this.structName = structName;
 		switch(structName) {
 		case "IntPoint":
-			structType = new FIntPoint(Ar);
+			this.structType = Ar.read(FIntPoint.class);
 			break;
 		case "Guid":
-			structType = new FGUID(Ar);
+			this.structType = Ar.read(FGUID.class);
 			break;
 		case "GameplayTagContainer":
-			structType = new FGameplayTagContainer(Ar, nameMap);
+			this.structType = Ar.read(FGameplayTagContainer.class);
 			break;
 		case "Color":
-			structType = new FColor(Ar);
+			this.structType = Ar.read(FColor.class);
 			break;
 		case "LinearColor":
-			structType = new FLinearColor(Ar);
+			this.structType = Ar.read(FLinearColor.class);
 			break;
 		case "SoftObjectPath":
-			structType = new FSoftObjectPath(Ar, nameMap);
+			this.structType = Ar.read(FSoftObjectPath.class);
 			break;
 		case "Vector2D":
 		case "Box2D":
-			structType = new FVector2D(Ar);
+			this.structType = Ar.read(FVector2D.class);
 			break;
 		case "Quat":
-			structType = new FQuat(Ar);
+			this.structType = Ar.read(FQuat.class);
 			break;
 		case "Vector":
-			structType = new FVector(Ar);
+			this.structType = Ar.read(FVector.class);
 			break;
 		case "Rotator":
-			structType = new FRotator(Ar);
+			this.structType = Ar.read(FRotator.class);
 			break;
 		case "PerPlatformFloat":
-			structType = new FPerPlatformFloat(Ar);
+			this.structType = Ar.read(FPerPlatformFloat.class);
 			break;
 		case "PerPlatformInt":
-			structType = new FPerPlatformInt(Ar);
+			this.structType = Ar.read(FPerPlatformInt.class);
 			break;
 		case "SkeletalMeshSamplingLODBuiltData":
-			structType = new FWeightedRandomSampler(Ar);
+			this.structType = Ar.read(FWeightedRandomSampler.class);
 			break;
 		case "LevelSequenceObjectReferenceMap":
-			structType = new FLevelSequenceObjectReferenceMap(Ar);
+			this.structType = Ar.read(FLevelSequenceObjectReferenceMap.class);
 			break;
 			//TODO Maybe implement more to reduce crashes
 			
 		default:
 			//System.err.println("WARNING: Unknown struct type: " + structName + ", using FStructFallback");
-			structType = new FStructFallback(Ar, nameMap, importMap);
+			this.structType = Ar.read(FStructFallback.class);
 			break;
+		
 		}
-	} 
-
-	public String getStructName() {
-		return structName;
-	}
-
-	public Object getStructType() {
-		return structType;
 	}
 
 	/**

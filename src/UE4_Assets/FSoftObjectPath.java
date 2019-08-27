@@ -3,26 +3,18 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.FName;
+import annotation.Serializable;
+import annotation.Stringz;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FSoftObjectPath {
-	private String assetPathName;
-	private String subPathString;
-	
-	public FSoftObjectPath(FArchive Ar, NameMap nameMap) throws ReadException {
-		assetPathName = Ar.readFName(nameMap);
-		subPathString = Ar.readString();
-	}
-
-	public String getAssetPathName() {
-		return assetPathName;
-	}
-
-	public String getSubPathString() {
-		return subPathString;
-	}
+	@FName private String assetPathName;
+	@Stringz private String subPathString;
 }

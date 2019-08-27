@@ -3,28 +3,20 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.Serializable;
+import annotation.UInt8;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FStripDataFlags {
-	private byte globalStripFlags;
-	private byte classStripFlags;
+	@UInt8 private byte globalStripFlags;
+	@UInt8 private byte classStripFlags;
 
-	public FStripDataFlags(FArchive Ar) throws ReadException {
-		globalStripFlags = Ar.readUInt8();
-		classStripFlags = Ar.readUInt8();
-	}
-
-	public byte getGlobalStripFlags() {
-		return globalStripFlags;
-	}
-
-	public byte getClassStripFlags() {
-		return classStripFlags;
-	}
 	public boolean isEditorDataStripped() {
 		if((this.globalStripFlags & 1) == 0) {
 			return false;

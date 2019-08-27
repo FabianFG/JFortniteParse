@@ -3,22 +3,17 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.Serializable;
+import annotation.UInt32;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class UInterfaceProperty {
-	private long interfaceNumber;
-
-	public long getInterfaceNumber() {
-		return interfaceNumber;
-	}
-
-	
-	public UInterfaceProperty(FArchive Ar) throws ReadException {
-		interfaceNumber = Ar.readUInt32();
-	}
+	@UInt32 private long interfaceNumber;
 	
 }

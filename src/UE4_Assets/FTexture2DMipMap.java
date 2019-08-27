@@ -3,43 +3,23 @@
  */
 package UE4_Assets;
 
-import UE4.FArchive;
+import annotation.BooleanZ;
+import annotation.Int32;
+import annotation.OnlyIf;
+import annotation.Serializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FTexture2DMipMap {
+	@BooleanZ private boolean cooked;
 	private FByteBulkData data;
-	private int sizeX;
-	private int sizeY;
-	private int sizeZ;
-
-	public FTexture2DMipMap(FArchive Ar) throws ReadException {
-		boolean cooked = Ar.readBoolean();
-		data = new FByteBulkData(Ar);
-		sizeX = Ar.readInt32();
-		sizeY = Ar.readInt32();
-		sizeZ = Ar.readInt32();
-		if(!cooked) {
-			@SuppressWarnings("unused")
-			String u = Ar.readString();
-		}
-	}
-
-	public FByteBulkData getData() {
-		return data;
-	}
-
-	public int getSizeX() {
-		return sizeX;
-	}
-
-	public int getSizeY() {
-		return sizeY;
-	}
-
-	public int getSizeZ() {
-		return sizeZ;
-	}
+	@Int32 private int sizeX;
+	@Int32 private int sizeY;
+	@Int32 private int sizeZ;
+	@OnlyIf(value = "cooked", req=false) private String _unused;
 }

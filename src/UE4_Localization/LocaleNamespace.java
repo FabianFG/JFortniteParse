@@ -5,16 +5,16 @@ package UE4_Localization;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
 /**
  * @author FunGames
  *
  */
+@Data
+@AllArgsConstructor
 public class LocaleNamespace {
-	public String namespace;
-	public List<FEntry> data;
-	
-	public LocaleNamespace(String namespace, List<FEntry> data) {
-		this.namespace = namespace;
-		this.data = data;
-	}
+	private String namespace;
+	private List<FEntry> data;
 }

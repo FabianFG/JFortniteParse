@@ -3,19 +3,17 @@
  */
 package UE4_PakFile;
 
-import UE4.FArchive;
-import UE4_Assets.ReadException;
+import annotation.Int64;
+import annotation.Serializable;
+import lombok.Data;
 
 /**
  * @author FunGames
  *
  */
+@Data
+@Serializable
 public class FPakCompressedBlock {
-	public long compressedStart;
-	public long compressedEnd;
-
-	public FPakCompressedBlock(FArchive Ar) throws ReadException {
-		compressedStart = Ar.readInt64();
-		compressedEnd = Ar.readInt64();
-	}
+	@Int64 private long compressedStart;
+	@Int64 private long compressedEnd;
 }
