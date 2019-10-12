@@ -18,5 +18,6 @@
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/DDSUtil.jar"/>
 	<classpathentry kind="lib" path="lib/JOodle.jar"/>
+	<classpathentry kind="lib" path="lib/KotlinASTC-1.0-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

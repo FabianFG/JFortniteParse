@@ -243,6 +243,19 @@ public class FPropertyTagType {
 		}
 	}
 	
+	public static class SoftObjectPropertyMap extends FPropertyTagType {
+		private FGUID object;
+		
+		public SoftObjectPropertyMap(FGUID object, String propertyType) {
+			super(propertyType);
+			this.object = object;
+		}
+
+		public FGUID getGuid() {
+			return object;
+		}
+	}
+	
 	public static FPropertyTagType readFPropertyTagType(FArchive Ar, NameMap nameMap, ImportMap importMap, String propertyType, FPropertyTagData tagData) throws ReadException {
 		switch(propertyType) {
 			case "BoolProperty":

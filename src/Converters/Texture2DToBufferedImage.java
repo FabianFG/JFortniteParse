@@ -22,10 +22,11 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import com.fungames.kotlinASTC.ASTCCodecImage;
+import com.fungames.kotlinASTC.Bitness;
 import com.tomgibara.bits.BitReader;
 import com.tomgibara.bits.Bits;
 
-import ASTC.ASTC;
 import UE4_Assets.FTexture2DMipMap;
 import UE4_Assets.Float8;
 import UE4_Assets.Package;
@@ -137,18 +138,10 @@ public class Texture2DToBufferedImage {
 	
 	private static BufferedImage readASCT(String format, byte[] data, int width, int height) throws IOException {
 		PixelFormatInfo formatInfo = formats.get(format);
-		int USize = width;
-		int VSize = height;
-		
-		int blockSizeX = formatInfo.BlockSizeX;
-		int blockSizeY = formatInfo.BlockSizeY;
-		
-		int pixelSize = formatInfo.Float != 0 ? 16 : 4;
-		int size = USize * VSize * pixelSize;
-		byte[] dst = new byte[size];
-		
-		ASTC.decompressASTC(data, dst, USize, VSize, blockSizeX, blockSizeY, false/*isNormalMap*/);
-		return rgbaBufferToImage(dst, width, height);
+		ASTCCodecImage img = new ASTCCodecImage(Bitness.BITNESS_8, width, height, /*zDim*/1, /*padding*/0, formatInfo.BlockSizeX, formatInfo.BlockSizeY);
+		img.initializeImage();
+		img.decode(data);
+		return rgbaBufferToImage(img.toBuffer(), width, height);
 	}
 
 	/**

@@ -41,6 +41,8 @@ public class UScriptMap {
 	private FPropertyTagType readMapValue(FArchive Ar, String innerType, String structType, NameMap nameMap, ImportMap importMap) throws ReadException {
 		FPropertyTagType tagType;
 		switch(innerType) {
+		case "ByteProperty":
+			tagType = new FPropertyTagType.ByteProperty((byte) Ar.readUInt32(), innerType);
 		case "BoolProperty":
 			tagType = new FPropertyTagType.BoolProperty(Ar.readBooleanFromUInt8(), innerType);
 			return tagType;
@@ -56,12 +58,18 @@ public class UScriptMap {
 		case "NameProperty":
 			tagType = new FPropertyTagType.NameProperty(Ar.readFName(nameMap), innerType);
 			return tagType;
+		case "ObjectProperty":
+			tagType = new FPropertyTagType.ObjectProperty(new FPackageIndex(Ar, importMap), innerType);
+			return tagType;
 		case "TextProperty":
 			tagType = new FPropertyTagType.TextProperty(new FText(Ar), innerType);
 			return tagType;
 		case "StrProperty":
 			tagType = new FPropertyTagType.StrProperty(Ar.readString(), innerType);
 			return tagType;
+		case "SoftObjectProperty":
+			tagType = new FPropertyTagType.SoftObjectPropertyMap(new FGUID(Ar), innerType);
+			return tagType;			
 		default:
 			tagType = new FPropertyTagType.StructProperty(new UScriptStruct(Ar, nameMap, importMap, innerType), innerType);
 			return tagType;
