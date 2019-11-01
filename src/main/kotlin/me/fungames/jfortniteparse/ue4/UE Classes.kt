@@ -98,4 +98,9 @@ class FGuid : UEClass {
         this.part3 = part3
         this.part4 = part4
     }
+
+    /**
+     * @return a string representation of this fguid
+     */
+    override fun toString() = "${part1}-${part2}-${part3}-${part4}"
 }

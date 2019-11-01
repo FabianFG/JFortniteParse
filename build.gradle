@@ -68,7 +68,7 @@ dependencies {
     implementation 'me.fungames:KotlinPointers:1.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
-    implementation 'com.beust:klaxon:5.0.1'
+    implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
     implementation 'io.github.microutils:kotlin-logging:1.7.6'
     implementation 'org.slf4j:slf4j-log4j12:1.7.5'
 }

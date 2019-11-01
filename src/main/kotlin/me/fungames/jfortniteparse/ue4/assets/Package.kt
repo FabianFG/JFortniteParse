@@ -1,5 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets
 
+import com.github.salomonbrys.kotson.registerTypeAdapter
+import com.google.gson.GsonBuilder
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UEClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.exports.*
@@ -18,6 +20,17 @@ import java.io.OutputStream
 @ExperimentalUnsignedTypes
 class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, name : String) {
 
+    companion object {
+        val packageMagic = 0x9E2A83C1u
+        val gson = GsonBuilder()
+            .setPrettyPrinting()
+            .registerTypeAdapter(JsonSerializer.packageConverter)
+            .registerTypeAdapter(JsonSerializer.importSerializer)
+            .registerTypeAdapter(JsonSerializer.exportSerializer)
+            .registerTypeAdapter(JsonSerializer.uobjectSerializer)
+            .create()
+    }
+
     constructor(uasset : File, uexp : File, ubulk : File?) : this(uasset.readBytes(), uexp.readBytes(),
         ubulk?.readBytes(), uasset.nameWithoutExtension)
 
@@ -31,10 +44,6 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     val exportMap : MutableList<FObjectExport>
 
     val exports = mutableListOf<UEExport>()
-
-    companion object{
-        val packageMagic = 0x9E2A83C1u
-    }
 
     init {
         info = FPackageFileSummary(uassetAr)
@@ -128,6 +137,8 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
      * @return the all exports of the given type
      */
     inline fun <reified T : UEExport> getExportsOfType() = exports.filterIsInstance<T>()
+
+    fun toJson() = gson.toJson(this)!!
 
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
     private fun updateHeader() {
