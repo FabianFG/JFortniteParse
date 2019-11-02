@@ -1,17 +1,14 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package me.fungames.jfortniteparse.converters
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.resources.Resources
-import me.fungames.jfortniteparse.resources.getBackgroundImage
-import me.fungames.jfortniteparse.resources.getDailyShopBackgroundImage
-import me.fungames.jfortniteparse.resources.getFeaturedShopBackgroundImage
+import me.fungames.jfortniteparse.resources.*
 import me.fungames.jfortniteparse.ue4.UEClass
 import me.fungames.jfortniteparse.ue4.assets.FText
 import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.athena.AthenaItemDefinition
-import me.fungames.jfortniteparse.ue4.assets.exports.fort.CosmeticVariant
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortHeroType
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortMtxOfferData
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortWeaponMeleeItemDefinition
@@ -25,6 +22,8 @@ import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.max
+import kotlin.math.min
 
 object ItemDefinitionInfo {
     val sets = ConcurrentHashMap<String, FText>()
@@ -39,33 +38,36 @@ object ItemDefinitionInfo {
         initialized.set(true)
         try {
             throw Exception("Not Implemented")
-        } catch (e : Exception) {
+        } catch (e: Exception) {
             initialized.set(false)
         }
     }
 }
 
 @Throws(ParserException::class)
-fun AthenaItemDefinition.createContainer(fileProvider: FileProvider,
-                                         loadVariants : Boolean = true, failOnNoIconLoaded : Boolean = false, overrideIcon : BufferedImage? = null) : ItemDefinitionContainer {
+fun AthenaItemDefinition.createContainer(
+    fileProvider: FileProvider,
+    loadVariants: Boolean = true, failOnNoIconLoaded: Boolean = false, overrideIcon: BufferedImage? = null
+): ItemDefinitionContainer {
     ItemDefinitionInfo.init(fileProvider)
     val icon = loadIcon(this, fileProvider)
         ?: if (failOnNoIconLoaded) throw ParserException("Failed to load icon") else Resources.fallbackIcon
-    if (loadVariants && this.variants != null) {
-        val map = mutableMapOf<CosmeticVariant, BufferedImage>()
-        this.variants?.variants?.forEach {
-            if (it.previewImage != null) {
-                val iconPkg = fileProvider.loadGameFile(it.previewImage!!)
-                it.previewIcon = iconPkg?.getExportOfTypeOrNull<UTexture2D>()?.toBufferedImage()
+    if (loadVariants) {
+        this.variants.forEach { variants ->
+            variants.variants.forEach {
+                if (it.previewImage != null) {
+                    val iconPkg = fileProvider.loadGameFile(it.previewImage!!)
+                    it.previewIcon = iconPkg?.getExportOfTypeOrNull<UTexture2D>()?.toBufferedImage()
+                }
             }
         }
     }
     return ItemDefinitionContainer(this, icon)
 }
 
-data class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var icon : BufferedImage) : Cloneable {
-    val variantsLoaded : Boolean
-        get() = itemDefinition.variants?.variants?.firstOrNull { it.previewIcon != null } != null
+data class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var icon: BufferedImage) : Cloneable {
+    val variantsLoaded: Boolean
+        get() = itemDefinition.variants.firstOrNull { it.variants.firstOrNull { it.previewIcon != null } != null } != null
 
     fun getImage() = getImage(this)
     fun getImageWithVariants() = getImageWithVariants(this)
@@ -74,20 +76,110 @@ data class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var
     fun getShopDailyImage(price: Int) = getShopDailyImage(this, price)
 }
 
-fun getImage(container: ItemDefinitionContainer) : BufferedImage {
+fun getImage(container: ItemDefinitionContainer): BufferedImage {
     return if (container.variantsLoaded)
         getImageWithVariants(container)
     else
         getImageNoVariants(container)
 }
 
-fun getImageWithVariants(container: ItemDefinitionContainer) : BufferedImage {
-    TODO("not implemented")
+private const val variantsIconSize = 180
+private const val variantsX = 500
+private const val variantsY = 350
+private const val variantsSpaceBetween = 5
+private const val variantsMaxPerRow = 7
+private const val variantsBeginX = 11
+fun getImageWithVariants(container: ItemDefinitionContainer): BufferedImage {
+    val itemDef = container.itemDefinition
+    var icon = container.icon
+    val vars = itemDef.variants
+    if (icon.width != variantsIconSize || icon.height != variantsIconSize)
+        icon = icon.scale(variantsIconSize, variantsIconSize)
+
+    val result = itemDef.rarity.getVariantsBackgroundImage()
+    val g = result.createGraphics()
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+
+    val burbank = Resources.burbank
+    val notoSans = Resources.notoSans
+
+    //Remove numeric and pattern channels (used for soccer skins, cannot be displayed properly)
+    vars.removeIf { it.variantChannelTag.text == "Cosmetics.Variant.Channel.Pattern" || it.variantChannelTag.text == "Cosmetics.Variant.Channel.Numeric"
+            || it.variantChannelTag.text.contains("PATTERN") || it.variantChannelTag.text.contains("NUMBER")}
+
+    var numChannels = vars.size
+
+    if (numChannels > 2) {
+        numChannels = 2
+        UEClass.logger.warn("Dropped ${numChannels - 2} cosmetic channel(s)")
+    }
+    val availableX = variantsX - (numChannels * g.fontMetrics.height)
+
+    val totalRows = vars.sumBy {
+        var count = it.variants.size
+        if (count < variantsMaxPerRow)
+            return@sumBy 1
+        while (count % variantsMaxPerRow != 0)
+            count++
+        count / variantsMaxPerRow
+    }
+    val maxVarSize = (availableX - (numChannels - 1) * 10) / totalRows
+
+    var cY = 35
+    vars.forEach {
+        val varCount = it.variants.size
+        g.font = burbank.deriveFont(25f)
+        g.paint = Color.WHITE
+        g.drawString(it.variantChannelName.text, variantsBeginX, cY + 20)
+        cY += g.fontMetrics.height
+        var cX = variantsBeginX
+        val perRow = min(variantsMaxPerRow, varCount)
+        val varSize = if (maxVarSize * perRow + (perRow - 1) * variantsSpaceBetween > variantsX)
+            (variantsX - (perRow - 1) * variantsSpaceBetween) / perRow
+        else
+            maxVarSize
+        for (i in 0 until varCount) {
+            val varContainer = it.variants[i]
+            var varIcon = varContainer.previewIcon ?: continue
+            if (varIcon.width != varSize || varIcon.height != varSize)
+                varIcon = varIcon.scale(varSize, varSize)
+            if (cX + varSize > variantsBeginX + variantsX) {
+                cX = variantsBeginX
+                cY += varSize + variantsSpaceBetween
+            }
+            g.paint = Color(255, 255, 255, 70)
+            g.fillRect(cX, cY, varSize, varSize)
+            g.drawImage(varIcon, cX, cY, null)
+
+            val varName = varContainer.variantName?.text
+            if (varName != null) {
+                g.paint = Color(0, 0, 0, 100)
+                g.fillRect(cX, cY + varSize - varSize / 4, varSize, varSize / 4)
+
+                g.paint = Color.WHITE
+                g.font = burbank.deriveFont((varSize / 4) / 1.2f)
+
+                g.drawCenteredString(varName, cX + varSize / 2, cY + varSize - varSize / 4 + (varSize / 4 / 2 + g.fontMetrics.height) / 2)
+                cX += varSize + variantsSpaceBetween
+                if (cX > variantsX) {
+                    cX = variantsBeginX
+                    if (i + 1 < varCount)
+                        cY += varSize + variantsSpaceBetween
+                }
+            }
+        }
+        cY += varSize + 10
+    }
+
+    g.drawImage(icon, result.width - 5 - variantsIconSize, result.height - 5 - variantsIconSize, null)
+
+    return result
 }
 
 private val trackingAttr: Map<TextAttribute, Double> by lazy { mapOf(TextAttribute.TRACKING to 0.03) }
 private const val barHeight = 160
-fun getImageNoVariants(container: ItemDefinitionContainer) : BufferedImage {
+fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
@@ -121,7 +213,7 @@ fun getImageNoVariants(container: ItemDefinitionContainer) : BufferedImage {
     if (description != null) {
         g.color = Color.LIGHT_GRAY
         var fontSize: Float
-        var fm : FontMetrics
+        var fm: FontMetrics
         var y = icon.height - 50
         val lines = description.split("\\r?\\n")
         // TODO Sets
@@ -144,7 +236,7 @@ fun getImageNoVariants(container: ItemDefinitionContainer) : BufferedImage {
 
 private const val featuredAdditionalHeight = 200
 private const val featuredBarHeight = 131
-fun getShopFeaturedImage(container: ItemDefinitionContainer, price : Int) : BufferedImage {
+fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     if (icon.width != 1024 || icon.height != 1024)
@@ -155,7 +247,7 @@ fun getShopFeaturedImage(container: ItemDefinitionContainer, price : Int) : Buff
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     g.drawImage(icon.cut(result.width - 22), 11, 11, null)
 
-    g.paint = Color(0,0,0, 100)
+    g.paint = Color(0, 0, 0, 100)
     g.fillRect(11, 11 + icon.height - featuredAdditionalHeight, result.width - 22, featuredAdditionalHeight)
 
     val burbank = Resources.burbank
@@ -266,10 +358,10 @@ fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): BufferedI
     return result
 }
 
-private val numberFormatter : NumberFormat by lazy { NumberFormat.getNumberInstance(Locale.US) }
-private fun printPrice(price : Int) = numberFormatter.format(price)
+private val numberFormatter: NumberFormat by lazy { NumberFormat.getNumberInstance(Locale.US) }
+private fun printPrice(price: Int) = numberFormatter.format(price)
 
-private fun loadFeaturedIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider) : BufferedImage? {
+private fun loadFeaturedIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider): BufferedImage? {
     if (itemDefinition.usesDisplayAssetPath) {
         val pkg = fileProvider.loadGameFile(itemDefinition.displayAssetPath!!) ?: return null
         val offerData = pkg.getExportOfTypeOrNull<FortMtxOfferData>() ?: return null
@@ -282,7 +374,7 @@ private fun loadFeaturedIcon(itemDefinition: AthenaItemDefinition, fileProvider:
         return null
 }
 
-private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider) : BufferedImage? {
+private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider): BufferedImage? {
     if (itemDefinition.hasIcons) {
         val iconPkg = fileProvider.loadGameFile(itemDefinition.largePreviewImage!!)
         val icon = iconPkg?.getExportOfType<UTexture2D>()?.toBufferedImage()
@@ -296,7 +388,7 @@ private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: F
             val iconPkg = fileProvider.loadGameFile(hero.largePreviewImage)
             val icon = iconPkg?.getExportOfType<UTexture2D>()?.toBufferedImage()
             if (icon != null)
-                return  icon
+                return icon
         }
     }
     if (itemDefinition.usesWeaponDefinition) {
@@ -306,7 +398,7 @@ private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: F
             val iconPkg = fileProvider.loadGameFile(weapon.largePreviewImage)
             val icon = iconPkg?.getExportOfType<UTexture2D>()?.toBufferedImage()
             if (icon != null)
-                return  icon
+                return icon
         }
     }
     return null

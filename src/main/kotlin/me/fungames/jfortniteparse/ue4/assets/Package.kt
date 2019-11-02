@@ -23,7 +23,6 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     companion object {
         val packageMagic = 0x9E2A83C1u
         val gson = GsonBuilder()
-            .setPrettyPrinting()
             .registerTypeAdapter(JsonSerializer.packageConverter)
             .registerTypeAdapter(JsonSerializer.importSerializer)
             .registerTypeAdapter(JsonSerializer.exportSerializer)
@@ -100,7 +99,9 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                     if (exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) {
                         exports.add(AthenaItemDefinition(uexpAr, it))
                     } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
-                        exports.add(FortCosmeticVariant(uexpAr, it))
+                        val variant = FortCosmeticVariant(uexpAr, it)
+                        matchItemDefAndVariant(variant)
+                        exports.add(variant)
                     } else
                         exports.add(UObject(uexpAr, it))
 
@@ -111,14 +112,12 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             else
                 logger.debug("Successfully read $exportType at ${uexpAr.toNormalPos(it.serialOffset.toInt())} with size ${it.serialSize}")
         }
-        matchItemDefAndVariant()
         logger.info("Successfully parsed package : $name")
     }
 
-    private fun matchItemDefAndVariant() {
+    private fun matchItemDefAndVariant(variant: FortCosmeticVariant) {
         val itemDef = getExportOfTypeOrNull<AthenaItemDefinition>() ?: return
-        val variant = getExportOfTypeOrNull<FortCosmeticVariant>() ?: return
-        itemDef.variants = variant
+        itemDef.variants.add(variant)
     }
 
     /**

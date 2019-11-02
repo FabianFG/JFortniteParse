@@ -43,7 +43,7 @@ class AthenaItemDefinition : UEExport {
     val userFacingFlags : FName?
         get() = gameplayTags.getValue("Cosmetics.UserFacingFlags")
 
-    var variants : FortCosmeticVariant? = null
+    var variants = mutableListOf<FortCosmeticVariant>()
 
     constructor() : super("AthenaItemDefinition") {
         baseObject = UObject(mutableListOf(), false, null, "AthenaItemDefinition")

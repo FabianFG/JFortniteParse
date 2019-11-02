@@ -19,7 +19,7 @@ class FortCosmeticVariant : UEExport {
     override var baseObject: UObject
     val variantChannelName : FText
     val variantChannelTag : FName
-    val variants : List<CosmeticVariant>
+    val variants : MutableList<CosmeticVariant>
 
     constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(exportObject) {
         super.init(Ar)
