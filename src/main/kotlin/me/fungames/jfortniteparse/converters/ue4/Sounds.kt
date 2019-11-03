@@ -1,4 +1,4 @@
-package me.fungames.jfortniteparse.converters
+package me.fungames.jfortniteparse.converters.ue4
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UEClass
@@ -30,7 +30,10 @@ fun USoundWave.convert() : SoundWave {
             val compressedFormatData = this.compressedFormatData ?: throw ParserException("Cooked sounds need compressed format data")
             require(!compressedFormatData.isNullOrEmpty())
             UEClass.logger.debug("Done")
-            SoundWave(compressedFormatData[0].data.data, compressedFormatData[0].formatName.text)
+            SoundWave(
+                compressedFormatData[0].data.data,
+                compressedFormatData[0].formatName.text
+            )
         } else {
             UEClass.logger.debug("Found non-cooked sound data, exporting...")
             val rawData = this.rawData ?: throw ParserException("Non-cooked sounds need raw data")

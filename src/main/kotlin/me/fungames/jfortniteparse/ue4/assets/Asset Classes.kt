@@ -109,26 +109,26 @@ class FPropertyTag : UEClass {
                 else -> null
             }
 
-        // MapProperty doesn't seem to store the inner types as their types when they're UStructs.
-        hasPropertyGuid = Ar.readFlag()
-        if (hasPropertyGuid)
-            propertyGuid = FGuid(Ar)
+            // MapProperty doesn't seem to store the inner types as their types when they're UStructs.
+            hasPropertyGuid = Ar.readFlag()
+            if (hasPropertyGuid)
+                propertyGuid = FGuid(Ar)
 
-        if (readData) {
-            val pos = Ar.pos()
-            try {
-                tag = FPropertyTagType.readFPropertyTagType(Ar, propertyType.text, tagData)
-                val finalPos = pos + size
-                if (finalPos != Ar.pos()) {
-                    logger.warn("FPropertyTagType $name ($propertyType) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
+            if (readData) {
+                val pos = Ar.pos()
+                try {
+                    tag = FPropertyTagType.readFPropertyTagType(Ar, propertyType.text, tagData)
+                    val finalPos = pos + size
+                    if (finalPos != Ar.pos()) {
+                        logger.debug("FPropertyTagType $name ($propertyType) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
+                    }
+                    //Even if the property wasn't read properly
+                    //we don't need to crash here because we know the expected size
+                    Ar.seek(finalPos)
+                } catch (e: ParserException) {
+                    throw ParserException("Error occurred while reading the FPropertyTagType $name ($propertyType) ", Ar, e)
                 }
-                //Even if the property wasn't read properly
-                //we don't need to crash here because we know the expected size
-                Ar.seek(finalPos)
-            } catch (e: ParserException) {
-                throw ParserException("Error occurred while reading the FPropertyTagType $name ($propertyType) ", Ar, e)
             }
-        }
         }
         super.complete(Ar)
     }
@@ -1413,8 +1413,7 @@ class FText : UEClass {
         Ar.writeUInt32(flags)
         Ar.writeInt8(historyType)
         when (historyType.toInt()) {
-            -1 -> {
-            }
+            -1 -> { }
             0 -> {
                 Ar.writeString(nameSpace)
                 Ar.writeString(key)
@@ -1425,12 +1424,12 @@ class FText : UEClass {
         super.completeWrite(Ar)
     }
 
-    constructor(flags: UInt, historyType: Byte, nameSpace: String, key: String, sourceString: String) {
-        this.flags = flags
-        this.historyType = historyType
+    constructor(nameSpace: String, key: String, sourceString: String, flags: UInt = 0u, historyType: Byte = 0) {
         this.nameSpace = nameSpace
         this.key = key
         this.sourceString = sourceString
+        this.flags = flags
+        this.historyType = historyType
     }
 }
 

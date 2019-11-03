@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4
 
+import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import mu.KotlinLogging
@@ -20,14 +21,18 @@ abstract class UEClass {
         private set
 
     protected fun init(Ar: FArchive) {
-        check(begin < 0 && end < 0) { "UE Class (${this::class.simpleName}) was started to be deserialized but not finished" }
+        if (Ar is FPakArchive)
+            return
+        check(begin < 0 && end < 0) { "UE Class (${this::class.java.simpleName}) was started to be deserialized but not finished" }
         end = -1
         begin = Ar.pos()
         //logger.debug("[${this::class.simpleName}] Starting deserialization at ${Ar.pos()}")
     }
 
     protected fun complete(Ar: FArchive) {
-        check(begin >= 0) { "UE Class (${this::class.simpleName}) was not initialized yet" }
+        if (Ar is FPakArchive)
+            return
+        check(begin >= 0) { "UE Class (${this::class.java.simpleName}) was not initialized yet" }
         end = Ar.pos()
         //logger.debug("[${this::class.simpleName}] Finished deserialization from $begin to $end, ${end - begin} bytes total")
     }

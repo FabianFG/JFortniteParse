@@ -21,7 +21,7 @@ abstract class FArchive : Cloneable {
     abstract fun read(buffer: ByteArray)
     abstract fun printError(): String
 
-    fun read(size: Int): ByteArray {
+    open fun read(size: Int): ByteArray {
         if (!rangeCheck(pos() + size))
             throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
         val res = ByteArray(size)
@@ -30,7 +30,7 @@ abstract class FArchive : Cloneable {
     }
 
     fun isAtStopper() = pos() == size()
-    protected fun rangeCheck(pos: Int) = (0..size()).contains(pos)
+    protected open fun rangeCheck(pos: Int) = (0..size()).contains(pos)
 
     fun readInt8() = read(1)[0]
 

@@ -1,12 +1,16 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 
-package me.fungames.jfortniteparse.converters
+package me.fungames.jfortniteparse.converters.fort
 
+import FortItemCategory
+import me.fungames.jfortniteparse.converters.ue4.toBufferedImage
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.resources.*
 import me.fungames.jfortniteparse.ue4.UEClass
+import me.fungames.jfortniteparse.ue4.assets.FPackageIndex
 import me.fungames.jfortniteparse.ue4.assets.FText
+import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
 import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.athena.AthenaItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortHeroType
@@ -18,11 +22,11 @@ import me.fungames.jfortniteparse.util.scale
 import java.awt.*
 import java.awt.font.TextAttribute
 import java.awt.image.BufferedImage
+import java.io.File
 import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.max
 import kotlin.math.min
 
 object ItemDefinitionInfo {
@@ -37,10 +41,50 @@ object ItemDefinitionInfo {
             return
         initialized.set(true)
         try {
-            throw Exception("Not Implemented")
+            loadSets(fileProvider)
+            loadUserFacingFlags(fileProvider)
         } catch (e: Exception) {
             initialized.set(false)
         }
+    }
+
+
+    private const val setAssetPath = "FortniteGame/Content/Athena/Items/Cosmetics/Metadata/CosmeticSets.uasset"
+    private fun loadSets(fileProvider: FileProvider) : Boolean {
+        val setsPkg = fileProvider.loadGameFile(setAssetPath) ?: return false
+        return try {
+            val table = setsPkg.getExportOfType<UDataTable>()
+            table.rows.forEach { (name, uObject) ->
+                val displayName = uObject.getOrNull<FText>("DisplayName")
+                if (displayName != null)
+                    sets.putIfAbsent(name.text, displayName)
+            }
+            true
+        } catch (e : Exception) {
+            false
+        }
+    }
+    private const val itemCategoriesAssetPath = "FortniteGame/Content/Items/ItemCategories.uasset"
+    private fun loadUserFacingFlags(fileProvider: FileProvider) : Boolean {
+        val itemsPkg = fileProvider.loadGameFile(itemCategoriesAssetPath) ?: return false
+        return try {
+            val itemCategory = itemsPkg.getExportOfType<FortItemCategory>()
+            val requiredImgs = mutableMapOf<FPackageIndex, BufferedImage>()
+            itemCategory.userFacingFlags.forEach { _, (_, index) ->
+                if (!requiredImgs.containsKey(index)) {
+                    val iconPkg = fileProvider.loadGameFile(index)
+                    if (iconPkg != null)
+                        requiredImgs[index] = iconPkg.getExportOfType<UTexture2D>().toBufferedImage()
+                }
+            }
+            itemCategory.userFacingFlags.forEach { flag, (_, index) ->
+                userFacingFlags.putIfAbsent(flag, requiredImgs[index]!!)
+            }
+            true
+        } catch (e : Exception) {
+            false
+        }
+
     }
 }
 
@@ -64,7 +108,7 @@ fun AthenaItemDefinition.createContainer(
     }
     return ItemDefinitionContainer(this, icon)
 }
-
+data class SetName(val set : FText, val wrapper : FText = FText("", "", "Part of the <SetName>{0}</> set."))
 data class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var icon: BufferedImage) : Cloneable {
     val variantsLoaded: Boolean
         get() = itemDefinition.variants.firstOrNull { it.variants.firstOrNull { it.previewIcon != null } != null } != null
@@ -85,16 +129,19 @@ fun getImage(container: ItemDefinitionContainer): BufferedImage {
 
 private const val variantsIconSize = 180
 private const val variantsX = 500
-private const val variantsY = 350
+//private const val variantsY = 350
 private const val variantsSpaceBetween = 5
 private const val variantsMaxPerRow = 7
 private const val variantsBeginX = 11
-fun getImageWithVariants(container: ItemDefinitionContainer): BufferedImage {
+private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     val vars = itemDef.variants
     if (icon.width != variantsIconSize || icon.height != variantsIconSize)
-        icon = icon.scale(variantsIconSize, variantsIconSize)
+        icon = icon.scale(
+            variantsIconSize,
+            variantsIconSize
+        )
 
     val result = itemDef.rarity.getVariantsBackgroundImage()
     val g = result.createGraphics()
@@ -129,10 +176,13 @@ fun getImageWithVariants(container: ItemDefinitionContainer): BufferedImage {
     var cY = 35
     vars.forEach {
         val varCount = it.variants.size
-        g.font = burbank.deriveFont(25f)
-        g.paint = Color.WHITE
-        g.drawString(it.variantChannelName.text, variantsBeginX, cY + 20)
-        cY += g.fontMetrics.height
+        val channelName = it.variantChannelName?.text
+        if (channelName != null) {
+            g.font = burbank.deriveFont(25f)
+            g.paint = Color.WHITE
+            g.drawString(it.variantChannelName.text, variantsBeginX, cY + 20)
+            cY += g.fontMetrics.height
+        }
         var cX = variantsBeginX
         val perRow = min(variantsMaxPerRow, varCount)
         val varSize = if (maxVarSize * perRow + (perRow - 1) * variantsSpaceBetween > variantsX)
@@ -174,12 +224,63 @@ fun getImageWithVariants(container: ItemDefinitionContainer): BufferedImage {
 
     g.drawImage(icon, result.width - 5 - variantsIconSize, result.height - 5 - variantsIconSize, null)
 
+    val displayName = itemDef.displayName?.text?.toUpperCase()
+
+    val rightX = result.width - 5 - variantsIconSize - 10
+    val spaceForString = rightX - 5
+    if (displayName != null) {
+        g.color = Color.WHITE
+        var fontSize = 50f
+        g.font = burbank.deriveFont(Font.PLAIN, fontSize)
+        var fm = g.fontMetrics
+        while (fm.stringWidth(displayName) > spaceForString) {
+            fontSize--
+            g.font = burbank.deriveFont(Font.PLAIN, fontSize)
+            fm = g.fontMetrics
+        }
+        g.drawString(displayName, rightX - fm.stringWidth(displayName), result.width - 52)
+    }
+
+    val description = itemDef.description?.text
+    if (description != null) {
+        g.color = Color.WHITE
+        var fontSize: Float
+        var fm: FontMetrics
+        var y = result.height - 30
+        var lines = description.split("\\r?\\n")
+        if (lines.size > 2) {
+            lines = lines.subList(0, 2)
+            UEClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
+        }
+
+        if (lines.size == 1)
+            y += 7
+        lines.forEach {
+            fontSize = 15f
+            g.font = notoSans.deriveFont(Font.PLAIN, fontSize)
+            fm = g.fontMetrics
+            while (fm.stringWidth(it) > spaceForString) {
+                fontSize--
+                g.font = notoSans.deriveFont(Font.PLAIN, fontSize)
+                fm = g.fontMetrics
+            }
+            g.drawString(it, rightX - fm.stringWidth(it), y)
+            y += 18
+        }
+    }
+    val userFacingFlag = itemDef.userFacingFlags?.text
+    if (userFacingFlag != null && ItemDefinitionInfo.userFacingFlags.containsKey(userFacingFlag)) {
+        var flagIcon = ItemDefinitionInfo.userFacingFlags[userFacingFlag]!!
+        if (flagIcon.width != 45 || flagIcon.height != 45)
+            flagIcon = flagIcon.scale(45, 45)
+        g.drawImage(flagIcon, result.width - 10 - 45, 10, null)
+    }
     return result
 }
 
 private val trackingAttr: Map<TextAttribute, Double> by lazy { mapOf(TextAttribute.TRACKING to 0.03) }
 private const val barHeight = 160
-fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImage {
+private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
@@ -194,7 +295,9 @@ fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImage {
     val notoSans = Resources.notoSans
 
     g.paint = Color(0, 0, 0, 100)
-    g.fillRect(5, 5 + 512 - barHeight, 512, barHeight)
+    g.fillRect(5, 5 + 512 - barHeight, 512,
+        barHeight
+    )
     g.font = burbank
     val displayName = itemDef.displayName?.text?.toUpperCase()
     if (displayName != null) {
@@ -215,8 +318,13 @@ fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImage {
         var fontSize: Float
         var fm: FontMetrics
         var y = icon.height - 50
-        val lines = description.split("\\r?\\n")
+        var lines = description.split("\\r?\\n")
+        if (lines.size > 2) {
+            lines = lines.subList(0, 2)
+            UEClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
+        }
         // TODO Sets
+
         lines.forEach {
             fontSize = 25f
             g.font = notoSans.deriveFont(Font.PLAIN, fontSize)
@@ -230,13 +338,21 @@ fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImage {
             y += 35
         }
     }
+
+    val userFacingFlag = itemDef.userFacingFlags?.text
+    if (userFacingFlag != null && ItemDefinitionInfo.userFacingFlags.containsKey(userFacingFlag)) {
+        var flagIcon = ItemDefinitionInfo.userFacingFlags[userFacingFlag]!!
+        if (flagIcon.width != 64 || flagIcon.height != 64)
+            flagIcon = flagIcon.scale(64, 64)
+        g.drawImage(flagIcon, 10, 10, null)
+    }
     g.dispose()
     return result
 }
 
 private const val featuredAdditionalHeight = 200
 private const val featuredBarHeight = 131
-fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int): BufferedImage {
+private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     if (icon.width != 1024 || icon.height != 1024)
@@ -248,7 +364,9 @@ fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int): Buffer
     g.drawImage(icon.cut(result.width - 22), 11, 11, null)
 
     g.paint = Color(0, 0, 0, 100)
-    g.fillRect(11, 11 + icon.height - featuredAdditionalHeight, result.width - 22, featuredAdditionalHeight)
+    g.fillRect(11, 11 + icon.height - featuredAdditionalHeight, result.width - 22,
+        featuredAdditionalHeight
+    )
 
     val burbank = Resources.burbank
     val notoSans = Resources.notoSans
@@ -297,7 +415,7 @@ fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int): Buffer
 
 private const val dailyAdditionalHeight = 160
 private const val dailyBarHeight = 83
-fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): BufferedImage {
+private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
@@ -313,7 +431,9 @@ fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): BufferedI
     val notoSansBold = Resources.notoSansBold
 
     g.paint = Color(0, 0, 0, 100)
-    g.fillRect(5, 5 + 512 - dailyAdditionalHeight, 512, dailyAdditionalHeight)
+    g.fillRect(5, 5 + 512 - dailyAdditionalHeight, 512,
+        dailyAdditionalHeight
+    )
 
     val displayName = itemDef.displayName?.text?.toUpperCase()
     if (displayName != null) {
@@ -405,4 +525,5 @@ private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: F
 }
 
 private fun loadIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider) =
-    loadFeaturedIcon(itemDefinition, fileProvider) ?: loadNormalIcon(itemDefinition, fileProvider)
+    loadFeaturedIcon(itemDefinition, fileProvider)
+        ?: loadNormalIcon(itemDefinition, fileProvider)

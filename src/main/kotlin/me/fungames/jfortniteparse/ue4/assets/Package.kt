@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets
 
+import FortItemCategory
 import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.gson.GsonBuilder
 import me.fungames.jfortniteparse.exceptions.ParserException
@@ -23,6 +24,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     companion object {
         val packageMagic = 0x9E2A83C1u
         val gson = GsonBuilder()
+            .setPrettyPrinting()
             .registerTypeAdapter(JsonSerializer.packageConverter)
             .registerTypeAdapter(JsonSerializer.importSerializer)
             .registerTypeAdapter(JsonSerializer.exportSerializer)
@@ -85,7 +87,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         exportMap.forEach {
             val exportType = it.classIndex.importName
             uexpAr.seekRelative(it.serialOffset.toInt())
-            var validPos = uexpAr.pos() + it.serialSize
+            val validPos = uexpAr.pos() + it.serialSize
             when (exportType) {
                 //UE generic export classes
                 "Texture2D" -> exports.add(UTexture2D(uexpAr, it))
@@ -95,6 +97,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                 "FortMtxOfferData" -> exports.add(FortMtxOfferData(uexpAr, it))
                 "FortHeroType" -> exports.add(FortHeroType(uexpAr, it))
                 "FortWeaponMeleeItemDefinition" -> exports.add(FortWeaponMeleeItemDefinition(uexpAr, it))
+                "FortItemCategory" -> exports.add(FortItemCategory(uexpAr, it))
                 else -> {
                     if (exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) {
                         exports.add(AthenaItemDefinition(uexpAr, it))

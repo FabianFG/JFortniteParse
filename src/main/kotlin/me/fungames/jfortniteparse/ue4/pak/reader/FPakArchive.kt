@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.pak.reader
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.pak.FPakInfo
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
@@ -20,6 +21,14 @@ abstract class FPakArchive(val fileName : String) : FArchive() {
     override fun pos() = pakPos().toInt()
 
     abstract override fun read(buffer: ByteArray)
+    override fun read(size: Int): ByteArray {
+        if (!rangeCheck(pakPos() + size))
+            throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
+        val res = ByteArray(size)
+        read(res)
+        return res
+    }
+    fun rangeCheck(pos: Long) = (0..pakSize()).contains(pos)
 
     override fun printError() = "FPakArchive Info: pos ${pakPos()}, stopper ${pakSize()}"
 

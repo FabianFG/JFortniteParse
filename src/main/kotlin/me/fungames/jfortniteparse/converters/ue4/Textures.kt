@@ -1,15 +1,11 @@
-package me.fungames.jfortniteparse.converters
+package me.fungames.jfortniteparse.converters.ue4
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
 import me.fungames.kotlinASTC.ASTCCodecImage
 import me.fungames.kotlinASTC.Bitness
-import me.fungames.kotlinASTC.buildQuantizationModeTable
-import me.fungames.kotlinASTC.quantizationModeTable
 import me.fungames.kotlinPointers.asPointer
 import me.fungames.kotlinSquish.Squish
 import java.awt.image.BufferedImage
-import kotlin.experimental.and
 import kotlin.math.floor
 import kotlin.math.sqrt
 

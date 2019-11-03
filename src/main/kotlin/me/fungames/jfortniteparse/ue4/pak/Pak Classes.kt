@@ -53,7 +53,7 @@ class FPakInfo : UEClass {
     var indexHash : ByteArray
     var compressionMethods : MutableList<String>
 
-    constructor(Ar : FArchive, maxNumCompressionMethods : Int = 4) {
+    constructor(Ar : FPakArchive, maxNumCompressionMethods : Int = 4) {
         super.init(Ar)
 
         // New FPakInfo fields

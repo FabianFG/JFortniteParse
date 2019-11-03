@@ -25,8 +25,8 @@ class FBytePakArchive(val data : ByteArray, fileName: String, val offsetInPakFil
     override fun pakPos() = offsetInPakFile
 
     override fun read(buffer: ByteArray) {
-        if (!rangeCheck(pos() + buffer.size))
-            throw ParserException("Serializing behind stopper (${pos()}+${buffer.size} > ${size()})", this)
+        if (!rangeCheck(pakPos() + buffer.size))
+            throw ParserException("Serializing behind stopper (${pakPos()}+${buffer.size} > ${pakSize()})", this)
         for (i in buffer.indices) {
             buffer[i] = data[pos + i]
         }

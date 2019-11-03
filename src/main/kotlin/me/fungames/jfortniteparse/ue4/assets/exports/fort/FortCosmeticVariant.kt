@@ -17,14 +17,14 @@ data class CosmeticVariant(var startUnlocked : Boolean, var isDefault : Boolean,
 @ExperimentalUnsignedTypes
 class FortCosmeticVariant : UEExport {
     override var baseObject: UObject
-    val variantChannelName : FText
+    val variantChannelName : FText?
     val variantChannelTag : FName
     val variants : MutableList<CosmeticVariant>
 
     constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(exportObject) {
         super.init(Ar)
         baseObject = UObject(Ar, exportObject)
-        variantChannelName = baseObject.get("VariantChannelName")
+        variantChannelName = baseObject.getOrNull("VariantChannelName")
         variantChannelTag = baseObject.get<FStructFallback>("VariantChannelTag").get("TagName")
         val searchTag = when(exportObject.classIndex.importName) {
             "FortCosmeticCharacterPartVariant" -> "PartOptions"
