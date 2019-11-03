@@ -4,9 +4,7 @@ fun String.parseHexBinary(): ByteArray {
     val len = this.length
 
     // "111" is not a valid hex encoding.
-    if (len % 2 != 0) {
-        throw IllegalArgumentException("hexBinary needs to be even-length: $this")
-    }
+    require(len % 2 == 0) { "hexBinary needs to be even-length: $this" }
 
     val out = ByteArray(len / 2)
 
@@ -14,9 +12,7 @@ fun String.parseHexBinary(): ByteArray {
     while (i < len) {
         val h = hexToBin(this[i])
         val l = hexToBin(this[i + 1])
-        if (h == -1 || l == -1) {
-            throw IllegalArgumentException("contains illegal character for hexBinary: $this")
-        }
+        require(!(h == -1 || l == -1)) { "contains illegal character for hexBinary: $this" }
 
         out[i / 2] = (h * 16 + l).toByte()
         i += 2
