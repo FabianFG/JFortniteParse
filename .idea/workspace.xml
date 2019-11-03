@@ -2,19 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortItemCategory.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ItemDefinitions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/Sounds.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ue4/Sounds.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/Textures.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ue4/Textures.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/UE Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/UE Classes.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Asset Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Asset Classes.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortCosmeticVariant.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortCosmeticVariant.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/Pak Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/Pak Classes.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FBytePakArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FBytePakArchive.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FPakArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FPakArchive.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FArchive.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/compression/Compression.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/compression/Compression.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -242,7 +231,7 @@
       <workItem from="1572613457137" duration="6333000" />
       <workItem from="1572621300645" duration="6146000" />
       <workItem from="1572690839870" duration="9601000" />
-      <workItem from="1572778826949" duration="14703000" />
+      <workItem from="1572778826949" duration="16920000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -251,7 +240,14 @@
       <option name="project" value="LOCAL" />
       <updated>1572648237801</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="variants images completed, just locres todo">
+      <created>1572798253455</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1572798253455</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -272,7 +268,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="json exporting" />
-    <option name="LAST_COMMIT_MESSAGE" value="json exporting" />
+    <MESSAGE value="variants images completed, just locres todo" />
+    <option name="LAST_COMMIT_MESSAGE" value="variants images completed, just locres todo" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

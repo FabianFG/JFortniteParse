@@ -22,10 +22,12 @@ object Compression {
             CompressionMethod.Zlib -> {
                 val iis = InflaterInputStream(ByteArrayInputStream(compressed))
                 iis.read(decompressed)
+                iis.close()
             }
             CompressionMethod.Gzip -> {
                 val gzipIn = GZIPInputStream(ByteArrayInputStream(compressed))
                 gzipIn.read(decompressed)
+                gzipIn.close()
             }
             CompressionMethod.Oodle -> {
                 Oodle.decompress(compressed, decompressed)
