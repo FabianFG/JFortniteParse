@@ -17,7 +17,7 @@ object Compression {
         when(method) {
             CompressionMethod.None -> {
                 assert(compressed.size == decompressed.size)
-                System.arraycopy(compressed, 0, decompressed, 0, compressed.size)
+                compressed.copyInto(decompressed, 0, 0, compressed.size)
             }
             CompressionMethod.Zlib -> {
                 val iis = InflaterInputStream(ByteArrayInputStream(compressed))

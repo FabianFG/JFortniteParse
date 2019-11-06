@@ -70,7 +70,7 @@ fun UTexture2D.toBufferedImage() : BufferedImage {
             }
         }
         PixelFormatInfo.PF_RGBA8, PixelFormatInfo.PF_R8G8B8A8 -> {
-            System.arraycopy(data, 0, dst, 0, width * height * 4)
+            data.copyInto(dst, 0, 0, width * height * 4)
         }
         PixelFormatInfo.PF_BGRA8, PixelFormatInfo.PF_B8G8R8A8 -> {
             var s = data.asPointer()
@@ -138,7 +138,7 @@ fun UTexture2D.toBufferedImage() : BufferedImage {
             val img = ASTCCodecImage(Bitness.BITNESS_8, width, height, 1, 0, format.blockSizeX, format.blockSizeY)
             img.initializeImage()
             img.decode(data)
-            System.arraycopy(img.toBuffer(), 0, dst, 0, width * height * 4)
+            img.toBuffer().copyInto(dst, 0, 0, width * height * 4)
         }
         //All DXT formats
         PixelFormatInfo.PF_DXT1, PixelFormatInfo.PF_DXT3, PixelFormatInfo.PF_DXT5, PixelFormatInfo.PF_DXT5N -> {
@@ -149,7 +149,7 @@ fun UTexture2D.toBufferedImage() : BufferedImage {
             else
                 Squish.CompressionType.DXT1
             val decompressed = Squish.decompressImage(width, height, data, type)
-            System.arraycopy(decompressed, 0, dst, 0, width * height * 4)
+            decompressed.copyInto(dst, 0, 0, width * height * 4)
         }
     }
 
