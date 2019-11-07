@@ -1,6 +1,6 @@
 # JFortniteParse
 
-### A asset parser for ue4 assets for the jvm written in kotlin
+### An asset parser for ue4 assets for the jvm written in kotlin
 
 **Note: This project is 100% compatible and usable with java**
 
