@@ -4,6 +4,8 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.FPackageIndex
 import me.fungames.jfortniteparse.ue4.assets.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.locres.FnLanguage
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -15,7 +17,7 @@ interface FileProvider {
     fun getGameName() : String
     /**
      * Searches for a gamefile by its path
-     * @param path the path to search for
+     * @param filePath the path to search for
      * @return the game file or null if it wasn't found
      */
     fun findGameFile(filePath : String) : GameFile?
@@ -39,7 +41,7 @@ interface FileProvider {
 
     /**
      * Searches for the game file and then load its contained package
-     * @param path the path to search for
+     * @param filePath the path to search for
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
@@ -54,8 +56,26 @@ interface FileProvider {
     fun loadGameFile(file : GameFile) : Package?
 
     /**
+     * Searches for the game file and then load its contained locres
+     * @param filePath the path to search for
+     * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
+     */
+    @Throws(ParserException::class)
+    fun loadLocres(filePath : String) : Locres?
+
+    /**
+     * Loads a UE4 Locres file
+     * @param file the game file to load
+     * @return the parsed locres or null if the file was not an ue4 locres (.locres)
+     */
+    @Throws(ParserException::class)
+    fun loadLocres(file : GameFile) : Locres?
+
+    fun loadLocres(ln : FnLanguage) = loadLocres(ln.path)
+
+    /**
      * Searches for the game file and then saves all parts of this package
-     * @param path the path to search for
+     * @param filePath the path to search for
      * @return a map with the files name as key and data as value
      */
     fun savePackage(filePath : String) : Map<String, ByteArray>
@@ -69,14 +89,14 @@ interface FileProvider {
 
     /**
      * Searches for the game file and then saves the it
-     * @param path the game file to save
+     * @param filePath the game file to save
      * @return the files data
      */
     fun saveGameFile(filePath : String) : ByteArray?
 
     /**
      * Saves the game file
-     * @param path the game file to save
+     * @param file the game file to save
      * @return the files data
      */
     fun saveGameFile(file: GameFile) : ByteArray

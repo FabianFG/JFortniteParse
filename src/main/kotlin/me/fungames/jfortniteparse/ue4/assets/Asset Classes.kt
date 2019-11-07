@@ -11,6 +11,7 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
+import me.fungames.jfortniteparse.ue4.locres.Locres
 
 @ExperimentalUnsignedTypes
 class UObject : UEExport {
@@ -645,7 +646,7 @@ class UScriptMap : UEClass {
             is FPropertyTagType.TextProperty -> tagType.text.serialize(Ar)
             is FPropertyTagType.StrProperty -> Ar.writeString(tagType.str)
             is FPropertyTagType.SoftObjectPropertyMap -> tagType.guid.serialize(Ar)
-            else -> throw ParserException("Invalid map key/value of class ${tagType::class.simpleName}")
+            else -> throw ParserException("Invalid map key/value of class ${tagType::class.java.simpleName}")
         }
     }
 
@@ -1385,8 +1386,7 @@ class FText : UEClass {
     var nameSpace: String
     var key: String
     var sourceString: String
-    val text : String
-        get() = sourceString
+    var text: String
 
     constructor(Ar: FArchive) {
         super.init(Ar)
@@ -1405,6 +1405,7 @@ class FText : UEClass {
             }
             else -> throw ParserException("Couldn't read history type $historyType")
         }
+        text = sourceString
         super.complete(Ar)
     }
 
@@ -1424,12 +1425,19 @@ class FText : UEClass {
         super.completeWrite(Ar)
     }
 
+    @Suppress("EXPERIMENTAL_UNSIGNED_LITERALS")
     constructor(nameSpace: String, key: String, sourceString: String, flags: UInt = 0u, historyType: Byte = 0) {
         this.nameSpace = nameSpace
         this.key = key
         this.sourceString = sourceString
         this.flags = flags
         this.historyType = historyType
+        this.text = sourceString
+    }
+
+    fun applyLocres(locres: Locres?) {
+        if (locres != null)
+            text = locres.texts.stringData[nameSpace]?.get(key) ?: return
     }
 }
 

@@ -7,6 +7,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortCosmeticVariant
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.locres.Locres
 
 @ExperimentalUnsignedTypes
 class AthenaItemDefinition : UEExport {
@@ -69,6 +70,13 @@ class AthenaItemDefinition : UEExport {
         super.initWrite(Ar)
         baseObject.serialize(Ar)
         super.completeWrite(Ar)
+    }
+
+    override fun applyLocres(locres : Locres?) {
+        displayName?.applyLocres(locres)
+        shortDescription?.applyLocres(locres)
+        description?.applyLocres(locres)
+        variants.forEach { it.applyLocres(locres) }
     }
 
 }

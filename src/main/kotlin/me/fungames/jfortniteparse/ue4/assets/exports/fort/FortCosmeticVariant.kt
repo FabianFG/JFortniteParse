@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UEExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import java.awt.image.BufferedImage
 
 
@@ -52,5 +53,12 @@ class FortCosmeticVariant : UEExport {
         super.initWrite(Ar)
         baseObject.serialize(Ar)
         super.completeWrite(Ar)
+    }
+
+    override fun applyLocres(locres : Locres?) {
+        variantChannelName?.applyLocres(locres)
+        variants.forEach {
+            it.variantName?.applyLocres(locres)
+        }
     }
 }

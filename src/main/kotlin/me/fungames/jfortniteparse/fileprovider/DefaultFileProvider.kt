@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.fileprovider
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
 import mu.KotlinLogging
@@ -164,6 +165,34 @@ class DefaultFileProvider(val folder : File) : FileProvider {
             Package(uasset, uexp, ubulk, file.path)
         } catch (e : Exception) {
             logger.error("Failed to load package ${file.path}", e)
+            null
+        }
+    }
+
+    override fun loadLocres(filePath: String): Locres? {
+        val path = fixPath(filePath)
+        val gameFile = findGameFile(path)
+        if (gameFile != null)
+            return loadLocres(gameFile)
+        if (!path.endsWith(".locres"))
+            return null
+        val locres = saveGameFile(path) ?: return null
+        return try {
+            Locres(locres, path)
+        } catch (e : ParserException) {
+            logger.error("Failed to load locres $path", e)
+            null
+        }
+    }
+
+    override fun loadLocres(file: GameFile): Locres? {
+        if (!file.isLocres())
+            return null
+        val locres = saveGameFile(file)
+        return try {
+            Locres(locres, file.path)
+        } catch (e : Exception) {
+            logger.error("Failed to load locres ${file.path}", e)
             null
         }
     }

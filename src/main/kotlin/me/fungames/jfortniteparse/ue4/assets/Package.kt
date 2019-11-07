@@ -15,6 +15,7 @@ import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArrayArchiveWriter
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import java.io.File
 import java.io.OutputStream
 
@@ -140,6 +141,10 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
      */
     inline fun <reified T : UEExport> getExportsOfType() = exports.filterIsInstance<T>()
 
+    fun applyLocres(locres : Locres?) {
+        exports.forEach { it.applyLocres(locres) }
+    }
+
     fun toJson() = gson.toJson(this)!!
 
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
@@ -201,6 +206,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         if(info.exportCount != exportMap.size)
             throw ParserException("Invalid export count, summary says ${info.exportCount} exports but export map is ${exportMap.size} entries long")
         exportMap.forEach { it.serialize(uassetWriter) }
+        ubulkOutputStream?.close()
     }
 
     fun write(uasset: File, uexp: File, ubulk: File?) {

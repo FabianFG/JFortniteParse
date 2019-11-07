@@ -17,7 +17,9 @@ open class GameFile(val path : String = "", val pos : Long = 0L, val size : Long
     lateinit var uexp : GameFile
     var ubulk : GameFile? = null
 
-    fun isUE4Package() = path.endsWith(".uasset")
+    val extension = path.substringAfterLast('.')
+    fun isUE4Package() = extension == "uasset"
+    fun isLocres() = extension == "locres"
 
     fun hasUexp() = ::uexp.isInitialized
     fun hasUbulk() = ubulk != null
