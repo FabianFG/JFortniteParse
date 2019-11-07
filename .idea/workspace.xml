@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -108,7 +108,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Kotlin.TestKt (1)">
+  <component name="RunManager" selected="Gradle.JFortniteParse [bintrayUpload]">
     <configuration name="JFortniteParse [bintrayPublish]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -194,8 +194,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Kotlin.TestKt (1)" />
         <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
+        <item itemvalue="Kotlin.TestKt (1)" />
         <item itemvalue="Gradle.JFortniteParse [build]" />
         <item itemvalue="Kotlin.TestKt" />
         <item itemvalue="Gradle.JFortniteParse [bintrayPublish]" />
@@ -232,7 +232,7 @@
       <workItem from="1572690839870" duration="9601000" />
       <workItem from="1572778826949" duration="20871000" />
       <workItem from="1573050658023" duration="2109000" />
-      <workItem from="1573147855819" duration="4040000" />
+      <workItem from="1573147855819" duration="9853000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -276,7 +276,14 @@
       <option name="project" value="LOCAL" />
       <updated>1573152277273</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="2.0 release">
+      <created>1573152465683</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1573152465683</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -303,7 +310,8 @@
     <MESSAGE value="use kotlins array copy functions" />
     <MESSAGE value="locres support" />
     <MESSAGE value="locres support finished" />
-    <option name="LAST_COMMIT_MESSAGE" value="locres support finished" />
+    <MESSAGE value="2.0 release" />
+    <option name="LAST_COMMIT_MESSAGE" value="2.0 release" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
