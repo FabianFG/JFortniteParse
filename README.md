@@ -1,3 +1,4 @@
+
 # JFortniteParse
 
 ### An asset parser for ue4 assets for the jvm written in kotlin
@@ -130,7 +131,7 @@ pkg.applyLocres(locres)
 <dependency>
 	<groupId>me.fungames</groupId>
 	<artifactId>JFortniteParse</artifactId>
-	<version>2.0</version>
+	<version>2.0.2</version>
 </dependency>
 ```
 ##### Gradle
@@ -144,6 +145,33 @@ repositories {
 ```
 - Add the dependency
 ```groovy
-implementation 'me.fungames:JFortniteParse:2.0'
+implementation 'me.fungames:JFortniteParse:2.0.2'
+```
+
+### Fortnite Text Hotfixes
+I'm also providing a plugin for Fortnite's text hotfixes
+
+#### Usage
+This example will use a variable locres of the type Locres
+You will need an internet connection to use this
+```kotlin
+locres.applyHotfixes()
+```
+This method will replace all entries from the locres that are overwritten by the hotfix
+Afterwards you can use the locres and apply it to instances of Package etc.
+Texts will be exported with the hotfixed ones
+- Add the dependency
+**Its located in the same repository as the main parser**
+##### Maven
+```xml
+<dependency>
+  <groupId>me.fungames</groupId>
+  <artifactId>JFortniteParseTextHotfixes</artifactId>
+  <version>1.0</version>
+</dependency>
+```
+##### Gradle
+```groovy
+implementation 'me.fungames:JFortniteParseTextHotfixes:1.0'
 ```
 
