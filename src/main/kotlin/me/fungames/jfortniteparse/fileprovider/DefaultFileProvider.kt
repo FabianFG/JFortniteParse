@@ -22,6 +22,8 @@ class DefaultFileProvider(val folder : File) : FileProvider {
     private val requiredKeys = mutableListOf<FGuid>()
     private val mountedPaks = mutableListOf<PakFileReader>()
 
+    override var defaultLocres : Locres? = null
+
 
     init {
         scanFiles(folder)
@@ -103,7 +105,7 @@ class DefaultFileProvider(val folder : File) : FileProvider {
         val uexp = saveGameFile(path.substringBeforeLast(".uasset") + ".uexp") ?: return null
         val ubulk = saveGameFile(path.substringBeforeLast(".uasset") + ".ubulk")
         return try {
-            Package(uasset, uexp, ubulk, path)
+            Package(uasset, uexp, ubulk, path).apply { applyLocres(defaultLocres) }
         } catch (e : ParserException) {
             logger.error("Failed to load package $path", e)
             null
@@ -162,7 +164,7 @@ class DefaultFileProvider(val folder : File) : FileProvider {
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
         return try {
-            Package(uasset, uexp, ubulk, file.path)
+            Package(uasset, uexp, ubulk, file.path).apply { applyLocres(defaultLocres) }
         } catch (e : Exception) {
             logger.error("Failed to load package ${file.path}", e)
             null
@@ -178,7 +180,7 @@ class DefaultFileProvider(val folder : File) : FileProvider {
             return null
         val locres = saveGameFile(path) ?: return null
         return try {
-            Locres(locres, path)
+            Locres(locres, path, getLocresLanguageByPath(filePath))
         } catch (e : ParserException) {
             logger.error("Failed to load locres $path", e)
             null
@@ -190,7 +192,7 @@ class DefaultFileProvider(val folder : File) : FileProvider {
             return null
         val locres = saveGameFile(file)
         return try {
-            Locres(locres, file.path)
+            Locres(locres, file.path, getLocresLanguageByPath(file.path))
         } catch (e : Exception) {
             logger.error("Failed to load locres ${file.path}", e)
             null

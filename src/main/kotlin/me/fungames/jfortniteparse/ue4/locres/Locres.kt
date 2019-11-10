@@ -5,11 +5,11 @@ import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.io.File
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-class Locres(val locres : ByteArray, val fileName : String) {
+class Locres(val locres : ByteArray, val fileName : String, val language: FnLanguage) {
 
     val texts : FTextLocalizationResource
 
-    constructor(locresFile : File) : this(locresFile.readBytes(), locresFile.nameWithoutExtension)
+    constructor(locresFile : File) : this(locresFile.readBytes(), locresFile.nameWithoutExtension, FnLanguage.UNKNOWN)
 
     init {
         val locresAr = FByteArchive(locres)

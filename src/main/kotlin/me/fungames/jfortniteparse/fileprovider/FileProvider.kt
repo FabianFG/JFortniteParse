@@ -71,6 +71,8 @@ interface FileProvider {
     @Throws(ParserException::class)
     fun loadLocres(file : GameFile) : Locres?
 
+    fun getLocresLanguageByPath(filePath: String) = FnLanguage.valueOfLanguageCode(filePath.split("Localization/(.*?)/".toRegex())[1].takeWhile { it != '/' })
+
     fun loadLocres(ln : FnLanguage) = loadLocres(ln.path)
 
     /**
@@ -93,6 +95,8 @@ interface FileProvider {
      * @return the files data
      */
     fun saveGameFile(filePath : String) : ByteArray?
+
+    var defaultLocres : Locres?
 
     /**
      * Saves the game file
