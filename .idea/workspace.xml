@@ -4,10 +4,7 @@
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/DefaultFileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/DefaultFileProvider.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/locres/FnLanguage.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/locres/FnLanguage.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/locres/Locres.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/locres/Locres.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/locres/Locres Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/locres/Locres Classes.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -113,7 +110,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Kotlin.TestKt (1)">
+  <component name="RunManager" selected="Gradle.JFortniteParse [bintrayUpload]">
     <configuration name="JFortniteParse [bintrayPublish]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -199,8 +196,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Kotlin.TestKt (1)" />
         <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
+        <item itemvalue="Kotlin.TestKt (1)" />
         <item itemvalue="Gradle.JFortniteParse [build]" />
         <item itemvalue="Kotlin.TestKt" />
         <item itemvalue="Gradle.JFortniteParse [bintrayPublish]" />
@@ -239,7 +236,7 @@
       <workItem from="1573050658023" duration="2109000" />
       <workItem from="1573147855819" duration="10479000" />
       <workItem from="1573217494912" duration="1895000" />
-      <workItem from="1573382672646" duration="2369000" />
+      <workItem from="1573382672646" duration="3043000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -290,7 +287,14 @@
       <option name="project" value="LOCAL" />
       <updated>1573152465683</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="added option for setting a default locres in file provider&#10;every locres now has its language stored">
+      <created>1573399158022</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1573399158022</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -318,7 +322,9 @@
     <MESSAGE value="locres support" />
     <MESSAGE value="locres support finished" />
     <MESSAGE value="2.0 release" />
-    <option name="LAST_COMMIT_MESSAGE" value="2.0 release" />
+    <MESSAGE value="added option for setting a default locres in file provider&#10;every locres now has its language stored" />
+    <MESSAGE value="locres texts are now in a mutable map" />
+    <option name="LAST_COMMIT_MESSAGE" value="locres texts are now in a mutable map" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

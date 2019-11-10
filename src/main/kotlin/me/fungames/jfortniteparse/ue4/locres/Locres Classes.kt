@@ -15,7 +15,7 @@ class FTextLocalizationResource : UEClass {
 
     var version : UByte
     var strArrayOffset: Long
-    val stringData : Map<String, Map<String, String>>
+    val stringData : MutableMap<String, MutableMap<String, String>>
 
     constructor(Ar : FArchive) {
         super.init(Ar)
