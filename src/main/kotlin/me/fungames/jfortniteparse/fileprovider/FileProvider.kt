@@ -11,6 +11,8 @@ import me.fungames.jfortniteparse.ue4.pak.GameFile
 @Suppress("EXPERIMENTAL_API_USAGE")
 interface FileProvider {
 
+    var game : Int
+
     /**
      * @return the name of the game that is loaded by the provider
      */

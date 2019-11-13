@@ -6,6 +6,7 @@ import me.fungames.jfortniteparse.ue4.assets.*
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_23
 
 @ExperimentalUnsignedTypes
 class UTexture2D : UEExport {
@@ -85,7 +86,7 @@ class FTexturePlatformData : UEClass {
     var firstMip : Int
     var mipCount : Int
     var mips : MutableList<FTexture2DMipMap>
-    //var isVirtual : Boolean
+    var isVirtual : Boolean = false
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
@@ -102,10 +103,12 @@ class FTexturePlatformData : UEClass {
         for (i in 0 until mipCount) {
             mips.add(FTexture2DMipMap(Ar))
         }
-        //isVirtual = Ar.readBoolean()
-        //if(isVirtual)
-        //    throw ParserException("Texture is virtual, not implemented", Ar)
 
+        if (Ar.game >= GAME_UE4_23) {
+            isVirtual = Ar.readBoolean()
+            if(isVirtual)
+                throw ParserException("Texture is virtual, not implemented", Ar)
+        }
         super.complete(Ar)
     }
 
@@ -120,10 +123,11 @@ class FTexturePlatformData : UEClass {
         Ar.writeInt32(firstMip)
         Ar.writeInt32(mipCount)
         mips.forEach {it.serialize(Ar)}
-        //Ar.writeBoolean(isVirtual)
-        //if(isVirtual)
-        //    throw ParserException("Texture is virtual, not implemented", Ar)
-
+        if (Ar.game >= GAME_UE4_23) {
+            Ar.writeBoolean(isVirtual)
+            if(isVirtual)
+                throw ParserException("Texture is virtual, not implemented", Ar)
+        }
         super.completeWrite(Ar)
     }
 
@@ -135,7 +139,7 @@ class FTexturePlatformData : UEClass {
         this.firstMip = firstMip
         this.mipCount = mipCount
         this.mips = mips
-        //this.isVirtual = isVirtual
+        this.isVirtual = isVirtual
     }
 }
 

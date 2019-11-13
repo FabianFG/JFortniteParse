@@ -1,7 +1,8 @@
 package me.fungames.jfortniteparse.ue4.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import java.lang.reflect.Array.getShort
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
+import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -10,6 +11,7 @@ import java.nio.ByteOrder
  */
 @ExperimentalUnsignedTypes
 abstract class FArchive : Cloneable {
+    var game = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)
     abstract var littleEndian: Boolean
 
     abstract override fun clone(): FArchive

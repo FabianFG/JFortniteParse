@@ -6,11 +6,13 @@ import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
+import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
 import mu.KotlinLogging
 import java.io.File
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-class DefaultFileProvider(val folder : File) : FileProvider {
+class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : FileProvider {
 
     companion object {
         val logger = KotlinLogging.logger("JFortniteParse")
@@ -105,7 +107,7 @@ class DefaultFileProvider(val folder : File) : FileProvider {
         val uexp = saveGameFile(path.substringBeforeLast(".uasset") + ".uexp") ?: return null
         val ubulk = saveGameFile(path.substringBeforeLast(".uasset") + ".ubulk")
         return try {
-            Package(uasset, uexp, ubulk, path).apply { applyLocres(defaultLocres) }
+            Package(uasset, uexp, ubulk, path, game).apply { applyLocres(defaultLocres) }
         } catch (e : ParserException) {
             logger.error("Failed to load package $path", e)
             null
@@ -164,7 +166,7 @@ class DefaultFileProvider(val folder : File) : FileProvider {
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
         return try {
-            Package(uasset, uexp, ubulk, file.path).apply { applyLocres(defaultLocres) }
+            Package(uasset, uexp, ubulk, file.path, game).apply { applyLocres(defaultLocres) }
         } catch (e : Exception) {
             logger.error("Failed to load package ${file.path}", e)
             null

@@ -16,11 +16,14 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArrayArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
+import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
 import java.io.File
 import java.io.OutputStream
 
 @ExperimentalUnsignedTypes
-class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, name : String) {
+class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, name : String, var game : Int = GAME_UE4(
+    LATEST_SUPPORTED_UE4_VERSION)) {
 
     companion object {
         val packageMagic = 0x9E2A83C1u
@@ -48,6 +51,9 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     val exports = mutableListOf<UEExport>()
 
     init {
+        uassetAr.game = game
+        uexpAr.game = game
+        ubulkAr?.game = game
         info = FPackageFileSummary(uassetAr)
         if (info.tag != packageMagic)
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
@@ -150,6 +156,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
     private fun updateHeader() {
         val uassetWriter = FByteArrayArchiveWriter()
+        uassetWriter.game = game
         uassetWriter.nameMap = nameMap
         uassetWriter.importMap = importMap
         uassetWriter.exportMap = exportMap
@@ -175,6 +182,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     fun write(uassetOutputStream: OutputStream, uexpOutputStream: OutputStream, ubulkOutputStream: OutputStream?) {
         updateHeader()
         val uexpWriter = writer(uexpOutputStream)
+        uexpWriter.game = game
         uexpWriter.uassetSize = info.totalHeaderSize
         exports.forEach {
             val beginPos = uexpWriter.relativePos()
@@ -185,6 +193,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         }
         uexpWriter.writeUInt32(packageMagic)
         val uassetWriter = writer(uassetOutputStream)
+        uassetWriter.game = game
         info.serialize(uassetWriter)
         val nameMapPadding = info.nameOffset - uassetWriter.pos()
         if(nameMapPadding > 0)
