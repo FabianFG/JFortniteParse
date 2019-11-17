@@ -7,9 +7,14 @@ import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
+import mu.KotlinLogging
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 interface FileProvider {
+
+    companion object {
+        val logger = KotlinLogging.logger("JFortniteParse")
+    }
 
     var game : Int
 
@@ -55,7 +60,7 @@ interface FileProvider {
      * @return the parsed package or null if the file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    fun loadGameFile(file : GameFile) : Package?
+    fun loadGameFile(file: GameFile): Package?
 
     /**
      * Searches for the game file and then load its contained locres
@@ -63,7 +68,7 @@ interface FileProvider {
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    fun loadLocres(filePath : String) : Locres?
+    fun loadLocres(filePath: String): Locres?
 
     /**
      * Loads a UE4 Locres file
@@ -71,7 +76,7 @@ interface FileProvider {
      * @return the parsed locres or null if the file was not an ue4 locres (.locres)
      */
     @Throws(ParserException::class)
-    fun loadLocres(file : GameFile) : Locres?
+    fun loadLocres(file: GameFile): Locres?
 
     fun getLocresLanguageByPath(filePath: String) = FnLanguage.valueOfLanguageCode(filePath.split("Localization/(.*?)/".toRegex())[1].takeWhile { it != '/' })
 
@@ -82,14 +87,14 @@ interface FileProvider {
      * @param filePath the path to search for
      * @return a map with the files name as key and data as value
      */
-    fun savePackage(filePath : String) : Map<String, ByteArray>
+    fun savePackage(filePath: String): Map<String, ByteArray>
 
     /**
      * Saves all parts of this package
      * @param file the game file to save
      * @return a map with the files name as key and data as value
      */
-    fun savePackage(file: GameFile) : Map<String, ByteArray>
+    fun savePackage(file: GameFile): Map<String, ByteArray>
 
     /**
      * Searches for the game file and then saves the it
