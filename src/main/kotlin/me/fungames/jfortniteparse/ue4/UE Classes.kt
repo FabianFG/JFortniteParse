@@ -49,8 +49,13 @@ abstract class UEClass {
     }
 }
 
-@ExperimentalUnsignedTypes
+@Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
 class FGuid : UEClass {
+
+    companion object {
+        val mainGuid : FGuid by lazy { FGuid(0u, 0u, 0u, 0u) }
+    }
+
     var part1: UInt
     var part2: UInt
     var part3: UInt
@@ -73,7 +78,7 @@ class FGuid : UEClass {
         Ar.writeUInt32(part4)
         super.completeWrite(Ar)
     }
-
+    
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

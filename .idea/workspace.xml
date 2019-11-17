@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/AbstractFileProvider.kt" afterDir="false" />
+    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="added main guid constant">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/DefaultFileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/DefaultFileProvider.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/UE Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/UE Classes.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -111,7 +110,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Kotlin.TestKt (1)">
+  <component name="RunManager" selected="Gradle.JFortniteParse [bintrayUpload]">
     <configuration name="JFortniteParse [bintrayPublish]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -197,8 +196,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Kotlin.TestKt (1)" />
         <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
+        <item itemvalue="Kotlin.TestKt (1)" />
         <item itemvalue="Gradle.JFortniteParse [build]" />
         <item itemvalue="Kotlin.TestKt" />
         <item itemvalue="Gradle.JFortniteParse [bintrayPublish]" />
@@ -241,7 +240,7 @@
       <workItem from="1573503539771" duration="591000" />
       <workItem from="1573573042587" duration="605000" />
       <workItem from="1573665129408" duration="3846000" />
-      <workItem from="1573985797524" duration="981000" />
+      <workItem from="1573985797524" duration="3808000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -313,7 +312,21 @@
       <option name="project" value="LOCAL" />
       <updated>1573668690459</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="work for Fortnite Downloader (moved generic file provider functions into abstract file provider)">
+      <created>1573986851409</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1573986851409</updated>
+    </task>
+    <task id="LOCAL-00012" summary="version bump">
+      <created>1573986905419</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1573986905419</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -344,7 +357,10 @@
     <MESSAGE value="added option for setting a default locres in file provider&#10;every locres now has its language stored" />
     <MESSAGE value="locres texts are now in a mutable map" />
     <MESSAGE value="support for different versions and games, old code won't break anymore when something new is added" />
-    <option name="LAST_COMMIT_MESSAGE" value="support for different versions and games, old code won't break anymore when something new is added" />
+    <MESSAGE value="work for Fortnite Downloader (moved generic file provider functions into abstract file provider)" />
+    <MESSAGE value="version bump" />
+    <MESSAGE value="added main guid constant" />
+    <option name="LAST_COMMIT_MESSAGE" value="added main guid constant" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
