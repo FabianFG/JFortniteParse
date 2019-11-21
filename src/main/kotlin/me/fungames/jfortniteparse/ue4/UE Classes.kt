@@ -1,8 +1,12 @@
 package me.fungames.jfortniteparse.ue4
 
+import me.fungames.jfortniteparse.ue4.assets.writer.FByteArrayArchiveWriter
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
+import me.fungames.jfortniteparse.util.parseHexBinary
+import me.fungames.jfortniteparse.util.printHexBinary
 import mu.KotlinLogging
 
 @ExperimentalUnsignedTypes
@@ -60,13 +64,16 @@ class FGuid : UEClass {
     var part2: UInt
     var part3: UInt
     var part4: UInt
+    var hexString : String
 
     constructor(Ar: FArchive) {
         super.init(Ar)
-        part1 = Ar.readUInt32()
-        part2 = Ar.readUInt32()
-        part3 = Ar.readUInt32()
-        part4 = Ar.readUInt32()
+        val ar = FByteArchive(Ar.read(16))
+        part1 = ar.readUInt32()
+        part2 = ar.readUInt32()
+        part3 = ar.readUInt32()
+        part4 = ar.readUInt32()
+        hexString = ar.data.printHexBinary()
         super.complete(Ar)
     }
 
@@ -78,7 +85,7 @@ class FGuid : UEClass {
         Ar.writeUInt32(part4)
         super.completeWrite(Ar)
     }
-    
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -107,6 +114,21 @@ class FGuid : UEClass {
         this.part2 = part2
         this.part3 = part3
         this.part4 = part4
+        val ar = FByteArrayArchiveWriter()
+        ar.writeUInt32(part1)
+        ar.writeUInt32(part2)
+        ar.writeUInt32(part3)
+        ar.writeUInt32(part4)
+        this.hexString = ar.toByteArray().printHexBinary()
+    }
+
+    constructor(hexString : String) {
+        this.hexString = hexString
+        val ar = FByteArchive(hexString.parseHexBinary())
+        part1 = ar.readUInt32()
+        part2 = ar.readUInt32()
+        part3 = ar.readUInt32()
+        part4 = ar.readUInt32()
     }
 
     /**

@@ -21,6 +21,17 @@ fun String.parseHexBinary(): ByteArray {
     return out
 }
 
+private val hexCode = "0123456789ABCDEF".toCharArray()
+
+fun ByteArray.printHexBinary() : String {
+    val r = StringBuilder(size * 2)
+    for (b in this) {
+        r.append(hexCode[b.toInt() shr 4 and 0xF])
+        r.append(hexCode[b.toInt() and 0xF])
+    }
+    return r.toString()
+}
+
 private fun hexToBin(ch: Char): Int {
     if (ch in '0'..'9') {
         return ch - '0'
