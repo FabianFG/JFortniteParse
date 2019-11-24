@@ -18,7 +18,10 @@ class FPakFileArchive(val rafile : RandomAccessFile, val file : File) : FPakArch
     override fun pakPos() = rafile.filePointer
     override fun pos() = pakPos().toInt()
 
-    override fun read(buffer: ByteArray) { rafile.read(buffer) }
+    override fun read(buffer: ByteArray) : Int {
+        rafile.read(buffer)
+        return buffer.size
+    }
 
     override fun printError() = "FPakArchive Info: pos ${pakPos()}, stopper ${pakSize()}"
 

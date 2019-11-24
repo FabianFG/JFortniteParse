@@ -24,13 +24,14 @@ open class FByteArchive(val data : ByteArray) : FArchive() {
 
     override fun pos() = pos
 
-    override fun read(buffer: ByteArray) {
+    override fun read(buffer: ByteArray) : Int {
         if (!rangeCheck(pos() + buffer.size))
             throw ParserException("Serializing behind stopper (${pos()}+${buffer.size} > ${size()})", this)
         for (i in buffer.indices) {
             buffer[i] = data[pos + i]
         }
         pos += buffer.size
+        return buffer.size
     }
 
     override fun printError() = "FByteArrayArchive Info: pos $pos, stopper $size"

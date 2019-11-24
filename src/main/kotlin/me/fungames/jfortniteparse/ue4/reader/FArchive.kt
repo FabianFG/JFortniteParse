@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.ue4.reader
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
+import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -10,7 +11,7 @@ import java.nio.ByteOrder
  * UE4 Generic Binary reader
  */
 @ExperimentalUnsignedTypes
-abstract class FArchive : Cloneable {
+abstract class FArchive : Cloneable, InputStream() {
     var game = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)
     abstract var littleEndian: Boolean
 
@@ -20,7 +21,8 @@ abstract class FArchive : Cloneable {
     abstract fun size(): Int
     abstract fun pos(): Int
 
-    abstract fun read(buffer: ByteArray)
+    abstract override fun read(buffer: ByteArray) : Int
+    override fun read() = read(1)[0].toInt()
     abstract fun printError(): String
 
     open fun read(size: Int): ByteArray {
