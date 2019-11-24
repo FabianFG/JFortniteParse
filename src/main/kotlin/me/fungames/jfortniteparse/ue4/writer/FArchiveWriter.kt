@@ -13,6 +13,7 @@ abstract class FArchiveWriter : OutputStream() {
     abstract var littleEndian: Boolean
     abstract fun pos() : Int
     abstract override fun write(buffer : ByteArray)
+    override fun write(b: Int) = write(byteArrayOf(b.toByte()))
     abstract fun printError() : String
 
     fun writeInt8(i : Byte) {
