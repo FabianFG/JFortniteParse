@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.pak.CompressionMethod
 import me.fungames.oodle.Oodle
 import java.io.ByteArrayInputStream
 import java.util.zip.GZIPInputStream
+import java.util.zip.Inflater
 import java.util.zip.InflaterInputStream
 
 object Compression {
@@ -20,9 +21,10 @@ object Compression {
                 compressed.copyInto(decompressed, 0, 0, compressed.size)
             }
             CompressionMethod.Zlib -> {
-                val iis = InflaterInputStream(ByteArrayInputStream(compressed))
-                iis.read(decompressed)
-                iis.close()
+                val inflater = Inflater()
+                inflater.setInput(compressed, 0, compressed.size)
+                inflater.inflate(decompressed)
+                inflater.end()
             }
             CompressionMethod.Gzip -> {
                 val gzipIn = GZIPInputStream(ByteArrayInputStream(compressed))
