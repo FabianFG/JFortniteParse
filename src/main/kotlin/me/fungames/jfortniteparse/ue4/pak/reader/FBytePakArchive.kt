@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4.pak.reader
 
-import me.fungames.jfortniteparse.exceptions.ParserException
+import kotlin.math.min
 
 @ExperimentalUnsignedTypes
 class FBytePakArchive(val data : ByteArray, fileName: String, val offsetInPakFile : Long, val pakFileSize : Long) : FPakArchive(fileName) {
@@ -25,12 +25,10 @@ class FBytePakArchive(val data : ByteArray, fileName: String, val offsetInPakFil
     override fun pakPos() = offsetInPakFile
 
     override fun read(buffer: ByteArray) : Int {
-        if (!rangeCheck(pakPos() + buffer.size))
-            throw ParserException("Serializing behind stopper (${pakPos()}+${buffer.size} > ${pakSize()})", this)
-        for (i in buffer.indices) {
-            buffer[i] = data[pos + i]
-        }
-        pos += buffer.size
-        return buffer.size
+        val count = min(size - pos, buffer.size)
+        if (count == 0) return -1
+        data.copyInto(buffer, 0, pos, pos + count)
+        pos += count
+        return count
     }
 }

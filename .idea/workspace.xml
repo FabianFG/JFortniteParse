@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="all readers are now inheriting inputstream / outputstream">
+    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FBytePakArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FBytePakArchive.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FPakArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FPakArchive.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FPakFileArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FPakFileArchive.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FArchive.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FByteArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FByteArchive.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/writer/FArchiveWriter.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/writer/FArchiveWriter.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -252,7 +249,8 @@
       <workItem from="1574350215793" duration="2589000" />
       <workItem from="1574436352900" duration="9853000" />
       <workItem from="1574518885684" duration="5836000" />
-      <workItem from="1574610853465" duration="1966000" />
+      <workItem from="1574610853465" duration="5115000" />
+      <workItem from="1574696067557" duration="607000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -359,7 +357,21 @@
       <option name="project" value="LOCAL" />
       <updated>1574611036070</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="all readers are now inheriting inputstream / outputstream">
+      <created>1574617364155</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1574617364155</updated>
+    </task>
+    <task id="LOCAL-00017" summary="all readers are now inheriting inputstream / outputstream">
+      <created>1574617547135</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1574617547135</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -395,7 +407,8 @@
     <MESSAGE value="added main guid constant" />
     <MESSAGE value="added hex string property to fguid" />
     <MESSAGE value="support for BuildPatchManifest" />
-    <option name="LAST_COMMIT_MESSAGE" value="support for BuildPatchManifest" />
+    <MESSAGE value="all readers are now inheriting inputstream / outputstream" />
+    <option name="LAST_COMMIT_MESSAGE" value="all readers are now inheriting inputstream / outputstream" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

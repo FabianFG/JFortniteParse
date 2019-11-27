@@ -9,6 +9,7 @@ import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
+import me.fungames.jfortniteparse.util.parseHexBinary
 import mu.KotlinLogging
 import java.io.File
 import java.io.RandomAccessFile
@@ -124,7 +125,7 @@ class PakFileReader(val Ar : FPakArchive) {
     /**
      * Test whether the given aes key is valid by attempting to read the pak mount point and validating it
      */
-    fun testAesKey(key : String) : Boolean {
+    fun testAesKey(key : ByteArray) : Boolean {
         if (!isEncrypted())
             return true
         Ar.seek(pakInfo.indexOffset)
@@ -151,6 +152,11 @@ class PakFileReader(val Ar : FPakArchive) {
             }
         }
     }
+
+    /**
+     * Test whether the given aes key is valid by attempting to read the pak mount point and validating it
+     */
+    fun testAesKey(key : String) = testAesKey((if (key.startsWith("0x")) key.substring(2) else key).parseHexBinary())
 
     fun readIndex() : List<GameFile> {
         // Prepare index and decrypt if necessary
