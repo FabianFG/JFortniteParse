@@ -132,7 +132,7 @@ class PakFileReader(val Ar : FPakArchive) {
         // Read 128 test bytes and decrypt it with the given key
         val testAr = Ar.createReader(Aes.decrypt(Ar.read(128), key), pakInfo.indexOffset)
         val stringLength = testAr.readInt32()
-        if (stringLength > 512 || stringLength < -512)
+        if (stringLength > 128 || stringLength < -128)
             return false
         // Calculate the pos of the null terminator for this string
         // Then read the null terminator byte and check whether it is actually 0

@@ -12,6 +12,7 @@ class FBytePakArchive(val data : ByteArray, fileName: String, val offsetInPakFil
     override fun clone(): FBytePakArchive {
         val clone = FBytePakArchive(data, fileName, offsetInPakFile, pakFileSize)
         clone.pos = pos
+        clone.pakInfo = pakInfo
         return clone
     }
 

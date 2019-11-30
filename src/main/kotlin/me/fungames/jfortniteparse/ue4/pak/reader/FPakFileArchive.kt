@@ -7,7 +7,11 @@ import java.io.RandomAccessFile
 class FPakFileArchive(val rafile : RandomAccessFile, val file : File) : FPakArchive(file.name) {
     override var littleEndian = true
 
-    override fun clone() = FPakFileArchive(rafile, file)
+    override fun clone(): FPakFileArchive {
+        val clone = FPakFileArchive(rafile, file)
+        clone.pakInfo = pakInfo
+        return clone
+    }
 
     override fun seek(pos : Long) { rafile.seek(pos) }
     override fun seek(pos: Int) = seek(pos.toLong())
