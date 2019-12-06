@@ -106,7 +106,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                 "FortWeaponMeleeItemDefinition" -> exports.add(FortWeaponMeleeItemDefinition(uexpAr, it))
                 "FortItemCategory" -> exports.add(FortItemCategory(uexpAr, it))
                 else -> {
-                    if (exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) {
+                    if ((exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) || exportType == "AthenaItemWrapDefinition") {
                         exports.add(AthenaItemDefinition(uexpAr, it))
                     } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
                         val variant = FortCosmeticVariant(uexpAr, it)

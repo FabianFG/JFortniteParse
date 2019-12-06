@@ -4,9 +4,7 @@
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FBytePakArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FBytePakArchive.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FPakFileArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/reader/FPakFileArchive.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -255,7 +253,10 @@
       <workItem from="1574956557404" duration="599000" />
       <workItem from="1574963932238" duration="600000" />
       <workItem from="1575045587925" duration="25000" />
-      <workItem from="1575119339656" duration="153000" />
+      <workItem from="1575119339656" duration="1562000" />
+      <workItem from="1575193224926" duration="598000" />
+      <workItem from="1575303685257" duration="123000" />
+      <workItem from="1575667840789" duration="116000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -383,7 +384,14 @@
       <option name="project" value="LOCAL" />
       <updated>1574861412630</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="fixed concurrent cloning of archives for pak archive">
+      <created>1575119614609</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1575119614609</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -421,7 +429,9 @@
     <MESSAGE value="support for BuildPatchManifest" />
     <MESSAGE value="all readers are now inheriting inputstream / outputstream" />
     <MESSAGE value="small pak reader improvements" />
-    <option name="LAST_COMMIT_MESSAGE" value="small pak reader improvements" />
+    <MESSAGE value="fixed concurrent cloning of archives for pak archive" />
+    <MESSAGE value="fixed weapon wraps" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed weapon wraps" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
