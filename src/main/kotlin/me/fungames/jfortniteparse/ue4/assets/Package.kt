@@ -7,10 +7,7 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UEClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.exports.*
 import me.fungames.jfortniteparse.ue4.assets.exports.athena.AthenaItemDefinition
-import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortCosmeticVariant
-import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortHeroType
-import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortMtxOfferData
-import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortWeaponMeleeItemDefinition
+import me.fungames.jfortniteparse.ue4.assets.exports.fort.*
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -105,6 +102,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                 "FortHeroType" -> exports.add(FortHeroType(uexpAr, it))
                 "FortWeaponMeleeItemDefinition" -> exports.add(FortWeaponMeleeItemDefinition(uexpAr, it))
                 "FortItemCategory" -> exports.add(FortItemCategory(uexpAr, it))
+                "CatalogMessaging" -> exports.add(FortCatalogMessaging(uexpAr, it))
                 else -> {
                     if ((exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) || exportType == "AthenaItemWrapDefinition") {
                         exports.add(AthenaItemDefinition(uexpAr, it))

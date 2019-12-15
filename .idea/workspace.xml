@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
+    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="fixed weapon wraps">
+      <change afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortCatalogMessaging.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -110,7 +113,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Gradle.JFortniteParse [bintrayUpload]">
+  <component name="RunManager" selected="Kotlin.TestKt (1)">
     <configuration name="JFortniteParse [bintrayUpload]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -196,9 +199,9 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
-        <item itemvalue="Gradle.JFortniteParse [publishMavenPublicationToMavenLocal]" />
         <item itemvalue="Kotlin.TestKt (1)" />
+        <item itemvalue="Gradle.JFortniteParse [publishMavenPublicationToMavenLocal]" />
+        <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
         <item itemvalue="Gradle.JFortniteParse [build]" />
         <item itemvalue="Kotlin.TestKt" />
       </list>
@@ -256,7 +259,14 @@
       <workItem from="1575119339656" duration="1562000" />
       <workItem from="1575193224926" duration="598000" />
       <workItem from="1575303685257" duration="123000" />
-      <workItem from="1575667840789" duration="116000" />
+      <workItem from="1575667840789" duration="827000" />
+      <workItem from="1575713448953" duration="87000" />
+      <workItem from="1575717185980" duration="2229000" />
+      <workItem from="1575799108324" duration="7000" />
+      <workItem from="1575805279598" duration="1859000" />
+      <workItem from="1575905988721" duration="25000" />
+      <workItem from="1576182287717" duration="964000" />
+      <workItem from="1576421142779" duration="1956000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -391,7 +401,14 @@
       <option name="project" value="LOCAL" />
       <updated>1575119614609</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="fixed weapon wraps">
+      <created>1575667967098</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1575667967098</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -476,6 +493,27 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/JFortniteParse$me_fungames_jfortniteparse_ue4_assets_PackageKt.ic" NAME="me.fungames.jfortniteparse.ue4.assets.PackageKt Coverage Results" MODIFIED="1570132770836" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+  </component>
+  <component name="com.vaadin.designer2.intellij.settings.SizePresetsSettingsComponent">
+    <option name="sizePresets">
+      <list>
+        <SizePreset>
+          <option name="caption" value="Phone" />
+          <option name="height" value="568" />
+          <option name="width" value="320" />
+        </SizePreset>
+        <SizePreset>
+          <option name="caption" value="Tablet" />
+          <option name="height" value="1024" />
+          <option name="width" value="768" />
+        </SizePreset>
+        <SizePreset>
+          <option name="caption" value="Desktop" />
+          <option name="height" value="900" />
+          <option name="width" value="1440" />
+        </SizePreset>
+      </list>
+    </option>
   </component>
   <component name="masterDetails">
     <states>

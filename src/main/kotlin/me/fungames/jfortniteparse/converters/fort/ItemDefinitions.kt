@@ -16,13 +16,16 @@ import me.fungames.jfortniteparse.ue4.assets.exports.athena.AthenaItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortHeroType
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortMtxOfferData
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortWeaponMeleeItemDefinition
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.util.cut
 import me.fungames.jfortniteparse.util.drawCenteredString
 import me.fungames.jfortniteparse.util.scale
-import java.awt.*
+import java.awt.Color
+import java.awt.Font
+import java.awt.FontMetrics
+import java.awt.RenderingHints
 import java.awt.font.TextAttribute
 import java.awt.image.BufferedImage
-import java.io.File
 import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -94,7 +97,7 @@ fun AthenaItemDefinition.createContainer(
     loadVariants: Boolean = true, failOnNoIconLoaded: Boolean = false, overrideIcon: BufferedImage? = null
 ): ItemDefinitionContainer {
     ItemDefinitionInfo.init(fileProvider)
-    val icon = loadIcon(this, fileProvider)
+    val icon = overrideIcon ?: loadIcon(this, fileProvider)
         ?: if (failOnNoIconLoaded) throw ParserException("Failed to load icon") else Resources.fallbackIcon
     if (loadVariants) {
         this.variants.forEach { variants ->
@@ -106,18 +109,38 @@ fun AthenaItemDefinition.createContainer(
             }
         }
     }
-    return ItemDefinitionContainer(this, icon)
+    var setText : FText? = null
+    val setName = this.set
+    if (setName != null)
+        setText = ItemDefinitionInfo.sets[setName.text]
+    return ItemDefinitionContainer(this, icon, setText)
 }
-data class SetName(val set : FText, val wrapper : FText = FText("", "", "Part of the <SetName>{0}</> set."))
-data class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var icon: BufferedImage) : Cloneable {
+data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics", "CosmeticItemDescription_SetMembership", "Part of the <SetName>{0}</> set.")) {
+    fun applyLocres(locres: Locres?) {
+        set.applyLocres(locres)
+        wrapper.applyLocres(locres)
+    }
+
+    val finalText : String
+        get() = wrapper.text.replace("<SetName>{0}</>", set.text)
+}
+class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var icon: BufferedImage, setText : FText?) : Cloneable {
+
+    var setName = setText?.let { SetName(setText) }
+
     val variantsLoaded: Boolean
-        get() = itemDefinition.variants.firstOrNull { it.variants.firstOrNull { it.previewIcon != null } != null } != null
+        get() = itemDefinition.variants.firstOrNull { variant -> variant.variants.firstOrNull { it.previewIcon != null } != null } != null
 
     fun getImage() = getImage(this)
     fun getImageWithVariants() = getImageWithVariants(this)
     fun getImageNoVariants() = getImageNoVariants(this)
     fun getShopFeaturedImage(price: Int) = getShopFeaturedImage(this, price)
     fun getShopDailyImage(price: Int) = getShopDailyImage(this, price)
+
+    fun applyLocres(locres : Locres?) {
+        itemDefinition.applyLocres(locres)
+        setName?.applyLocres(locres)
+    }
 }
 
 fun getImage(container: ItemDefinitionContainer): BufferedImage {
@@ -143,10 +166,12 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
             variantsIconSize
         )
 
-    val result = itemDef.rarity.getVariantsBackgroundImage()
+    val rarity = itemDef.rarity.getVariantsBackgroundImage()
+    val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.drawImage(rarity, 0, 0, null)
 
     val burbank = Resources.burbank
     val notoSans = Resources.notoSans
@@ -248,6 +273,10 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
         var fm: FontMetrics
         var y = result.height - 30
         var lines = description.split("\\r?\\n")
+        val setText = container.setName?.finalText
+        if (setText != null) {
+            lines = lines.toMutableList().apply { this.add(setText) }
+        }
         if (lines.size > 2) {
             lines = lines.subList(0, 2)
             UEClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
@@ -285,10 +314,12 @@ private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImag
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
         icon = icon.scale(512, 512)
-    val result = itemDef.rarity.getBackgroundImage()
+    val rarity = itemDef.rarity.getBackgroundImage()
+    val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.drawImage(rarity, 0, 0, null)
     g.drawImage(icon, 5, 5, null)
 
     val burbank = Resources.burbank
@@ -319,6 +350,10 @@ private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImag
         var fm: FontMetrics
         var y = icon.height - 50
         var lines = description.split("\\r?\\n")
+        val setText = container.setName?.finalText
+        if (setText != null) {
+            lines = lines.toMutableList().apply { this.add(setText) }
+        }
         if (lines.size > 2) {
             lines = lines.subList(0, 2)
             UEClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
@@ -357,10 +392,12 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
     var icon = container.icon
     if (icon.width != 1024 || icon.height != 1024)
         icon = icon.scale(1024, 1024)
-    val result = itemDef.rarity.getFeaturedShopBackgroundImage()
+    val rarity = itemDef.rarity.getFeaturedShopBackgroundImage()
+    val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.drawImage(rarity, 0, 0, null)
     g.drawImage(icon.cut(result.width - 22), 11, 11, null)
 
     g.paint = Color(0, 0, 0, 100)
@@ -420,10 +457,12 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
         icon = icon.scale(512, 512)
-    val result = itemDef.rarity.getDailyShopBackgroundImage()
+    val rarity = itemDef.rarity.getDailyShopBackgroundImage()
+    val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.drawImage(rarity, 0, 0, null)
     g.drawImage(icon, 5, 5, null)
 
     val burbank = Resources.burbank

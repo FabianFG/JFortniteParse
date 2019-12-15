@@ -124,7 +124,7 @@ interface FileProvider {
         val lastPart = path.substringAfterLast('/')
         if (lastPart.contains('.') && lastPart.substringBefore('.') == lastPart.substringAfter('.'))
             path = path.substringBeforeLast('/') + "/" + lastPart.substringBefore('.')
-        if (!path.substringAfterLast('/').contains('.'))
+        if (!path.endsWith('/') && !path.substringAfterLast('/').contains('.'))
             path += ".uasset"
         if (path.startsWith("Game/")) {
             val gameName = getGameName()
