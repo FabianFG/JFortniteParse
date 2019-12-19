@@ -1,14 +1,12 @@
 package me.fungames.jfortniteparse.ue4.pak
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
+import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.parseHexBinary
 import mu.KotlinLogging
 import java.io.File
@@ -17,9 +15,6 @@ import kotlin.math.min
 
 @ExperimentalUnsignedTypes
 class PakFileReader(val Ar : FPakArchive) {
-    companion object {
-        val logger = KotlinLogging.logger("PakFile")
-    }
     constructor(file : File) : this(FPakFileArchive(RandomAccessFile(file, "r"), file))
     constructor(filePath : String) : this(File(filePath))
 
@@ -122,35 +117,18 @@ class PakFileReader(val Ar : FPakArchive) {
         }
     }
 
+    fun indexCheckBytes() : ByteArray {
+        Ar.seek(pakInfo.indexOffset)
+        return Ar.read(128)
+    }
+
     /**
      * Test whether the given aes key is valid by attempting to read the pak mount point and validating it
      */
     fun testAesKey(key : ByteArray) : Boolean {
         if (!isEncrypted())
             return true
-        Ar.seek(pakInfo.indexOffset)
-        // Read 128 test bytes and decrypt it with the given key
-        val testAr = Ar.createReader(Aes.decrypt(Ar.read(128), key), pakInfo.indexOffset)
-        val stringLength = testAr.readInt32()
-        if (stringLength > 128 || stringLength < -128)
-            return false
-        // Calculate the pos of the null terminator for this string
-        // Then read the null terminator byte and check whether it is actually 0
-        return when {
-            stringLength == 0 -> testAr.readUInt16() == 0.toUShort()
-            stringLength < 0 -> {
-                // UTF16
-                val nullTerminatorPos = 4 - (stringLength - 1) * 2
-                testAr.seek(nullTerminatorPos)
-                testAr.readInt16() == 0.toShort()
-            }
-            else -> {
-                // UTF8
-                val nullTerminatorPos = 4 + stringLength - 1
-                testAr.seek(nullTerminatorPos)
-                testAr.readInt8() == 0.toByte()
-            }
-        }
+        return testAesKey(indexCheckBytes(), key)
     }
 
     /**
@@ -226,6 +204,31 @@ class PakFileReader(val Ar : FPakArchive) {
         return this.files
     }
 
+    companion object {
+        val logger = KotlinLogging.logger("PakFile")
 
-
+        fun testAesKey(bytes : ByteArray, key : ByteArray) : Boolean {
+            val testAr = FByteArchive(Aes.decrypt(bytes, key))
+            val stringLength = testAr.readInt32()
+            if (stringLength > 128 || stringLength < -128)
+                return false
+            // Calculate the pos of the null terminator for this string
+            // Then read the null terminator byte and check whether it is actually 0
+            return when {
+                stringLength == 0 -> testAr.readUInt16() == 0.toUShort()
+                stringLength < 0 -> {
+                    // UTF16
+                    val nullTerminatorPos = 4 - (stringLength - 1) * 2
+                    testAr.seek(nullTerminatorPos)
+                    testAr.readInt16() == 0.toShort()
+                }
+                else -> {
+                    // UTF8
+                    val nullTerminatorPos = 4 + stringLength - 1
+                    testAr.seek(nullTerminatorPos)
+                    testAr.readInt8() == 0.toByte()
+                }
+            }
+        }
+    }
 }

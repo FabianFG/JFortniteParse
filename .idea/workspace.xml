@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="fixed weapon wraps">
-      <change afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortCatalogMessaging.kt" afterDir="false" />
+    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -113,7 +110,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Kotlin.TestKt (1)">
+  <component name="RunManager" selected="Gradle.JFortniteParse [bintrayUpload]">
     <configuration name="JFortniteParse [bintrayUpload]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -199,9 +196,9 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
         <item itemvalue="Kotlin.TestKt (1)" />
         <item itemvalue="Gradle.JFortniteParse [publishMavenPublicationToMavenLocal]" />
-        <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
         <item itemvalue="Gradle.JFortniteParse [build]" />
         <item itemvalue="Kotlin.TestKt" />
       </list>
@@ -266,7 +263,11 @@
       <workItem from="1575805279598" duration="1859000" />
       <workItem from="1575905988721" duration="25000" />
       <workItem from="1576182287717" duration="964000" />
-      <workItem from="1576421142779" duration="1956000" />
+      <workItem from="1576421142779" duration="2889000" />
+      <workItem from="1576510660065" duration="750000" />
+      <workItem from="1576662792965" duration="264000" />
+      <workItem from="1576772951920" duration="17000" />
+      <workItem from="1576773889938" duration="1405000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -408,7 +409,14 @@
       <option name="project" value="LOCAL" />
       <updated>1575667967098</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="support for set names&#10;added catalog messages">
+      <created>1576423186335</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1576423186335</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -448,7 +456,8 @@
     <MESSAGE value="small pak reader improvements" />
     <MESSAGE value="fixed concurrent cloning of archives for pak archive" />
     <MESSAGE value="fixed weapon wraps" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed weapon wraps" />
+    <MESSAGE value="support for set names&#10;added catalog messages" />
+    <option name="LAST_COMMIT_MESSAGE" value="support for set names&#10;added catalog messages" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
