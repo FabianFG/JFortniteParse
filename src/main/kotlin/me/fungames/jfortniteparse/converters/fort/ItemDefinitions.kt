@@ -177,8 +177,8 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
     val notoSans = Resources.notoSans
 
     //Remove numeric and pattern channels (used for soccer skins, cannot be displayed properly)
-    vars.removeIf { it.variantChannelTag.text == "Cosmetics.Variant.Channel.Pattern" || it.variantChannelTag.text == "Cosmetics.Variant.Channel.Numeric"
-            || it.variantChannelTag.text.contains("PATTERN") || it.variantChannelTag.text.contains("NUMBER")}
+    vars.removeIf { it.variantChannelTag?.text == "Cosmetics.Variant.Channel.Pattern" || it.variantChannelTag?.text == "Cosmetics.Variant.Channel.Numeric"
+            || it.variantChannelTag?.text?.contains("PATTERN") == true || it.variantChannelTag?.text?.contains("NUMBER") == true}
 
     var numChannels = vars.size
 
