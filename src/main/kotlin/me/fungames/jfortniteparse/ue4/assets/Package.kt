@@ -104,7 +104,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                 "FortItemCategory" -> exports.add(FortItemCategory(uexpAr, it))
                 "CatalogMessaging" -> exports.add(FortCatalogMessaging(uexpAr, it))
                 else -> {
-                    if ((exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) || exportType == "AthenaItemWrapDefinition") {
+                    if ((exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) || exportType == "AthenaItemWrapDefinition" || exportType == "FortBannerTokenType") {
                         exports.add(AthenaItemDefinition(uexpAr, it))
                     } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
                         val variant = FortCosmeticVariant(uexpAr, it)

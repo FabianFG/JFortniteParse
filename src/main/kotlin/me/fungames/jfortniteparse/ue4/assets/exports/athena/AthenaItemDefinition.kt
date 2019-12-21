@@ -63,7 +63,7 @@ class AthenaItemDefinition : UEExport {
         displayName = baseObject.getOrNull("DisplayName")
         shortDescription = baseObject.getOrNull("ShortDescription")
         description = baseObject.getOrNull("Description")
-        gameplayTags = baseObject.get("GameplayTags")
+        gameplayTags = baseObject.getOrNull("GameplayTags")?: FGameplayTagContainer(mutableListOf())
         super.complete(Ar)
     }
     override fun serialize(Ar: FAssetArchiveWriter) {

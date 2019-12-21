@@ -4,8 +4,8 @@
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortCosmeticVariant.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortCosmeticVariant.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/athena/AthenaItemDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/athena/AthenaItemDefinition.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -111,7 +111,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Gradle.JFortniteParse [bintrayUpload]">
+  <component name="RunManager" selected="Kotlin.TestKt (1)">
     <configuration name="JFortniteParse [bintrayUpload]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -197,8 +197,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
         <item itemvalue="Kotlin.TestKt (1)" />
+        <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
         <item itemvalue="Gradle.JFortniteParse [publishMavenPublicationToMavenLocal]" />
         <item itemvalue="Gradle.JFortniteParse [build]" />
         <item itemvalue="Kotlin.TestKt" />
@@ -269,7 +269,7 @@
       <workItem from="1576662792965" duration="264000" />
       <workItem from="1576772951920" duration="17000" />
       <workItem from="1576773889938" duration="2200000" />
-      <workItem from="1576951328554" duration="187000" />
+      <workItem from="1576951328554" duration="1338000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -425,7 +425,14 @@
       <option name="project" value="LOCAL" />
       <updated>1576775489497</updated>
     </task>
-    <option name="localTasksCounter" value="23" />
+    <task id="LOCAL-00023" summary="breaking: variantChannelTag is now nullable">
+      <created>1576951605892</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1576951605892</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -467,7 +474,8 @@
     <MESSAGE value="fixed weapon wraps" />
     <MESSAGE value="support for set names&#10;added catalog messages" />
     <MESSAGE value="refactored some pak functions for optimization purposes" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactored some pak functions for optimization purposes" />
+    <MESSAGE value="breaking: variantChannelTag is now nullable" />
+    <option name="LAST_COMMIT_MESSAGE" value="breaking: variantChannelTag is now nullable" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -488,18 +496,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
-          <line>53</line>
+          <line>54</line>
           <option name="timeStamp" value="16" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/UTexture2D.kt</url>
           <line>106</line>
           <option name="timeStamp" value="18" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
-          <line>29</line>
-          <option name="timeStamp" value="21" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
