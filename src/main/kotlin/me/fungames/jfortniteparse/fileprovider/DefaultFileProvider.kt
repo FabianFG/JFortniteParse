@@ -16,7 +16,7 @@ import java.io.File
 class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : AbstractFileProvider() {
 
     private val localFiles = mutableMapOf<String, File>()
-    private val files = mutableMapOf<String, GameFile>()
+    override val files = mutableMapOf<String, GameFile>()
     private val unloadedPaks = mutableListOf<PakFileReader>()
     private val requiredKeys = mutableListOf<FGuid>()
     private val mountedPaks = mutableListOf<PakFileReader>()
@@ -27,8 +27,6 @@ class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(
     init {
         scanFiles(folder)
     }
-
-    override fun getGameName() = files.keys.firstOrNull { it.substringBefore('/').endsWith("Game") }?.substringBefore("Game") ?: ""
 
 
     private fun scanFiles(folder : File) {
@@ -62,9 +60,8 @@ class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(
         }
     }
 
-    fun requiredKeys() : List<FGuid> = requiredKeys
-    fun submitKey(guid : FGuid, key : String) = submitKeys(mapOf(guid to key))
-    fun submitKeys(keys : Map<FGuid, String>): Int {
+    override fun requiredKeys() : List<FGuid> = requiredKeys
+    override fun submitKeys(keys : Map<FGuid, String>): Int {
         var countNewMounts = 0
         keys.forEach { (guid, key) ->
             if (requiredKeys.contains(guid)) {

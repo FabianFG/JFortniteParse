@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.fileprovider
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.assets.FPackageIndex
 import me.fungames.jfortniteparse.ue4.assets.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.assets.Package
@@ -17,11 +18,16 @@ interface FileProvider {
     }
 
     var game : Int
+    val files : Map<String, GameFile>
+
+    fun requiredKeys() : List<FGuid>
+    fun submitKey(guid : FGuid, key : String) = submitKeys(mapOf(guid to key))
+    fun submitKeys(keys : Map<FGuid, String>) : Int
 
     /**
      * @return the name of the game that is loaded by the provider
      */
-    fun getGameName() : String
+    fun getGameName() = files.keys.firstOrNull { it.substringBefore('/').endsWith("Game") }?.substringBefore("Game") ?: ""
     /**
      * Searches for a gamefile by its path
      * @param filePath the path to search for
