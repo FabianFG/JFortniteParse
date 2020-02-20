@@ -1,5 +1,7 @@
 package me.fungames.jfortniteparse.util
 
+import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.kotlinPointers.BytePointer
 import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -21,3 +23,20 @@ fun BufferedImage.cut(newWidth: Int): BufferedImage {
 fun Graphics2D.drawCenteredString(s : String, x : Int, y : Int) {
     drawString(s, x - fontMetrics.stringWidth(s) / 2, y)
 }
+
+@ExperimentalUnsignedTypes
+fun BytePointer.toUInt32() = FByteArchive(byteArrayOf(this[0],
+        this[1],
+        this[2],
+        this[3]))
+        .readUInt32()
+@ExperimentalUnsignedTypes
+fun BytePointer.toInt64() = FByteArchive(byteArrayOf(this[0],
+    this[1],
+    this[2],
+    this[3],
+    this[4],
+    this[5],
+    this[6],
+    this[7]))
+    .readInt64()

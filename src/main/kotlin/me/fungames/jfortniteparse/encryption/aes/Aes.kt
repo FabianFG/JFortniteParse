@@ -8,6 +8,9 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 object Aes {
+
+    const val BLOCK_SIZE = 16
+
     private fun parseKey(key: String) : ByteArray {
         val data = if (key.startsWith("0x"))
             key.substring(2).parseHexBinary()
@@ -22,20 +25,20 @@ object Aes {
     fun decrypt(encrypted : ByteArray, key : ByteArray): ByteArray {
         val cipher = Cipher.getInstance("AES/CBC/NoPadding")
         val secretKeySpec = SecretKeySpec(key, "AES")
-        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, IvParameterSpec(ByteArray(16)))
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, IvParameterSpec(ByteArray(BLOCK_SIZE)))
         val out = ByteArrayOutputStream()
-        for (i in 0 until encrypted.size step 16)
-            out.write(cipher.doFinal(encrypted.copyOfRange(i, i + 16)))
+        for (i in encrypted.indices step BLOCK_SIZE)
+            out.write(cipher.doFinal(encrypted.copyOfRange(i, i + BLOCK_SIZE)))
         return out.toByteArray()
     }
     fun encrypt(decrypted: ByteArray, key : String) = encrypt(decrypted, parseKey(key))
     fun encrypt(decrypted : ByteArray, key : ByteArray): ByteArray {
         val cipher = Cipher.getInstance("AES/CBC/NoPadding")
         val secretKeySpec = SecretKeySpec(key, "AES")
-        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, IvParameterSpec(ByteArray(16)))
+        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, IvParameterSpec(ByteArray(BLOCK_SIZE)))
         val out = ByteArrayOutputStream()
-        for (i in 0 until decrypted.size step 16)
-            out.write(cipher.doFinal(decrypted.copyOfRange(i, i + 16)))
+        for (i in decrypted.indices step BLOCK_SIZE)
+            out.write(cipher.doFinal(decrypted.copyOfRange(i, i + BLOCK_SIZE)))
         return out.toByteArray()
     }
 

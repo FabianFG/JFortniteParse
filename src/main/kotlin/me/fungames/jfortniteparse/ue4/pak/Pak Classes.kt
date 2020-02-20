@@ -15,8 +15,12 @@ const val PakVersion_RelativeChunkOffsets = 5           // UE4.20+
 const val PakVersion_DeleteRecords = 6                  // UE4.21+ - this constant is not used in UE4 code
 const val PakVersion_EncryptionKeyGuid = 7              // ... allows to use multiple encryption keys over the single project
 const val PakVersion_FNameBasedCompressionMethod = 8    // UE4.22+ - use string instead of enum for compression method
-const val PakVersion_Last = 9
+const val PakVersion_FrozenIndex = 9
+const val PakVersion_PathHashIndex = 10
+const val PakVersion_Last = 11
 const val PakVersion_Latest = PakVersion_Last - 1
+
+const val INDEX_NONE = -1
 
 @ExperimentalUnsignedTypes
 class FPakInfo : UEClass {
@@ -52,6 +56,7 @@ class FPakInfo : UEClass {
     var indexSize : Long
     var indexHash : ByteArray
     var compressionMethods : MutableList<String>
+    var indexIsFrozen : Boolean = false
 
     constructor(Ar : FPakArchive, maxNumCompressionMethods : Int = 4) {
         super.init(Ar)
@@ -68,6 +73,12 @@ class FPakInfo : UEClass {
         indexOffset = Ar.readInt64()
         indexSize = Ar.readInt64()
         indexHash = Ar.read(20)
+        if (this.version in PakVersion_FrozenIndex until PakVersion_PathHashIndex) {
+            indexIsFrozen = Ar.readBoolean()
+            if (indexIsFrozen) {
+                logger.warn { "Frozen PakFile Index" }
+            }
+        }
         compressionMethods = mutableListOf()
         if (this.version >= PakVersion_FNameBasedCompressionMethod) {
             compressionMethods.add("None")
@@ -121,6 +132,29 @@ class FPakEntry : UEClass {
     var isEncrypted : Boolean = false
     var compressionBlockSize : Int = 0
 
+    companion object {
+        @JvmStatic
+        fun getSerializedSize(version : Int, compressionMethod : Int = 0, compressionBlocksCount : Int = 0): Int {
+            var serializedSize = /*pos*/ 8 + /*size*/ 8 + /*uncompressedSize*/ 8 + /*hash*/ 20
+            serializedSize += if (version >= PakVersion_FNameBasedCompressionMethod) {
+                4
+            } else {
+                4 // Old CompressedMethod var from pre-fname based compression methods
+            }
+
+            if (version >= PakVersion_CompressionEncryption) {
+                serializedSize += /*isEncrypted*/ 1 + /*compressionBlockSize*/ 4
+                if (compressionMethod != 0) {
+                    serializedSize += /*FPakCompressedBlock*/ 8 * 2 * compressionBlocksCount + /*int32*/ 4
+                }
+            }
+            if (version < PakVersion_NoTimestamps) {
+                serializedSize += /*timestamp*/ 8
+            }
+            return serializedSize
+        }
+    }
+
     constructor(Ar: FPakArchive, inIndex : Boolean) {
         super.init(Ar)
         name = if (inIndex) Ar.readString() else ""
@@ -160,4 +194,33 @@ class FPakEntry : UEClass {
         }
         super.complete(Ar)
     }
+
+    constructor(
+        pakInfo: FPakInfo,
+        name: String,
+        pos: Long,
+        size: Long,
+        uncompressedSize: Long,
+        compressionMethodIndex: Int,
+        hash: ByteArray,
+        compressionBlocks: Array<FPakCompressedBlock>,
+        isEncrypted: Boolean,
+        compressionBlockSize: Int
+    ) : super() {
+        this.name = name
+        this.pos = pos
+        this.size = size
+        this.uncompressedSize = uncompressedSize
+        this.compressionMethod = try {
+            CompressionMethod.valueOf(pakInfo.compressionMethods[compressionMethodIndex])
+        } catch (e : IllegalArgumentException) {
+            CompressionMethod.Unknown
+        }
+        this.hash = hash
+        this.compressionBlocks = compressionBlocks
+        this.isEncrypted = isEncrypted
+        this.compressionBlockSize = compressionBlockSize
+    }
+
+
 }
