@@ -3,11 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/encryption/aes/Aes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/encryption/aes/Aes.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/Pak Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/Pak Classes.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/util/Extensions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/util/Extensions.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -280,7 +276,7 @@
       <workItem from="1578677264129" duration="704000" />
       <workItem from="1578766184381" duration="663000" />
       <workItem from="1581337779772" duration="614000" />
-      <workItem from="1582196721083" duration="20044000" />
+      <workItem from="1582196721083" duration="23716000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -457,7 +453,14 @@
       <option name="project" value="LOCAL" />
       <updated>1577992099316</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="pak version 9 + 10 support (for Fortnite 12.00), updated dependencies">
+      <created>1582218173657</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1582218173657</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -477,7 +480,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="json exporting" />
     <MESSAGE value="variants images completed, just locres todo" />
     <MESSAGE value="small resource leak" />
     <MESSAGE value="locres parsing support" />
@@ -502,7 +504,8 @@
     <MESSAGE value="breaking: variantChannelTag is now nullable" />
     <MESSAGE value="added support for FortBannerTokenType" />
     <MESSAGE value="some function refactoring" />
-    <option name="LAST_COMMIT_MESSAGE" value="some function refactoring" />
+    <MESSAGE value="pak version 9 + 10 support (for Fortnite 12.00), updated dependencies" />
+    <option name="LAST_COMMIT_MESSAGE" value="pak version 9 + 10 support (for Fortnite 12.00), updated dependencies" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

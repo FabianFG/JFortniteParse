@@ -227,7 +227,7 @@ class PakFileReader(val Ar : FPakArchive) {
 
         val tempMap = mutableMapOf<String, GameFile>()
         for (indexCount in 0 until filesNum) {
-            val entry = FPakEntry(primaryIndexAr, true)
+            val entry = FPakEntry(primaryIndexAr, false)
             val gameFile = GameFile(entry, mountPrefix, fileName)
             if (gameFile.isEncrypted)
                 this.encryptedFileCount++
@@ -374,11 +374,7 @@ class PakFileReader(val Ar : FPakArchive) {
 
         var sourcePtr = BytePointer(encodedPakEntries)
         sourcePtr += entryOffset
-        val value = FByteArchive(byteArrayOf(sourcePtr[0],
-            sourcePtr[1],
-            sourcePtr[2],
-            sourcePtr[3]))
-            .readUInt32()
+        val value = sourcePtr.toUInt32()
         sourcePtr += 4
 
         // Filter out the CompressionMethod.
