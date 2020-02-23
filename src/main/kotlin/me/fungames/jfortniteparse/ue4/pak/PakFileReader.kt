@@ -338,7 +338,7 @@ class PakFileReader(val Ar : FPakArchive) {
                     it.uexp = uexp
                 val ubulk = tempMap[it.path.substringBeforeLast(".uasset") + ".ubulk"]
                 if(ubulk != null)
-                    it.uexp = ubulk
+                    it.ubulk = ubulk
                 files.add(it)
             } else {
                 //if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))
@@ -527,7 +527,7 @@ class PakFileReader(val Ar : FPakArchive) {
                     it.uexp = uexp
                 val ubulk = tempMap[it.path.substringBeforeLast(".uasset") + ".ubulk"]
                 if(ubulk != null)
-                    it.uexp = ubulk
+                    it.ubulk = ubulk
                 files.add(it)
             } else {
                 //if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))

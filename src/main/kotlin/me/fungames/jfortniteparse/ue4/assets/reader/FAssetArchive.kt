@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.ue4.assets.FNameEntry
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.FObjectImport
+import me.fungames.jfortniteparse.ue4.assets.FPackageFileSummary
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
@@ -23,6 +24,7 @@ class FAssetArchive(data : ByteArray) : FByteArchive(data) {
     private var payloads = mutableMapOf<PayloadType, FAssetArchive>()
     var uassetSize = 0
     var uexpSize = 0
+    var info : FPackageFileSummary? = null
 
     fun getPayload(type: PayloadType) = payloads[type] ?: throw ParserException("${type.name} is needed to parse the current package")
     fun addPayload(type: PayloadType, payload : FAssetArchive) {

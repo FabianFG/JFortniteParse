@@ -6,7 +6,7 @@ plugins {
 }
 
 group "me.fungames"
-version "2.3"
+version "2.3.1"
 
 repositories {
     mavenCentral()

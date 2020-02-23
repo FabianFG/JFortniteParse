@@ -2050,13 +2050,13 @@ class FByteBulkData : UEClass {
                 logger.warn("Bulk with no data")
             }
             EBulkData.BULKDATA_ForceInlinePayload.check(bulkDataFlags) -> {
-                logger.debug("bulk data in .uexp file (Force Inline Payload) (flags=$bulkDataFlags, pos=${Ar.toNormalPos(header.offsetInFile.toInt())}, size=${header.sizeOnDisk})")
+                logger.debug("bulk data in .uexp file (Force Inline Payload) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
                 Ar.read(data)
             }
             EBulkData.BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
-                logger.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${Ar.toNormalPos(header.offsetInFile.toInt())}, size=${header.sizeOnDisk})")
+                logger.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
                 val ubulkAr = Ar.getPayload(PayloadType.UBULK)
-                ubulkAr.seekRelative(header.offsetInFile.toInt())
+                ubulkAr.seek(header.offsetInFile.toInt())
                 ubulkAr.read(data)
             }
             EBulkData.BULKDATA_OptionalPayload.check(bulkDataFlags) -> {
@@ -2066,8 +2066,8 @@ class FByteBulkData : UEClass {
                 //stored in same file, but at different position
                 //save archive position
                 val savePos = Ar.pos()
-                if (Ar.toNormalPos(header.offsetInFile.toInt()) + header.elementCount <= Ar.size()) {
-                    Ar.seekRelative(header.offsetInFile.toInt())
+                if (header.offsetInFile.toInt() + header.elementCount <= Ar.size()) {
+                    Ar.seek(header.offsetInFile.toInt())
                     Ar.read(data)
                 } else {
                     throw ParserException("Failed to read PayloadAtEndOfFile, ${header.offsetInFile} is out of range", Ar)
@@ -2134,12 +2134,12 @@ class FByteBulkDataHeader : UEClass {
     var sizeOnDisk : Int
     var offsetInFile : Long
 
-    constructor(Ar: FArchive) {
+    constructor(Ar: FAssetArchive) {
         super.init(Ar)
         bulkDataFlags = Ar.readInt32()
         elementCount = Ar.readInt32()
         sizeOnDisk = Ar.readInt32()
-        offsetInFile = Ar.readInt64()
+        offsetInFile = Ar.readInt64() + (Ar.info?.bulkDataStartOffset ?: 0)
         super.complete(Ar)
     }
 

@@ -80,11 +80,13 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         uexpAr.importMap = importMap
         uexpAr.exportMap = exportMap
         uexpAr.uassetSize = info.totalHeaderSize
+        uexpAr.info = info
 
         //If attached also setup the ubulk reader
         if (ubulkAr != null) {
             ubulkAr.uassetSize = info.totalHeaderSize
             ubulkAr.uexpSize = exportMap.sumBy { it.serialSize.toInt() }
+            ubulkAr.info = info
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
