@@ -24,7 +24,7 @@ private typealias FPakDirectory = Map<String, Int>
 private typealias FDirectoryIndex = Map<String, FPakDirectory>
 
 @ExperimentalUnsignedTypes
-class PakFileReader(val Ar : FPakArchive) {
+class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
 
 
     constructor(file : File) : this(FPakFileArchive(RandomAccessFile(file, "r"), file))
@@ -350,6 +350,12 @@ class PakFileReader(val Ar : FPakArchive) {
         logger.info(String.format("Pak %s: %d files (%d encrypted), mount point: \"%s\", version %d",
             fileName, this.fileCount, this.encryptedFileCount, this.mountPrefix,
             this.pakInfo.version))
+
+        if (!keepIndexData) {
+            this.encodedPakEntries = byteArrayOf()
+            this.directoryIndex = emptyMap()
+            this.pathHashIndex = emptyMap()
+        }
 
         return this.files
     }
