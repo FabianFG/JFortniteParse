@@ -80,7 +80,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         uexpAr.importMap = importMap
         uexpAr.exportMap = exportMap
         uexpAr.uassetSize = info.totalHeaderSize
-        uexpAr.info = info
+            uexpAr.info = info
 
         //If attached also setup the ubulk reader
         if (ubulkAr != null) {
@@ -105,6 +105,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                 "FortWeaponMeleeItemDefinition" -> exports.add(FortWeaponMeleeItemDefinition(uexpAr, it))
                 "FortItemCategory" -> exports.add(FortItemCategory(uexpAr, it))
                 "CatalogMessaging" -> exports.add(FortCatalogMessaging(uexpAr, it))
+                "FortItemSeriesDefinition" -> exports.add(FortItemSeriesDefinition(uexpAr, it))
                 else -> {
                     if ((exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) || exportType == "AthenaItemWrapDefinition" || exportType == "FortBannerTokenType") {
                         exports.add(AthenaItemDefinition(uexpAr, it))

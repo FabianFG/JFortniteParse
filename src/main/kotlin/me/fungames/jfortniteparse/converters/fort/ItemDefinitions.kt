@@ -14,23 +14,23 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
 import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.athena.AthenaItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortHeroType
+import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortItemSeriesDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortMtxOfferData
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortWeaponMeleeItemDefinition
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.util.cut
 import me.fungames.jfortniteparse.util.drawCenteredString
 import me.fungames.jfortniteparse.util.scale
-import java.awt.Color
-import java.awt.Font
-import java.awt.FontMetrics
-import java.awt.RenderingHints
+import java.awt.*
 import java.awt.font.TextAttribute
+import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 object ItemDefinitionInfo {
     val sets = ConcurrentHashMap<String, FText>()
@@ -99,6 +99,11 @@ fun AthenaItemDefinition.createContainer(
     ItemDefinitionInfo.init(fileProvider)
     val icon = overrideIcon ?: loadIcon(this, fileProvider)
         ?: if (failOnNoIconLoaded) throw ParserException("Failed to load icon") else Resources.fallbackIcon
+    val serieDef = loadSerieDef(this, fileProvider)
+    var serieIcon : BufferedImage? = null
+    if (serieDef != null)
+        if (serieDef.backgroundTexture != null)
+            serieIcon = fileProvider.loadGameFile(serieDef.backgroundTexture?.assetPathName?.text!!)?.getExportOfType<UTexture2D>()?.toBufferedImage()
     if (loadVariants) {
         this.variants.forEach { variants ->
             variants.variants.forEach {
@@ -113,7 +118,7 @@ fun AthenaItemDefinition.createContainer(
     val setName = this.set
     if (setName != null)
         setText = ItemDefinitionInfo.sets[setName.text]
-    return ItemDefinitionContainer(this, icon, setText)
+    return ItemDefinitionContainer(this, icon, setText, serieIcon, serieDef)
 }
 data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics", "CosmeticItemDescription_SetMembership", "Part of the <SetName>{0}</> set.")) {
     fun applyLocres(locres: Locres?) {
@@ -124,7 +129,7 @@ data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics"
     val finalText : String
         get() = wrapper.text.replace("<SetName>{0}</>", set.text)
 }
-class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var icon: BufferedImage, setText : FText?) : Cloneable {
+class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var icon: BufferedImage, setText : FText?, var serieIcon: BufferedImage?, var serieDef: FortItemSeriesDefinition?) : Cloneable {
 
     var setName = setText?.let { SetName(setText) }
 
@@ -166,12 +171,44 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
             variantsIconSize
         )
 
-    val rarity = itemDef.rarity.getVariantsBackgroundImage()
+    var rarity = itemDef.rarity.getVariantsBackgroundImage()
     val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.drawImage(rarity, 0, 0, null)
+    if (container.serieDef != null)
+    {
+        val r = (container.serieDef?.colors?.get("Color1")?.r?.times(255))?.roundToInt()!!
+        val gr = (container.serieDef?.colors?.get("Color1")?.g?.times(255))?.roundToInt()!!
+        val b = (container.serieDef?.colors?.get("Color1")?.b?.times(255))?.roundToInt()!!
+        val r2 = (container.serieDef?.colors?.get("Color2")?.r?.times(255))?.roundToInt()!!
+        val gr2 = (container.serieDef?.colors?.get("Color2")?.g?.times(255))?.roundToInt()!!
+        val b2 = (container.serieDef?.colors?.get("Color2")?.b?.times(255))?.roundToInt()!!
+        val r3 = (container.serieDef?.colors?.get("Color3")?.r?.times(255))?.roundToInt()!!
+        val gr3 = (container.serieDef?.colors?.get("Color3")?.g?.times(255))?.roundToInt()!!
+        val b3 = (container.serieDef?.colors?.get("Color3")?.b?.times(255))?.roundToInt()!!
+
+        //gradient borders
+        val baseT = g.transform
+        val tf = AffineTransform.getTranslateInstance((-result.width / 2).toDouble(), (-result.height / 2).toDouble())
+        tf.preConcatenate(AffineTransform.getRotateInstance(Math.toRadians(180.0 + 45.0)))
+        tf.preConcatenate(AffineTransform.getTranslateInstance((result.width / 2).toDouble(), (result.height / 2).toDouble()));
+        g.transform = tf
+        g.paint = GradientPaint(0F, 0F, Color(r2, gr2, b2), 0F, (result.height + result.width).toFloat(), Color(r, gr, b), false)
+        g.fillRect(-result.width / 2, -result.height / 2, result.width * 2, result.height * 2)
+        g.transform = baseT
+
+        //actual background (you see it with the marvel rarity)
+        g.paint = Color(r3, gr3, b3)
+        g.fillRect(5, 5, result.width - 10, result.height - 10)
+    }
+    else g.drawImage(rarity, 0, 0, null)
+
+    if (container.serieIcon != null)
+    {
+        rarity = container.serieIcon!!
+        g.drawImage(rarity, 5, 5, null)
+    }
 
     val burbank = Resources.burbank
     val notoSans = Resources.notoSans
@@ -223,7 +260,14 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
                 cX = variantsBeginX
                 cY += varSize + variantsSpaceBetween
             }
-            g.paint = Color(255, 255, 255, 70)
+            //draw variant background with Color1
+            if (container.serieDef != null) {
+                val r = (container.serieDef?.colors?.get("Color1")?.r?.times(255))?.roundToInt()!!
+                val gr = (container.serieDef?.colors?.get("Color1")?.g?.times(255))?.roundToInt()!!
+                val b = (container.serieDef?.colors?.get("Color1")?.b?.times(255))?.roundToInt()!!
+                g.paint = Color(r, gr, b, 70)
+            }
+            else g.paint = Color(255, 255, 255, 70)
             g.fillRect(cX, cY, varSize, varSize)
             g.drawImage(varIcon, cX, cY, null)
 
@@ -314,12 +358,44 @@ private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImag
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
         icon = icon.scale(512, 512)
-    val rarity = itemDef.rarity.getBackgroundImage()
+    var rarity = itemDef.rarity.getBackgroundImage()
     val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.drawImage(rarity, 0, 0, null)
+    if (container.serieDef != null)
+    {
+        val r = (container.serieDef?.colors?.get("Color1")?.r?.times(255))?.roundToInt()!!
+        val gr = (container.serieDef?.colors?.get("Color1")?.g?.times(255))?.roundToInt()!!
+        val b = (container.serieDef?.colors?.get("Color1")?.b?.times(255))?.roundToInt()!!
+        val r2 = (container.serieDef?.colors?.get("Color2")?.r?.times(255))?.roundToInt()!!
+        val gr2 = (container.serieDef?.colors?.get("Color2")?.g?.times(255))?.roundToInt()!!
+        val b2 = (container.serieDef?.colors?.get("Color2")?.b?.times(255))?.roundToInt()!!
+        val r3 = (container.serieDef?.colors?.get("Color3")?.r?.times(255))?.roundToInt()!!
+        val gr3 = (container.serieDef?.colors?.get("Color3")?.g?.times(255))?.roundToInt()!!
+        val b3 = (container.serieDef?.colors?.get("Color3")?.b?.times(255))?.roundToInt()!!
+
+        //gradient borders
+        val baseT = g.transform
+        val tf = AffineTransform.getTranslateInstance((-result.width / 2).toDouble(), (-result.height / 2).toDouble())
+        tf.preConcatenate(AffineTransform.getRotateInstance(Math.toRadians(180.0 + 45.0)))
+        tf.preConcatenate(AffineTransform.getTranslateInstance((result.width / 2).toDouble(), (result.height / 2).toDouble()));
+        g.transform = tf
+        g.paint = GradientPaint(0F, 0F, Color(r2, gr2, b2), 0F, (result.height + result.width).toFloat(), Color(r, gr, b), false)
+        g.fillRect(-result.width / 2, -result.height / 2, result.width * 2, result.height * 2)
+        g.transform = baseT
+
+        //actual background (you see it with the marvel rarity)
+        g.paint = Color(r3, gr3, b3)
+        g.fillRect(5, 5, result.width - 10, result.height - 10)
+    }
+    else g.drawImage(rarity, 0, 0, null)
+
+    if (container.serieIcon != null)
+    {
+        rarity = container.serieIcon!!
+        g.drawImage(rarity, 5, 5, null)
+    }
     g.drawImage(icon, 5, 5, null)
 
     val burbank = Resources.burbank
@@ -392,12 +468,48 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
     var icon = container.icon
     if (icon.width != 1024 || icon.height != 1024)
         icon = icon.scale(1024, 1024)
-    val rarity = itemDef.rarity.getFeaturedShopBackgroundImage()
+    var rarity = itemDef.rarity.getFeaturedShopBackgroundImage()
     val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.drawImage(rarity, 0, 0, null)
+    if (container.serieDef != null)
+    {
+        val r = (container.serieDef?.colors?.get("Color1")?.r?.times(255))?.roundToInt()!!
+        val gr = (container.serieDef?.colors?.get("Color1")?.g?.times(255))?.roundToInt()!!
+        val b = (container.serieDef?.colors?.get("Color1")?.b?.times(255))?.roundToInt()!!
+        val r2 = (container.serieDef?.colors?.get("Color2")?.r?.times(255))?.roundToInt()!!
+        val gr2 = (container.serieDef?.colors?.get("Color2")?.g?.times(255))?.roundToInt()!!
+        val b2 = (container.serieDef?.colors?.get("Color2")?.b?.times(255))?.roundToInt()!!
+        val r3 = (container.serieDef?.colors?.get("Color3")?.r?.times(255))?.roundToInt()!!
+        val gr3 = (container.serieDef?.colors?.get("Color3")?.g?.times(255))?.roundToInt()!!
+        val b3 = (container.serieDef?.colors?.get("Color3")?.b?.times(255))?.roundToInt()!!
+
+        //gradient borders
+        val baseT = g.transform
+        val tf = AffineTransform.getTranslateInstance((-result.width / 2).toDouble(), (-result.height / 2).toDouble())
+        tf.preConcatenate(AffineTransform.getRotateInstance(Math.toRadians(180.0 + 45.0)))
+        tf.preConcatenate(AffineTransform.getTranslateInstance((result.width / 2).toDouble(), (result.height / 2).toDouble()));
+        g.transform = tf
+        g.paint = GradientPaint(0F, 0F, Color(r2, gr2, b2), 0F, (result.height + result.width).toFloat(), Color(r, gr, b), false)
+        g.fillRect(-result.width / 2, -result.height / 2, result.width * 2, result.height * 2)
+        g.transform = baseT
+
+        //actual background (you see it with the marvel rarity)
+        g.paint = Color(r3, gr3, b3)
+        g.fillRect(10, 10, result.width - 20, result.height - 20)
+
+        //price background
+        g.paint = Color(0, 7, 36, 255)
+        g.fillRect(10, result.height - 20 - 122, result.width - 20, 132)
+    }
+    else g.drawImage(rarity, 0, 0, null)
+
+    if (container.serieIcon != null)
+    {
+        rarity = container.serieIcon!!
+        g.drawImage(rarity.scale(result.width - 20, result.height - 20 - 132), 10, 10, null)
+    }
     g.drawImage(icon.cut(result.width - 22), 11, 11, null)
 
     g.paint = Color(0, 0, 0, 100)
@@ -422,18 +534,31 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
         }
         g.drawCenteredString(displayName, result.width / 2, icon.height - 95)
     }
-    val shortDesc = itemDef.shortDescription?.text
+    var shortDesc = itemDef.shortDescription?.text
     if (shortDesc != null) {
-        g.color = Color.LIGHT_GRAY
         var fontSize = 40f
-        g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
         var fm = g.fontMetrics
         while (fm.stringWidth(shortDesc) > result.width - 10) {
             fontSize--
             g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
             fm = g.fontMetrics
         }
-        g.drawCenteredString(shortDesc, result.width / 2, icon.height - 20)
+        g.color = Color.LIGHT_GRAY
+        g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
+        //draw serie name with Color1
+        if (container.serieDef != null) {
+            val r = (container.serieDef?.colors?.get("Color1")?.r?.times(255))?.roundToInt()!!
+            val gr = (container.serieDef?.colors?.get("Color1")?.g?.times(255))?.roundToInt()!!
+            val b = (container.serieDef?.colors?.get("Color1")?.b?.times(255))?.roundToInt()!!
+            g.color = Color(r, gr, b)
+            g.font = notoSans.deriveFont(Font.BOLD, fontSize).deriveFont(trackingAttr)
+            val serieX = (result.width / 2 - (g.fontMetrics.stringWidth(container.serieDef?.displayName?.sourceString) / 2)) + 20
+            g.drawCenteredString(container.serieDef?.displayName?.sourceString?.toUpperCase()!!, serieX, icon.height - 20)
+            g.color = Color.LIGHT_GRAY
+            g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
+            g.drawString(shortDesc, serieX + 60 + (g.fontMetrics.stringWidth(container.serieDef?.displayName?.sourceString) / 2), icon.height - 20)
+        }
+        else g.drawCenteredString(shortDesc, result.width / 2, icon.height - 20)
     }
 
     g.font = notoSansBold.deriveFont(Font.PLAIN, 60f)
@@ -457,12 +582,48 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
         icon = icon.scale(512, 512)
-    val rarity = itemDef.rarity.getDailyShopBackgroundImage()
+    var rarity = itemDef.rarity.getDailyShopBackgroundImage()
     val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.drawImage(rarity, 0, 0, null)
+    if (container.serieDef != null)
+    {
+        val r = (container.serieDef?.colors?.get("Color1")?.r?.times(255))?.roundToInt()!!
+        val gr = (container.serieDef?.colors?.get("Color1")?.g?.times(255))?.roundToInt()!!
+        val b = (container.serieDef?.colors?.get("Color1")?.b?.times(255))?.roundToInt()!!
+        val r2 = (container.serieDef?.colors?.get("Color2")?.r?.times(255))?.roundToInt()!!
+        val gr2 = (container.serieDef?.colors?.get("Color2")?.g?.times(255))?.roundToInt()!!
+        val b2 = (container.serieDef?.colors?.get("Color2")?.b?.times(255))?.roundToInt()!!
+        val r3 = (container.serieDef?.colors?.get("Color3")?.r?.times(255))?.roundToInt()!!
+        val gr3 = (container.serieDef?.colors?.get("Color3")?.g?.times(255))?.roundToInt()!!
+        val b3 = (container.serieDef?.colors?.get("Color3")?.b?.times(255))?.roundToInt()!!
+
+        //gradient borders
+        val baseT = g.transform
+        val tf = AffineTransform.getTranslateInstance((-result.width / 2).toDouble(), (-result.height / 2).toDouble())
+        tf.preConcatenate(AffineTransform.getRotateInstance(Math.toRadians(180.0 + 45.0)))
+        tf.preConcatenate(AffineTransform.getTranslateInstance((result.width / 2).toDouble(), (result.height / 2).toDouble()));
+        g.transform = tf
+        g.paint = GradientPaint(0F, 0F, Color(r2, gr2, b2), 0F, (result.height + result.width).toFloat(), Color(r, gr, b), false)
+        g.fillRect(-result.width / 2, -result.height / 2, result.width * 2, result.height * 2)
+        g.transform = baseT
+
+        //actual background (you see it with the marvel rarity)
+        g.paint = Color(r3, gr3, b3)
+        g.fillRect(5, 5, result.width - 10, result.height - 10)
+
+        //price background
+        g.paint = Color(0, 7, 36, 255)
+        g.fillRect(5, result.height - 10 - 78, result.width - 10, 83)
+    }
+    else g.drawImage(rarity, 0, 0, null)
+
+    if (container.serieIcon != null)
+    {
+        rarity = container.serieIcon!!
+        g.drawImage(rarity, 5, 5, null)
+    }
     g.drawImage(icon, 5, 5, null)
 
     val burbank = Resources.burbank
@@ -490,16 +651,29 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
 
     val shortDesc = itemDef.shortDescription?.text
     if (shortDesc != null) {
-        g.color = Color.LIGHT_GRAY
-        var fontSize = 40f
-        g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
+        var fontSize = 30f
         var fm = g.fontMetrics
         while (fm.stringWidth(shortDesc) > result.width - 10) {
             fontSize--
             g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
             fm = g.fontMetrics
         }
-        g.drawCenteredString(shortDesc, result.width / 2, icon.height - 20)
+        g.color = Color.LIGHT_GRAY
+        g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
+        //draw serie name with Color1
+        if (container.serieDef != null) {
+            val r = (container.serieDef?.colors?.get("Color1")?.r?.times(255))?.roundToInt()!!
+            val gr = (container.serieDef?.colors?.get("Color1")?.g?.times(255))?.roundToInt()!!
+            val b = (container.serieDef?.colors?.get("Color1")?.b?.times(255))?.roundToInt()!!
+            g.color = Color(r, gr, b)
+            g.font = notoSans.deriveFont(Font.BOLD, fontSize).deriveFont(trackingAttr)
+            val serieX = (result.width / 2 - (g.fontMetrics.stringWidth(container.serieDef?.displayName?.sourceString) / 2)) + 20
+            g.drawCenteredString(container.serieDef?.displayName?.sourceString?.toUpperCase()!!, serieX, icon.height - 20)
+            g.color = Color.LIGHT_GRAY
+            g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
+            g.drawString(shortDesc, serieX + 40 + g.fontMetrics.stringWidth(container.serieDef?.displayName?.sourceString) / 2, icon.height - 20)
+        }
+        else g.drawCenteredString(shortDesc, result.width / 2, icon.height - 20)
     }
 
     g.font = notoSansBold.deriveFont(Font.PLAIN, 45f)
@@ -566,3 +740,12 @@ private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: F
 private fun loadIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider) =
     loadFeaturedIcon(itemDefinition, fileProvider)
         ?: loadNormalIcon(itemDefinition, fileProvider)
+
+private fun loadSerieDef(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider): FortItemSeriesDefinition? {
+    if (itemDefinition.series != null) {
+        val pkg = fileProvider.loadGameFile("FortniteGame/Content/Athena/Items/Cosmetics/Series/${itemDefinition.series!!.importName}.uasset") ?: return null
+        val serieData = pkg.getExportOfTypeOrNull<FortItemSeriesDefinition>() ?: return null
+        return serieData
+    } else
+        return null
+}

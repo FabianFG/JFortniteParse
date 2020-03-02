@@ -31,6 +31,7 @@ class AthenaItemDefinition : UEExport {
         get() = displayAssetPath != null
 
     var rarity : EFortRarity = EFortRarity.Uncommon
+    var series : FPackageIndex? = null
 
     var displayName : FText? = null
     var shortDescription : FText? = null
@@ -60,6 +61,7 @@ class AthenaItemDefinition : UEExport {
         largePreviewImage = baseObject.getOrNull("LargePreviewImage") ?: baseObject.getOrNull("SpriteSheet")
         displayAssetPath = baseObject.getOrNull("DisplayAssetPath")
         rarity = EFortRarity.getEnum(baseObject.getOrNull<FName>("Rarity")?.text)
+        series = baseObject.getOrNull("Series")
         displayName = baseObject.getOrNull("DisplayName")
         shortDescription = baseObject.getOrNull("ShortDescription")
         description = baseObject.getOrNull("Description")
