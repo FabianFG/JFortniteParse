@@ -21,10 +21,6 @@ enum class FnLanguage(val languageCode: String) {
 
     companion object {
         @JvmStatic
-        fun valueOfLanguageCode(lang : String) = FnLanguage.values().firstOrNull { l -> l.languageCode == lang } ?: UNKNOWN
+        fun valueOfLanguageCode(lang : String) = values().firstOrNull { l -> l.languageCode == lang } ?: UNKNOWN
     }
-
-    val path = "FortniteGame/Content/Localization/Game_BR/$languageCode/Game_BR.locres"
-
-
 }

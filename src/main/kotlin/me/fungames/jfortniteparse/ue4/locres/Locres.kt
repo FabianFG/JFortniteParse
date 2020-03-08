@@ -16,4 +16,18 @@ class Locres(val locres : ByteArray, val fileName : String, val language: FnLang
         texts = FTextLocalizationResource(locresAr)
         UEClass.logger.info("Successfully parsed locres package : $fileName")
     }
+
+    fun mergeInto(target : Locres) {
+        texts.stringData.forEach { (namespace, content) ->
+            val targetNamespace = target.texts.stringData[namespace] ?: run {
+                val newNamespace = mutableMapOf<String, String>()
+                target.texts.stringData[namespace] = newNamespace
+                return@run newNamespace
+            }
+            content.forEach { (key, value) ->
+                if (!targetNamespace.contains(key))
+                    targetNamespace[key] = value
+            }
+        }
+    }
 }

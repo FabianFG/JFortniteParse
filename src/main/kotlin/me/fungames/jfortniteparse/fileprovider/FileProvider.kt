@@ -8,6 +8,7 @@ import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
+import me.fungames.kotlinASTC.imageblockInitializeDerivFromWorkAndOrig
 import mu.KotlinLogging
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -86,7 +87,21 @@ interface FileProvider {
 
     fun getLocresLanguageByPath(filePath: String) = FnLanguage.valueOfLanguageCode(filePath.split("Localization/(.*?)/".toRegex())[1].takeWhile { it != '/' })
 
-    fun loadLocres(ln : FnLanguage) = loadLocres(ln.path)
+    fun loadLocres(ln : FnLanguage) : Locres? {
+        val files = files.values
+            .filter { it.path.startsWith("${getGameName()}Game/Content/Localization") && it.path.contains("/${ln.languageCode}/") && it.path.endsWith(".locres") }
+        if (files.isEmpty()) return null
+        var first : Locres? = null
+        files.forEach {
+            val f = first
+            if (f == null) {
+                first = loadLocres(it)
+            } else {
+                loadLocres(it)?.mergeInto(f)
+            }
+        }
+        return first
+    }
 
     /**
      * Searches for the game file and then saves all parts of this package
