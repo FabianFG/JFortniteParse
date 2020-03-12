@@ -28,7 +28,7 @@ interface FileProvider {
     /**
      * @return the name of the game that is loaded by the provider
      */
-    fun getGameName() = files.keys.firstOrNull { it.substringBefore('/').endsWith("Game") }?.substringBefore("Game") ?: ""
+    fun getGameName() = files.keys.firstOrNull { it.substringBefore('/').endsWith("game") }?.substringBefore("game") ?: ""
     /**
      * Searches for a gamefile by its path
      * @param filePath the path to search for
@@ -89,7 +89,7 @@ interface FileProvider {
 
     fun loadLocres(ln : FnLanguage) : Locres? {
         val files = files.values
-            .filter { it.path.startsWith("${getGameName()}Game/Content/Localization") && it.path.contains("/${ln.languageCode}/") && it.path.endsWith(".locres") }
+            .filter { it.path.startsWith("${getGameName()}Game/Content/Localization", ignoreCase = true) && it.path.contains("/${ln.languageCode}/", ignoreCase = true) && it.path.endsWith(".locres") }
         if (files.isEmpty()) return null
         var first : Locres? = null
         files.forEach {
@@ -137,8 +137,8 @@ interface FileProvider {
      * @param filePath the file path to be fixed
      * @return the file path translated into the correct format
      */
-    fun fixPath(filePath: String, toLowerCase : Boolean = true): String {
-        var path = filePath
+    fun fixPath(filePath: String): String {
+        var path = filePath.toLowerCase()
         path = path.replace('\\', '/')
         if (path.startsWith('/'))
             path = path.substring(1)
@@ -147,15 +147,15 @@ interface FileProvider {
             path = path.substringBeforeLast('/') + "/" + lastPart.substringBefore('.')
         if (!path.endsWith('/') && !path.substringAfterLast('/').contains('.'))
             path += ".uasset"
-        if (path.startsWith("Game/")) {
+        if (path.startsWith("game/")) {
             val gameName = getGameName()
             path = when {
-                path.startsWith("Game/Content/") -> path.replaceFirst("Game/Content/", gameName + "Game/Content/")
-                path.startsWith("Game/Config/") -> path.replaceFirst("Game/Config/", gameName + "Game/Config/")
-                path.startsWith("Game/Plugins") -> path.replaceFirst("Game/Plugins/", gameName + "Game/Plugins/")
-                else -> path.replaceFirst("Game/", gameName + "Game/Content/")
+                path.startsWith("game/content/") -> path.replaceFirst("game/content/", gameName + "game/content/")
+                path.startsWith("game/config/") -> path.replaceFirst("game/config/", gameName + "game/config/")
+                path.startsWith("game/plugins") -> path.replaceFirst("game/plugins/", gameName + "game/plugins/")
+                else -> path.replaceFirst("game/", gameName + "game/content/")
             }
         }
-        return if (toLowerCase) path.toLowerCase() else path
+        return path.toLowerCase()
     }
 }
