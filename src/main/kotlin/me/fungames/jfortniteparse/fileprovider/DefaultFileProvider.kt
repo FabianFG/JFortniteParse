@@ -39,7 +39,7 @@ class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(
                     val reader = PakFileReader(it)
                     if (!reader.isEncrypted()) {
                         reader.readIndex()
-                        reader.files.associateByTo(files, {file -> file.path})
+                        reader.files.associateByTo(files, {file -> file.path.toLowerCase()})
                         mountedPaks.add(reader)
                     } else {
                         unloadedPaks.add(reader)
@@ -55,7 +55,7 @@ class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(
                     if (gamePath.startsWith('\\') || gamePath.startsWith('/'))
                         gamePath = gamePath.substring(1)
                     gamePath = gamePath.replace('\\', '/')
-                    localFiles[gamePath] = it
+                    localFiles[gamePath.toLowerCase()] = it
             }
         }
     }
@@ -70,7 +70,7 @@ class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(
                     if (it.testAesKey(key)) {
                         it.aesKey = key
                         it.readIndex()
-                        it.files.associateByTo(files, {file -> file.path})
+                        it.files.associateByTo(files, {file -> file.path.toLowerCase()})
                         unloadedPaks.remove(it)
                         mountedPaks.add(it)
                         countNewMounts++
@@ -101,10 +101,10 @@ class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(
             file = localFiles[justName]
         }
         if (file == null) {
-            if (path.startsWith("Game/"))
+            if (path.startsWith("Game/", ignoreCase = true))
                 file = localFiles.filterKeys {
-                    if (it.contains("Game/"))
-                        it.substringAfter("Game/") == path.substringAfter("Game/")
+                    if (it.contains("Game/", ignoreCase = true))
+                        it.substringAfter("game/") == path.substringAfter("game/")
                     else
                         false
                 }.values.firstOrNull()

@@ -137,7 +137,7 @@ interface FileProvider {
      * @param filePath the file path to be fixed
      * @return the file path translated into the correct format
      */
-    fun fixPath(filePath: String): String {
+    fun fixPath(filePath: String, toLowerCase : Boolean = true): String {
         var path = filePath
         path = path.replace('\\', '/')
         if (path.startsWith('/'))
@@ -156,6 +156,6 @@ interface FileProvider {
                 else -> path.replaceFirst("Game/", gameName + "Game/Content/")
             }
         }
-        return path
+        return if (toLowerCase) path.toLowerCase() else path
     }
 }
