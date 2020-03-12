@@ -3,8 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/DefaultFileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/DefaultFileProvider.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -288,7 +287,7 @@
       <workItem from="1582453176269" duration="4255000" />
       <workItem from="1582728534088" duration="1790000" />
       <workItem from="1583679396673" duration="4320000" />
-      <workItem from="1584038169080" duration="302000" />
+      <workItem from="1584038169080" duration="1102000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -500,7 +499,14 @@
       <option name="project" value="LOCAL" />
       <updated>1583683901898</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="case insensitive files in file provider&#10;hope I didn't mess it up">
+      <created>1584038754746</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1584038754746</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -520,8 +526,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="locres support" />
-    <MESSAGE value="locres support finished" />
     <MESSAGE value="2.0 release" />
     <MESSAGE value="added option for setting a default locres in file provider&#10;every locres now has its language stored" />
     <MESSAGE value="locres texts are now in a mutable map" />
@@ -545,7 +549,9 @@
     <MESSAGE value="fix for ubulk files" />
     <MESSAGE value="memory optimization: pak indexes are not kept in memory by default anymore" />
     <MESSAGE value="fixed locres loading for Fortnite 12.0 and 12.1" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed locres loading for Fortnite 12.0 and 12.1" />
+    <MESSAGE value="case insensitive files in file provider&#10;hope I didn't mess it up" />
+    <MESSAGE value="forgot version" />
+    <option name="LAST_COMMIT_MESSAGE" value="forgot version" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
