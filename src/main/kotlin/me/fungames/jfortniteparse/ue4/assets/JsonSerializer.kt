@@ -45,7 +45,7 @@ object JsonSerializer{
             is Float -> JsonPrimitive(tagValue)
             is String -> JsonPrimitive(tagValue)
             is FName -> JsonPrimitive(tagValue.text)
-            is FText -> jsonObject("namespace" to tagValue.nameSpace, "key" to tagValue.key, "source_string" to tagValue.text)
+            is FText -> jsonObject("namespace" to tagValue.nameSpace, "key" to tagValue.key, "source_string" to tagValue.sourceString, "text" to tagValue.text)
             is FPackageIndex -> JsonPrimitive(tagValue.importName)
             is UInterfaceProperty -> JsonPrimitive(tagValue.interfaceNumber.toInt())
             is FSoftObjectPath -> jsonObject("asset_path" to tagValue.assetPathName.text, "sub_path" to tagValue.subPathString)
