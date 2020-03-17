@@ -9,11 +9,12 @@ import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
+import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import mu.KotlinLogging
 import java.io.File
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-class DefaultFileProvider(val folder : File, override var game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : AbstractFileProvider() {
+class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : AbstractFileProvider() {
 
     private val localFiles = mutableMapOf<String, File>()
     override val files = mutableMapOf<String, GameFile>()

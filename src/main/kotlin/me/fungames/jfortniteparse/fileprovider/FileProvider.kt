@@ -8,6 +8,7 @@ import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
+import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import me.fungames.kotlinASTC.imageblockInitializeDerivFromWorkAndOrig
 import mu.KotlinLogging
 
@@ -18,7 +19,7 @@ interface FileProvider {
         val logger = KotlinLogging.logger("JFortniteParse")
     }
 
-    var game : Int
+    var game : Ue4Version
     val files : Map<String, GameFile>
 
     fun requiredKeys() : List<FGuid>
