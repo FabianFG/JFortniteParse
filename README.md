@@ -3,7 +3,7 @@
 
 ### An asset parser for ue4 assets for the jvm written in kotlin
 
-**Note: This project is 100% compatible and usable with java**
+**Note: This project is compatible and usable with java but you will need to use different methods**
 
 #### Features
 - Load ue4 pak files and provide ways to handle them
@@ -174,4 +174,7 @@ Texts will be exported with the hotfixed ones
 ```groovy
 implementation 'me.fungames:JFortniteParseTextHotfixes:1.0'
 ```
+
+### Contributors
+- [Asval](https://github.com/iAmAsval)
 

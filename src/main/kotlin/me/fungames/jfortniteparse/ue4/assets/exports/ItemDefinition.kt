@@ -1,7 +1,6 @@
-package me.fungames.jfortniteparse.ue4.assets.exports.athena
+package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.ue4.assets.*
-import me.fungames.jfortniteparse.ue4.assets.exports.UEExport
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.EFortRarity
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortCosmeticVariant
 import me.fungames.jfortniteparse.ue4.assets.util.FName
@@ -10,7 +9,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 
 @ExperimentalUnsignedTypes
-class AthenaItemDefinition : UEExport {
+class ItemDefinition : UEExport {
     override var baseObject: UObject
 
     var heroDefinitionPackage : FPackageIndex? = null
@@ -31,6 +30,7 @@ class AthenaItemDefinition : UEExport {
         get() = displayAssetPath != null
 
     var rarity : EFortRarity = EFortRarity.Uncommon
+    var series : FPackageIndex? = null
 
     var displayName : FText? = null
     var shortDescription : FText? = null
@@ -46,8 +46,8 @@ class AthenaItemDefinition : UEExport {
 
     var variants = mutableListOf<FortCosmeticVariant>()
 
-    constructor() : super("AthenaItemDefinition") {
-        baseObject = UObject(mutableListOf(), false, null, "AthenaItemDefinition")
+    constructor() : super("ItemDefinition") {
+        baseObject = UObject(mutableListOf(), false, null, "ItemDefinition")
         gameplayTags = FGameplayTagContainer(mutableListOf())
     }
 
@@ -60,6 +60,7 @@ class AthenaItemDefinition : UEExport {
         largePreviewImage = baseObject.getOrNull("LargePreviewImage") ?: baseObject.getOrNull("SpriteSheet")
         displayAssetPath = baseObject.getOrNull("DisplayAssetPath")
         rarity = EFortRarity.getEnum(baseObject.getOrNull<FName>("Rarity")?.text)
+        series = baseObject.getOrNull("Series")
         displayName = baseObject.getOrNull("DisplayName")
         shortDescription = baseObject.getOrNull("ShortDescription")
         description = baseObject.getOrNull("Description")

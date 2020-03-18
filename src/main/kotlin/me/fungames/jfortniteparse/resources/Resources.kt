@@ -47,13 +47,13 @@ object Resources {
         ?: throw IllegalStateException("Failed to load a resource") }
 
     // Legendary Rarity
-    val legendaryBackground : BufferedImage by lazy { ImageIO.read(Resources.javaClass.getResourceAsStream("/icons/E512.png"))
+    val legendaryBackground : BufferedImage by lazy { ImageIO.read(Resources.javaClass.getResourceAsStream("/icons/L512.png"))
         ?: throw IllegalStateException("Failed to load a resource") }
-    val legendaryVariantsBackground : BufferedImage by lazy { ImageIO.read(Resources.javaClass.getResourceAsStream("/icons/vE512.png"))
+    val legendaryVariantsBackground : BufferedImage by lazy { ImageIO.read(Resources.javaClass.getResourceAsStream("/icons/vL512.png"))
         ?: throw IllegalStateException("Failed to load a resource") }
-    val legendaryDailyShopBackground : BufferedImage by lazy { ImageIO.read(Resources.javaClass.getResourceAsStream("/icons/EDail.png"))
+    val legendaryDailyShopBackground : BufferedImage by lazy { ImageIO.read(Resources.javaClass.getResourceAsStream("/icons/LDail.png"))
         ?: throw IllegalStateException("Failed to load a resource") }
-    val legendaryFeaturedShopBackground : BufferedImage by lazy { ImageIO.read(Resources.javaClass.getResourceAsStream("/icons/EFeat.png"))
+    val legendaryFeaturedShopBackground : BufferedImage by lazy { ImageIO.read(Resources.javaClass.getResourceAsStream("/icons/LFeat.png"))
         ?: throw IllegalStateException("Failed to load a resource") }
 
     // Mythic Rarity

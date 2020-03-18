@@ -144,7 +144,7 @@ interface FileProvider {
         if (path.startsWith('/'))
             path = path.substring(1)
         val lastPart = path.substringAfterLast('/')
-        if (lastPart.contains('.') && lastPart.substringBefore('.') == lastPart.substringAfter('.'))
+        if (lastPart.contains('.')/* && lastPart.substringBefore('.') == lastPart.substringAfter('.')*/)
             path = path.substringBeforeLast('/') + "/" + lastPart.substringBefore('.')
         if (!path.endsWith('/') && !path.substringAfterLast('/').contains('.'))
             path += ".uasset"

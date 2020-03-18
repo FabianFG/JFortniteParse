@@ -6,15 +6,13 @@ import com.google.gson.GsonBuilder
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UEClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.exports.*
-import me.fungames.jfortniteparse.ue4.assets.exports.athena.AthenaItemDefinition
+import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.*
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArrayArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
-import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 import java.io.OutputStream
@@ -101,13 +99,18 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                 "DataTable" -> exports.add(UDataTable(uexpAr, it))
                 "CurveTable" -> exports.add(UCurveTable(uexpAr, it))
                 "FortMtxOfferData" -> exports.add(FortMtxOfferData(uexpAr, it))
-                "FortHeroType" -> exports.add(FortHeroType(uexpAr, it))
-                "FortWeaponMeleeItemDefinition" -> exports.add(FortWeaponMeleeItemDefinition(uexpAr, it))
                 "FortItemCategory" -> exports.add(FortItemCategory(uexpAr, it))
                 "CatalogMessaging" -> exports.add(FortCatalogMessaging(uexpAr, it))
+                "FortItemSeriesDefinition" -> exports.add(FortItemSeriesDefinition(uexpAr, it))
+                "AthenaItemWrapDefinition", "FortBannerTokenType",
+                "FortVariantTokenType", "FortHeroType",
+                "FortTokenType", "FortWorkerType",
+                "FortDailyRewardScheduleTokenDefinition",
+                "FortAbilityKit" -> exports.add(ItemDefinition(uexpAr, it))
                 else -> {
-                    if ((exportType.startsWith("Athena") && exportType.endsWith("ItemDefinition")) || exportType == "AthenaItemWrapDefinition" || exportType == "FortBannerTokenType") {
-                        exports.add(AthenaItemDefinition(uexpAr, it))
+                    if (exportType.contains("ItemDefinition")) {
+                        exports.add(ItemDefinition(uexpAr, it)
+                        )
                     } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
                         val variant = FortCosmeticVariant(uexpAr, it)
                         matchItemDefAndVariant(variant)
@@ -126,7 +129,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     }
 
     private fun matchItemDefAndVariant(variant: FortCosmeticVariant) {
-        val itemDef = getExportOfTypeOrNull<AthenaItemDefinition>() ?: return
+        val itemDef = getExportOfTypeOrNull<ItemDefinition>() ?: return
         itemDef.variants.add(variant)
     }
 

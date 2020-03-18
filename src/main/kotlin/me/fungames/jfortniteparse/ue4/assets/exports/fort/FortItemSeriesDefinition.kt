@@ -1,24 +1,25 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.fort
 
-import me.fungames.jfortniteparse.ue4.assets.FObjectExport
-import me.fungames.jfortniteparse.ue4.assets.FSoftObjectPath
-import me.fungames.jfortniteparse.ue4.assets.UObject
+import me.fungames.jfortniteparse.ue4.assets.*
 import me.fungames.jfortniteparse.ue4.assets.exports.UEExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.locres.Locres
 
 @ExperimentalUnsignedTypes
-class FortHeroType : UEExport {
+class FortItemSeriesDefinition : UEExport {
     override var baseObject: UObject
-    var largePreviewImage : FSoftObjectPath
-    var smallPreviewImage : FSoftObjectPath
-    // has more properties, just images needed for now
+
+    var displayName : FText? = null
+    var colors : Map<String, FLinearColor>
+    var backgroundTexture : FSoftObjectPath? = null
 
     constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(exportObject) {
         super.init(Ar)
         baseObject = UObject(Ar, exportObject)
-        largePreviewImage = baseObject.get("LargePreviewImage")
-        smallPreviewImage = baseObject.get("SmallPreviewImage")
+        displayName = baseObject.getOrNull("DisplayName")
+        colors = baseObject.get<FStructFallback>("Colors").properties.associateBy { it.name.text }.mapValues { it.value.getTagTypeValue() as FLinearColor }
+        backgroundTexture = baseObject.getOrNull("BackgroundTexture")
         super.complete(Ar)
     }
 
@@ -26,5 +27,9 @@ class FortHeroType : UEExport {
         super.initWrite(Ar)
         baseObject.serialize(Ar)
         super.completeWrite(Ar)
+    }
+
+    override fun applyLocres(locres : Locres?) {
+        displayName?.applyLocres(locres)
     }
 }

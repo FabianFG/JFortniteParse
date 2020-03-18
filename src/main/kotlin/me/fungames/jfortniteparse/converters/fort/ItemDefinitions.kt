@@ -12,25 +12,23 @@ import me.fungames.jfortniteparse.ue4.assets.FPackageIndex
 import me.fungames.jfortniteparse.ue4.assets.FText
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
 import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
-import me.fungames.jfortniteparse.ue4.assets.exports.athena.AthenaItemDefinition
-import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortHeroType
+import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
+import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortItemSeriesDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortMtxOfferData
-import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortWeaponMeleeItemDefinition
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.util.cut
 import me.fungames.jfortniteparse.util.drawCenteredString
 import me.fungames.jfortniteparse.util.scale
-import java.awt.Color
-import java.awt.Font
-import java.awt.FontMetrics
-import java.awt.RenderingHints
+import java.awt.*
 import java.awt.font.TextAttribute
+import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
 import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 object ItemDefinitionInfo {
     val sets = ConcurrentHashMap<String, FText>()
@@ -92,13 +90,15 @@ object ItemDefinitionInfo {
 }
 
 @Throws(ParserException::class)
-fun AthenaItemDefinition.createContainer(
+fun ItemDefinition.createContainer(
     fileProvider: FileProvider,
     loadVariants: Boolean = true, failOnNoIconLoaded: Boolean = false, overrideIcon: BufferedImage? = null
 ): ItemDefinitionContainer {
     ItemDefinitionInfo.init(fileProvider)
     val icon = overrideIcon ?: loadIcon(this, fileProvider)
         ?: if (failOnNoIconLoaded) throw ParserException("Failed to load icon") else Resources.fallbackIcon
+    val seriesDef = series?.let { loadSeriesDef(it, fileProvider) }
+    val seriesIcon = seriesDef?.backgroundTexture?.let { fileProvider.loadGameFile(it)?.getExportOfTypeOrNull<UTexture2D>()?.toBufferedImage() }
     if (loadVariants) {
         this.variants.forEach { variants ->
             variants.variants.forEach {
@@ -113,7 +113,7 @@ fun AthenaItemDefinition.createContainer(
     val setName = this.set
     if (setName != null)
         setText = ItemDefinitionInfo.sets[setName.text]
-    return ItemDefinitionContainer(this, icon, setText)
+    return ItemDefinitionContainer(this, icon, setText, seriesIcon, seriesDef)
 }
 data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics", "CosmeticItemDescription_SetMembership", "Part of the <SetName>{0}</> set.")) {
     fun applyLocres(locres: Locres?) {
@@ -124,7 +124,7 @@ data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics"
     val finalText : String
         get() = wrapper.text.replace("<SetName>{0}</>", set.text)
 }
-class ItemDefinitionContainer(val itemDefinition: AthenaItemDefinition, var icon: BufferedImage, setText : FText?) : Cloneable {
+class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: BufferedImage, setText : FText?, var seriesIcon : BufferedImage?, var seriesDef : FortItemSeriesDefinition?) : Cloneable {
 
     var setName = setText?.let { SetName(setText) }
 
@@ -165,13 +165,16 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
             variantsIconSize,
             variantsIconSize
         )
-
     val rarity = itemDef.rarity.getVariantsBackgroundImage()
     val result = BufferedImage(rarity.width, rarity.height, BufferedImage.TYPE_INT_ARGB)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.drawImage(rarity, 0, 0, null)
+
+    if (!drawSeriesBackgroundColors(result, g, container, isFeaturedShop = false, isDailyShop = false)) {
+        g.drawImage(rarity, 0, 0, null)
+    }
+    drawSeriesBackgroundImage(result, g, container, false)
 
     val burbank = Resources.burbank
     val notoSans = Resources.notoSans
@@ -223,7 +226,15 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
                 cX = variantsBeginX
                 cY += varSize + variantsSpaceBetween
             }
-            g.paint = Color(255, 255, 255, 70)
+            //draw variant background with Color1
+            val color1 = container.seriesDef?.colors?.get("Color1")
+            if (color1 != null) {
+                val r = color1.r.times(255).roundToInt()
+                val gr = color1.g.times(255).roundToInt()
+                val b = color1.b.times(255).roundToInt()
+                g.paint = Color(r, gr, b, 70)
+            }
+            else g.paint = Color(255, 255, 255, 70)
             g.fillRect(cX, cY, varSize, varSize)
             g.drawImage(varIcon, cX, cY, null)
 
@@ -319,7 +330,12 @@ private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImag
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.drawImage(rarity, 0, 0, null)
+
+    if (!drawSeriesBackgroundColors(result, g, container, isFeaturedShop = false, isDailyShop = false)) {
+        g.drawImage(rarity, 0, 0, null)
+    }
+    drawSeriesBackgroundImage(result, g, container, false)
+
     g.drawImage(icon, 5, 5, null)
 
     val burbank = Resources.burbank
@@ -358,7 +374,6 @@ private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImag
             lines = lines.subList(0, 2)
             UEClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
         }
-        // TODO Sets
 
         lines.forEach {
             fontSize = 25f
@@ -397,7 +412,12 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.drawImage(rarity, 0, 0, null)
+
+    if (!drawSeriesBackgroundColors(result, g, container, isFeaturedShop = true, isDailyShop = false)) {
+        g.drawImage(rarity, 0, 0, null)
+    }
+
+    drawSeriesBackgroundImage(result, g, container, true)
     g.drawImage(icon.cut(result.width - 22), 11, 11, null)
 
     g.paint = Color(0, 0, 0, 100)
@@ -433,7 +453,22 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
             g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
             fm = g.fontMetrics
         }
-        g.drawCenteredString(shortDesc, result.width / 2, icon.height - 20)
+        //draw series name with Color1
+        val color1 = container.seriesDef?.colors?.get("Color1")
+        val seriesDisplayName = container.seriesDef?.displayName
+        if (color1 != null && seriesDisplayName != null) {
+            val r = color1.r.times(255).roundToInt()
+            val gr = color1.g.times(255).roundToInt()
+            val b = color1.b.times(255).roundToInt()
+            g.color = Color(r, gr,b)
+            g.font = notoSans.deriveFont(Font.BOLD, fontSize).deriveFont(trackingAttr)
+            val stringWidth = g.fontMetrics.stringWidth(seriesDisplayName.text)
+            val serieX = (result.width / 2 - (stringWidth / 2)) + 20
+            g.drawCenteredString(seriesDisplayName.text.toUpperCase(), serieX, icon.height - 20)
+            g.color = Color.LIGHT_GRAY
+            g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
+            g.drawString(shortDesc, serieX + 60 + (stringWidth / 2), icon.height - 20)
+        } else g.drawCenteredString(shortDesc, result.width / 2, icon.height - 20)
     }
 
     g.font = notoSansBold.deriveFont(Font.PLAIN, 60f)
@@ -462,7 +497,10 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
     val g = result.createGraphics()
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.drawImage(rarity, 0, 0, null)
+    if (!drawSeriesBackgroundColors(result, g, container, isFeaturedShop = false, isDailyShop = true)) {
+        g.drawImage(rarity, 0, 0, null)
+    }
+    drawSeriesBackgroundImage(result, g, container, false)
     g.drawImage(icon, 5, 5, null)
 
     val burbank = Resources.burbank
@@ -491,7 +529,7 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
     val shortDesc = itemDef.shortDescription?.text
     if (shortDesc != null) {
         g.color = Color.LIGHT_GRAY
-        var fontSize = 40f
+        var fontSize = 30f
         g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
         var fm = g.fontMetrics
         while (fm.stringWidth(shortDesc) > result.width - 10) {
@@ -499,7 +537,24 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
             g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
             fm = g.fontMetrics
         }
-        g.drawCenteredString(shortDesc, result.width / 2, icon.height - 20)
+
+
+        //draw series name with Color1
+        val color1 = container.seriesDef?.colors?.get("Color1")
+        val seriesDisplayName = container.seriesDef?.displayName
+        if (color1 != null && seriesDisplayName != null) {
+            val r = color1.r.times(255).roundToInt()
+            val gr = color1.g.times(255).roundToInt()
+            val b = color1.b.times(255).roundToInt()
+            g.color = Color(r, gr,b)
+            g.font = notoSans.deriveFont(Font.BOLD, fontSize).deriveFont(trackingAttr)
+            val stringWidth = g.fontMetrics.stringWidth(seriesDisplayName.text)
+            val serieX = (result.width / 2 - (stringWidth / 2)) + 20
+            g.drawCenteredString(seriesDisplayName.text.toUpperCase(), serieX, icon.height - 20)
+            g.color = Color.LIGHT_GRAY
+            g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
+            g.drawString(shortDesc, serieX + 40 + (stringWidth / 2), icon.height - 20)
+        } else g.drawCenteredString(shortDesc, result.width / 2, icon.height - 20)
     }
 
     g.font = notoSansBold.deriveFont(Font.PLAIN, 45f)
@@ -520,7 +575,7 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
 private val numberFormatter: NumberFormat by lazy { NumberFormat.getNumberInstance(Locale.US) }
 private fun printPrice(price: Int) = numberFormatter.format(price)
 
-private fun loadFeaturedIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider): BufferedImage? {
+private fun loadFeaturedIcon(itemDefinition: ItemDefinition, fileProvider: FileProvider): BufferedImage? {
     if (itemDefinition.usesDisplayAssetPath) {
         val pkg = fileProvider.loadGameFile(itemDefinition.displayAssetPath!!) ?: return null
         val offerData = pkg.getExportOfTypeOrNull<FortMtxOfferData>() ?: return null
@@ -533,7 +588,7 @@ private fun loadFeaturedIcon(itemDefinition: AthenaItemDefinition, fileProvider:
         return null
 }
 
-private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider): BufferedImage? {
+private fun loadNormalIcon(itemDefinition: ItemDefinition, fileProvider: FileProvider): BufferedImage? {
     if (itemDefinition.hasIcons) {
         val iconPkg = fileProvider.loadGameFile(itemDefinition.largePreviewImage!!)
         val icon = iconPkg?.getExportOfType<UTexture2D>()?.toBufferedImage()
@@ -542,9 +597,9 @@ private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: F
     }
     if (itemDefinition.usesHeroDefinition) {
         val heroDefPkg = fileProvider.loadGameFile(itemDefinition.heroDefinitionPackage!!)
-        val hero = heroDefPkg?.getExportOfTypeOrNull<FortHeroType>()
-        if (hero != null) {
-            val iconPkg = fileProvider.loadGameFile(hero.largePreviewImage)
+        val largePreviewImage = heroDefPkg?.getExportOfTypeOrNull<ItemDefinition>()?.largePreviewImage
+        if (largePreviewImage != null) {
+            val iconPkg = fileProvider.loadGameFile(largePreviewImage)
             val icon = iconPkg?.getExportOfType<UTexture2D>()?.toBufferedImage()
             if (icon != null)
                 return icon
@@ -552,9 +607,9 @@ private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: F
     }
     if (itemDefinition.usesWeaponDefinition) {
         val weaponDefPkg = fileProvider.loadGameFile(itemDefinition.weaponDefinitionPackage!!)
-        val weapon = weaponDefPkg?.getExportOfTypeOrNull<FortWeaponMeleeItemDefinition>()
-        if (weapon != null) {
-            val iconPkg = fileProvider.loadGameFile(weapon.largePreviewImage)
+        val largePreviewImage = weaponDefPkg?.getExportOfTypeOrNull<ItemDefinition>()?.largePreviewImage
+        if (largePreviewImage != null) {
+            val iconPkg = fileProvider.loadGameFile(largePreviewImage)
             val icon = iconPkg?.getExportOfType<UTexture2D>()?.toBufferedImage()
             if (icon != null)
                 return icon
@@ -563,6 +618,60 @@ private fun loadNormalIcon(itemDefinition: AthenaItemDefinition, fileProvider: F
     return null
 }
 
-private fun loadIcon(itemDefinition: AthenaItemDefinition, fileProvider: FileProvider) =
+private fun loadIcon(itemDefinition: ItemDefinition, fileProvider: FileProvider) =
     loadFeaturedIcon(itemDefinition, fileProvider)
         ?: loadNormalIcon(itemDefinition, fileProvider)
+
+private fun loadSeriesDef(index : FPackageIndex, fileProvider: FileProvider) = fileProvider.loadGameFile(index)?.getExportOfTypeOrNull<FortItemSeriesDefinition>()
+
+private fun drawSeriesBackgroundColors(result : BufferedImage, g : Graphics2D, container: ItemDefinitionContainer, isFeaturedShop : Boolean, isDailyShop : Boolean) : Boolean {
+    val seriesDef = container.seriesDef ?: return false
+    val color1 = seriesDef.colors["Color1"] ?: return false
+    val color2 = seriesDef.colors["Color2"] ?: return false
+    val color3 = seriesDef.colors["Color3"] ?: return false
+
+    val r = color1.r.times(255).roundToInt()
+    val gr = color1.g.times(255).roundToInt()
+    val b = color1.b.times(255).roundToInt()
+    val r2 = color2.r.times(255).roundToInt()
+    val gr2 = color2.g.times(255).roundToInt()
+    val b2 = color2.b.times(255).roundToInt()
+    val r3 = color3.r.times(255).roundToInt()
+    val gr3 = color3.g.times(255).roundToInt()
+    val b3 = color3.b.times(255).roundToInt()
+
+    //gradient borders
+    val baseT = g.transform
+    val tf = AffineTransform.getTranslateInstance((-result.width / 2).toDouble(), (-result.height / 2).toDouble())
+    tf.preConcatenate(AffineTransform.getRotateInstance(Math.toRadians(180.0 + 45.0)))
+    tf.preConcatenate(AffineTransform.getTranslateInstance((result.width / 2).toDouble(), (result.height / 2).toDouble()))
+    g.transform = tf
+    g.paint = GradientPaint(0F, 0F, Color(r2, gr2, b2), 0F, (result.height + result.width).toFloat(), Color(r, gr, b), false)
+    g.fillRect(-result.width / 2, -result.height / 2, result.width * 2, result.height * 2)
+    g.transform = baseT
+
+    //actual background (you see it with the marvel rarity)
+    g.paint = Color(r3, gr3, b3)
+    if (isFeaturedShop)
+        g.fillRect(10, 10, result.width - 20, result.height - 20)
+    else
+        g.fillRect(5, 5, result.width - 10, result.height - 10)
+
+    if (isFeaturedShop) {
+        g.paint = Color(0, 7, 36, 255)
+        g.fillRect(10, result.height - 20 - 122, result.width - 20, 132)
+    } else if(isDailyShop) {
+        g.paint = Color(0, 7, 36, 255)
+        g.fillRect(5, result.height - 10 - 78, result.width - 10, 83)
+    }
+    return true
+}
+
+private fun drawSeriesBackgroundImage(result: BufferedImage, g: Graphics2D, container: ItemDefinitionContainer, isFeatured : Boolean) : Boolean {
+    val seriesIcon = container.seriesIcon ?: return false
+    if (isFeatured)
+        g.drawImage(seriesIcon.scale(result.width - 20, result.height - 20 - 132), 10, 10, null)
+    else
+        g.drawImage(seriesIcon, 5, 5, null)
+    return true
+}
