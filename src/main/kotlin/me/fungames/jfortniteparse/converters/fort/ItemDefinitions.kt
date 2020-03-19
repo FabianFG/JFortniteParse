@@ -95,8 +95,21 @@ fun ItemDefinition.createContainer(
     loadVariants: Boolean = true, failOnNoIconLoaded: Boolean = false, overrideIcon: BufferedImage? = null
 ): ItemDefinitionContainer {
     ItemDefinitionInfo.init(fileProvider)
-    val icon = overrideIcon ?: loadIcon(this, fileProvider)
-        ?: if (failOnNoIconLoaded) throw ParserException("Failed to load icon") else Resources.fallbackIcon
+    var icon = overrideIcon
+    var isFeatured = false
+    if (icon == null) {
+        icon = loadFeaturedIcon(this, fileProvider)
+        if (icon != null)
+            isFeatured = true
+        else
+            icon = loadNormalIcon(this, fileProvider)
+        if (icon == null) {
+            if (failOnNoIconLoaded)
+                throw ParserException("Failed to load icon")
+            else
+                icon = Resources.fallbackIcon
+        }
+    }
     val seriesDef = series?.let { loadSeriesDef(it, fileProvider) }
     val seriesIcon = seriesDef?.backgroundTexture?.let { fileProvider.loadGameFile(it)?.getExportOfTypeOrNull<UTexture2D>()?.toBufferedImage() }
     if (loadVariants) {
@@ -113,7 +126,7 @@ fun ItemDefinition.createContainer(
     val setName = this.set
     if (setName != null)
         setText = ItemDefinitionInfo.sets[setName.text]
-    return ItemDefinitionContainer(this, icon, setText, seriesIcon, seriesDef)
+    return ItemDefinitionContainer(this, icon, isFeatured, setText, seriesIcon, seriesDef)
 }
 data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics", "CosmeticItemDescription_SetMembership", "Part of the <SetName>{0}</> set.")) {
     fun applyLocres(locres: Locres?) {
@@ -124,7 +137,7 @@ data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics"
     val finalText : String
         get() = wrapper.text.replace("<SetName>{0}</>", set.text)
 }
-class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: BufferedImage, setText : FText?, var seriesIcon : BufferedImage?, var seriesDef : FortItemSeriesDefinition?) : Cloneable {
+class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: BufferedImage, var isFeaturedIcon : Boolean, setText : FText?, var seriesIcon : BufferedImage?, var seriesDef : FortItemSeriesDefinition?) : Cloneable {
 
     var setName = setText?.let { SetName(setText) }
 
@@ -575,7 +588,7 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
 private val numberFormatter: NumberFormat by lazy { NumberFormat.getNumberInstance(Locale.US) }
 private fun printPrice(price: Int) = numberFormatter.format(price)
 
-private fun loadFeaturedIcon(itemDefinition: ItemDefinition, fileProvider: FileProvider): BufferedImage? {
+fun loadFeaturedIcon(itemDefinition: ItemDefinition, fileProvider: FileProvider): BufferedImage? {
     if (itemDefinition.usesDisplayAssetPath) {
         val pkg = fileProvider.loadGameFile(itemDefinition.displayAssetPath!!) ?: return null
         val offerData = pkg.getExportOfTypeOrNull<FortMtxOfferData>() ?: return null
@@ -588,7 +601,7 @@ private fun loadFeaturedIcon(itemDefinition: ItemDefinition, fileProvider: FileP
         return null
 }
 
-private fun loadNormalIcon(itemDefinition: ItemDefinition, fileProvider: FileProvider): BufferedImage? {
+fun loadNormalIcon(itemDefinition: ItemDefinition, fileProvider: FileProvider): BufferedImage? {
     if (itemDefinition.hasIcons) {
         val iconPkg = fileProvider.loadGameFile(itemDefinition.largePreviewImage!!)
         val icon = iconPkg?.getExportOfType<UTexture2D>()?.toBufferedImage()
@@ -617,10 +630,6 @@ private fun loadNormalIcon(itemDefinition: ItemDefinition, fileProvider: FilePro
     }
     return null
 }
-
-private fun loadIcon(itemDefinition: ItemDefinition, fileProvider: FileProvider) =
-    loadFeaturedIcon(itemDefinition, fileProvider)
-        ?: loadNormalIcon(itemDefinition, fileProvider)
 
 private fun loadSeriesDef(index : FPackageIndex, fileProvider: FileProvider) = fileProvider.loadGameFile(index)?.getExportOfTypeOrNull<FortItemSeriesDefinition>()
 
