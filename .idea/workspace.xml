@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
+    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="rarity now uses a ftext for display name">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Asset Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Asset Classes.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/EFortRarity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/EFortRarity.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -21,7 +23,7 @@
     <option name="myElementSize" value="293" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="8442" />
+    <option name="totalTimeSeconds" value="10450" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -95,7 +97,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../../Desktop/Asval/SerieRarity/JFortniteParse-master/build.gradle" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.project.gradle" />
+    <property name="settings.editor.selected.configurable" value="discord-application" />
   </component>
   <component name="RecentsManager">
     <key name="MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY">
@@ -298,7 +300,8 @@
       <workItem from="1584111043505" duration="1648000" />
       <workItem from="1584442030310" duration="1338000" />
       <workItem from="1584544129230" duration="9563000" />
-      <workItem from="1584652061101" duration="462000" />
+      <workItem from="1584652061101" duration="1094000" />
+      <workItem from="1584726657440" duration="2429000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -552,7 +555,14 @@
       <option name="project" value="LOCAL" />
       <updated>1584552911811</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="added isFeaturedIcon to ItemDefinitionContainer">
+      <created>1584652552870</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1584652552870</updated>
+    </task>
+    <option name="localTasksCounter" value="38" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -572,8 +582,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="work for Fortnite Downloader (moved generic file provider functions into abstract file provider)" />
-    <MESSAGE value="version bump" />
     <MESSAGE value="added main guid constant" />
     <MESSAGE value="added hex string property to fguid" />
     <MESSAGE value="support for BuildPatchManifest" />
@@ -597,7 +605,9 @@
     <MESSAGE value="added translated string to ftext serialization" />
     <MESSAGE value="version is now a enum" />
     <MESSAGE value="support for series backgrounds, breaking: AthenaItemDefinition renamed to ItemDefinition to support more types" />
-    <option name="LAST_COMMIT_MESSAGE" value="support for series backgrounds, breaking: AthenaItemDefinition renamed to ItemDefinition to support more types" />
+    <MESSAGE value="added isFeaturedIcon to ItemDefinitionContainer" />
+    <MESSAGE value="rarity now uses a ftext for display name" />
+    <option name="LAST_COMMIT_MESSAGE" value="rarity now uses a ftext for display name" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

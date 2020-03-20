@@ -126,7 +126,7 @@ fun ItemDefinition.createContainer(
     val setName = this.set
     if (setName != null)
         setText = ItemDefinitionInfo.sets[setName.text]
-    return ItemDefinitionContainer(this, icon, isFeatured, setText, seriesIcon, seriesDef)
+    return ItemDefinitionContainer(this, icon, rarity.rarityName.copy(), isFeatured, setText, seriesIcon, seriesDef)
 }
 data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics", "CosmeticItemDescription_SetMembership", "Part of the <SetName>{0}</> set.")) {
     fun applyLocres(locres: Locres?) {
@@ -137,7 +137,7 @@ data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics"
     val finalText : String
         get() = wrapper.text.replace("<SetName>{0}</>", set.text)
 }
-class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: BufferedImage, var isFeaturedIcon : Boolean, setText : FText?, var seriesIcon : BufferedImage?, var seriesDef : FortItemSeriesDefinition?) : Cloneable {
+class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: BufferedImage, var rarityText : FText, var isFeaturedIcon : Boolean, setText : FText?, var seriesIcon : BufferedImage?, var seriesDef : FortItemSeriesDefinition?) : Cloneable {
 
     var setName = setText?.let { SetName(setText) }
 
@@ -153,6 +153,7 @@ class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: Buff
     fun applyLocres(locres : Locres?) {
         itemDefinition.applyLocres(locres)
         setName?.applyLocres(locres)
+        rarityText.applyLocres(locres)
     }
 }
 

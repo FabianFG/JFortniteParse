@@ -1,26 +1,28 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.fort
 
-enum class EFortRarity(val rarityName : String) {
+import me.fungames.jfortniteparse.ue4.assets.FText
 
-    Masterwork("Transcendent"),
-    Transcendent("Transcendent"),
+enum class EFortRarity(val rarityName : FText) {
 
-    Elegant("Mythic"),
-    Mythic("Mythic"),
+    Masterwork(FText("Fort.Rarity", "Transcendent", "Transcendent")),
+    Transcendent(FText("Fort.Rarity", "Transcendent", "Transcendent")),
 
-    Fine("Legendary"),
-    Legendary("Legendary"),
+    Elegant(FText("Fort.Rarity", "Mythic", "Mythic")),
+    Mythic(FText("Fort.Rarity", "Mythic", "Mythic")),
 
-    Quality("Epic"),
-    Epic("Epic"),
+    Fine(FText("Fort.Rarity", "Legendary", "Legendary")),
+    Legendary(FText("Fort.Rarity", "Legendary", "Legendary")),
 
-    Sturdy("Rare"),
-    Rare("Rare"),
+    Quality(FText("Fort.Rarity", "Epic", "Epic")),
+    Epic(FText("Fort.Rarity", "Epic", "Epic")),
 
-    Uncommon("Uncommon"),
+    Sturdy(FText("Fort.Rarity", "Rare", "Rare")),
+    Rare(FText("Fort.Rarity", "Rare", "Rare")),
 
-    Handmade("Common"),
-    Common("Common");
+    Uncommon(FText("Fort.Rarity", "Uncommon", "Uncommon")),
+
+    Handmade(FText("Fort.Rarity", "Common", "Common")),
+    Common(FText("Fort.Rarity", "Common ", "Common"));
 
     companion object {
         fun getEnum(rarity: String?) : EFortRarity {

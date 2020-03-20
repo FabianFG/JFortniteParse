@@ -1409,6 +1409,8 @@ class FText : UEClass {
         super.complete(Ar)
     }
 
+    fun copy() = FText(nameSpace, key, sourceString, flags, historyType)
+
     fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeUInt32(flags)
