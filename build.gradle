@@ -6,7 +6,7 @@ plugins {
 }
 
 group "me.fungames"
-version "2.4.2"
+version "2.4.3"
 
 repositories {
     mavenCentral()
@@ -64,7 +64,8 @@ publishing {
 dependencies {
     implementation 'me.fungames:JOodle:1.0'
     implementation 'me.fungames:KotlinASTC:1.1'
-    implementation 'me.fungames:KotlinSquish:1.0'
+    //implementation 'me.fungames:KotlinSquish:1.0' Somehow broken with alpha values
+    implementation 'com.github.memo33:jsquish:1.0'
     implementation 'me.fungames:KotlinPointers:1.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'

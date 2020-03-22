@@ -1,10 +1,10 @@
 package me.fungames.jfortniteparse.converters.ue4
 
+import com.github.memo33.jsquish.Squish
 import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
 import me.fungames.kotlinASTC.ASTCCodecImage
 import me.fungames.kotlinASTC.Bitness
 import me.fungames.kotlinPointers.asPointer
-import me.fungames.kotlinSquish.Squish
 import java.awt.image.BufferedImage
 import kotlin.math.floor
 import kotlin.math.sqrt
@@ -148,7 +148,7 @@ fun UTexture2D.toBufferedImage() : BufferedImage {
                 Squish.CompressionType.DXT3
             else
                 Squish.CompressionType.DXT1
-            val decompressed = Squish.decompressImage(width, height, data, type)
+            val decompressed = Squish.decompressImage(null, width, height, data, type)
             decompressed.copyInto(dst, 0, 0, width * height * 4)
         }
     }
