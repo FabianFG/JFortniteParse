@@ -57,10 +57,10 @@ object JsonSerializer{
     @Suppress("EXPERIMENTAL_API_USAGE")
     fun UScriptStruct.toJson(context: JsonSerializationContext) : JsonElement {
         return when(val ob = this.structType) {
-            is FIntPoint -> jsonObject("X" to ob.x, "Y" to ob.y)
+            is FIntPoint -> jsonObject("X" to ob.x.toInt(), "Y" to ob.y.toInt())
             is FGuid -> JsonPrimitive(ob.toString())
             is FGameplayTagContainer -> jsonArray(ob.gameplayTags.map { it.text })
-            is FColor -> jsonObject("R" to ob.r, "B" to ob.b, "G" to ob.g, "A" to ob.a)
+            is FColor -> jsonObject("R" to ob.r.toShort(), "B" to ob.b.toShort(), "G" to ob.g.toShort(), "A" to ob.a)
             is FLinearColor -> jsonObject("R" to ob.r, "B" to ob.b, "G" to ob.g, "A" to ob.a)
             is FSoftObjectPath -> jsonObject("asset_path" to ob.assetPathName.text, "sub_path" to ob.subPathString)
             is FStructFallback -> {
@@ -99,6 +99,7 @@ object JsonSerializer{
         }
     }
 
+    @Suppress("EXPERIMENTAL_API_USAGE")
     val uobjectSerializer = jsonSerializer<UObject> {
         val ob = jsonObject("export_type" to it.src.exportType)
         it.src.properties.forEach {pTag ->

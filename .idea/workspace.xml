@@ -4,7 +4,7 @@
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ue4/Textures.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ue4/Textures.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/JsonSerializer.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/JsonSerializer.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -21,7 +21,7 @@
     <option name="myElementSize" value="293" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="11269" />
+    <option name="totalTimeSeconds" value="11677" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -125,7 +125,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Kotlin.TestKt (1)">
+  <component name="RunManager" selected="Gradle.JFortniteParse [bintrayUpload]">
     <configuration name="JFortniteParse [bintrayUpload]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -307,7 +307,8 @@
       <workItem from="1584726657440" duration="3166000" />
       <workItem from="1584786656164" duration="85000" />
       <workItem from="1584907771701" duration="183000" />
-      <workItem from="1584908639880" duration="578000" />
+      <workItem from="1584908639880" duration="1367000" />
+      <workItem from="1584952077668" duration="244000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -575,7 +576,14 @@
       <option name="project" value="LOCAL" />
       <updated>1584730459973</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="fixed strange alpha for dxt images">
+      <created>1584909236538</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1584909236538</updated>
+    </task>
+    <option name="localTasksCounter" value="40" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -595,8 +603,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added main guid constant" />
-    <MESSAGE value="added hex string property to fguid" />
     <MESSAGE value="support for BuildPatchManifest" />
     <MESSAGE value="all readers are now inheriting inputstream / outputstream" />
     <MESSAGE value="small pak reader improvements" />
@@ -620,7 +626,9 @@
     <MESSAGE value="support for series backgrounds, breaking: AthenaItemDefinition renamed to ItemDefinition to support more types" />
     <MESSAGE value="added isFeaturedIcon to ItemDefinitionContainer" />
     <MESSAGE value="rarity now uses a ftext for display name" />
-    <option name="LAST_COMMIT_MESSAGE" value="rarity now uses a ftext for display name" />
+    <MESSAGE value="fixed strange alpha for dxt images" />
+    <MESSAGE value="fixed some bugs with the json serializer" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed some bugs with the json serializer" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
