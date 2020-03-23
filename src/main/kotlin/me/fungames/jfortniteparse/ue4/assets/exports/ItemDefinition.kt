@@ -63,6 +63,8 @@ class ItemDefinition : UEExport {
         series = baseObject.getOrNull("Series")
         displayName = baseObject.getOrNull("DisplayName")
         shortDescription = baseObject.getOrNull("ShortDescription")
+        if (shortDescription == null && exportType == "AthenaItemWrapDefinition")
+            shortDescription = FText("Fort.Cosmetics", "ItemWrapShortDescription", "Wrap")
         description = baseObject.getOrNull("Description")
         gameplayTags = baseObject.getOrNull("GameplayTags")?: FGameplayTagContainer(mutableListOf())
         super.complete(Ar)

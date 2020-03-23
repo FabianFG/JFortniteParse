@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FArchive.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/reader/FArchive.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/ItemDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/ItemDefinition.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -20,7 +20,7 @@
     <option name="myElementSize" value="293" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="12129" />
+    <option name="totalTimeSeconds" value="12510" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -307,7 +307,7 @@
       <workItem from="1584786656164" duration="85000" />
       <workItem from="1584907771701" duration="183000" />
       <workItem from="1584908639880" duration="1367000" />
-      <workItem from="1584952077668" duration="1173000" />
+      <workItem from="1584952077668" duration="2089000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -589,7 +589,14 @@
       <option name="project" value="LOCAL" />
       <updated>1584952324862</updated>
     </task>
-    <option name="localTasksCounter" value="41" />
+    <task id="LOCAL-00041" summary="fixed a translation bug with locres files">
+      <created>1584956205228</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1584956205228</updated>
+    </task>
+    <option name="localTasksCounter" value="42" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -609,7 +616,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="support for BuildPatchManifest" />
     <MESSAGE value="all readers are now inheriting inputstream / outputstream" />
     <MESSAGE value="small pak reader improvements" />
     <MESSAGE value="fixed concurrent cloning of archives for pak archive" />
@@ -634,7 +640,8 @@
     <MESSAGE value="rarity now uses a ftext for display name" />
     <MESSAGE value="fixed strange alpha for dxt images" />
     <MESSAGE value="fixed some bugs with the json serializer" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed some bugs with the json serializer" />
+    <MESSAGE value="fixed a translation bug with locres files" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed a translation bug with locres files" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
