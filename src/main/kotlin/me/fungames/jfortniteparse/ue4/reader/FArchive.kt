@@ -103,10 +103,10 @@ abstract class FArchive : Cloneable, InputStream() {
             val string = read(length - 1).toString(Charsets.UTF_8)
             if (readUInt8() != 0.toUByte())
                 throw ParserException("Serialized FString is not null-terminated", this)
-            if (string == "")
-                " "
-            else
-                string
+            //if (string == "") For re-serializing replacing actually empty strings with these ones to detect the difference, causes issues with locres
+            //    " "
+            //else
+            string
         }
     }
 

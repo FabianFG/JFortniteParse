@@ -78,10 +78,10 @@ abstract class FArchiveWriter : OutputStream() {
         if (!(-65536..65536).contains(i.length))
             throw ParserException("Invalid String length '${i.length}'", this)
         when {
-            i == " " -> {
-                writeInt32(1)
-                writeInt8(0)
-            }
+//            i == " " -> {
+//                writeInt32(1)
+//                writeInt8(0)
+//            }
             i.isNotEmpty() -> {
                 writeInt32(i.length + 1)
                 write(i.toByteArray(Charsets.UTF_8))
