@@ -21,6 +21,7 @@ data class SoundWave(var data : ByteArray, var format : String) {
     }
 }
 
+@Suppress("EXPERIMENTAL_API_USAGE")
 @Throws(IllegalArgumentException::class)
 fun USoundWave.convert() : SoundWave {
     UEClass.logger.debug("Starting to convert USoundWave")
@@ -30,6 +31,9 @@ fun USoundWave.convert() : SoundWave {
             val compressedFormatData = this.compressedFormatData ?: throw ParserException("Cooked sounds need compressed format data")
             require(!compressedFormatData.isNullOrEmpty())
             UEClass.logger.debug("Done")
+            if (compressedFormatData[0].formatName.text.startsWith("OGG1")) {
+                compressedFormatData[0].formatName.text = "OGG"
+            }
             SoundWave(
                 compressedFormatData[0].data.data,
                 compressedFormatData[0].formatName.text
@@ -44,6 +48,9 @@ fun USoundWave.convert() : SoundWave {
         val streamedChunks = this.streamedAudioChunks ?: throw ParserException("Streamed sounds need streamed audio chunks")
         UEClass.logger.debug("Found streamed sound data, exporting...")
         var data = ByteArray(0)
+        if (this.format?.text?.startsWith("OGG1") == true) {
+            this.format?.text = "OGG"
+        }
         streamedChunks.iterator().forEach { data +=  it.data.data.copyOfRange(0, it.audioDataSize)}
         val format = this.format?.text ?: throw IllegalArgumentException("Streamed sounds need format")
         UEClass.logger.debug("Done")

@@ -3,7 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/ItemDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/ItemDefinition.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ue4/Sounds.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ue4/Sounds.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -20,7 +21,7 @@
     <option name="myElementSize" value="293" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="12510" />
+    <option name="totalTimeSeconds" value="13324" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -307,7 +308,9 @@
       <workItem from="1584786656164" duration="85000" />
       <workItem from="1584907771701" duration="183000" />
       <workItem from="1584908639880" duration="1367000" />
-      <workItem from="1584952077668" duration="2089000" />
+      <workItem from="1584952077668" duration="2874000" />
+      <workItem from="1585082857536" duration="12000" />
+      <workItem from="1585086047107" duration="623000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -596,7 +599,14 @@
       <option name="project" value="LOCAL" />
       <updated>1584956205228</updated>
     </task>
-    <option name="localTasksCounter" value="42" />
+    <task id="LOCAL-00042" summary="added short description support for item wraps">
+      <created>1584957042059</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1584957042059</updated>
+    </task>
+    <option name="localTasksCounter" value="43" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -616,7 +626,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="all readers are now inheriting inputstream / outputstream" />
     <MESSAGE value="small pak reader improvements" />
     <MESSAGE value="fixed concurrent cloning of archives for pak archive" />
     <MESSAGE value="fixed weapon wraps" />
@@ -641,7 +650,8 @@
     <MESSAGE value="fixed strange alpha for dxt images" />
     <MESSAGE value="fixed some bugs with the json serializer" />
     <MESSAGE value="fixed a translation bug with locres files" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed a translation bug with locres files" />
+    <MESSAGE value="added short description support for item wraps" />
+    <option name="LAST_COMMIT_MESSAGE" value="added short description support for item wraps" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -659,6 +669,11 @@
           <url>file://$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/Pak Classes.kt</url>
           <line>47</line>
           <option name="timeStamp" value="14" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
+          <line>60</line>
+          <option name="timeStamp" value="15" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
