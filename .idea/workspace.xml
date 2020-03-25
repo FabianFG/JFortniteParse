@@ -4,7 +4,8 @@
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ue4/Sounds.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/ue4/Sounds.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Asset Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Asset Classes.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -21,7 +22,7 @@
     <option name="myElementSize" value="293" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="13324" />
+    <option name="totalTimeSeconds" value="14780" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -310,7 +311,9 @@
       <workItem from="1584908639880" duration="1367000" />
       <workItem from="1584952077668" duration="2874000" />
       <workItem from="1585082857536" duration="12000" />
-      <workItem from="1585086047107" duration="623000" />
+      <workItem from="1585086047107" duration="1269000" />
+      <workItem from="1585137763342" duration="33000" />
+      <workItem from="1585146004704" duration="1473000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -606,7 +609,14 @@
       <option name="project" value="LOCAL" />
       <updated>1584957042059</updated>
     </task>
-    <option name="localTasksCounter" value="43" />
+    <task id="LOCAL-00043" summary="fixed strange ogg format">
+      <created>1585086705779</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1585086705779</updated>
+    </task>
+    <option name="localTasksCounter" value="44" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -626,7 +636,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="small pak reader improvements" />
     <MESSAGE value="fixed concurrent cloning of archives for pak archive" />
     <MESSAGE value="fixed weapon wraps" />
     <MESSAGE value="support for set names&#10;added catalog messages" />
@@ -651,7 +660,8 @@
     <MESSAGE value="fixed some bugs with the json serializer" />
     <MESSAGE value="fixed a translation bug with locres files" />
     <MESSAGE value="added short description support for item wraps" />
-    <option name="LAST_COMMIT_MESSAGE" value="added short description support for item wraps" />
+    <MESSAGE value="fixed strange ogg format" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed strange ogg format" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

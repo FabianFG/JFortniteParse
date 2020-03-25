@@ -1441,6 +1441,8 @@ class FText : UEClass {
         if (locres != null)
             text = locres.texts.stringData[nameSpace]?.get(key) ?: return
     }
+
+    fun textForLocres(locres: Locres?) = locres?.texts?.stringData?.get(nameSpace)?.get(key) ?: text
 }
 
 @ExperimentalUnsignedTypes

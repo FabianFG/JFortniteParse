@@ -134,6 +134,8 @@ data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics"
         wrapper.applyLocres(locres)
     }
 
+    fun finalTextForLocres(locres: Locres?) = wrapper.textForLocres(locres).replace("<SetName>{0}</>", set.textForLocres(locres))
+
     val finalText : String
         get() = wrapper.text.replace("<SetName>{0}</>", set.text)
 }
@@ -144,11 +146,11 @@ class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: Buff
     val variantsLoaded: Boolean
         get() = itemDefinition.variants.firstOrNull { variant -> variant.variants.firstOrNull { it.previewIcon != null } != null } != null
 
-    fun getImage() = getImage(this)
-    fun getImageWithVariants() = getImageWithVariants(this)
-    fun getImageNoVariants() = getImageNoVariants(this)
-    fun getShopFeaturedImage(price: Int) = getShopFeaturedImage(this, price)
-    fun getShopDailyImage(price: Int) = getShopDailyImage(this, price)
+    fun getImage(locres: Locres? = null) = getImage(this, locres)
+    fun getImageWithVariants(locres: Locres? = null) = getImageWithVariants(this, locres)
+    fun getImageNoVariants(locres: Locres? = null) = getImageNoVariants(this, locres)
+    fun getShopFeaturedImage(price: Int, locres: Locres? = null) = getShopFeaturedImage(this, price, locres)
+    fun getShopDailyImage(price: Int, locres: Locres? = null) = getShopDailyImage(this, price, locres)
 
     fun applyLocres(locres : Locres?) {
         itemDefinition.applyLocres(locres)
@@ -157,11 +159,11 @@ class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: Buff
     }
 }
 
-fun getImage(container: ItemDefinitionContainer): BufferedImage {
+fun getImage(container: ItemDefinitionContainer, locres: Locres?): BufferedImage {
     return if (container.variantsLoaded)
-        getImageWithVariants(container)
+        getImageWithVariants(container, locres)
     else
-        getImageNoVariants(container)
+        getImageNoVariants(container, locres)
 }
 
 private const val variantsIconSize = 180
@@ -170,7 +172,7 @@ private const val variantsX = 500
 private const val variantsSpaceBetween = 5
 private const val variantsMaxPerRow = 7
 private const val variantsBeginX = 11
-private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedImage {
+private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Locres?): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     val vars = itemDef.variants
@@ -218,11 +220,11 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
     var cY = 35
     vars.forEach {
         val varCount = it.variants.size
-        val channelName = it.variantChannelName?.text
+        val channelName = it.variantChannelName?.textForLocres(locres)
         if (channelName != null) {
             g.font = burbank.deriveFont(25f)
             g.paint = Color.WHITE
-            g.drawString(it.variantChannelName.text, variantsBeginX, cY + 20)
+            g.drawString(channelName, variantsBeginX, cY + 20)
             cY += g.fontMetrics.height
         }
         var cX = variantsBeginX
@@ -252,7 +254,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
             g.fillRect(cX, cY, varSize, varSize)
             g.drawImage(varIcon, cX, cY, null)
 
-            val varName = varContainer.variantName?.text
+            val varName = varContainer.variantName?.textForLocres(locres)
             if (varName != null) {
                 g.paint = Color(0, 0, 0, 100)
                 g.fillRect(cX, cY + varSize - varSize / 4, varSize, varSize / 4)
@@ -274,7 +276,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
 
     g.drawImage(icon, result.width - 5 - variantsIconSize, result.height - 5 - variantsIconSize, null)
 
-    val displayName = itemDef.displayName?.text?.toUpperCase()
+    val displayName = itemDef.displayName?.textForLocres(locres)?.toUpperCase()
 
     val rightX = result.width - 5 - variantsIconSize - 10
     val spaceForString = rightX - 5
@@ -291,14 +293,14 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
         g.drawString(displayName, rightX - fm.stringWidth(displayName), result.width - 52)
     }
 
-    val description = itemDef.description?.text
+    val description = itemDef.description?.textForLocres(locres)
     if (description != null) {
         g.color = Color.WHITE
         var fontSize: Float
         var fm: FontMetrics
         var y = result.height - 30
         var lines = description.split("\\r?\\n")
-        val setText = container.setName?.finalText
+        val setText = container.setName?.finalTextForLocres(locres)
         if (setText != null) {
             lines = lines.toMutableList().apply { this.add(setText) }
         }
@@ -334,7 +336,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer): BufferedIm
 
 private val trackingAttr: Map<TextAttribute, Double> by lazy { mapOf(TextAttribute.TRACKING to 0.03) }
 private const val barHeight = 160
-private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImage {
+private fun getImageNoVariants(container: ItemDefinitionContainer, locres: Locres?): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
@@ -360,7 +362,7 @@ private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImag
         barHeight
     )
     g.font = burbank
-    val displayName = itemDef.displayName?.text?.toUpperCase()
+    val displayName = itemDef.displayName?.textForLocres(locres)?.toUpperCase()
     if (displayName != null) {
         g.color = Color.WHITE
         var fontSize = 60f
@@ -373,14 +375,14 @@ private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImag
         }
         g.drawCenteredString(displayName, result.width / 2, result.height - 95)
     }
-    val description = itemDef.description?.text
+    val description = itemDef.description?.textForLocres(locres)
     if (description != null) {
         g.color = Color.LIGHT_GRAY
         var fontSize: Float
         var fm: FontMetrics
         var y = icon.height - 50
         var lines = description.split("\\r?\\n")
-        val setText = container.setName?.finalText
+        val setText = container.setName?.finalTextForLocres(locres)
         if (setText != null) {
             lines = lines.toMutableList().apply { this.add(setText) }
         }
@@ -416,7 +418,7 @@ private fun getImageNoVariants(container: ItemDefinitionContainer): BufferedImag
 
 private const val featuredAdditionalHeight = 200
 private const val featuredBarHeight = 131
-private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int): BufferedImage {
+private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int, locres: Locres?): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     if (icon.width != 1024 || icon.height != 1024)
@@ -443,7 +445,7 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
     val notoSans = Resources.notoSans
     val notoSansBold = Resources.notoSansBold
 
-    val displayName = itemDef.displayName?.text?.toUpperCase()
+    val displayName = itemDef.displayName?.textForLocres(locres)?.toUpperCase()
     if (displayName != null) {
         g.color = Color.WHITE
         var fontSize = 80f
@@ -456,7 +458,7 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
         }
         g.drawCenteredString(displayName, result.width / 2, icon.height - 95)
     }
-    val shortDesc = itemDef.shortDescription?.text
+    val shortDesc = itemDef.shortDescription?.textForLocres(locres)
     if (shortDesc != null) {
         g.color = Color.LIGHT_GRAY
         var fontSize = 40f
@@ -476,9 +478,9 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
             val b = color1.b.times(255).roundToInt()
             g.color = Color(r, gr,b)
             g.font = notoSans.deriveFont(Font.BOLD, fontSize).deriveFont(trackingAttr)
-            val stringWidth = g.fontMetrics.stringWidth(seriesDisplayName.text)
+            val stringWidth = g.fontMetrics.stringWidth(seriesDisplayName.textForLocres(locres))
             val serieX = (result.width / 2 - (stringWidth / 2)) + 20
-            g.drawCenteredString(seriesDisplayName.text.toUpperCase(), serieX, icon.height - 20)
+            g.drawCenteredString(seriesDisplayName.textForLocres(locres).toUpperCase(), serieX, icon.height - 20)
             g.color = Color.LIGHT_GRAY
             g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
             g.drawString(shortDesc, serieX + 60 + (stringWidth / 2), icon.height - 20)
@@ -501,7 +503,7 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int)
 
 private const val dailyAdditionalHeight = 160
 private const val dailyBarHeight = 83
-private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): BufferedImage {
+private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int, locres : Locres?): BufferedImage {
     val itemDef = container.itemDefinition
     var icon = container.icon
     if (icon.width != 512 || icon.height != 512)
@@ -526,7 +528,7 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
         dailyAdditionalHeight
     )
 
-    val displayName = itemDef.displayName?.text?.toUpperCase()
+    val displayName = itemDef.displayName?.textForLocres(locres)?.toUpperCase()
     if (displayName != null) {
         g.color = Color.WHITE
         var fontSize = 60f
@@ -540,7 +542,7 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
         g.drawCenteredString(displayName, result.width / 2, icon.height - 85)
     }
 
-    val shortDesc = itemDef.shortDescription?.text
+    val shortDesc = itemDef.shortDescription?.textForLocres(locres)
     if (shortDesc != null) {
         g.color = Color.LIGHT_GRAY
         var fontSize = 30f
@@ -562,9 +564,9 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int): B
             val b = color1.b.times(255).roundToInt()
             g.color = Color(r, gr,b)
             g.font = notoSans.deriveFont(Font.BOLD, fontSize).deriveFont(trackingAttr)
-            val stringWidth = g.fontMetrics.stringWidth(seriesDisplayName.text)
+            val stringWidth = g.fontMetrics.stringWidth(seriesDisplayName.textForLocres(locres))
             val serieX = (result.width / 2 - (stringWidth / 2)) + 20
-            g.drawCenteredString(seriesDisplayName.text.toUpperCase(), serieX, icon.height - 20)
+            g.drawCenteredString(seriesDisplayName.textForLocres(locres).toUpperCase(), serieX, icon.height - 20)
             g.color = Color.LIGHT_GRAY
             g.font = notoSans.deriveFont(Font.PLAIN, fontSize).deriveFont(trackingAttr)
             g.drawString(shortDesc, serieX + 40 + (stringWidth / 2), icon.height - 20)
