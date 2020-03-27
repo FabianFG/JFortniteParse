@@ -10,9 +10,9 @@ import me.fungames.jfortniteparse.resources.*
 import me.fungames.jfortniteparse.ue4.UEClass
 import me.fungames.jfortniteparse.ue4.assets.FPackageIndex
 import me.fungames.jfortniteparse.ue4.assets.FText
+import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
 import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
-import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortItemSeriesDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortMtxOfferData
 import me.fungames.jfortniteparse.ue4.locres.Locres
@@ -28,7 +28,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
-import kotlin.math.roundToInt
 
 object ItemDefinitionInfo {
     val sets = ConcurrentHashMap<String, FText>()
@@ -126,22 +125,20 @@ fun ItemDefinition.createContainer(
     val setName = this.set
     if (setName != null)
         setText = ItemDefinitionInfo.sets[setName.text]
-    return ItemDefinitionContainer(this, icon, rarity.rarityName.copy(), isFeatured, setText, seriesIcon, seriesDef)
+    return ItemDefinitionContainer(this, icon, rarity.rarityName.copy(), isFeatured, setText?.let { SetName(setText) }, seriesIcon, seriesDef)
 }
-data class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics", "CosmeticItemDescription_SetMembership", "Part of the <SetName>{0}</> set.")) {
+open class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics", "CosmeticItemDescription_SetMembership", "Part of the <SetName>{0}</> set.")) {
     fun applyLocres(locres: Locres?) {
         set.applyLocres(locres)
         wrapper.applyLocres(locres)
     }
 
-    fun finalTextForLocres(locres: Locres?) = wrapper.textForLocres(locres).replace("<SetName>{0}</>", set.textForLocres(locres))
+    open fun finalTextForLocres(locres: Locres?) = wrapper.textForLocres(locres).replace("<SetName>{0}</>", set.textForLocres(locres))
 
-    val finalText : String
+    open val finalText : String
         get() = wrapper.text.replace("<SetName>{0}</>", set.text)
 }
-class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: BufferedImage, var rarityText : FText, var isFeaturedIcon : Boolean, setText : FText?, var seriesIcon : BufferedImage?, var seriesDef : FortItemSeriesDefinition?) : Cloneable {
-
-    var setName = setText?.let { SetName(setText) }
+class ItemDefinitionContainer(val itemDefinition: ItemDefinition, var icon: BufferedImage, var rarityText : FText, var isFeaturedIcon : Boolean, val setName : SetName?, var seriesIcon : BufferedImage?, var seriesDef : FortItemSeriesDefinition?) : Cloneable {
 
     val variantsLoaded: Boolean
         get() = itemDefinition.variants.firstOrNull { variant -> variant.variants.firstOrNull { it.previewIcon != null } != null } != null
@@ -244,12 +241,8 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
             }
             //draw variant background with Color1
             val color1 = container.seriesDef?.colors?.get("Color1")
-            if (color1 != null) {
-                val r = color1.r.times(255).roundToInt()
-                val gr = color1.g.times(255).roundToInt()
-                val b = color1.b.times(255).roundToInt()
-                g.paint = Color(r, gr, b, 70)
-            }
+            if (color1 != null)
+                g.paint = Color(color1.red, color1.green, color1.blue, 70)
             else g.paint = Color(255, 255, 255, 70)
             g.fillRect(cX, cY, varSize, varSize)
             g.drawImage(varIcon, cX, cY, null)
@@ -473,10 +466,7 @@ private fun getShopFeaturedImage(container: ItemDefinitionContainer, price: Int,
         val color1 = container.seriesDef?.colors?.get("Color1")
         val seriesDisplayName = container.seriesDef?.displayName
         if (color1 != null && seriesDisplayName != null) {
-            val r = color1.r.times(255).roundToInt()
-            val gr = color1.g.times(255).roundToInt()
-            val b = color1.b.times(255).roundToInt()
-            g.color = Color(r, gr,b)
+            g.color = Color(color1.red, color1.green, color1.blue)
             g.font = notoSans.deriveFont(Font.BOLD, fontSize).deriveFont(trackingAttr)
             val stringWidth = g.fontMetrics.stringWidth(seriesDisplayName.textForLocres(locres))
             val serieX = (result.width / 2 - (stringWidth / 2)) + 20
@@ -559,10 +549,7 @@ private fun getShopDailyImage(container: ItemDefinitionContainer, price: Int, lo
         val color1 = container.seriesDef?.colors?.get("Color1")
         val seriesDisplayName = container.seriesDef?.displayName
         if (color1 != null && seriesDisplayName != null) {
-            val r = color1.r.times(255).roundToInt()
-            val gr = color1.g.times(255).roundToInt()
-            val b = color1.b.times(255).roundToInt()
-            g.color = Color(r, gr,b)
+            g.color = Color(color1.red, color1.green, color1.blue)
             g.font = notoSans.deriveFont(Font.BOLD, fontSize).deriveFont(trackingAttr)
             val stringWidth = g.fontMetrics.stringWidth(seriesDisplayName.textForLocres(locres))
             val serieX = (result.width / 2 - (stringWidth / 2)) + 20
@@ -642,28 +629,18 @@ private fun drawSeriesBackgroundColors(result : BufferedImage, g : Graphics2D, c
     val color2 = seriesDef.colors["Color2"] ?: return false
     val color3 = seriesDef.colors["Color3"] ?: return false
 
-    val r = color1.r.times(255).roundToInt()
-    val gr = color1.g.times(255).roundToInt()
-    val b = color1.b.times(255).roundToInt()
-    val r2 = color2.r.times(255).roundToInt()
-    val gr2 = color2.g.times(255).roundToInt()
-    val b2 = color2.b.times(255).roundToInt()
-    val r3 = color3.r.times(255).roundToInt()
-    val gr3 = color3.g.times(255).roundToInt()
-    val b3 = color3.b.times(255).roundToInt()
-
     //gradient borders
     val baseT = g.transform
     val tf = AffineTransform.getTranslateInstance((-result.width / 2).toDouble(), (-result.height / 2).toDouble())
     tf.preConcatenate(AffineTransform.getRotateInstance(Math.toRadians(180.0 + 45.0)))
     tf.preConcatenate(AffineTransform.getTranslateInstance((result.width / 2).toDouble(), (result.height / 2).toDouble()))
     g.transform = tf
-    g.paint = GradientPaint(0F, 0F, Color(r2, gr2, b2), 0F, (result.height + result.width).toFloat(), Color(r, gr, b), false)
+    g.paint = GradientPaint(0F, 0F, color2, 0F, (result.height + result.width).toFloat(), color1, false)
     g.fillRect(-result.width / 2, -result.height / 2, result.width * 2, result.height * 2)
     g.transform = baseT
 
     //actual background (you see it with the marvel rarity)
-    g.paint = Color(r3, gr3, b3)
+    g.paint = color3
     if (isFeaturedShop)
         g.fillRect(10, 10, result.width - 20, result.height - 20)
     else

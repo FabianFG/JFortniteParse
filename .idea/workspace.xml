@@ -6,6 +6,9 @@
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Asset Classes.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Asset Classes.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/ItemDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/ItemDefinition.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortCosmeticVariant.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortCosmeticVariant.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortItemSeriesDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortItemSeriesDefinition.kt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -22,7 +25,7 @@
     <option name="myElementSize" value="293" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="14780" />
+    <option name="totalTimeSeconds" value="17541" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -126,7 +129,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Kotlin.TestKt (1)">
+  <component name="RunManager" selected="Gradle.JFortniteParse [publishMavenPublicationToMavenLocal]">
     <configuration name="JFortniteParse [bintrayUpload]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -313,7 +316,9 @@
       <workItem from="1585082857536" duration="12000" />
       <workItem from="1585086047107" duration="1269000" />
       <workItem from="1585137763342" duration="33000" />
-      <workItem from="1585146004704" duration="1473000" />
+      <workItem from="1585146004704" duration="2233000" />
+      <workItem from="1585224825561" duration="1363000" />
+      <workItem from="1585304155886" duration="8777000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -616,7 +621,14 @@
       <option name="project" value="LOCAL" />
       <updated>1585086705779</updated>
     </task>
-    <option name="localTasksCounter" value="44" />
+    <task id="LOCAL-00044" summary="added some support for concurrent locres for item defs">
+      <created>1585147625548</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1585147625548</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -636,8 +648,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fixed concurrent cloning of archives for pak archive" />
-    <MESSAGE value="fixed weapon wraps" />
     <MESSAGE value="support for set names&#10;added catalog messages" />
     <MESSAGE value="refactored some pak functions for optimization purposes" />
     <MESSAGE value="breaking: variantChannelTag is now nullable" />
@@ -661,7 +671,9 @@
     <MESSAGE value="fixed a translation bug with locres files" />
     <MESSAGE value="added short description support for item wraps" />
     <MESSAGE value="fixed strange ogg format" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed strange ogg format" />
+    <MESSAGE value="added some support for concurrent locres for item defs" />
+    <MESSAGE value="support for generating images from api" />
+    <option name="LAST_COMMIT_MESSAGE" value="support for generating images from api" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

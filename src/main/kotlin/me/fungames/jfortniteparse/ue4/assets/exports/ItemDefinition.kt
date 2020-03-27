@@ -9,8 +9,8 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 
 @ExperimentalUnsignedTypes
-class ItemDefinition : UEExport {
-    override var baseObject: UObject
+open class ItemDefinition : UEExport {
+    final override var baseObject: UObject
 
     var heroDefinitionPackage : FPackageIndex? = null
     val usesHeroDefinition : Boolean

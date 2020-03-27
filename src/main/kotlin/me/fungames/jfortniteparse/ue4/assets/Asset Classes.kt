@@ -12,6 +12,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import java.awt.Color
 
 @ExperimentalUnsignedTypes
 class UObject : UEExport {
@@ -1258,6 +1259,8 @@ class FLinearColor : UEClass {
         super.completeWrite(Ar)
     }
 
+    fun toColor() = Color(r, g, b, a)
+
     constructor(r: Float, g: Float, b: Float, a: Float) {
         this.r = r
         this.g = g
@@ -1281,6 +1284,8 @@ class FColor : UEClass {
         a = Ar.readUInt8()
         super.complete(Ar)
     }
+
+    fun toColor() = Color(r.toInt(), g.toInt(), b.toInt(), a.toInt())
 
     fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)

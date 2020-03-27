@@ -18,9 +18,14 @@ data class CosmeticVariant(var startUnlocked : Boolean, var isDefault : Boolean,
 @ExperimentalUnsignedTypes
 class FortCosmeticVariant : UEExport {
     override var baseObject: UObject
-    val variantChannelName : FText?
-    val variantChannelTag : FName?
+    var variantChannelName : FText? = null
+    var variantChannelTag : FName? = null
     val variants : MutableList<CosmeticVariant>
+
+    constructor() : super("FortCosmeticVariant") {
+        baseObject = UObject(mutableListOf(), false, null, "ItemDefinition")
+        variants = mutableListOf()
+    }
 
     constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(exportObject) {
         super.init(Ar)
