@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.ue4.manifests.objects
 
 import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.manifests.*
 import me.fungames.jfortniteparse.ue4.pak.CompressionMethod
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
