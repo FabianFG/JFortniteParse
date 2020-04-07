@@ -67,6 +67,14 @@ abstract class FArchiveWriter : OutputStream() {
         write(bb.array())
     }
 
+    fun writeDouble(i : Double) {
+        val bb = ByteBuffer.allocate(8)
+        if (this.littleEndian)
+            bb.order(ByteOrder.LITTLE_ENDIAN)
+        bb.putDouble(i)
+        write(bb.array())
+    }
+
     fun writeBoolean(i : Boolean) {
         if (i) writeInt32(1) else writeInt32(0)
     }

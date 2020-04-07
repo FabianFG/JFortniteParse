@@ -1,17 +1,41 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.fort
 
-import me.fungames.jfortniteparse.ue4.assets.FText
+import me.fungames.jfortniteparse.ue4.assets.objects.FText
 
 enum class EFortRarity(val rarityName : FText) {
 
-    Masterwork(FText("Fort.Rarity", "Transcendent", "Transcendent")),
-    Transcendent(FText("Fort.Rarity", "Transcendent", "Transcendent")),
+    Masterwork(
+        FText(
+            "Fort.Rarity",
+            "Transcendent",
+            "Transcendent"
+        )
+    ),
+    Transcendent(
+        FText(
+            "Fort.Rarity",
+            "Transcendent",
+            "Transcendent"
+        )
+    ),
 
     Elegant(FText("Fort.Rarity", "Mythic", "Mythic")),
     Mythic(FText("Fort.Rarity", "Mythic", "Mythic")),
 
-    Fine(FText("Fort.Rarity", "Legendary", "Legendary")),
-    Legendary(FText("Fort.Rarity", "Legendary", "Legendary")),
+    Fine(
+        FText(
+            "Fort.Rarity",
+            "Legendary",
+            "Legendary"
+        )
+    ),
+    Legendary(
+        FText(
+            "Fort.Rarity",
+            "Legendary",
+            "Legendary"
+        )
+    ),
 
     Quality(FText("Fort.Rarity", "Epic", "Epic")),
     Epic(FText("Fort.Rarity", "Epic", "Epic")),
@@ -19,7 +43,13 @@ enum class EFortRarity(val rarityName : FText) {
     Sturdy(FText("Fort.Rarity", "Rare", "Rare")),
     Rare(FText("Fort.Rarity", "Rare", "Rare")),
 
-    Uncommon(FText("Fort.Rarity", "Uncommon", "Uncommon")),
+    Uncommon(
+        FText(
+            "Fort.Rarity",
+            "Uncommon",
+            "Uncommon"
+        )
+    ),
 
     Handmade(FText("Fort.Rarity", "Common", "Common")),
     Common(FText("Fort.Rarity", "Common ", "Common"));

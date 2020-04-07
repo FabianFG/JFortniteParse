@@ -7,9 +7,9 @@ import me.fungames.jfortniteparse.converters.ue4.toBufferedImage
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.resources.*
-import me.fungames.jfortniteparse.ue4.UEClass
-import me.fungames.jfortniteparse.ue4.assets.FPackageIndex
-import me.fungames.jfortniteparse.ue4.assets.FText
+import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.objects.FPackageIndex
+import me.fungames.jfortniteparse.ue4.assets.objects.FText
 import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
 import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
@@ -127,7 +127,12 @@ fun ItemDefinition.createContainer(
         setText = ItemDefinitionInfo.sets[setName.text]
     return ItemDefinitionContainer(this, icon, rarity.rarityName.copy(), isFeatured, setText?.let { SetName(setText) }, seriesIcon, seriesDef)
 }
-open class SetName(val set : FText, val wrapper : FText = FText("Fort.Cosmetics", "CosmeticItemDescription_SetMembership", "Part of the <SetName>{0}</> set.")) {
+open class SetName(val set : FText, val wrapper : FText = FText(
+    "Fort.Cosmetics",
+    "CosmeticItemDescription_SetMembership",
+    "Part of the <SetName>{0}</> set."
+)
+) {
     fun applyLocres(locres: Locres?) {
         set.applyLocres(locres)
         wrapper.applyLocres(locres)
@@ -200,7 +205,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
 
     if (numChannels > 2) {
         numChannels = 2
-        UEClass.logger.warn("Dropped ${numChannels - 2} cosmetic channel(s)")
+        UClass.logger.warn("Dropped ${numChannels - 2} cosmetic channel(s)")
     }
     val availableX = variantsX - (numChannels * g.fontMetrics.height)
 
@@ -299,7 +304,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
         }
         if (lines.size > 2) {
             lines = lines.subList(0, 2)
-            UEClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
+            UClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
         }
 
         if (lines.size == 1)
@@ -381,7 +386,7 @@ private fun getImageNoVariants(container: ItemDefinitionContainer, locres: Locre
         }
         if (lines.size > 2) {
             lines = lines.subList(0, 2)
-            UEClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
+            UClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
         }
 
         lines.forEach {

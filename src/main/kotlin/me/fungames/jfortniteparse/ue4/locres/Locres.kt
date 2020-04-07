@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.locres
 
-import me.fungames.jfortniteparse.ue4.UEClass
+import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.locres.objects.FTextLocalizationResource
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.io.File
 
@@ -14,7 +15,7 @@ class Locres(val locres : ByteArray, val fileName : String, val language: FnLang
     init {
         val locresAr = FByteArchive(locres)
         texts = FTextLocalizationResource(locresAr)
-        UEClass.logger.info("Successfully parsed locres package : $fileName")
+        UClass.logger.info("Successfully parsed locres package : $fileName")
     }
 
     fun mergeInto(target : Locres) {

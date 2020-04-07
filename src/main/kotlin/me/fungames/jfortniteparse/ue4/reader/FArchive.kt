@@ -78,6 +78,14 @@ abstract class FArchive : Cloneable, InputStream() {
         return bb.float
     }
 
+    fun readDouble(): Double {
+        val data = read(8)
+        val bb = ByteBuffer.wrap(data)
+        if (this.littleEndian)
+            bb.order(ByteOrder.LITTLE_ENDIAN)
+        return bb.double
+    }
+
     fun readFloat16() = readUInt16().toFloat16()
 
     fun readBoolean() = readInt32() != 0

@@ -1,10 +1,11 @@
-import me.fungames.jfortniteparse.ue4.assets.*
-import me.fungames.jfortniteparse.ue4.assets.exports.UEExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.objects.*
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
 @ExperimentalUnsignedTypes
-class FortItemCategory : UEExport {
+class FortItemCategory : UExport {
     override var baseObject: UObject
     //This has way more stuff, but we just need the user facing flags for now
     val userFacingFlags : Map<String, Pair<FText, FPackageIndex>>

@@ -1,5 +1,7 @@
 package me.fungames.jfortniteparse.ue4.pak
 
+import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
+import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
 import kotlin.properties.Delegates
 
 @Suppress("EXPERIMENTAL_API_USAGE")

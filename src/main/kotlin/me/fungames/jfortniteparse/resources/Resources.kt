@@ -78,6 +78,12 @@ object Resources {
     val burbank : Font by lazy { Font.createFont(Font.TRUETYPE_FONT, Resources.javaClass.getResourceAsStream("/fonts/BurbankBigCondensed-Black.ttf")) }
     val notoSans : Font by lazy { Font.createFont(Font.TRUETYPE_FONT, Resources.javaClass.getResourceAsStream("/fonts/NotoSans-Regular.ttf")) }
     val notoSansBold : Font by lazy { Font.createFont(Font.TRUETYPE_FONT, Resources.javaClass.getResourceAsStream("/fonts/NotoSans-Bold.ttf")) }
+
+    val dinNextBlack : Font by lazy { Font.createFont(Font.TRUETYPE_FONT, Resources.javaClass.getResourceAsStream("/fonts/DINNext_Black.ttf")) }
+    val dinNextBold : Font by lazy { Font.createFont(Font.TRUETYPE_FONT, Resources.javaClass.getResourceAsStream("/fonts/DINNext_Bold.ttf")) }
+    val dinNextLight : Font by lazy { Font.createFont(Font.TRUETYPE_FONT, Resources.javaClass.getResourceAsStream("/fonts/DINNext_Light.ttf")) }
+
+
 }
 
 fun EFortRarity.getBackgroundImage() = when(this) {

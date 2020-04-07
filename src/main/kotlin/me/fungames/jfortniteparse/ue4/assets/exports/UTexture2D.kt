@@ -1,15 +1,18 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UEClass
-import me.fungames.jfortniteparse.ue4.assets.*
+import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
+import me.fungames.jfortniteparse.ue4.assets.objects.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_23
+import me.fungames.jfortniteparse.ue4.versions.GAME_VALORANT
 
 @ExperimentalUnsignedTypes
-class UTexture2D : UEExport {
+class UTexture2D : UExport {
 
     override var baseObject: UObject
     var flag1 : FStripDataFlags
@@ -78,7 +81,7 @@ class UTexture2D : UEExport {
 }
 
 @ExperimentalUnsignedTypes
-class FTexturePlatformData : UEClass {
+class FTexturePlatformData : UClass {
     var sizeX : Int
     var sizeY : Int
     var numSlices : Int
@@ -106,8 +109,9 @@ class FTexturePlatformData : UEClass {
 
         if (Ar.game >= GAME_UE4_23) {
             isVirtual = Ar.readBoolean()
-            if(isVirtual)
+            if(isVirtual) {
                 throw ParserException("Texture is virtual, not implemented", Ar)
+            }
         }
         super.complete(Ar)
     }
@@ -144,7 +148,7 @@ class FTexturePlatformData : UEClass {
 }
 
 @ExperimentalUnsignedTypes
-class FTexture2DMipMap : UEClass {
+class FTexture2DMipMap : UClass {
     var cooked : Boolean
     var data : FByteBulkData
     var sizeX : Int

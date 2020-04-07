@@ -16,7 +16,7 @@ abstract class AbstractFileProvider : FileProvider {
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
         return try {
-            Package(uasset, uexp, ubulk, file.path, game).apply { applyLocres(defaultLocres) }
+            Package(uasset, uexp, ubulk, file.path, this, game).apply { applyLocres(defaultLocres) }
         } catch (e : Exception) {
             logger.error("Failed to load package ${file.path}", e)
             null
@@ -34,7 +34,7 @@ abstract class AbstractFileProvider : FileProvider {
         val uexp = saveGameFile(path.substringBeforeLast(".uasset") + ".uexp") ?: return null
         val ubulk = saveGameFile(path.substringBeforeLast(".uasset") + ".ubulk")
         return try {
-            Package(uasset, uexp, ubulk, path, game).apply { applyLocres(defaultLocres) }
+            Package(uasset, uexp, ubulk, path, this, game).apply { applyLocres(defaultLocres) }
         } catch (e : ParserException) {
             logger.error("Failed to load package $path", e)
             null

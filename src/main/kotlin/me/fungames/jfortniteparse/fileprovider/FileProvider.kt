@@ -2,14 +2,13 @@ package me.fungames.jfortniteparse.fileprovider
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.FGuid
-import me.fungames.jfortniteparse.ue4.assets.FPackageIndex
-import me.fungames.jfortniteparse.ue4.assets.FSoftObjectPath
+import me.fungames.jfortniteparse.ue4.assets.objects.FPackageIndex
+import me.fungames.jfortniteparse.ue4.assets.objects.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
-import me.fungames.kotlinASTC.imageblockInitializeDerivFromWorkAndOrig
 import mu.KotlinLogging
 
 @Suppress("EXPERIMENTAL_API_USAGE")

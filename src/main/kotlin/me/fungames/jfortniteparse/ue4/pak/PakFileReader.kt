@@ -4,9 +4,17 @@ import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_Latest
+import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_PathHashIndex
+import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_RelativeChunkOffsets
+import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
+import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
+import me.fungames.jfortniteparse.ue4.pak.objects.FPakInfo
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
+import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
 import me.fungames.jfortniteparse.util.parseHexBinary
 import me.fungames.jfortniteparse.util.toInt64
 import me.fungames.jfortniteparse.util.toUInt32
@@ -26,9 +34,8 @@ private typealias FDirectoryIndex = Map<String, FPakDirectory>
 @ExperimentalUnsignedTypes
 class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
 
-
-    constructor(file : File) : this(FPakFileArchive(RandomAccessFile(file, "r"), file))
-    constructor(filePath : String) : this(File(filePath))
+    constructor(file : File, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(FPakFileArchive(RandomAccessFile(file, "r"), file).apply { this.game = game })
+    constructor(filePath : String, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(File(filePath), game)
 
     var encodedPakEntries: ByteArray = byteArrayOf()
         private set
@@ -549,6 +556,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
     }
 
     companion object {
+        const val INDEX_NONE = -1
         val logger = KotlinLogging.logger("PakFile")
 
         fun testAesKey(bytes : ByteArray, key : ByteArray) : Boolean {

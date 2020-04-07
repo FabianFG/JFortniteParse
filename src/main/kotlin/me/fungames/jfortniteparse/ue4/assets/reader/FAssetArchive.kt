@@ -1,25 +1,29 @@
 package me.fungames.jfortniteparse.ue4.assets.reader
 
-import me.fungames.jfortniteparse.ue4.assets.FNameEntry
+import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.assets.FObjectExport
-import me.fungames.jfortniteparse.ue4.assets.FObjectImport
-import me.fungames.jfortniteparse.ue4.assets.FPackageFileSummary
+import me.fungames.jfortniteparse.fileprovider.FileProvider
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectImport
+import me.fungames.jfortniteparse.ue4.assets.objects.FPackageFileSummary
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.ue4.assets.Package
 
 /**
  * Binary reader for UE4 Assets
  */
 @ExperimentalUnsignedTypes
-class FAssetArchive(data : ByteArray) : FByteArchive(data) {
+class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FByteArchive(data) {
 
     //Asset Specific Fields
     lateinit var nameMap : MutableList<FNameEntry>
     lateinit var importMap : MutableList<FObjectImport>
     lateinit var exportMap : MutableList<FObjectExport>
 
+
+    private val importCache = mutableMapOf<String, Package>()
 
     private var payloads = mutableMapOf<PayloadType, FAssetArchive>()
     var uassetSize = 0
@@ -34,7 +38,7 @@ class FAssetArchive(data : ByteArray) : FByteArchive(data) {
     }
 
     override fun clone(): FAssetArchive {
-        val c = FAssetArchive(data)
+        val c = FAssetArchive(data, provider)
         c.littleEndian = littleEndian
         c.pos = pos
         payloads.forEach { c.payloads[it.key] = it.value }
@@ -59,6 +63,21 @@ class FAssetArchive(data : ByteArray) : FByteArchive(data) {
         else
             throw ParserException("FName could not be read, requested index $nameIndex, name map size ${nameMap.size}", this)
     }
+
+    fun loadImport(path : String) : Package? {
+        if (provider == null) return null
+        val fixedPath = provider.fixPath(path)
+        val cachedPackage = importCache[fixedPath]
+        if (cachedPackage != null)
+            return cachedPackage
+        val pkg = provider.loadGameFile(path)
+        return if (pkg != null) {
+            importCache[fixedPath] = pkg
+            pkg
+        } else null
+    }
+
+    fun clearImportCache() = importCache.clear()
 
     override fun printError() = "FAssetArchive Info: pos $pos, stopper $size"
 }

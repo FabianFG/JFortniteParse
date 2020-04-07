@@ -1,20 +1,24 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
-import me.fungames.jfortniteparse.ue4.assets.FObjectExport
-import me.fungames.jfortniteparse.ue4.assets.UObject
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
 @ExperimentalUnsignedTypes
-class UDataTable : UEExport {
+class UDataTable : UExport {
     override var baseObject: UObject
     var rows : MutableMap<FName, UObject>
 
     constructor(Ar: FAssetArchive, exportObject : FObjectExport) : super(exportObject) {
         super.init(Ar)
         baseObject = UObject(Ar, exportObject)
-        rows = Ar.readTMap { Ar.readFName() to UObject(UObject.deserializeProperties(Ar), false, null, "RowStruct") }
+        rows = Ar.readTMap { Ar.readFName() to UObject(
+            UObject.deserializeProperties(Ar),
+            null,
+            "RowStruct"
+        )
+        }
         super.complete(Ar)
     }
 

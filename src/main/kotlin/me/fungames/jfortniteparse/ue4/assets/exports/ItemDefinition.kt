@@ -1,15 +1,15 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
-import me.fungames.jfortniteparse.ue4.assets.*
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.EFortRarity
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortCosmeticVariant
+import me.fungames.jfortniteparse.ue4.assets.objects.*
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 
 @ExperimentalUnsignedTypes
-open class ItemDefinition : UEExport {
+open class ItemDefinition : UExport {
     final override var baseObject: UObject
 
     var heroDefinitionPackage : FPackageIndex? = null
@@ -47,8 +47,13 @@ open class ItemDefinition : UEExport {
     var variants = mutableListOf<FortCosmeticVariant>()
 
     constructor() : super("ItemDefinition") {
-        baseObject = UObject(mutableListOf(), false, null, "ItemDefinition")
-        gameplayTags = FGameplayTagContainer(mutableListOf())
+        baseObject = UObject(
+            mutableListOf(),
+            null,
+            "ItemDefinition"
+        )
+        gameplayTags =
+            FGameplayTagContainer(mutableListOf())
     }
 
     constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(exportObject) {
@@ -64,9 +69,15 @@ open class ItemDefinition : UEExport {
         displayName = baseObject.getOrNull("DisplayName")
         shortDescription = baseObject.getOrNull("ShortDescription")
         if (shortDescription == null && exportType == "AthenaItemWrapDefinition")
-            shortDescription = FText("Fort.Cosmetics", "ItemWrapShortDescription", "Wrap")
+            shortDescription = FText(
+                "Fort.Cosmetics",
+                "ItemWrapShortDescription",
+                "Wrap"
+            )
         description = baseObject.getOrNull("Description")
-        gameplayTags = baseObject.getOrNull("GameplayTags")?: FGameplayTagContainer(mutableListOf())
+        gameplayTags = baseObject.getOrNull("GameplayTags")?: FGameplayTagContainer(
+            mutableListOf()
+        )
         super.complete(Ar)
     }
     override fun serialize(Ar: FAssetArchiveWriter) {

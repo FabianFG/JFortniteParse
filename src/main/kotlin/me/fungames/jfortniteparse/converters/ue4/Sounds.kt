@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.converters.ue4
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UEClass
+import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.USoundWave
 
 data class SoundWave(var data : ByteArray, var format : String) {
@@ -24,13 +24,13 @@ data class SoundWave(var data : ByteArray, var format : String) {
 @Suppress("EXPERIMENTAL_API_USAGE")
 @Throws(IllegalArgumentException::class)
 fun USoundWave.convert() : SoundWave {
-    UEClass.logger.debug("Starting to convert USoundWave")
+    UClass.logger.debug("Starting to convert USoundWave")
     return if (!bStreaming) {
         if (bCooked) {
-            UEClass.logger.debug("Found cooked sound data, exporting...")
+            UClass.logger.debug("Found cooked sound data, exporting...")
             val compressedFormatData = this.compressedFormatData ?: throw ParserException("Cooked sounds need compressed format data")
             require(!compressedFormatData.isNullOrEmpty())
-            UEClass.logger.debug("Done")
+            UClass.logger.debug("Done")
             if (compressedFormatData[0].formatName.text.startsWith("OGG1")) {
                 compressedFormatData[0].formatName.text = "OGG"
             }
@@ -39,21 +39,21 @@ fun USoundWave.convert() : SoundWave {
                 compressedFormatData[0].formatName.text
             )
         } else {
-            UEClass.logger.debug("Found non-cooked sound data, exporting...")
+            UClass.logger.debug("Found non-cooked sound data, exporting...")
             val rawData = this.rawData ?: throw ParserException("Non-cooked sounds need raw data")
-            UEClass.logger.debug("Done")
+            UClass.logger.debug("Done")
             SoundWave(rawData.data, "ogg")
         }
     } else {
         val streamedChunks = this.streamedAudioChunks ?: throw ParserException("Streamed sounds need streamed audio chunks")
-        UEClass.logger.debug("Found streamed sound data, exporting...")
+        UClass.logger.debug("Found streamed sound data, exporting...")
         var data = ByteArray(0)
         if (this.format?.text?.startsWith("OGG1") == true) {
             this.format?.text = "OGG"
         }
         streamedChunks.iterator().forEach { data +=  it.data.data.copyOfRange(0, it.audioDataSize)}
         val format = this.format?.text ?: throw IllegalArgumentException("Streamed sounds need format")
-        UEClass.logger.debug("Done")
+        UClass.logger.debug("Done")
         SoundWave(data, format)
     }
 }

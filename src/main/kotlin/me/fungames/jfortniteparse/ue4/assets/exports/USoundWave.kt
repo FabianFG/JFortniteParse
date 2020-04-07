@@ -2,14 +2,15 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.FGuid
-import me.fungames.jfortniteparse.ue4.UEClass
-import me.fungames.jfortniteparse.ue4.assets.*
+import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
 @ExperimentalUnsignedTypes
-class USoundWave : UEExport {
+class USoundWave : UExport {
 
     override var baseObject: UObject
     var bCooked : Boolean
@@ -82,7 +83,7 @@ class USoundWave : UEExport {
 }
 
 @ExperimentalUnsignedTypes
-class FSoundFormatData : UEClass {
+class FSoundFormatData : UClass {
     var formatName : FName
     var data : FByteBulkData
 
@@ -107,7 +108,7 @@ class FSoundFormatData : UEClass {
 }
 
 @ExperimentalUnsignedTypes
-class FStreamedAudioChunk : UEClass {
+class FStreamedAudioChunk : UClass {
     var bCooked : Boolean
     var data : FByteBulkData
     var dataSize : Int

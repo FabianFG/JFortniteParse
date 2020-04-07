@@ -3,14 +3,10 @@ package me.fungames.jfortniteparse.fileprovider
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider.Companion.logger
 import me.fungames.jfortniteparse.ue4.FGuid
-import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
-import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
-import mu.KotlinLogging
 import java.io.File
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -37,7 +33,7 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
                 scanFiles(it)
             else if (it.isFile && it.extension == "pak") {
                 try {
-                    val reader = PakFileReader(it)
+                    val reader = PakFileReader(it, game.versionInt)
                     if (!reader.isEncrypted()) {
                         reader.readIndex()
                         reader.files.associateByTo(files, {file -> file.path.toLowerCase()})

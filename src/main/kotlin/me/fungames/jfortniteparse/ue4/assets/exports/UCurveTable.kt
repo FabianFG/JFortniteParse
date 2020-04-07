@@ -1,14 +1,13 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.assets.FObjectExport
-import me.fungames.jfortniteparse.ue4.assets.UObject
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
 @ExperimentalUnsignedTypes
-class UCurveTable : UEExport {
+class UCurveTable : UExport {
     override var baseObject: UObject
     var curveTableMode : ECurveTableMode
     var rows : MutableMap<FName, UObject>
@@ -28,7 +27,11 @@ class UCurveTable : UEExport {
                 ECurveTableMode.SimpleCurves -> "SimpleCurveKey"
                 ECurveTableMode.RichCurves -> "RichCurveKey"
             }
-            Ar.readFName() to UObject(UObject.deserializeProperties(Ar), false, null, rowType)
+            Ar.readFName() to UObject(
+                UObject.deserializeProperties(Ar),
+                null,
+                rowType
+            )
         }
         super.complete(Ar)
     }

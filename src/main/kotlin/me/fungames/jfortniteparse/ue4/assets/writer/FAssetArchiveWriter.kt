@@ -1,9 +1,9 @@
 package me.fungames.jfortniteparse.ue4.assets.writer
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.assets.FNameEntry
-import me.fungames.jfortniteparse.ue4.assets.FObjectExport
-import me.fungames.jfortniteparse.ue4.assets.FObjectImport
+import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectImport
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
