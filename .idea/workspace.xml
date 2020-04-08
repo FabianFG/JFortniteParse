@@ -3,8 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/manifests/objects/FManifestData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/manifests/objects/FManifestData.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/fileprovider/FileProvider.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,7 +20,7 @@
     <option name="myElementSize" value="293" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="93551" />
+    <option name="totalTimeSeconds" value="94489" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -321,7 +321,8 @@
       <workItem from="1586077814998" duration="24838000" />
       <workItem from="1586163303529" duration="30590000" />
       <workItem from="1586246978590" duration="26007000" />
-      <workItem from="1586280947758" duration="871000" />
+      <workItem from="1586280947758" duration="950000" />
+      <workItem from="1586351012888" duration="917000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -645,7 +646,14 @@
       <option name="project" value="LOCAL" />
       <updated>1586279430708</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="updated readme for valorant">
+      <created>1586281835092</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1586281835092</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -666,7 +674,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
-    <MESSAGE value="refactored some pak functions for optimization purposes" />
     <MESSAGE value="breaking: variantChannelTag is now nullable" />
     <MESSAGE value="added support for FortBannerTokenType" />
     <MESSAGE value="some function refactoring" />
@@ -691,7 +698,8 @@
     <MESSAGE value="added some support for concurrent locres for item defs" />
     <MESSAGE value="support for generating images from api" />
     <MESSAGE value="valorant paks, assets and icon generation support and complete refactor of the parser to reduce crashes overall" />
-    <option name="LAST_COMMIT_MESSAGE" value="valorant paks, assets and icon generation support and complete refactor of the parser to reduce crashes overall" />
+    <MESSAGE value="updated readme for valorant" />
+    <option name="LAST_COMMIT_MESSAGE" value="updated readme for valorant" />
   </component>
   <component name="WindowStateProjectService">
     <state x="872" y="357" width="858" height="749" key="#Project_Structure" timestamp="1586011264399">
@@ -722,54 +730,54 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="1035" y="401" key="#xdebugger.evaluate/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586032872065" />
-    <state x="817" y="0" width="925" height="1400" key="CommitChangelistDialog2" timestamp="1586279422927">
+    <state x="817" y="0" width="925" height="1400" key="CommitChangelistDialog2" timestamp="1586281832742">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="817" y="0" width="925" height="1400" key="CommitChangelistDialog2/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279422927" />
+    <state x="817" y="0" width="925" height="1400" key="CommitChangelistDialog2/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586281832742" />
     <state x="1060" y="453" key="FileChooserDialogImpl" timestamp="1586010268333">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="1060" y="453" key="FileChooserDialogImpl/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586010268333" />
-    <state width="2516" height="484" key="GridCell.Tab.0.bottom" timestamp="1586279506121">
+    <state width="2516" height="484" key="GridCell.Tab.0.bottom" timestamp="1586351838252">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2516" height="484" key="GridCell.Tab.0.bottom/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279506121" />
-    <state width="2516" height="484" key="GridCell.Tab.0.center" timestamp="1586279506120">
+    <state width="2516" height="484" key="GridCell.Tab.0.bottom/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351838252" />
+    <state width="2516" height="484" key="GridCell.Tab.0.center" timestamp="1586351838251">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2516" height="484" key="GridCell.Tab.0.center/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279506120" />
-    <state width="2516" height="484" key="GridCell.Tab.0.left" timestamp="1586279506120">
+    <state width="2516" height="484" key="GridCell.Tab.0.center/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351838251" />
+    <state width="2516" height="484" key="GridCell.Tab.0.left" timestamp="1586351838251">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2516" height="484" key="GridCell.Tab.0.left/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279506120" />
-    <state width="2516" height="484" key="GridCell.Tab.0.right" timestamp="1586279506120">
+    <state width="2516" height="484" key="GridCell.Tab.0.left/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351838251" />
+    <state width="2516" height="484" key="GridCell.Tab.0.right" timestamp="1586351838252">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2516" height="484" key="GridCell.Tab.0.right/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279506120" />
-    <state width="2516" height="484" key="GridCell.Tab.1.bottom" timestamp="1586279506121">
+    <state width="2516" height="484" key="GridCell.Tab.0.right/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351838252" />
+    <state width="2516" height="484" key="GridCell.Tab.1.bottom" timestamp="1586351853364">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2516" height="484" key="GridCell.Tab.1.bottom/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279506121" />
-    <state width="2516" height="484" key="GridCell.Tab.1.center" timestamp="1586279506121">
+    <state width="2516" height="484" key="GridCell.Tab.1.bottom/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351853364" />
+    <state width="2516" height="484" key="GridCell.Tab.1.center" timestamp="1586351853364">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2516" height="484" key="GridCell.Tab.1.center/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279506121" />
-    <state width="2516" height="484" key="GridCell.Tab.1.left" timestamp="1586279506121">
+    <state width="2516" height="484" key="GridCell.Tab.1.center/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351853364" />
+    <state width="2516" height="484" key="GridCell.Tab.1.left" timestamp="1586351853363">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2516" height="484" key="GridCell.Tab.1.left/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279506121" />
-    <state width="2516" height="484" key="GridCell.Tab.1.right" timestamp="1586279506121">
+    <state width="2516" height="484" key="GridCell.Tab.1.left/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351853363" />
+    <state width="2516" height="484" key="GridCell.Tab.1.right" timestamp="1586351853364">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2516" height="484" key="GridCell.Tab.1.right/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279506121" />
+    <state width="2516" height="484" key="GridCell.Tab.1.right/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351853364" />
     <state x="760" y="273" key="SettingsEditor" timestamp="1586010556729">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="760" y="273" key="SettingsEditor/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586010556729" />
-    <state x="872" y="431" key="Vcs.Push.Dialog.v2" timestamp="1586279448168">
+    <state x="872" y="431" key="Vcs.Push.Dialog.v2" timestamp="1586281840430">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="872" y="431" key="Vcs.Push.Dialog.v2/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586279448168" />
+    <state x="872" y="431" key="Vcs.Push.Dialog.v2/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586281840430" />
     <state x="1089" y="615" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1586114660969">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -778,10 +786,10 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="976" y="432" width="607" height="536" key="find.popup/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586258846274" />
-    <state width="528" height="86" key="javadoc.popup.new" timestamp="1586281461074">
+    <state width="528" height="86" key="javadoc.popup.new" timestamp="1586351796316">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="528" height="86" key="javadoc.popup.new/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586281461074" />
+    <state width="528" height="86" key="javadoc.popup.new/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586351796316" />
     <state x="943" y="315" width="672" height="678" key="search.everywhere.popup" timestamp="1586274643644">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -796,11 +804,6 @@
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
-          <line>62</line>
-          <option name="timeStamp" value="23" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/test/kotlin/PakTest.kt</url>
           <line>4</line>
           <option name="timeStamp" value="25" />
@@ -809,6 +812,11 @@
           <url>file://$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/blueprints/UFunction.kt</url>
           <line>21</line>
           <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
+          <line>63</line>
+          <option name="timeStamp" value="37" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

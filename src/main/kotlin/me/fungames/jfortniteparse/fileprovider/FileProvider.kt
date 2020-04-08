@@ -41,7 +41,13 @@ interface FileProvider {
      * @param softObjectPath the soft object reference
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
-    fun loadGameFile(softObjectPath: FSoftObjectPath) = loadGameFile(softObjectPath.assetPathName.text)
+    fun loadGameFile(softObjectPath: FSoftObjectPath): Package? {
+        var path = softObjectPath.assetPathName.text
+        val lastPart = path.substringAfterLast('/')
+        if (lastPart.contains('.'))
+           path = path.substringBeforeLast('.')
+        return loadGameFile(path)
+    }
 
     /**
      * Searches for the game file and then load its contained package
@@ -143,7 +149,8 @@ interface FileProvider {
         if (path.startsWith('/'))
             path = path.substring(1)
         val lastPart = path.substringAfterLast('/')
-        if (lastPart.contains('.')/* && lastPart.substringBefore('.') == lastPart.substringAfter('.')*/)
+        //Not needed anymore, this was only needed for FSoftObjectPaths. The last part of the file name is now removed by them
+        if (lastPart.contains('.') && lastPart.substringBefore('.') == lastPart.substringAfter('.'))
             path = path.substringBeforeLast('/') + "/" + lastPart.substringBefore('.')
         if (!path.endsWith('/') && !path.substringAfterLast('/').contains('.'))
             path += ".uasset"
