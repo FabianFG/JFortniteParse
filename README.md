@@ -160,7 +160,7 @@ pkg.applyLocres(locres)
 <dependency>
 	<groupId>me.fungames</groupId>
 	<artifactId>JFortniteParse</artifactId>
-	<version>3.0</version>
+	<version>3.0.2</version>
 </dependency>
 ```
 ##### Gradle
@@ -174,7 +174,7 @@ repositories {
 ```
 - Add the dependency
 ```groovy
-implementation 'me.fungames:JFortniteParse:3.0'
+implementation 'me.fungames:JFortniteParse:3.0.2'
 ```
 
 ### Fortnite Text Hotfixes

@@ -83,10 +83,11 @@ class FPakEntry : UClass {
                 isEncrypted = true
             //Note: This is not how it works in UE, default is Int8 but Fortnite uses Int32.
             // This project was originally intended to be used only with Fortnite, that's why it is twisted like that
-            compressionBlockSize = if (Ar.game == GAME_VALORANT)
-                Ar.readInt8().toInt()
-            else
-                Ar.readInt32()
+            //compressionBlockSize = if (Ar.game == GAME_VALORANT)
+            //    Ar.readInt8().toInt()
+            //else
+            // Ar.readInt32()
+            compressionBlockSize = Ar.readInt32()
         }
         if (Ar.pakInfo.version >= PakVersion_RelativeChunkOffsets) {
             // Convert relative compressed offsets to absolute
