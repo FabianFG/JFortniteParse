@@ -1,11 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="">
+    <list default="true" id="2ad0c40d-c758-4bfd-9c53-f11fecba01ab" name="Default Changelist" comment="fix for reading valorant paks of 0.49+">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/objects/FPakEntry.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/objects/FPakEntry.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/converters/fort/ItemDefinitions.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/Package.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortItemCategory.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/fort/FortItemCategory.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,7 +40,7 @@
     <option name="myElementSize" value="293" />
   </component>
   <component name="DarkyenusTimeTracker">
-    <option name="totalTimeSeconds" value="99007" />
+    <option name="totalTimeSeconds" value="103542" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -38,7 +59,23 @@
         </task>
         <projects_view>
           <tree_state>
-            <expand />
+            <expand>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="JFortniteParse" type="f1a62948:ProjectNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="JFortniteParse" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="JFortniteParse" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="publishing" type="c8890929:TasksNode$1" />
+              </path>
+            </expand>
             <select />
           </tree_state>
         </projects_view>
@@ -96,7 +133,7 @@
       <recent name="D:\Fabian\IDEA_WORKSPACE\JFortniteParse\src\main\kotlin\me\fungames\jfortniteparse\ue4\assets\writer" />
     </key>
   </component>
-  <component name="RunManager" selected="Kotlin.TestKt (1)">
+  <component name="RunManager" selected="Kotlin.PakTestKt">
     <configuration name="JFortniteParse [bintrayUpload]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -196,11 +233,11 @@
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Kotlin.PakTestKt" />
         <item itemvalue="Kotlin.TestKt (1)" />
         <item itemvalue="Kotlin.TestKt" />
         <item itemvalue="Gradle.JFortniteParse [bintrayUpload]" />
         <item itemvalue="Gradle.JFortniteParse [publishMavenPublicationToMavenLocal]" />
-        <item itemvalue="Kotlin.PakTestKt" />
       </list>
     </recent_temporary>
   </component>
@@ -317,7 +354,11 @@
       <workItem from="1587718271860" duration="720000" />
       <workItem from="1587762571336" duration="663000" />
       <workItem from="1587829185535" duration="21000" />
-      <workItem from="1588148116456" duration="1233000" />
+      <workItem from="1588148116456" duration="2831000" />
+      <workItem from="1588451229017" duration="287000" />
+      <workItem from="1589575598299" duration="320000" />
+      <workItem from="1589634312491" duration="590000" />
+      <workItem from="1589975715397" duration="4874000" />
     </task>
     <task id="LOCAL-00001" summary="json exporting">
       <created>1572648237801</created>
@@ -655,7 +696,14 @@
       <option name="project" value="LOCAL" />
       <updated>1586352129902</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="fix for reading valorant paks of 0.49+">
+      <created>1588149384384</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1588149384384</updated>
+    </task>
+    <option name="localTasksCounter" value="50" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -675,7 +723,6 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
-    <MESSAGE value="added support for FortBannerTokenType" />
     <MESSAGE value="some function refactoring" />
     <MESSAGE value="pak version 9 + 10 support (for Fortnite 12.00), updated dependencies" />
     <MESSAGE value="very few fixes" />
@@ -700,7 +747,8 @@
     <MESSAGE value="valorant paks, assets and icon generation support and complete refactor of the parser to reduce crashes overall" />
     <MESSAGE value="updated readme for valorant" />
     <MESSAGE value="fixed bug with loading/saving files that are not uassets" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed bug with loading/saving files that are not uassets" />
+    <MESSAGE value="fix for reading valorant paks of 0.49+" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix for reading valorant paks of 0.49+" />
   </component>
   <component name="WindowStateProjectService">
     <state x="872" y="357" width="858" height="749" key="#Project_Structure" timestamp="1586011264399">
@@ -723,10 +771,10 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="800" y="0" key="#com.intellij.refactoring.rename.AutomaticRenamingDialog/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586084501425" />
-    <state x="1033" y="351" width="730" height="698" key="#org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog" timestamp="1586095695273">
+    <state x="1033" y="351" width="730" height="698" key="#org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog" timestamp="1589978525008">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="1033" y="351" width="730" height="698" key="#org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586095695273" />
+    <state x="1033" y="351" width="730" height="698" key="#org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui.MoveKotlinTopLevelDeclarationsDialog/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589978525008" />
     <state x="1035" y="401" key="#xdebugger.evaluate" timestamp="1586032872065">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -739,46 +787,46 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="1060" y="453" key="FileChooserDialogImpl/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586010268333" />
-    <state width="2517" height="399" key="GridCell.Tab.0.bottom" timestamp="1588149230989">
+    <state width="2517" height="489" key="GridCell.Tab.0.bottom" timestamp="1589982650951">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="399" key="GridCell.Tab.0.bottom/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149230989" />
-    <state width="2517" height="399" key="GridCell.Tab.0.center" timestamp="1588149230989">
+    <state width="2517" height="489" key="GridCell.Tab.0.bottom/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982650951" />
+    <state width="2517" height="489" key="GridCell.Tab.0.center" timestamp="1589982650951">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="399" key="GridCell.Tab.0.center/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149230989" />
-    <state width="2517" height="399" key="GridCell.Tab.0.left" timestamp="1588149230988">
+    <state width="2517" height="489" key="GridCell.Tab.0.center/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982650951" />
+    <state width="2517" height="489" key="GridCell.Tab.0.left" timestamp="1589982650951">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="399" key="GridCell.Tab.0.left/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149230988" />
-    <state width="2517" height="399" key="GridCell.Tab.0.right" timestamp="1588149230989">
+    <state width="2517" height="489" key="GridCell.Tab.0.left/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982650951" />
+    <state width="2517" height="489" key="GridCell.Tab.0.right" timestamp="1589982650951">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="399" key="GridCell.Tab.0.right/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149230989" />
-    <state width="2517" height="489" key="GridCell.Tab.1.bottom" timestamp="1588149145735">
+    <state width="2517" height="489" key="GridCell.Tab.0.right/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982650951" />
+    <state width="2517" height="489" key="GridCell.Tab.1.bottom" timestamp="1589982652787">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="489" key="GridCell.Tab.1.bottom/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149145735" />
-    <state width="2517" height="489" key="GridCell.Tab.1.center" timestamp="1588149145734">
+    <state width="2517" height="489" key="GridCell.Tab.1.bottom/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982652787" />
+    <state width="2517" height="489" key="GridCell.Tab.1.center" timestamp="1589982652787">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="489" key="GridCell.Tab.1.center/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149145734" />
-    <state width="2517" height="489" key="GridCell.Tab.1.left" timestamp="1588149145734">
+    <state width="2517" height="489" key="GridCell.Tab.1.center/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982652787" />
+    <state width="2517" height="489" key="GridCell.Tab.1.left" timestamp="1589982652787">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="489" key="GridCell.Tab.1.left/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149145734" />
-    <state width="2517" height="489" key="GridCell.Tab.1.right" timestamp="1588149145735">
+    <state width="2517" height="489" key="GridCell.Tab.1.left/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982652787" />
+    <state width="2517" height="489" key="GridCell.Tab.1.right" timestamp="1589982652787">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="2517" height="489" key="GridCell.Tab.1.right/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149145735" />
+    <state width="2517" height="489" key="GridCell.Tab.1.right/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982652787" />
     <state x="760" y="273" key="SettingsEditor" timestamp="1586010556729">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="760" y="273" key="SettingsEditor/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586010556729" />
-    <state x="872" y="431" key="Vcs.Push.Dialog.v2" timestamp="1586352132299">
+    <state x="872" y="431" key="Vcs.Push.Dialog.v2" timestamp="1588149391440">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="872" y="431" key="Vcs.Push.Dialog.v2/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586352132299" />
+    <state x="872" y="431" key="Vcs.Push.Dialog.v2/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149391440" />
     <state x="1089" y="615" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1586114660969">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -787,10 +835,10 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="976" y="432" width="607" height="536" key="find.popup/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1586258846274" />
-    <state width="528" height="86" key="javadoc.popup.new" timestamp="1588149220428">
+    <state width="528" height="86" key="javadoc.popup.new" timestamp="1589982641948">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state width="528" height="86" key="javadoc.popup.new/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1588149220428" />
+    <state width="528" height="86" key="javadoc.popup.new/0.0.2560.1400/2560.360.1920.1040@0.0.2560.1400" timestamp="1589982641948" />
     <state x="943" y="315" width="672" height="678" key="search.everywhere.popup" timestamp="1586274643644">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -805,33 +853,28 @@
           <option name="timeStamp" value="9" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/src/test/kotlin/PakTest.kt</url>
-          <line>4</line>
-          <option name="timeStamp" value="25" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/assets/exports/blueprints/UFunction.kt</url>
           <line>21</line>
           <option name="timeStamp" value="32" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
-          <line>61</line>
+          <line>63</line>
           <option name="timeStamp" value="37" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
-          <line>30</line>
+          <line>32</line>
           <option name="timeStamp" value="39" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
-          <line>29</line>
+          <line>31</line>
           <option name="timeStamp" value="40" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/test/kotlin/Test.kt</url>
-          <line>68</line>
+          <line>70</line>
           <option name="timeStamp" value="41" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
@@ -841,8 +884,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="kotlin-line">
           <url>file://$PROJECT_DIR$/src/main/kotlin/me/fungames/jfortniteparse/ue4/pak/PakFileReader.kt</url>
-          <line>491</line>
+          <line>500</line>
           <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/src/test/kotlin/PakTest.kt</url>
+          <line>12</line>
+          <option name="timeStamp" value="52" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

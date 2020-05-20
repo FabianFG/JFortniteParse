@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.assets
 
-import FortItemCategory
 import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.gson.GsonBuilder
 import me.fungames.jfortniteparse.exceptions.ParserException

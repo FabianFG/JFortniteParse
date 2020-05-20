@@ -1,3 +1,5 @@
+package me.fungames.jfortniteparse.ue4.assets.exports.fort
+
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.*

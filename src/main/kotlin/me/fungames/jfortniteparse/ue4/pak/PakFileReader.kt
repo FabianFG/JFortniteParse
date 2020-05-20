@@ -95,12 +95,16 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         exAr.seek(gameFile.pos)
         // Pak Entry is written before the file data,
         // but its the same as the one from the index, just without a name
-        FPakEntry(exAr, false)
+        val tempEntry = FPakEntry(exAr, false)
+        tempEntry.compressionBlocks.forEach {
+            it.compressedStart += gameFile.pos
+            it.compressedEnd += gameFile.pos
+        }
         when {
             gameFile.isCompressed() -> {
                 logger.debug("${gameFile.getName()} is compressed with ${gameFile.compressionMethod}")
                 var data = ByteArray(0)
-                gameFile.compressedBlocks.forEach { block ->
+                tempEntry.compressionBlocks.forEach { block ->
                     exAr.seek(block.compressedStart)
                     var srcSize = (block.compressedEnd - block.compressedStart).toInt()
                     // Read the compressed block
@@ -115,7 +119,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                             decrypted = decrypted.copyOf(srcSize)
                         decrypted
                     } else
-                        // Read the block data
+                    // Read the block data
                         exAr.read(srcSize)
                     // Calculate the uncompressed size,
                     // its either just the compression block size
@@ -480,6 +484,11 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                 val align = compressedBlock.compressedEnd - compressedBlock.compressedStart
                 compressedBlockOffset += align + compressedBlockAlignment - (align % compressedBlockAlignment)
             }
+        }
+        //TODO There is some kind of issue here, compression blocks are sometimes going to far by one byte
+        compressionBlocks.forEach {
+            it.compressedStart += offset
+            it.compressedEnd += offset
         }
         return FPakEntry(pakInfo, "", offset, size, uncompressedSize, compressionMethodIndex.toInt(), ByteArray(20), compressionBlocks, encrypted, compressionBlockSize.toInt())
     }
