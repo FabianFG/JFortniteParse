@@ -182,8 +182,6 @@ sealed class FTextHistory : UClass() {
         }
     }
 
-
-
     abstract fun serialize(Ar : FAssetArchiveWriter)
     abstract val text : String
 }

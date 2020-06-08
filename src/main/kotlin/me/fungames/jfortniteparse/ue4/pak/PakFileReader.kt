@@ -576,7 +576,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             // Calculate the pos of the null terminator for this string
             // Then read the null terminator byte and check whether it is actually 0
             return when {
-                stringLength == 0 -> testAr.readUInt16() == 0.toUShort()
+                stringLength == 0 -> testAr.readInt8() == 0.toByte()
                 stringLength < 0 -> {
                     // UTF16
                     val nullTerminatorPos = 4 - (stringLength - 1) * 2

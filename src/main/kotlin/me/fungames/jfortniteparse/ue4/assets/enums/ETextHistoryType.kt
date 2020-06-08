@@ -1,5 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.enums
 
+import me.fungames.jfortniteparse.ue4.UClass
+
 enum class ETextHistoryType(val value : Byte) {
     None(-1),
     Base(0),
@@ -17,6 +19,12 @@ enum class ETextHistoryType(val value : Byte) {
     TextGenerator(12);
 
     companion object {
-        fun valueOfByte(byte: Byte) = values().first { it.value == byte}
+        @Suppress("EXPERIMENTAL_API_USAGE")
+        fun valueOfByte(byte: Byte) : ETextHistoryType {
+            val value = values().firstOrNull { it.value == byte}
+            if (value == null)
+                UClass.logger.warn { "Unsupported ETextHistoryType $byte, using ETextHistoryType::None as fallback" }
+            return value ?: None
+        }
     }
 }

@@ -220,8 +220,8 @@ sealed class FPropertyTagType(val propertyType: String) {
                 "Int8Property" -> return Int8Property(Ar.readInt8(), propertyType)
                 "Int16Property" -> return Int16Property(Ar.readInt16(), propertyType)
                 "Int64Property" -> return Int64Property(Ar.readInt64(), propertyType)
-                "MulticastDelegateProperty" -> TODO("MulticastDelegateProperty not implemented yet")
-                "LazyObjectProperty" -> TODO("LazyObjectProperty not implemented yet")
+                "MulticastDelegateProperty" -> throw ParserException("MulticastDelegateProperty not implemented yet")
+                "LazyObjectProperty" -> throw ParserException("LazyObjectProperty not implemented yet")
 
                 else -> {
                     UClass.logger.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
@@ -270,6 +270,9 @@ sealed class FPropertyTagType(val propertyType: String) {
                 is Int8Property -> Ar.writeInt8(tag.number)
                 is Int16Property -> Ar.writeInt16(tag.number)
                 is Int64Property -> Ar.writeInt64(tag.number)
+                is BoolProperty -> {
+                    if (type == Type.MAP || type == Type.ARRAY) Ar.writeFlag(tag.bool)
+                }
             }
         }
     }
