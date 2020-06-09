@@ -2,7 +2,9 @@ package me.fungames.jfortniteparse.ue4.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
+import me.fungames.jfortniteparse.util.toFloat16
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -13,6 +15,7 @@ import java.nio.ByteOrder
 @ExperimentalUnsignedTypes
 abstract class FArchive : Cloneable, InputStream() {
     var game = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)
+    var ver = GAME_UE4_GET_AR_VER(game)
     abstract var littleEndian: Boolean
 
     abstract override fun clone(): FArchive
@@ -133,36 +136,12 @@ abstract class FArchive : Cloneable, InputStream() {
 
     inline fun <reified T> readTArray(init: (FArchive) -> T) = readTArray(readInt32(), init)
 
-
-    //Util functions
-
-    fun UShort.toFloat16(): Float {
-        val hbits = this.toInt()
-        var mant = hbits and 0x03ff // 10 bits mantissa
-        var exp = hbits and 0x7c00 // 5 bits exponent
-        if (exp == 0x7c00)
-        // NaN/Inf
-            exp = 0x3fc00 // -> NaN/Inf
-        else if (exp != 0)
-        // normalized value
-        {
-            exp += 0x1c000 // exp - 15 + 127
-            if (mant == 0 && exp > 0x1c400)
-            // smooth transition
-                return Float.fromBits((hbits and 0x8000 shl 16 or (exp shl 13) or 0x3ff).toInt())
-        } else if (mant != 0)
-        // && exp==0 -> subnormal
-        {
-            exp = 0x1c400 // make it normal
-            do {
-                mant = mant shl 1 // mantissa * 2
-                exp -= 0x400 // decrease exp by 1
-            } while (mant and 0x400 == 0) // while not normal
-            mant = mant and 0x3ff // discard subnormal bit
-        } // else +/-0 -> +/-0
-        return Float.fromBits( // combine all parts
-            (hbits and 0x8000 shl 16 // sign << ( 31 - 15 )
-                    or (exp or mant shl 13)).toInt()
-        ) // value << ( 23 - 10 )
+    inline fun <reified T> readBulkTArray(init: (FArchive) -> T): Array<T> {
+        val elementSize = readInt32()
+        val savePos = pos()
+        val array = readTArray(readInt32(), init)
+        if (pos() != savePos + 4 + array.size * elementSize)
+            throw ParserException("RawArray item size mismatch: expected %d, serialized %d".format(elementSize, (pos() - savePos) / array.size))
+        return array
     }
 }

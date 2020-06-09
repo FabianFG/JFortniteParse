@@ -10,6 +10,12 @@ class FVector : UClass {
     var y: Float
     var z: Float
 
+    constructor(packedRGBA16N: FPackedRGBA16N) {
+        this.x = (packedRGBA16N.x.toFloat() - 32767.5f) / 32767.5f
+        this.y = (packedRGBA16N.y.toFloat() - 32767.5f) / 32767.5f
+        this.z = (packedRGBA16N.z.toFloat() - 32767.5f) / 32767.5f
+    }
+
     constructor(Ar: FArchive) {
         super.init(Ar)
         x = Ar.readFloat32()

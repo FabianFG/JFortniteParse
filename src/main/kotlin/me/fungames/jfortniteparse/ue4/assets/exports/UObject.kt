@@ -15,6 +15,13 @@ class UObject : UExport {
     var objectGuid : FGuid? = null
     var readGuid = false
 
+    constructor(Ar: FAssetArchive, exportType: String, readGuid: Boolean = true) : super(exportType) {
+        properties =
+            deserializeProperties(Ar)
+        if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
+            objectGuid = FGuid(Ar)
+    }
+
     constructor(Ar: FAssetArchive, exportObject : FObjectExport, readGuid : Boolean = true) : super(exportObject) {
         properties =
             deserializeProperties(Ar)

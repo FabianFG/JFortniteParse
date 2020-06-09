@@ -36,8 +36,8 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             .create()
     }
 
-    constructor(uasset : File, uexp : File, ubulk : File?) : this(uasset.readBytes(), uexp.readBytes(),
-        ubulk?.readBytes(), uasset.nameWithoutExtension)
+    constructor(uasset : File, uexp : File, ubulk : File?, provider: FileProvider? = null, game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : this(uasset.readBytes(), uexp.readBytes(),
+        ubulk?.readBytes(), uasset.nameWithoutExtension, provider, game)
 
     private val uassetAr = FAssetArchive(uasset, provider)
     private val uexpAr = FAssetArchive(uexp, provider)
@@ -51,9 +51,12 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     val exports = mutableListOf<UExport>()
 
     init {
-        uassetAr.game = game.versionInt
-        uexpAr.game = game.versionInt
-        ubulkAr?.game = game.versionInt
+        uassetAr.game = game.game
+        uassetAr.ver = game.version
+        uexpAr.game = game.game
+        uexpAr.ver = game.version
+        ubulkAr?.game = game.game
+        ubulkAr?.ver = game.version
         info = FPackageFileSummary(uassetAr)
         if (info.tag != packageMagic)
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
@@ -96,20 +99,21 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         exportMap.forEach {
             val exportType = it.classIndex.importName.substringAfter("Default__")
             uexpAr.seekRelative(it.serialOffset.toInt())
-            val validPos = uexpAr.pos() + it.serialSize
+            val validPos = (uexpAr.pos() + it.serialSize).toInt()
+            uexpAr
             when(exportType) {
                 "BlueprintGeneratedClass" -> {
                     val className = it.templateIndex.importObject?.className?.text
                     if (className != null)
-                        readExport(className, it)
+                        readExport(className, it, validPos)
                     else {
                         logger.warn { "Couldn't find content class of BlueprintGeneratedClass, attempting normal UObject deserialization" }
-                        readExport(exportType, it)
+                        readExport(exportType, it, validPos)
                     }
                 }
-                else -> readExport(exportType, it)
+                else -> readExport(exportType, it, validPos)
             }
-            if (validPos != uexpAr.pos().toLong())
+            if (validPos != uexpAr.pos())
                 logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
             else
                 logger.debug("Successfully read $exportType at ${uexpAr.toNormalPos(it.serialOffset.toInt())} with size ${it.serialSize}")
@@ -121,7 +125,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         logger.info("Successfully parsed package : $name")
     }
 
-    fun readExport(exportType : String, it : FObjectExport) {
+    fun readExport(exportType : String, it : FObjectExport, validPos : Int) {
         when (exportType) {
             //UE generic export classes
             "Texture2D" -> exports.add(UTexture2D(uexpAr, it))
@@ -129,6 +133,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             "DataTable" -> exports.add(UDataTable(uexpAr, it))
             "CurveTable" -> exports.add(UCurveTable(uexpAr, it))
             "StringTable" -> exports.add(UStringTable(uexpAr, it))
+            "StaticMesh" -> exports.add(UStaticMesh(uexpAr, it, validPos))
             //Valorant specific classes
             "CharacterUIData" -> exports.add(CharacterUIData(uexpAr, it))
             "CharacterAbilityUIData" -> exports.add(CharacterAbilityUIData(uexpAr, it))
@@ -202,7 +207,8 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
     private fun updateHeader() {
         val uassetWriter = FByteArrayArchiveWriter()
-        uassetWriter.game = game.versionInt
+        uassetWriter.game = game.game
+        uassetWriter.ver = game.version
         uassetWriter.nameMap = nameMap
         uassetWriter.importMap = importMap
         uassetWriter.exportMap = exportMap
@@ -228,7 +234,8 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     fun write(uassetOutputStream: OutputStream, uexpOutputStream: OutputStream, ubulkOutputStream: OutputStream?) {
         updateHeader()
         val uexpWriter = writer(uexpOutputStream)
-        uexpWriter.game = game.versionInt
+        uexpWriter.game = game.game
+        uexpWriter.ver = game.version
         uexpWriter.uassetSize = info.totalHeaderSize
         exports.forEach {
             val beginPos = uexpWriter.relativePos()
@@ -239,7 +246,8 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         }
         uexpWriter.writeUInt32(packageMagic)
         val uassetWriter = writer(uassetOutputStream)
-        uassetWriter.game = game.versionInt
+        uassetWriter.game = game.game
+        uassetWriter.ver = game.version
         info.serialize(uassetWriter)
         val nameMapPadding = info.nameOffset - uassetWriter.pos()
         if(nameMapPadding > 0)

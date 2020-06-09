@@ -33,7 +33,7 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
                 scanFiles(it)
             else if (it.isFile && it.extension == "pak") {
                 try {
-                    val reader = PakFileReader(it, game.versionInt)
+                    val reader = PakFileReader(it, game.game)
                     if (!reader.isEncrypted()) {
                         reader.readIndex()
                         reader.files.associateByTo(files, {file -> file.path.toLowerCase()})
