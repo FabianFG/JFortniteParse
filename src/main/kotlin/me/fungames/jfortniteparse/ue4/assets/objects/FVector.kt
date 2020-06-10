@@ -1,11 +1,12 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import glm_.vec3.Vec3
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 @ExperimentalUnsignedTypes
-class FVector : UClass {
+open class FVector : UClass {
     var x: Float
     var y: Float
     var z: Float
@@ -24,13 +25,18 @@ class FVector : UClass {
         super.complete(Ar)
     }
 
-    fun serialize(Ar: FArchiveWriter) {
+    open fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeFloat32(x)
         Ar.writeFloat32(y)
         Ar.writeFloat32(z)
         super.completeWrite(Ar)
     }
+
+    fun toVec3() = Vec3(x, y, z)
+
+    operator fun minus(other : FVector) = FVector(x - other.x, y - other.y, z - other.z)
+    operator fun plus(other : FVector) = FVector(x + other.x, y + other.y, z + other.z)
 
     constructor(x: Float, y: Float, z: Float) {
         this.x = x

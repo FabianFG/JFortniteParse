@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.FGuid
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.objects.*
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMeshLODResources
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -12,33 +13,33 @@ import me.fungames.jfortniteparse.ue4.versions.VER_UE4_RENAME_CROUCHMOVESCHARACT
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_RENAME_WIDGET_VISIBILITY
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_STATIC_MESH_STORE_NAV_COLLISION
 
-const val MAX_STATIC_UV_SETS_UE4 = 8
-const val MAX_STATIC_LODS_UE4 = 8
+internal const val MAX_STATIC_UV_SETS_UE4 = 8
+internal const val MAX_STATIC_LODS_UE4 = 8
 
 @ExperimentalUnsignedTypes
 class UStaticMesh : UExport {
     override var baseObject: UObject
     var stripFlags : FStripDataFlags
-    var bodySetup : FPackageIndex // UBodySetup
-    var navCollision : FPackageIndex // UNavCollision
+    var bodySetup : UExport? // UBodySetup
+    var navCollision : UExport? // UNavCollision
     var lightingGuid : FGuid
-    var sockets : Array<FPackageIndex>
+    var sockets : Array<UExport?> //TODO this somehow produces wrong import object??? no idea tbh
     var lods = emptyArray<FStaticMeshLODResources>()
     var bounds = FBoxSphereBounds(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f), 0f)
     var lodsShareStaticLighting = false
     var screenSize = Array(8) { 0f }
-    var staticMaterials = emptyArray<FPackageIndex>()
+    var staticMaterials = emptyArray<UMaterialInstanceConstant?>() //TODO actual right type
 
     constructor(Ar: FAssetArchive, exportObject : FObjectExport, validPos : Int) : super(exportObject) {
         super.init(Ar)
         baseObject = UObject(Ar, exportObject)
         stripFlags = FStripDataFlags(Ar)
         val cooked = Ar.readBoolean()
-        bodySetup = FPackageIndex(Ar)
-        navCollision = if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
+        bodySetup = Ar.loadObject(FPackageIndex(Ar))
+        navCollision = Ar.loadObject(if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
             FPackageIndex(Ar)
         else
-            FPackageIndex(0, Ar.importMap)
+            FPackageIndex(0, Ar.importMap))
 
         if (!stripFlags.isEditorDataStripped()) {
             if (Ar.ver < VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED) {
@@ -49,7 +50,7 @@ class UStaticMesh : UExport {
             Ar.readUInt32() // highResSourceMeshCRC
         }
         lightingGuid = FGuid(Ar)
-        sockets = Ar.readTArray { FPackageIndex(Ar) }
+        sockets = Ar.readTArray { Ar.loadObject(FPackageIndex(Ar)) }
         if (!stripFlags.isEditorDataStripped()) {
             //TODO https://github.com/gildor2/UEViewer/blob/master/Unreal/UnMesh4.cpp#L2382
             throw ParserException("Static Mesh with Editor Data not implemented yet")
@@ -137,7 +138,7 @@ class UStaticMesh : UExport {
             } else {
                 if (FEditorObjectVersion.get(Ar) >= FEditorObjectVersion.RefactorMeshEditorMaterials) {
                     // UE4.14+ - "Materials" are deprecated, added StaticMaterials
-                    staticMaterials = Ar.readTArray { FPackageIndex(Ar) }
+                    staticMaterials = Ar.readTArray { Ar.loadObject(FPackageIndex(Ar)) }
                 }
             }
         }
@@ -151,6 +152,7 @@ class UStaticMesh : UExport {
         super.initWrite(Ar)
         baseObject.serialize(Ar)
         super.completeWrite(Ar)
+        throw ParserException("Serializing UStaticMesh not supported")
     }
 
 }

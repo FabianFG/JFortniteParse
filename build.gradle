@@ -14,6 +14,7 @@ repositories {
     maven {
         url  "https://dl.bintray.com/fungamesleaks/mavenRepo"
     }
+    maven { url 'https://jitpack.io' }
 }
 
 task sourcesJar(type: Jar) {
@@ -72,6 +73,7 @@ dependencies {
     implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
     implementation 'io.github.microutils:kotlin-logging:1.7.6'
     implementation 'org.slf4j:slf4j-log4j12:1.7.30'
+    implementation 'com.github.kotlin-graphics:glm:v1.0.1'
 }
 
 compileKotlin {

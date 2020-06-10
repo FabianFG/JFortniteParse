@@ -1,15 +1,15 @@
 package me.fungames.jfortniteparse.ue4.assets.reader
 
-import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectImport
-import me.fungames.jfortniteparse.ue4.assets.objects.FPackageFileSummary
+import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.objects.*
 
 /**
  * Binary reader for UE4 Assets
@@ -21,6 +21,7 @@ class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FBy
     lateinit var nameMap : MutableList<FNameEntry>
     lateinit var importMap : MutableList<FObjectImport>
     lateinit var exportMap : MutableList<FObjectExport>
+    lateinit var exports : MutableList<UExport>
 
 
     private val importCache = mutableMapOf<String, Package>()
@@ -75,6 +76,45 @@ class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FBy
             importCache[fixedPath] = pkg
             pkg
         } else null
+    }
+
+    inline fun <reified T> loadObject(obj: FPackageIndex) : T? {
+        val loaded = loadObjectGeneric(obj) ?: return null
+        return if (loaded is T)
+            loaded
+        else
+            null
+    }
+
+    fun loadObjectGeneric(obj : FPackageIndex) : UExport? {
+        val import = obj.importObject ?: return null
+        if (import.objectName.text.startsWith("Default__")) {
+            //The needed export is inside our package, lets hope we already serialized it before (I don't know whether that's always the case)
+            val export = exports.firstOrNull { it.export?.templateIndex?.importObject == import }
+            if (export != null)
+                return export
+            else
+                UClass.logger.warn { "Couldn't resolve package index, the required export was not serialized yet" }
+        }
+        if(provider != null && import.outerIndex.importObject != null) {
+            //The needed export is located in another asset, try to load it
+            val fixedPath = provider.fixPath(obj.outerImportObject!!.objectName.text)
+            val pkg = importCache[fixedPath]
+                ?: provider.loadGameFile(fixedPath)?.apply { importCache[fixedPath] = this }
+            if (pkg != null) {
+                val export = pkg.exports.firstOrNull {
+                    it.export?.classIndex?.importName == import.className.text
+                        && it.export?.objectName?.text == import.objectName.text
+                }
+                if (export != null)
+                    return export
+                else
+                    UClass.logger.warn { "Couldn't resolve package index in external package" }
+            } else {
+                UClass.logger.warn { "Failed to load referenced import" }
+            }
+        }
+        return null
     }
 
     fun clearImportCache() = importCache.clear()

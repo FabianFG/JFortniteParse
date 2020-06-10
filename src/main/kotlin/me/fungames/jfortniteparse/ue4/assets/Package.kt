@@ -8,6 +8,7 @@ import me.fungames.jfortniteparse.ue4.UClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.exports.*
 import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.*
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.*
 import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
 import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
@@ -85,6 +86,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         uexpAr.nameMap = nameMap
         uexpAr.importMap = importMap
         uexpAr.exportMap = exportMap
+        uexpAr.exports = exports
         uexpAr.uassetSize = info.totalHeaderSize
         uexpAr.info = info
 
@@ -93,6 +95,10 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             ubulkAr.uassetSize = info.totalHeaderSize
             ubulkAr.uexpSize = exportMap.sumBy { it.serialSize.toInt() }
             ubulkAr.info = info
+            ubulkAr.nameMap = nameMap
+            ubulkAr.importMap = importMap
+            ubulkAr.exportMap = exportMap
+            ubulkAr.exports = exports
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
@@ -100,7 +106,6 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             val exportType = it.classIndex.importName.substringAfter("Default__")
             uexpAr.seekRelative(it.serialOffset.toInt())
             val validPos = (uexpAr.pos() + it.serialSize).toInt()
-            uexpAr
             when(exportType) {
                 "BlueprintGeneratedClass" -> {
                     val className = it.templateIndex.importObject?.className?.text
@@ -134,6 +139,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             "CurveTable" -> exports.add(UCurveTable(uexpAr, it))
             "StringTable" -> exports.add(UStringTable(uexpAr, it))
             "StaticMesh" -> exports.add(UStaticMesh(uexpAr, it, validPos))
+            "MaterialInstanceConstant" -> exports.add(UMaterialInstanceConstant(uexpAr, it))
             //Valorant specific classes
             "CharacterUIData" -> exports.add(CharacterUIData(uexpAr, it))
             "CharacterAbilityUIData" -> exports.add(CharacterAbilityUIData(uexpAr, it))

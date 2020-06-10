@@ -27,8 +27,8 @@ class FBox : UClass {
     }
 
     constructor(min: FVector, max: FVector) {
-        this.min = min;
-        this.max = max;
-        this.isValid = true;
+        this.min = min
+        this.max = max
+        this.isValid = true
     }
 }
