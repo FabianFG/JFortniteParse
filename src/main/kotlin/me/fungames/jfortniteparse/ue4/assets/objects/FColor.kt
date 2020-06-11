@@ -21,6 +21,8 @@ class FColor : UClass {
         super.complete(Ar)
     }
 
+    constructor() : this(0u, 0u, 0u, 0u)
+
     fun toColor() = Color(r.toInt(), g.toInt(), b.toInt(), a.toInt())
 
     fun serialize(Ar: FArchiveWriter) {

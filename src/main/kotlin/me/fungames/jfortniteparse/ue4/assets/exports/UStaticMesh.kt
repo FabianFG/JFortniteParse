@@ -3,7 +3,9 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.objects.*
+import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMaterial
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMeshLODResources
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -28,7 +30,8 @@ class UStaticMesh : UExport {
     var bounds = FBoxSphereBounds(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f), 0f)
     var lodsShareStaticLighting = false
     var screenSize = Array(8) { 0f }
-    var staticMaterials = emptyArray<UMaterialInstanceConstant?>() //TODO actual right type
+    var staticMaterials = emptyArray<FStaticMaterial>()
+    var materials = emptyArray<UMaterialInterface>()
 
     constructor(Ar: FAssetArchive, exportObject : FObjectExport, validPos : Int) : super(exportObject) {
         super.init(Ar)
@@ -50,7 +53,7 @@ class UStaticMesh : UExport {
             Ar.readUInt32() // highResSourceMeshCRC
         }
         lightingGuid = FGuid(Ar)
-        sockets = Ar.readTArray { Ar.loadObject(FPackageIndex(Ar)) }
+        sockets = Ar.readTArray { Ar.loadObject<UExport>(FPackageIndex(Ar)) }
         if (!stripFlags.isEditorDataStripped()) {
             //TODO https://github.com/gildor2/UEViewer/blob/master/Unreal/UnMesh4.cpp#L2382
             throw ParserException("Static Mesh with Editor Data not implemented yet")
@@ -138,10 +141,12 @@ class UStaticMesh : UExport {
             } else {
                 if (FEditorObjectVersion.get(Ar) >= FEditorObjectVersion.RefactorMeshEditorMaterials) {
                     // UE4.14+ - "Materials" are deprecated, added StaticMaterials
-                    staticMaterials = Ar.readTArray { Ar.loadObject(FPackageIndex(Ar)) }
+                    staticMaterials = Ar.readTArray { FStaticMaterial(Ar) }
                 }
             }
         }
+
+        materials = staticMaterials.mapNotNull { it.materialInterface }.toTypedArray()
 
         //Drop remaining SpeedTree data
         Ar.seek(validPos)

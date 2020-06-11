@@ -77,8 +77,8 @@ class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FBy
             pkg
         } else null
     }
-
-    inline fun <reified T> loadObject(obj: FPackageIndex) : T? {
+    inline fun <reified T> loadObject(obj: FPackageIndex?) : T? {
+        if (obj == null) return null
         val loaded = loadObjectGeneric(obj) ?: return null
         return if (loaded is T)
             loaded

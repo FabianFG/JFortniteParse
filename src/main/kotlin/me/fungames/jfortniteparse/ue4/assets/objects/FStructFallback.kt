@@ -42,7 +42,7 @@ class FStructFallback : UClass {
     }
 
     inline fun <reified T> getOrNull(name : String) : T? {
-        val value = properties.firstOrNull { it.name.text == name }?.getTagTypeValue()
+        val value = properties.firstOrNull { it.name.text == name }?.getTagTypeValueLegacy()
         return if (value is T)
             value
         else
@@ -54,4 +54,6 @@ class FStructFallback : UClass {
     constructor(properties: MutableList<FPropertyTag>) {
         this.properties = properties
     }
+
+
 }

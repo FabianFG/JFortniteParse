@@ -52,6 +52,8 @@ class UScriptStruct : UClass {
 
             else -> {
                 logger.debug("Unknown struct type $structName, using FStructFallback")
+                //TODO this should in theory map the struct fallbacks directly to their target, not implemented yet
+                //For now it will be done with the getTagTypeValue method, not optimal though
                 FStructFallback(Ar)
             }
         }

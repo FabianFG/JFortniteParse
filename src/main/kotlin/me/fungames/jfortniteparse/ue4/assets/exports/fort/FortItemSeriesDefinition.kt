@@ -29,7 +29,7 @@ class FortItemSeriesDefinition : UExport {
         super.init(Ar)
         baseObject = UObject(Ar, exportObject)
         displayName = baseObject.getOrNull("DisplayName")
-        colors = baseObject.get<FStructFallback>("Colors").properties.associateBy { it.name.text }.mapValues { (it.value.getTagTypeValue() as FLinearColor).toColor() }.toMutableMap()
+        colors = baseObject.get<FStructFallback>("Colors").properties.associateBy { it.name.text }.mapValues { (it.value.getTagTypeValueLegacy() as FLinearColor).toColor() }.toMutableMap()
         backgroundTexture = baseObject.getOrNull("BackgroundTexture")
         super.complete(Ar)
     }

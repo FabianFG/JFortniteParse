@@ -1,20 +1,29 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
+@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
 
 package me.fungames.jfortniteparse.converters.ue4.meshes
 
+import glm_.vec3.Vec3
 import glm_.vec4.Vec4
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh
 import me.fungames.jfortniteparse.ue4.assets.objects.FBox
+import me.fungames.jfortniteparse.ue4.assets.objects.FColor
+import me.fungames.jfortniteparse.ue4.assets.objects.FPackedNormal
 import me.fungames.jfortniteparse.ue4.assets.objects.FSphere
 
 
 class CStaticMesh(val originalMesh : UObject, val boundingBox : FBox, val boundingSphere : FSphere, val lods : Array<CStaticMeshLod>)
 
 class CStaticMeshLod : CBaseMeshLod() {
-    lateinit var verts : CStaticMeshVertex
+    lateinit var verts : Array<CStaticMeshVertex>
+
+    fun allocateVerts(count : Int) {
+        verts = Array(count) { CStaticMeshVertex(Vec4(), CPackedNormal(), CPackedNormal(), CMeshUVFloat()) }
+        numVerts = count
+        allocateUVBuffers()
+    }
 }
 
 class CStaticMeshVertex(position: Vec4, normal: CPackedNormal, tangent: CPackedNormal, uv: CMeshUVFloat) :
@@ -50,9 +59,36 @@ fun UStaticMesh.convertMesh() {
         // sections
         val sections = mutableListOf<CMeshSection>()
         for (src in srcLod.sections) {
-            val material = staticMaterials.getOrNull(src.materialIndex)
+            val material = materials.getOrNull(src.materialIndex)
+            sections.add(CMeshSection(material, src.firstIndex, src.numTriangles))
         }
+        lod.sections = sections.toTypedArray()
+
+        // vertices
+        lod.allocateVerts(numVerts)
+        if (srcLod.colorVertexBuffer.numVertices != 0)
+            lod.allocateVertexColorBuffer()
+        for (i in 0 until numVerts) {
+            val suv = srcLod.vertexBuffer.uv[i]
+            val v = lod.verts[i]
+
+            v.position = srcLod.positionVertexBuffer.verts[i].toVec4()
+            unpackNormals(suv.normal, v)
+            // copy UV
+            v.uv = CMeshUVFloat(suv.uv[0])
+            for (texCoordIndex in 1 until numTexCoords) {
+                lod.extraUV[texCoordIndex - 1][i].u = suv.uv[texCoordIndex].u
+                lod.extraUV[texCoordIndex - 1][i].v = suv.uv[texCoordIndex].v
+            }
+            if (srcLod.colorVertexBuffer.numVertices != 0)
+                lod.vertexColors[i] = srcLod.colorVertexBuffer.data[i]
+        }
+
+        // indices
+        lod.indices = CIndexBuffer(srcLod.indexBuffer.indices16, srcLod.indexBuffer.indices32)
     }
+
+    TODO("Finalize Mesh")
 
 }
 

@@ -18,7 +18,7 @@ class FortItemCategory : UExport {
         val tertiary = baseObject.get<UScriptArray>("TertiaryCategories")
         userFacingFlags = mutableMapOf()
         tertiary.contents.forEach { entry ->
-            val data = entry.getTagTypeValue() as FStructFallback
+            val data = entry.getTagTypeValueLegacy() as FStructFallback
             val tags = data.get<FGameplayTagContainer>("TagContainer")
             if (tags.gameplayTags.any { it.text.startsWith("Cosmetics.UserFacingFlags") }) {
                 val name = data.get<FText>("CategoryName")

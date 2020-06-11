@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import glm_.vec3.Vec3
+import glm_.vec4.Vec4
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
@@ -34,6 +35,7 @@ open class FVector : UClass {
     }
 
     fun toVec3() = Vec3(x, y, z)
+    fun toVec4() = Vec4(x, y, z, 0)
 
     operator fun minus(other : FVector) = FVector(x - other.x, y - other.y, z - other.z)
     operator fun plus(other : FVector) = FVector(x + other.x, y + other.y, z + other.z)

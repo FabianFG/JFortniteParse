@@ -2,14 +2,64 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.FName
+import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
+import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import java.lang.reflect.Array
 
 @ExperimentalUnsignedTypes
 sealed class FPropertyTagType(val propertyType: String) {
 
-    fun getTagTypeValue() : Any {
+    inline fun <reified T> getTagTypeValue(Ar: FAssetArchive? = null) : T? {
+        val value = getTagTypeValue(T::class.java, Ar)
+        return if (value is T)
+            value
+        else
+            null
+    }
+
+    fun getTagTypeValue(clazz: Class<*>, Ar: FAssetArchive? = null) : Any? {
+        @Suppress("DEPRECATION") val value = getTagTypeValueLegacy()
+        return when {
+            clazz.isAssignableFrom(value::class.java) -> value
+            value is Boolean && clazz == Boolean::class.javaPrimitiveType -> value
+            value is Byte && clazz == Byte::class.javaPrimitiveType -> value
+            value is Short && clazz == Short::class.javaPrimitiveType -> value
+            value is Char && clazz == Char::class.javaPrimitiveType -> value
+            value is Int && clazz == Int::class.javaPrimitiveType -> value
+            value is Long && clazz == Long::class.javaPrimitiveType -> value
+            value is Float && clazz == Float::class.javaPrimitiveType -> value
+            value is Double && clazz == Double::class.javaPrimitiveType -> value
+            value is FStructFallback && clazz.isAnnotationPresent(StructFallbackClass::class.java) -> value.mapToClass(clazz, Ar)
+            value is UScriptArray && clazz.isArray -> {
+                val content = clazz.componentType
+                val array = Array.newInstance(content, value.data.size)
+                value.contents.forEachIndexed { i, tag ->
+                    val data = tag.getTagTypeValue(content, Ar)
+                    if (data != null)
+                        Array.set(array, i, data)
+                    else
+                        UClass.logger.error { "Failed to get value at index $i in UScriptArray for content class ${content::class.java.simpleName}" }
+                }
+                array
+            }
+            value is FPackageIndex && UExport::class.java.isAssignableFrom(clazz) && Ar != null -> {
+                val export = Ar.loadObjectGeneric(value)
+                if (export != null && export::class.java == clazz)
+                    export
+                else
+                    null
+            }
+            //TODO maybe also add Map
+            else -> null
+        }
+    }
+
+    @Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
+    fun getTagTypeValueLegacy() : Any {
         return when(this) {
             is BoolProperty -> this.bool
             is StructProperty -> this.struct.structType

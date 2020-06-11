@@ -33,8 +33,8 @@ class CharacterUIData : UExport {
         displayIconSmall = baseObject.get("DisplayIconSmall")
         displayIcon = baseObject.get("DisplayIcon")
         abilitiesWithIndex = baseObject.get<UScriptMap>("Abilities").mapData
-            .mapKeys { ECharacterAbilitySlot.valueOf((it.key.getTagTypeValue() as FName).text.substringAfter("ECharacterAbilitySlot::")) }
-            .mapValues { (it.value.getTagTypeValue() as FPackageIndex).index }
+            .mapKeys { ECharacterAbilitySlot.valueOf((it.key.getTagTypeValueLegacy() as FName).text.substringAfter("ECharacterAbilitySlot::")) }
+            .mapValues { (it.value.getTagTypeValueLegacy() as FPackageIndex).index }
         wwiseStateName = baseObject.getOrNull<FName>("WwiseStateName")?.text
         displayName = baseObject.get("DisplayName")
         description = baseObject.get("Description")

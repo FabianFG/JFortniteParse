@@ -34,20 +34,14 @@ class UObject : UExport {
             properties.first { it.name.text == name }.setTagTypeValue(value)
     }
 
-    inline fun <reified T> getOrDefault(name : String, default : T) : T {
-        val value : T? = getOrNull(name)
+    inline fun <reified T> getOrDefault(name : String, default : T, Ar: FAssetArchive? = null) : T {
+        val value : T? = getOrNull(name, Ar)
         return value ?: default
     }
 
-    inline fun <reified T> getOrNull(name : String) : T? {
-        val value = properties.firstOrNull { it.name.text == name }?.getTagTypeValue()
-        return if (value is T)
-            value
-        else
-            null
-    }
+    inline fun <reified T> getOrNull(name : String, Ar: FAssetArchive? = null) = properties.firstOrNull { it.name.text == name }?.getTagTypeValue<T>(Ar)
 
-    inline fun <reified T> get(name: String) : T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
+    inline fun <reified T> get(name: String, Ar: FAssetArchive? = null) : T = getOrNull(name, Ar) ?: throw KotlinNullPointerException("$name must be not-null")
 
     override fun serialize(Ar: FAssetArchiveWriter) {
         serializeProperties(

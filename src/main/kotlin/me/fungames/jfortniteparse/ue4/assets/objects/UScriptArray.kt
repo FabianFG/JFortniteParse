@@ -32,7 +32,7 @@ class UScriptArray : UClass {
         }
 
         data = mutableListOf()
-        contents.forEach { data.add(it.getTagTypeValue()) }
+        contents.forEach { data.add(it.getTagTypeValueLegacy()) }
 
         super.complete(Ar)
     }
@@ -51,7 +51,7 @@ class UScriptArray : UClass {
         this.arrayTag = arrayTag
         this.contents = contents
         this.data = mutableListOf()
-        contents.forEach { this.data.add(it.getTagTypeValue()) }
+        contents.forEach { this.data.add(it.getTagTypeValueLegacy()) }
         this.innerType = innerType
     }
 }

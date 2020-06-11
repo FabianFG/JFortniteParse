@@ -33,7 +33,7 @@ object JsonSerializer{
 
     @Suppress("EXPERIMENTAL_API_USAGE")
     fun FPropertyTagType.toJson(context: JsonSerializationContext) : JsonElement {
-        return this.getTagTypeValue().toJson(context)
+        return this.getTagTypeValueLegacy().toJson(context)
     }
 
     @Suppress("EXPERIMENTAL_API_USAGE")

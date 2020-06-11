@@ -80,7 +80,20 @@ class FPropertyTag : UClass {
         super.complete(Ar)
     }
 
-    fun getTagTypeValue() = tag?.getTagTypeValue() ?: throw IllegalArgumentException("This tag was read without data")
+    fun getTagTypeValue(clazz: Class<*>, Ar: FAssetArchive? = null) : Any? {
+        if (tag == null)
+            throw IllegalArgumentException("This tag was read without data")
+        return tag?.getTagTypeValue(clazz, Ar)
+    }
+
+    inline fun <reified T> getTagTypeValue(Ar: FAssetArchive? = null) : T? {
+        if (tag == null)
+            throw IllegalArgumentException("This tag was read without data")
+        return tag?.getTagTypeValue<T>(Ar)
+    }
+
+    @Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
+    fun getTagTypeValueLegacy() = tag?.getTagTypeValueLegacy() ?: throw IllegalArgumentException("This tag was read without data")
 
     fun setTagTypeValue(value : Any?) = tag?.setTagTypeValue(value)
 
@@ -123,5 +136,5 @@ class FPropertyTag : UClass {
         super.completeWrite(Ar)
     }
 
-    override fun toString() = "${name.text}   -->   ${getTagTypeValue()}"
+    override fun toString() = "${name.text}   -->   ${getTagTypeValueLegacy()}"
 }

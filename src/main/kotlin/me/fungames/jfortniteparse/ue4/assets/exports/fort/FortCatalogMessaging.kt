@@ -19,9 +19,9 @@ class FortCatalogMessaging : UExport {
     constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(exportObject) {
         super.init(Ar)
         baseObject = UObject(Ar, exportObject)
-        banners = baseObject.get<UScriptMap>("Banners").mapData.mapKeys { it.key.getTagTypeValue() as String }.mapValues { it.value.getTagTypeValue() as FText }
-        storeToastHeader = baseObject.get<UScriptMap>("StoreToast_Header").mapData.mapKeys { it.key.getTagTypeValue() as String }.mapValues { it.value.getTagTypeValue() as FText }
-        storeToastBody = baseObject.get<UScriptMap>("StoreToast_Body").mapData.mapKeys { it.key.getTagTypeValue() as String }.mapValues { it.value.getTagTypeValue() as FText }
+        banners = baseObject.get<UScriptMap>("Banners").mapData.mapKeys { it.key.getTagTypeValueLegacy() as String }.mapValues { it.value.getTagTypeValueLegacy() as FText }
+        storeToastHeader = baseObject.get<UScriptMap>("StoreToast_Header").mapData.mapKeys { it.key.getTagTypeValueLegacy() as String }.mapValues { it.value.getTagTypeValueLegacy() as FText }
+        storeToastBody = baseObject.get<UScriptMap>("StoreToast_Body").mapData.mapKeys { it.key.getTagTypeValueLegacy() as String }.mapValues { it.value.getTagTypeValueLegacy() as FText }
         super.complete(Ar)
     }
 
