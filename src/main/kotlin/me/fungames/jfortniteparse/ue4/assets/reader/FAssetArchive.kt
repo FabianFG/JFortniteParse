@@ -8,7 +8,6 @@ import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.*
 
 /**
@@ -58,9 +57,9 @@ class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FBy
 
     fun readFName() : FName {
         val nameIndex = this.readInt32()
-        val nameNumber = this.readInt32() // name number?
+        val extraIndex = this.readInt32()
         if (nameIndex in nameMap.indices)
-            return FName(nameMap, nameIndex, nameNumber)
+            return FName(nameMap, nameIndex, extraIndex)
         else
             throw ParserException("FName could not be read, requested index $nameIndex, name map size ${nameMap.size}", this)
     }

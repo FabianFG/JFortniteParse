@@ -14,29 +14,39 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPackedNormal
 import me.fungames.jfortniteparse.ue4.assets.objects.FSphere
 
 
-class CStaticMesh(val originalMesh : UObject, val boundingBox : FBox, val boundingSphere : FSphere, val lods : Array<CStaticMeshLod>)
-
-class CStaticMeshLod : CBaseMeshLod() {
-    lateinit var verts : Array<CStaticMeshVertex>
-
-    fun allocateVerts(count : Int) {
-        verts = Array(count) { CStaticMeshVertex(Vec4(), CPackedNormal(), CPackedNormal(), CMeshUVFloat()) }
-        numVerts = count
-        allocateUVBuffers()
+class CStaticMesh(val originalMesh : UStaticMesh, val boundingBox : FBox, val boundingSphere : FSphere, val lods : Array<CStaticMeshLod>) {
+    internal fun finalizeMesh() {
+        lods.forEach { it.buildNormals() }
     }
 }
 
-class CStaticMeshVertex(position: Vec4, normal: CPackedNormal, tangent: CPackedNormal, uv: CMeshUVFloat) :
+class CStaticMeshLod : CBaseMeshLod() {
+    lateinit var verts : Array<CMeshVertex>
+
+    fun allocateVerts(count : Int) {
+        verts = Array(count) { CStaticMeshVertex(Vec3(), CPackedNormal(), CPackedNormal(), CMeshUVFloat()) }
+        numVerts = count
+        allocateUVBuffers()
+    }
+
+    fun buildNormals() {
+        if (hasNormals) return
+        buildNormalsCommon(verts, indices)
+        hasNormals = true
+    }
+}
+
+class CStaticMeshVertex(position: Vec3, normal: CPackedNormal, tangent: CPackedNormal, uv: CMeshUVFloat) :
     CMeshVertex(position, normal, tangent, uv)
 
-fun UStaticMesh.convertMesh() {
+fun UStaticMesh.convertMesh(): CStaticMesh {
 
     // convert bounds
     val boundingSphere = FSphere(0f, 0f, 0f, bounds.sphereRadius / 2) //?? UE3 meshes has radius 2 times larger than mesh itself; verify for UE4
     val boundingBox = FBox(bounds.origin - bounds.boxExtent, bounds.origin + bounds.boxExtent)
 
     // convert lods
-    val lods = mutableListOf<CStaticMeshLod>()
+    val lods = Array(this.lods.size) { CStaticMeshLod() }
     for (lodIndex in this.lods.indices) {
         val srcLod = this.lods[lodIndex]
 
@@ -51,7 +61,7 @@ fun UStaticMesh.convertMesh() {
         if (numTexCoords > MAX_MESH_UV_SETS)
             throw ParserException("Static mesh has too many UV sets ($numTexCoords)")
 
-        val lod = CStaticMeshLod()
+        val lod = lods[lodIndex]
         lod.numTexCoords = numTexCoords
         lod.hasNormals = true
         lod.hasTangents = true
@@ -72,7 +82,7 @@ fun UStaticMesh.convertMesh() {
             val suv = srcLod.vertexBuffer.uv[i]
             val v = lod.verts[i]
 
-            v.position = srcLod.positionVertexBuffer.verts[i].toVec4()
+            v.position = srcLod.positionVertexBuffer.verts[i].toVec3()
             unpackNormals(suv.normal, v)
             // copy UV
             v.uv = CMeshUVFloat(suv.uv[0])
@@ -81,14 +91,15 @@ fun UStaticMesh.convertMesh() {
                 lod.extraUV[texCoordIndex - 1][i].v = suv.uv[texCoordIndex].v
             }
             if (srcLod.colorVertexBuffer.numVertices != 0)
-                lod.vertexColors[i] = srcLod.colorVertexBuffer.data[i]
+                lod.vertexColors!![i] = srcLod.colorVertexBuffer.data[i]
         }
 
         // indices
         lod.indices = CIndexBuffer(srcLod.indexBuffer.indices16, srcLod.indexBuffer.indices32)
     }
 
-    TODO("Finalize Mesh")
-
+    val mesh = CStaticMesh(this, boundingBox, boundingSphere, lods)
+    mesh.finalizeMesh()
+    return mesh
 }
 

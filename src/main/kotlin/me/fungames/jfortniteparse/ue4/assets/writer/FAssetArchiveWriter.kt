@@ -47,7 +47,7 @@ open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter(
             throw ParserException("FName does not have a valid value, value in name map : ${nameMap[i.index].name}, value in fname : ${i.text}", this)
         }
         writeInt32(i.index)
-        writeInt32(i.number)
+        writeInt32(i.extraIndex)
     }
 
     override fun write(buffer: ByteArray) {
@@ -55,8 +55,8 @@ open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter(
         pos += buffer.size
     }
 
-    internal fun setupByteArrayWriter() : FByteArrayArchiveWriter {
-        val ar = FByteArrayArchiveWriter()
+    internal fun setupByteArrayWriter() : FByteArchiveWriter {
+        val ar = FByteArchiveWriter()
         ar.uassetSize = uassetSize
         ar.uexpSize = uexpSize
         payloads.forEach { ar.addPayload(it.key, it.value) }
@@ -71,7 +71,7 @@ open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter(
 }
 
 @ExperimentalUnsignedTypes
-internal class FByteArrayArchiveWriter() : FAssetArchiveWriter(ByteArrayOutputStream()) {
+internal class FByteArchiveWriter() : FAssetArchiveWriter(ByteArrayOutputStream()) {
 
     val bos = super.outputStream as ByteArrayOutputStream
 

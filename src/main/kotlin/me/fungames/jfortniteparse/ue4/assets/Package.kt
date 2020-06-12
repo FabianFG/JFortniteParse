@@ -17,7 +17,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPackageFileSummary
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
-import me.fungames.jfortniteparse.ue4.assets.writer.FByteArrayArchiveWriter
+import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
@@ -212,7 +212,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
 
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
     private fun updateHeader() {
-        val uassetWriter = FByteArrayArchiveWriter()
+        val uassetWriter = FByteArchiveWriter()
         uassetWriter.game = game.game
         uassetWriter.ver = game.version
         uassetWriter.nameMap = nameMap

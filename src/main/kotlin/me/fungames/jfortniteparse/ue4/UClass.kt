@@ -1,12 +1,8 @@
 package me.fungames.jfortniteparse.ue4
 
-import me.fungames.jfortniteparse.ue4.assets.writer.FByteArrayArchiveWriter
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
-import me.fungames.jfortniteparse.util.parseHexBinary
-import me.fungames.jfortniteparse.util.printHexBinary
 import mu.KotlinLogging
 
 @ExperimentalUnsignedTypes

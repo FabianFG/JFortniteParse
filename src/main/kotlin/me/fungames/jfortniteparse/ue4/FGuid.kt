@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4
 
-import me.fungames.jfortniteparse.ue4.assets.writer.FByteArrayArchiveWriter
+import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
@@ -68,7 +68,7 @@ class FGuid : UClass {
         this.part2 = part2
         this.part3 = part3
         this.part4 = part4
-        val ar = FByteArrayArchiveWriter()
+        val ar = FByteArchiveWriter()
         ar.writeUInt32(part1)
         ar.writeUInt32(part2)
         ar.writeUInt32(part3)

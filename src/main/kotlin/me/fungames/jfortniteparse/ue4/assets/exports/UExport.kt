@@ -10,9 +10,11 @@ abstract class UExport(val exportType: String) : UClass() {
     abstract var baseObject : UObject
     abstract fun serialize(Ar: FAssetArchiveWriter)
     var export : FObjectExport? = null
+    var name = exportType
 
     constructor(exportObject : FObjectExport) : this(exportObject.classIndex.importName) {
         export = exportObject
+        name = exportObject.objectName.text
     }
 
     open fun applyLocres(locres : Locres?) {}

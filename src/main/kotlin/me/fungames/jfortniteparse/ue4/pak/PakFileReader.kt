@@ -16,6 +16,7 @@ import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
+import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.parseHexBinary
 import me.fungames.jfortniteparse.util.toInt64
 import me.fungames.jfortniteparse.util.toUInt32
@@ -566,7 +567,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
     }
 
     companion object {
-        const val INDEX_NONE = -1
+
         val logger = KotlinLogging.logger("PakFile")
 
         fun testAesKey(bytes : ByteArray, key : ByteArray) : Boolean {
