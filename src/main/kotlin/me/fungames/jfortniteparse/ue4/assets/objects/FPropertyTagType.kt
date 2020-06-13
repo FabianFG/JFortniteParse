@@ -48,10 +48,22 @@ sealed class FPropertyTagType(val propertyType: String) {
             }
             value is FPackageIndex && UExport::class.java.isAssignableFrom(clazz) && Ar != null -> {
                 val export = Ar.loadObjectGeneric(value)
-                if (export != null && export::class.java == clazz)
+                if (export != null && clazz.isAssignableFrom(export::class.java))
                     export
                 else
                     null
+            }
+            clazz.isEnum && this is EnumProperty -> {
+                val storedEnum = this.name.text
+                if (clazz.simpleName != storedEnum.substringBefore("::"))
+                    null
+                else {
+                    val search = storedEnum.substringAfter("::")
+                    val values = clazz.enumConstants
+                    val names = clazz.fields.mapNotNull { if (!it.isSynthetic && it.name != "Companion") it.name else null }
+                    val idx = names.indexOfFirst { it == search }
+                    values.getOrNull(idx)
+                }
             }
             //TODO maybe also add Map
             else -> null

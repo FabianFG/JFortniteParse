@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO">
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+            <PatternLayout
+                    pattern="%d{dd.MM.yyyy HH:mm:ss} %p %c [%t] - %m%throwable{3}%n " />
+        </Console>
+    </Appenders>
+    <Loggers>
+        <Root level="off">
+            <AppenderRef ref="console" />
+        </Root>
+        <logger name="JFortniteParse" level="info" additivity="false">
+            <AppenderRef ref="console"/>
+        </logger>
+        <logger name="Oodle" level="info" additivity="false">
+            <AppenderRef ref="console"/>
+        </logger>
+        <logger name="PakFile" level="info" additivity="false">
+            <AppenderRef ref="console"/>
+        </logger>
+    </Loggers>
+</Configuration>

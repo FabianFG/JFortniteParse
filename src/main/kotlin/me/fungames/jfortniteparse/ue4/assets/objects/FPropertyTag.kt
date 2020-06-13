@@ -57,6 +57,7 @@ class FPropertyTag : UClass {
 
             if (readData) {
                 val pos = Ar.pos()
+                val finalPos = pos + size
                 try {
                     tag =
                         FPropertyTagType.readFPropertyTagType(
@@ -65,7 +66,6 @@ class FPropertyTag : UClass {
                             tagData,
                             FPropertyTagType.Type.NORMAL
                         )
-                    val finalPos = pos + size
                     if (finalPos != Ar.pos()) {
                         logger.debug("FPropertyTagType $name ($propertyType) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
                     }
@@ -73,7 +73,11 @@ class FPropertyTag : UClass {
                     //we don't need to crash here because we know the expected size
                     Ar.seek(finalPos)
                 } catch (e: ParserException) {
-                    throw ParserException("Error occurred while reading the FPropertyTagType $name ($propertyType) ", Ar, e)
+                    if (finalPos != Ar.pos()) {
+                        logger.warn("Failed to read FPropertyTagType $name ($propertyType), skipping it, please report", e)
+                    }
+                    //Also no need to crash here, just seek to the desired offset
+                    Ar.seek(finalPos)
                 }
             }
         }

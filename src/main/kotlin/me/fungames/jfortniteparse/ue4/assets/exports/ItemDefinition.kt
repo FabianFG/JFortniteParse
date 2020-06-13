@@ -64,7 +64,7 @@ open class ItemDefinition : UExport {
         smallPreviewImage = baseObject.getOrNull("SmallPreviewImage")
         largePreviewImage = baseObject.getOrNull("LargePreviewImage") ?: baseObject.getOrNull("SpriteSheet")
         displayAssetPath = baseObject.getOrNull("DisplayAssetPath")
-        rarity = EFortRarity.getEnum(baseObject.getOrNull<FName>("Rarity")?.text)
+        rarity = baseObject.getOrNull("Rarity") ?: EFortRarity.Uncommon
         series = baseObject.getOrNull("Series")
         displayName = baseObject.getOrNull("DisplayName")
         shortDescription = baseObject.getOrNull("ShortDescription")

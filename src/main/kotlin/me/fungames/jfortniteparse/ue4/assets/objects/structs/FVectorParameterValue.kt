@@ -13,7 +13,7 @@ class FVectorParameterValue(
     @StructFieldName("ParameterInfo")
     val parameterInfo : FMaterialParameterInfo,
     @StructFieldName("ParameterValue")
-    val parameterValue: FLinearColor
+    val parameterValue: FLinearColor?
 ) {
     fun getName() = parameterName?.text ?: parameterInfo.name.text
 }

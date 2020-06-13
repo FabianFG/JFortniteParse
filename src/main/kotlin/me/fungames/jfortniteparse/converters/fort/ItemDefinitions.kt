@@ -2,7 +2,7 @@
 
 package me.fungames.jfortniteparse.converters.fort
 
-import me.fungames.jfortniteparse.converters.ue4.toBufferedImage
+import me.fungames.jfortniteparse.converters.ue4.textures.toBufferedImage
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.resources.*
@@ -11,7 +11,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPackageIndex
 import me.fungames.jfortniteparse.ue4.assets.objects.FText
 import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
-import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortItemCategory
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortItemSeriesDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortMtxOfferData

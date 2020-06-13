@@ -1,18 +1,18 @@
-package me.fungames.jfortniteparse.ue4.assets.exports
+package me.fungames.jfortniteparse.ue4.assets.exports.tex
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
 import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.objects.FStripDataFlags
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_23
-import me.fungames.jfortniteparse.ue4.versions.GAME_VALORANT
 
 @ExperimentalUnsignedTypes
-class UTexture2D : UExport {
+class UTexture2D : UTexture {
 
     override var baseObject: UObject
     var flag1 : FStripDataFlags
@@ -65,7 +65,7 @@ class UTexture2D : UExport {
     }
 
     constructor(
-        exportType: String,
+        exportType: FObjectExport,
         baseObject: UObject,
         flag1: FStripDataFlags,
         flag2: FStripDataFlags,

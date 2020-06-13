@@ -2,6 +2,7 @@
 
 package me.fungames.jfortniteparse.converters.ue4.meshes.psk
 
+import me.fungames.jfortniteparse.converters.ue4.MaterialExport
 import me.fungames.jfortniteparse.converters.ue4.meshes.CStaticMesh
 import me.fungames.jfortniteparse.converters.ue4.meshes.CStaticMeshLod
 import me.fungames.jfortniteparse.converters.ue4.meshes.CVertexShare
@@ -9,14 +10,47 @@ import me.fungames.jfortniteparse.converters.ue4.meshes.psk.common.VChunkHeader
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.zip.Deflater
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
-fun CStaticMesh.export(exportLods : Boolean) {
-    if (lods.isEmpty()) {
-        UClass.logger.warn { "Mesh ${originalMesh.name} has 0 lods" }
-        return
+class StaticMeshExport(val fileName : String, val pskx : ByteArray, val materials: MutableList<MaterialExport>) {
+    fun writeToDir(dir : File) {
+        dir.mkdirs()
+        File(dir.absolutePath + "/$fileName").writeBytes(pskx)
+        materials.forEach { it.writeToDir(dir) }
     }
 
+    fun appendToZip(zos : ZipOutputStream) {
+        val mat = ZipEntry(fileName)
+        zos.putNextEntry(mat)
+        zos.write(pskx)
+        zos.flush()
+        zos.closeEntry()
+        materials.forEach { it.appendToZip(zos) }
+    }
+
+    fun toZip() : ByteArray {
+        val bos = ByteArrayOutputStream()
+        val zos = ZipOutputStream(bos)
+        zos.setMethod(ZipOutputStream.DEFLATED)
+        appendToZip(zos)
+        zos.close()
+        return bos.toByteArray()
+    }
+}
+
+fun CStaticMesh.export() = exportLods().firstOrNull()
+
+fun CStaticMesh.exportLods(exportLods : Boolean = false) : List<StaticMeshExport> {
+    if (lods.isEmpty()) {
+        UClass.logger.warn { "Mesh ${originalMesh.name} has 0 lods" }
+        return emptyList()
+    }
+
+    val exports = mutableListOf<StaticMeshExport>()
     val maxLod = if (exportLods) lods.size else 1
     for (lod in 0 until maxLod) {
         if (lods[lod].sections.isEmpty()) {
@@ -31,13 +65,16 @@ fun CStaticMesh.export(exportLods : Boolean) {
         val writer = FByteArchiveWriter()
         writer.ver = 128 // less than UE3 version (required at least for VJointPos structure)
 
-        exportStaticMeshLod(lods[lod], writer)
+        val materialExports = mutableListOf<MaterialExport>()
 
-        File(fileName).writeBytes(writer.toByteArray())
+        exportStaticMeshLod(lods[lod], writer, materialExports)
+
+        exports.add(StaticMeshExport(fileName, writer.toByteArray(), materialExports))
     }
+    return exports
 }
 
-private fun exportStaticMeshLod(lod : CStaticMeshLod, Ar : FArchiveWriter) {
+private fun exportStaticMeshLod(lod : CStaticMeshLod, Ar : FArchiveWriter, materialExports : MutableList<MaterialExport>) {
     val share = CVertexShare()
 
     val boneHdr = VChunkHeader()
@@ -52,7 +89,8 @@ private fun exportStaticMeshLod(lod : CStaticMeshLod, Ar : FArchiveWriter) {
         lod.sections,
         lod.verts,
         lod.indices,
-        share
+        share,
+        materialExports
     )
 
     boneHdr.dataCount = 0		// dummy ...

@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.structs
 
-import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
 import me.fungames.jfortniteparse.ue4.assets.util.StructFieldName
@@ -13,7 +13,7 @@ class FTextureParameterValue(
     @StructFieldName("ParameterInfo")
     val parameterInfo : FMaterialParameterInfo,
     @StructFieldName("ParameterValue")
-    val parameterValue: UTexture2D
+    val parameterValue: UTexture2D?
 ) {
     fun getName() = parameterName?.text ?: parameterInfo.name.text
 }

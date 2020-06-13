@@ -8,7 +8,9 @@ import me.fungames.jfortniteparse.ue4.UClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.exports.*
 import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.*
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.*
 import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
 import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
@@ -133,12 +135,18 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     fun readExport(exportType : String, it : FObjectExport, validPos : Int) {
         when (exportType) {
             //UE generic export classes
-            "Texture2D" -> exports.add(UTexture2D(uexpAr, it))
+            "Texture2D" -> exports.add(
+                UTexture2D(
+                    uexpAr,
+                    it
+                )
+            )
             "SoundWave" -> exports.add(USoundWave(uexpAr, it))
             "DataTable" -> exports.add(UDataTable(uexpAr, it))
             "CurveTable" -> exports.add(UCurveTable(uexpAr, it))
             "StringTable" -> exports.add(UStringTable(uexpAr, it))
             "StaticMesh" -> exports.add(UStaticMesh(uexpAr, it, validPos))
+            "Material" -> exports.add(UMaterial(uexpAr, it, validPos))
             "MaterialInstanceConstant" -> exports.add(UMaterialInstanceConstant(uexpAr, it))
             //Valorant specific classes
             "CharacterUIData" -> exports.add(CharacterUIData(uexpAr, it))

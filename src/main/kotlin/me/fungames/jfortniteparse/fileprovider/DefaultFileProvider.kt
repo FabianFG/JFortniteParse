@@ -27,7 +27,7 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
 
 
     private fun scanFiles(folder : File) {
-        val folderFiles = folder.listFiles()!!
+        val folderFiles = folder.listFiles() ?: emptyArray()
         folderFiles.forEach {
             if (it.isDirectory)
                 scanFiles(it)

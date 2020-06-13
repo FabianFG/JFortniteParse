@@ -1,12 +1,12 @@
 @file:Suppress("EXPERIMENTAL_API_USAGE")
 package me.fungames.jfortniteparse.converters.valorant
 
-import me.fungames.jfortniteparse.converters.ue4.toBufferedImage
+import me.fungames.jfortniteparse.converters.ue4.textures.toBufferedImage
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.resources.Resources
 import me.fungames.jfortniteparse.ue4.assets.enums.valorant.ECharacterAbilitySlot
-import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.CharacterDataAsset
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.CharacterAbilityUIData
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.CharacterRoleDataAsset

@@ -1,7 +1,11 @@
-package me.fungames.jfortniteparse.converters.ue4
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
+package me.fungames.jfortniteparse.converters.ue4.textures
 
 import com.github.memo33.jsquish.Squish
-import me.fungames.jfortniteparse.ue4.assets.exports.UTexture2D
+import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.kotlinASTC.ASTCCodecImage
 import me.fungames.kotlinASTC.Bitness
 import me.fungames.kotlinPointers.asPointer
@@ -22,6 +26,7 @@ enum class PixelFormatInfo(val blockSizeX : Int, val blockSizeY : Int, val bytes
     PF_DXT5N       (4, 4, 16, 128, 128, false),
     PF_V8U8        (1, 1, 2, 64, 32, false),
     PF_V8U8_2      (1, 1, 2, 64, 32, false),
+    PF_BC5         (4, 4, 16, 0, 0, false),
     PF_RGBA4       (1, 1, 2, 0, 0, false),
     PF_ASTC_4x4    (4, 4, 16, 0, 0, false),
     PF_ASTC_6x6    (6, 6, 16, 0, 0, false),
@@ -37,9 +42,16 @@ private fun rgbaBufferToImage(rgba: ByteArray, width: Int, height: Int): Buffere
     return img
 }
 
+private fun rgbBufferToImage(rgb: ByteArray, width: Int, height: Int): BufferedImage {
+    val img = BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR)
+    img.raster.setDataElements(0, 0, width, height, rgb)
+    return img
+}
+
 @Throws(IllegalArgumentException::class)
 @Synchronized
-fun UTexture2D.toBufferedImage() : BufferedImage {
+fun UTexture.toBufferedImage() : BufferedImage {
+    if (this !is UTexture2D) throw ParserException("Can only convert UTexture2D so far")
     val texture = getFirstTexture()
     val mip = getFirstMip()
     val data = mip.data.data
@@ -150,6 +162,10 @@ fun UTexture2D.toBufferedImage() : BufferedImage {
                 Squish.CompressionType.DXT1
             val decompressed = Squish.decompressImage(null, width, height, data, type)
             decompressed.copyInto(dst, 0, 0, width * height * 4)
+        }
+        PixelFormatInfo.PF_BC5 -> {
+            val rgb = readBC5(data, width, height)
+            return rgbBufferToImage(rgb, width, height)
         }
     }
 

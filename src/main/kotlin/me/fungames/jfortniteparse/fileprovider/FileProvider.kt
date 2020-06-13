@@ -162,6 +162,13 @@ interface FileProvider {
                 path.startsWith("game/plugins") -> path.replaceFirst("game/plugins/", gameName + "game/plugins/")
                 else -> path.replaceFirst("game/", gameName + "game/content/")
             }
+        } else if (path.startsWith("engine/")) {
+            path = when {
+                path.startsWith("engine/content/") -> path
+                path.startsWith("engine/config/") -> path
+                path.startsWith("engine/plugins") -> path
+                else -> path.replaceFirst("engine/", "engine/content/")
+            }
         }
         return path.toLowerCase()
     }
