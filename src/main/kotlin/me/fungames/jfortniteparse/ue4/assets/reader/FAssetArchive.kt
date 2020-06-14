@@ -20,7 +20,7 @@ class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FBy
     lateinit var nameMap : MutableList<FNameEntry>
     lateinit var importMap : MutableList<FObjectImport>
     lateinit var exportMap : MutableList<FObjectExport>
-    lateinit var exports : MutableList<UExport>
+    lateinit var exports : Map<FObjectExport, Lazy<UExport>>
 
 
     private val importCache = mutableMapOf<String, Package>()
@@ -85,48 +85,55 @@ class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FBy
             null
     }
 
-    inline fun <reified T> loadObject(import: FObjectImport?) : T? {
+    inline fun <reified T> loadImport(import: FObjectImport?) : T? {
         if (import == null) return null
-        val loaded = loadObjectGeneric(import) ?: return null
+        val loaded = loadImportGeneric(import) ?: return null
         return if (loaded is T)
             loaded
         else
             null
     }
 
-    fun loadObjectGeneric(import : FObjectImport) : UExport? {
-        if (import.objectName.text.startsWith("Default__")) {
-            //The needed export is inside our package, lets hope we already serialized it before (I don't know whether that's always the case)
-            val export = exports.firstOrNull { it.export?.templateIndex?.importObject == import }
+    inline fun <reified T> loadExport(export: FObjectExport?) : T? {
+        if (export == null) return null
+        val loaded = loadExportGeneric(export) ?: return null
+        return if (loaded is T)
+            loaded
+        else
+            null
+    }
+
+    fun loadImportGeneric(import: FObjectImport) : UExport? {
+        //The needed export is located in another asset, try to load it
+        if (provider == null || import.outerIndex.importObject == null) return null
+        val fixedPath = provider.fixPath(import.outerIndex.importObject!!.objectName.text)
+        val pkg = importCache[fixedPath]
+            ?: provider.loadGameFile(fixedPath)?.apply { importCache[fixedPath] = this }
+        if (pkg != null) {
+            val export = pkg.exports.firstOrNull {
+                it.export?.classIndex?.name == import.className.text
+                        && it.export?.objectName?.text == import.objectName.text
+            }
             if (export != null)
                 return export
             else
-                UClass.logger.warn { "Couldn't resolve package index, the required export was not serialized yet" }
-        }
-        if(provider != null && import.outerIndex.importObject != null) {
-            //The needed export is located in another asset, try to load it
-            val fixedPath = provider.fixPath(import.outerIndex.importObject!!.objectName.text)
-            val pkg = importCache[fixedPath]
-                ?: provider.loadGameFile(fixedPath)?.apply { importCache[fixedPath] = this }
-            if (pkg != null) {
-                val export = pkg.exports.firstOrNull {
-                    it.export?.classIndex?.importName == import.className.text
-                            && it.export?.objectName?.text == import.objectName.text
-                }
-                if (export != null)
-                    return export
-                else
-                    UClass.logger.warn { "Couldn't resolve package index in external package" }
-            } else {
-                UClass.logger.warn { "Failed to load referenced import" }
-            }
+                UClass.logger.warn { "Couldn't resolve package index in external package" }
+        } else {
+            UClass.logger.warn { "Failed to load referenced import" }
         }
         return null
     }
 
-    fun loadObjectGeneric(obj : FPackageIndex) : UExport? {
-        val import = obj.importObject ?: return null
-        return loadObjectGeneric(import)
+    fun loadExportGeneric(export: FObjectExport) = exports[export]?.value
+
+    fun loadObjectGeneric(index : FPackageIndex) : UExport? {
+        val import = index.importObject
+        if (import != null)
+            return loadImportGeneric(import)
+        val export = index.exportObject
+        if (export != null)
+            return loadExportGeneric(export)
+        return null
     }
 
     fun clearImportCache() = importCache.clear()

@@ -1,3 +1,5 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.*
@@ -25,7 +27,7 @@ object JsonSerializer{
     }
     val exportSerializer = jsonSerializer<FObjectExport> {
         jsonObject(
-            "export_type" to it.src.classIndex.importName,
+            "export_type" to it.src.classIndex.name,
             "export_offset" to it.src.serialOffset,
             "export_length" to it.src.serialSize
         )
@@ -56,7 +58,7 @@ object JsonSerializer{
             is String -> JsonPrimitive(ob)
             is FName -> JsonPrimitive(ob.text)
             is FText -> jsonObject("historyType" to ob.historyType.toJson(context), "finalText" to ob.text, "value" to context.serialize(ob.textHistory))
-            is FPackageIndex -> JsonPrimitive(ob.importName)
+            is FPackageIndex -> JsonPrimitive(ob.name)
             is UInterfaceProperty -> JsonPrimitive(ob.interfaceNumber.toInt())
             is FSoftObjectPath -> jsonObject("assetPath" to ob.assetPathName.text, "subPath" to ob.subPathString)
             is FGuid -> JsonPrimitive(ob.toString())

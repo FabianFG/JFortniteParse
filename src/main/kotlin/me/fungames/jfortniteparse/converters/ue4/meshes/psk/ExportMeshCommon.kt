@@ -2,6 +2,7 @@
 
 package me.fungames.jfortniteparse.converters.ue4.meshes.psk
 
+import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.converters.ue4.MaterialExport
 import me.fungames.jfortniteparse.converters.ue4.export
 import me.fungames.jfortniteparse.converters.ue4.meshes.*
@@ -15,6 +16,7 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.objects.FColor
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.MIRROR_MESH
+import kotlin.coroutines.CoroutineContext
 
 fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, verts : Array<CMeshVertex>, indices : CIndexBuffer, share: CVertexShare, materialExports : MutableList<MaterialExport>) {
     val mainHdr = VChunkHeader()

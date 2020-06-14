@@ -37,11 +37,11 @@ class FortCosmeticVariant : UExport {
         baseObject = UObject(Ar, exportObject)
         variantChannelName = baseObject.getOrNull("VariantChannelName")
         variantChannelTag = baseObject.getOrNull<FStructFallback>("VariantChannelTag")?.getOrNull<FName>("TagName")
-        val searchTag = when(exportObject.classIndex.importName) {
+        val searchTag = when(exportObject.classIndex.name) {
             "FortCosmeticCharacterPartVariant" -> "PartOptions"
             "FortCosmeticMaterialVariant" -> "MaterialOptions"
             "FortCosmeticParticleVariant" -> "ParticleOptions"
-            else -> exportObject.classIndex.importName
+            else -> exportObject.classIndex.name
                 .replace("FortCosmetic", "")
                 .replace("Variant", "")
         }

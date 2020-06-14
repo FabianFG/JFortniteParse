@@ -51,7 +51,9 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     val importMap : MutableList<FObjectImport>
     val exportMap : MutableList<FObjectExport>
 
-    val exports = mutableListOf<UExport>()
+    private val exportsLazy = mutableMapOf<FObjectExport, Lazy<UExport>>()
+
+    val exports : List<UExport>
 
     init {
         uassetAr.game = game.game
@@ -60,27 +62,29 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         uexpAr.ver = game.version
         ubulkAr?.game = game.game
         ubulkAr?.ver = game.version
+
+        nameMap = mutableListOf()
+        uassetAr.nameMap = nameMap
+        importMap = mutableListOf()
+        uassetAr.importMap = importMap
+        exportMap = mutableListOf()
+        uassetAr.exportMap = exportMap
+
         info = FPackageFileSummary(uassetAr)
         if (info.tag != packageMagic)
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
 
 
         uassetAr.seek(this.info.nameOffset)
-        nameMap = mutableListOf()
-        uassetAr.nameMap = nameMap
         for (i in 0 until info.nameCount)
             nameMap.add(FNameEntry(uassetAr))
 
 
         uassetAr.seek(this.info.importOffset)
-        importMap = mutableListOf()
-        uassetAr.importMap = importMap
         for (i in 0 until info.importCount)
             importMap.add(FObjectImport(uassetAr))
 
         uassetAr.seek(this.info.exportOffset)
-        exportMap = mutableListOf()
-        uassetAr.exportMap = exportMap
         for (i in 0 until info.exportCount)
             exportMap.add(FObjectExport(uassetAr))
 
@@ -88,7 +92,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         uexpAr.nameMap = nameMap
         uexpAr.importMap = importMap
         uexpAr.exportMap = exportMap
-        uexpAr.exports = exports
+        uexpAr.exports = exportsLazy
         uexpAr.uassetSize = info.totalHeaderSize
         uexpAr.info = info
 
@@ -100,15 +104,16 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             ubulkAr.nameMap = nameMap
             ubulkAr.importMap = importMap
             ubulkAr.exportMap = exportMap
-            ubulkAr.exports = exports
+            ubulkAr.exports = exportsLazy
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
-        exportMap.forEach {
-            val exportType = it.classIndex.importName.substringAfter("Default__")
+        exportMap.forEach { exportsLazy[it] = lazy {
+            val origPos = uexpAr.pos()
+            val exportType = it.classIndex.name.substringAfter("Default__")
             uexpAr.seekRelative(it.serialOffset.toInt())
             val validPos = (uexpAr.pos() + it.serialSize).toInt()
-            when(exportType) {
+            val export = when(exportType) {
                 "BlueprintGeneratedClass" -> {
                     val className = it.templateIndex.importObject?.className?.text
                     if (className != null)
@@ -124,7 +129,10 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                 logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
             else
                 logger.debug("Successfully read $exportType at ${uexpAr.toNormalPos(it.serialOffset.toInt())} with size ${it.serialSize}")
-        }
+            uexpAr.seek(origPos)
+            export
+        } }
+        exports = exportsLazy.values.map { it.value }
         matchValorantCharacterAbilities()
         uassetAr.clearImportCache()
         uexpAr.clearImportCache()
@@ -132,55 +140,41 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         logger.info("Successfully parsed package : $name")
     }
 
-    fun readExport(exportType : String, it : FObjectExport, validPos : Int) {
-        when (exportType) {
-            //UE generic export classes
-            "Texture2D" -> exports.add(
-                UTexture2D(
-                    uexpAr,
-                    it
-                )
-            )
-            "SoundWave" -> exports.add(USoundWave(uexpAr, it))
-            "DataTable" -> exports.add(UDataTable(uexpAr, it))
-            "CurveTable" -> exports.add(UCurveTable(uexpAr, it))
-            "StringTable" -> exports.add(UStringTable(uexpAr, it))
-            "StaticMesh" -> exports.add(UStaticMesh(uexpAr, it, validPos))
-            "Material" -> exports.add(UMaterial(uexpAr, it, validPos))
-            "MaterialInstanceConstant" -> exports.add(UMaterialInstanceConstant(uexpAr, it))
-            //Valorant specific classes
-            "CharacterUIData" -> exports.add(CharacterUIData(uexpAr, it))
-            "CharacterAbilityUIData" -> exports.add(CharacterAbilityUIData(uexpAr, it))
-            "BaseCharacterPrimaryDataAsset_C", "CharacterDataAsset" -> exports.add(CharacterDataAsset(uexpAr, it))
-            "CharacterRoleDataAsset" -> exports.add(CharacterRoleDataAsset(uexpAr, it))
-            "CharacterRoleUIData" -> exports.add(CharacterRoleUIData(uexpAr, it))
-            //Fortnite Specific Classes
-            "FortMtxOfferData" -> exports.add(FortMtxOfferData(uexpAr, it))
-            "FortItemCategory" -> exports.add(FortItemCategory(uexpAr, it))
-            "CatalogMessaging" -> exports.add(FortCatalogMessaging(uexpAr, it))
-            "FortItemSeriesDefinition" -> exports.add(FortItemSeriesDefinition(uexpAr, it))
-            "AthenaItemWrapDefinition", "FortBannerTokenType",
-            "FortVariantTokenType", "FortHeroType",
-            "FortTokenType", "FortWorkerType",
-            "FortDailyRewardScheduleTokenDefinition",
-            "FortAbilityKit" -> exports.add(ItemDefinition(uexpAr, it))
-            else -> {
-                if (exportType.contains("ItemDefinition")) {
-                    exports.add(ItemDefinition(uexpAr, it)
-                    )
-                } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
-                    val variant = FortCosmeticVariant(uexpAr, it)
-                    matchFortniteItemDefAndVariant(variant)
-                    exports.add(variant)
-                } else
-                    exports.add(
-                        UObject(
-                            uexpAr,
-                            it
-                        )
-                    )
-
-            }
+    fun readExport(exportType : String, it : FObjectExport, validPos : Int) = when(exportType) {
+        //UE generic export classes
+        "Texture2D" -> UTexture2D(uexpAr, it)
+        "SoundWave" -> USoundWave(uexpAr, it)
+        "DataTable" -> UDataTable(uexpAr, it)
+        "CurveTable" -> UCurveTable(uexpAr, it)
+        "StringTable" -> UStringTable(uexpAr, it)
+        "StaticMesh" -> UStaticMesh(uexpAr, it, validPos)
+        "Material" -> UMaterial(uexpAr, it, validPos)
+        "MaterialInstanceConstant" -> UMaterialInstanceConstant(uexpAr, it)
+        //Valorant specific classes
+        "CharacterUIData" -> CharacterUIData(uexpAr, it)
+        "CharacterAbilityUIData" -> CharacterAbilityUIData(uexpAr, it)
+        "BaseCharacterPrimaryDataAsset_C", "CharacterDataAsset" -> CharacterDataAsset(uexpAr, it)
+        "CharacterRoleDataAsset" -> CharacterRoleDataAsset(uexpAr, it)
+        "CharacterRoleUIData" -> CharacterRoleUIData(uexpAr, it)
+        //Fortnite Specific Classes
+        "FortMtxOfferData" -> FortMtxOfferData(uexpAr, it)
+        "FortItemCategory" -> FortItemCategory(uexpAr, it)
+        "CatalogMessaging" -> FortCatalogMessaging(uexpAr, it)
+        "FortItemSeriesDefinition" -> FortItemSeriesDefinition(uexpAr, it)
+        "AthenaItemWrapDefinition", "FortBannerTokenType",
+        "FortVariantTokenType", "FortHeroType",
+        "FortTokenType", "FortWorkerType",
+        "FortDailyRewardScheduleTokenDefinition",
+        "FortAbilityKit" -> ItemDefinition(uexpAr, it)
+        else -> {
+            if (exportType.contains("ItemDefinition")) {
+                ItemDefinition(uexpAr, it)
+            } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
+                val variant = FortCosmeticVariant(uexpAr, it)
+                matchFortniteItemDefAndVariant(variant)
+                variant
+            } else
+                UObject(uexpAr, it)
         }
     }
 

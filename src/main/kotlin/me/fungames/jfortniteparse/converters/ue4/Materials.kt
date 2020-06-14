@@ -2,6 +2,7 @@
 
 package me.fungames.jfortniteparse.converters.ue4
 
+import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.converters.ue4.textures.toBufferedImage
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.enums.EMobileSpecularMask
@@ -10,9 +11,11 @@ import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConst
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UUnrealMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.objects.FLinearColor
+import me.fungames.jfortniteparse.util.toPngArray
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import javax.imageio.ImageIO
@@ -67,11 +70,19 @@ class MaterialExport(val matFileName : String, val matFile : String, val texture
 
     fun writeToDir(dir : File) {
         dir.mkdirs()
+        val exportJobs = mutableListOf<Deferred<Any?>>()
+        val scope = object : CoroutineScope {
+            private val job = Job()
+            override val coroutineContext = job + Dispatchers.IO
+        }
         File(dir.absolutePath + "/$matFileName").writeText(matFile)
         textures.forEach { (name, img) ->
-            ImageIO.write(img, "png", File(dir.absolutePath + "/$name.png"))
+            exportJobs.add(scope.async { ImageIO.write(img, "png", File(dir.absolutePath + "/$name.png")) })
         }
         parentExport?.writeToDir(dir)
+
+        runBlocking { exportJobs.awaitAll() }
+        scope.cancel()
     }
 
     fun appendToZip(zos : ZipOutputStream) {
@@ -80,10 +91,15 @@ class MaterialExport(val matFileName : String, val matFile : String, val texture
         zos.write(matFile.toByteArray())
         zos.flush()
         zos.closeEntry()
-        for ((key, value) in textures) {
-            val e = ZipEntry(key)
+        val scope = object : CoroutineScope {
+            private val job = Job()
+            override val coroutineContext = job + Dispatchers.IO
+        }
+        val exports = textures.mapValues { scope.async { it.value.toPngArray() } }
+        for ((key, value) in exports) {
+            val e = ZipEntry("$key.png")
             zos.putNextEntry(e)
-            ImageIO.write(value, "png", zos)
+            zos.write(runBlocking { value.await() })
             zos.flush()
             zos.closeEntry()
         }
@@ -134,10 +150,19 @@ fun UUnrealMaterial.export() : MaterialExport {
 
     //TODO create a props file like umodel?
 
-    val textures = mutableMapOf<String, BufferedImage>()
+    val exportJobs = mutableListOf<Deferred<Any?>>()
+
+    val scope = object : CoroutineScope {
+        private val job = Job()
+        override val coroutineContext = job + Dispatchers.IO
+    }
+
+    val textures = ConcurrentHashMap<String, BufferedImage>()
     for (obj in toExport) {
         if (obj is UTexture && obj != this) //TODO might also work with non-textures, not sure whether that can happen
-            runCatching { obj.toBufferedImage() }.onSuccess { textures[obj.name] = it }.onFailure { UClass.logger.warn(it) { "Conversion of texture ${obj.name} failed" } }
+            exportJobs.add(scope.async {
+                runCatching { obj.toBufferedImage() }.onSuccess { textures[obj.name] = it }.onFailure { UClass.logger.warn(it) { "Conversion of texture ${obj.name} failed" } }
+            })
         else
             UClass.logger.error { "Material Export contained an toExport that was not an texture" }
     }
@@ -146,6 +171,9 @@ fun UUnrealMaterial.export() : MaterialExport {
         parent?.export()
     } else null
     //TODO TextureCube3 ???
+
+    // Wait for all texture exporters to finish
+    runBlocking { exportJobs.awaitAll() }
 
     return MaterialExport("$name.mat", matFile, textures, parentExport)
 }

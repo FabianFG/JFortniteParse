@@ -5,6 +5,8 @@ import me.fungames.kotlinPointers.BytePointer
 import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 
 fun BufferedImage.scale(newWidth : Int, newHeight : Int, flags : Int = Image.SCALE_SMOOTH) : BufferedImage {
     val scaled = this.getScaledInstance(newWidth, newHeight, flags)
@@ -22,6 +24,12 @@ fun BufferedImage.cut(newWidth: Int): BufferedImage {
 
 fun Graphics2D.drawCenteredString(s : String, x : Int, y : Int) {
     drawString(s, x - fontMetrics.stringWidth(s) / 2, y)
+}
+
+fun BufferedImage.toPngArray(): ByteArray {
+    val out = ByteArrayOutputStream()
+    ImageIO.write(this, "png", out)
+    return out.toByteArray()
 }
 
 @ExperimentalUnsignedTypes

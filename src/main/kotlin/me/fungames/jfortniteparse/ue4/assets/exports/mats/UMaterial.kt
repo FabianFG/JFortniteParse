@@ -31,7 +31,7 @@ class UMaterial(Ar: FAssetArchive, exportObject: FObjectExport, validPos: Int) :
         //!! but could be found in export table. That's true for Simplygon-generated materials.
         for (imp in Ar.importMap) {
             if (imp.className.text.startsWith("Texture", true))
-                Ar.loadObject<UTexture>(imp)?.let { referencedTextures.add(it) }
+                Ar.loadImport<UTexture>(imp)?.let { referencedTextures.add(it) }
         }
     }
 

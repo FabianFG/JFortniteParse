@@ -12,7 +12,7 @@ abstract class UExport(val exportType: String) : UClass() {
     var export : FObjectExport? = null
     var name = exportType
 
-    constructor(exportObject : FObjectExport) : this(exportObject.classIndex.importName) {
+    constructor(exportObject : FObjectExport) : this(exportObject.classIndex.name) {
         export = exportObject
         name = exportObject.objectName.text
     }
