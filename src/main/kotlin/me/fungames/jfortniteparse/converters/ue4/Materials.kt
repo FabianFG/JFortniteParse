@@ -164,7 +164,7 @@ fun UUnrealMaterial.export() : MaterialExport {
                 runCatching { obj.toBufferedImage() }.onSuccess { textures[obj.name] = it }.onFailure { UClass.logger.warn(it) { "Conversion of texture ${obj.name} failed" } }
             })
         else
-            UClass.logger.error { "Material Export contained an toExport that was not an texture" }
+            UClass.logger.error { "Material Export contained an toExport that was not an texture, please report this" }
     }
 
     val parentExport = if (this is UMaterialInstanceConstant) {

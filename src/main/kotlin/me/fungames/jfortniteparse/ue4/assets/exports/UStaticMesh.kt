@@ -25,7 +25,7 @@ class UStaticMesh : UExport {
     var bodySetup : UExport? // UBodySetup
     var navCollision : UExport? // UNavCollision
     var lightingGuid : FGuid
-    var sockets : Array<UExport?> //TODO this somehow produces wrong import object??? no idea tbh
+    var sockets : Array<UExport?>
     var lods = emptyArray<FStaticMeshLODResources>()
     var bounds = FBoxSphereBounds(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f), 0f)
     var lodsShareStaticLighting = false
