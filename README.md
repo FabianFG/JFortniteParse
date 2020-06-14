@@ -11,8 +11,10 @@ I provide active support for the following games
 #### Features
 - Load ue4 pak files and provide ways to handle them
 - Load ue4 asset files (.uasset, .uexp, .ubulk) and provide ways to convert their exports
-- Convert lots of ue4 texture formats to BufferedImages and png files
-- Save sound files
+- Convert lots of ue4 **texture** formats to BufferedImages and png files
+- Save **sound** files
+- Load and export **static meshes** with their materials to pskx files
+- Load and export **materials** with their textures to mat files
 - Convert cosmetics into images providing all of their details with or without variants
 - Locres support for asset files
 - A file provider for providing comfortable loading of asset files
@@ -160,7 +162,7 @@ pkg.applyLocres(locres)
 <dependency>
 	<groupId>me.fungames</groupId>
 	<artifactId>JFortniteParse</artifactId>
-	<version>3.0.2</version>
+	<version>3.1</version>
 </dependency>
 ```
 ##### Gradle
@@ -174,7 +176,7 @@ repositories {
 ```
 - Add the dependency
 ```groovy
-implementation 'me.fungames:JFortniteParse:3.0.2'
+implementation 'me.fungames:JFortniteParse:3.1'
 ```
 
 ### Fortnite Text Hotfixes
@@ -196,12 +198,12 @@ Texts will be exported with the hotfixed ones
 <dependency>
   <groupId>me.fungames</groupId>
   <artifactId>JFortniteParseTextHotfixes</artifactId>
-  <version>1.3.8</version>
+  <version>1.3.9</version>
 </dependency>
 ```
 ##### Gradle
 ```groovy
-implementation 'me.fungames:JFortniteParseTextHotfixes:1.3.8'
+implementation 'me.fungames:JFortniteParseTextHotfixes:1.3.9'
 ```
 
 ### Contributors
