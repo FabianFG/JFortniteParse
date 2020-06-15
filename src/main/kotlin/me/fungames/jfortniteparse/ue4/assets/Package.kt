@@ -131,8 +131,6 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             else
                 logger.debug("Successfully read $exportType at ${uexpAr.toNormalPos(it.serialOffset.toInt())} with size ${it.serialSize}")
             uexpAr.seek(origPos)
-            if (!exports.contains(export))
-                exports.add(export)
             export
         } }
         exportsLazy.values.forEach {
