@@ -78,6 +78,7 @@ open class ItemDefinition : UExport {
         gameplayTags = baseObject.getOrNull("GameplayTags")?: FGameplayTagContainer(
             mutableListOf()
         )
+        variants = baseObject.getOrDefault<Array<FortCosmeticVariant>>("ItemVariants", emptyArray(), Ar).toMutableList()
         super.complete(Ar)
     }
     override fun serialize(Ar: FAssetArchiveWriter) {

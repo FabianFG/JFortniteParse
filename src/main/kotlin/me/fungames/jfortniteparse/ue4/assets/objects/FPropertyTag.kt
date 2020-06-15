@@ -140,5 +140,5 @@ class FPropertyTag : UClass {
         super.completeWrite(Ar)
     }
 
-    override fun toString() = "${name.text}   -->   ${getTagTypeValueLegacy()}"
+    override fun toString() = "${name.text}   -->   ${if (tag != null) getTagTypeValueLegacy() else "Failed to parse"}"
 }

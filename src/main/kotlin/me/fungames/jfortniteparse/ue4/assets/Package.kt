@@ -108,6 +108,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
+        exports = mutableListOf()
         exportMap.forEach { exportsLazy[it] = lazy {
             val origPos = uexpAr.pos()
             val exportType = it.classIndex.name.substringAfter("Default__")
@@ -130,9 +131,15 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             else
                 logger.debug("Successfully read $exportType at ${uexpAr.toNormalPos(it.serialOffset.toInt())} with size ${it.serialSize}")
             uexpAr.seek(origPos)
+            if (!exports.contains(export))
+                exports.add(export)
             export
         } }
-        exports = exportsLazy.values.map { it.value }
+        exportsLazy.values.forEach {
+            val value = it.value
+            if (!exports.contains(value))
+                exports.add(value)
+        }
         matchValorantCharacterAbilities()
         uassetAr.clearImportCache()
         uexpAr.clearImportCache()
@@ -170,15 +177,11 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
             if (exportType.contains("ItemDefinition")) {
                 ItemDefinition(uexpAr, it)
             } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
-                val variant = FortCosmeticVariant(uexpAr, it)
-                matchFortniteItemDefAndVariant(variant)
-                variant
+                FortCosmeticVariant(uexpAr, it)
             } else
                 UObject(uexpAr, it)
         }
     }
-
-    private fun matchFortniteItemDefAndVariant(variant: FortCosmeticVariant) = getExportOfTypeOrNull<ItemDefinition>()?.variants?.add(variant)
 
     private fun matchValorantCharacterAbilities() {
         val uiData = getExportOfTypeOrNull<CharacterUIData>() ?: return
