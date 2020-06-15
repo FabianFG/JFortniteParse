@@ -12,9 +12,9 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 @ExperimentalUnsignedTypes
 class UMaterialInstanceConstant(Ar: FAssetArchive, exportObject: FObjectExport) : UMaterialInstance(Ar, exportObject) {
 
-    val scalarParameterValues = baseObject.get<Array<FScalarParameterValue>>("ScalarParameterValues", Ar)
-    val textureParameterValues = baseObject.get<Array<FTextureParameterValue>>("TextureParameterValues", Ar)
-    val vectorParameterValues = baseObject.getOrNull<Array<FVectorParameterValue>>("VectorParameterValues", Ar)
+    val scalarParameterValues = baseObject.getOrDefault<Array<FScalarParameterValue>>("ScalarParameterValues", emptyArray(), Ar)
+    val textureParameterValues = baseObject.getOrDefault<Array<FTextureParameterValue>>("TextureParameterValues", emptyArray(), Ar)
+    val vectorParameterValues = baseObject.getOrDefault<Array<FVectorParameterValue>>("VectorParameterValues", emptyArray(), Ar)
 
     override fun getParams(params: CMaterialParams) {
 
@@ -114,12 +114,10 @@ class UMaterialInstanceConstant(Ar: FAssetArchive, exportObject: FObjectExport) 
             opacity(name.contains("alpha", true), 100, tex)
         }
 
-        if (vectorParameterValues != null) {
-            for (p in vectorParameterValues) {
-                val name = p.getName()
-                val color = p.parameterValue ?: continue
-                emissiveColor(name.contains("Emissive", true), 100, color)
-            }
+        for (p in vectorParameterValues) {
+            val name = p.getName()
+            val color = p.parameterValue ?: continue
+            emissiveColor(name.contains("Emissive", true), 100, color)
         }
 
         // try to get diffuse texture when nothing found

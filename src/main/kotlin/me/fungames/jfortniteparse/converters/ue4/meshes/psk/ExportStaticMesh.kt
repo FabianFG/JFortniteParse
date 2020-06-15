@@ -24,11 +24,13 @@ class StaticMeshExport(val fileName : String, val pskx : ByteArray, val material
     }
 
     fun appendToZip(zos : ZipOutputStream) {
-        val mat = ZipEntry(fileName)
-        zos.putNextEntry(mat)
-        zos.write(pskx)
-        zos.flush()
-        zos.closeEntry()
+        runCatching {
+            val mat = ZipEntry(fileName)
+            zos.putNextEntry(mat)
+            zos.write(pskx)
+            zos.flush()
+            zos.closeEntry()
+        }
         materials.forEach { it.appendToZip(zos) }
     }
 

@@ -14,14 +14,14 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPackedNormal
 import me.fungames.jfortniteparse.ue4.assets.objects.FSphere
 
 
-class CStaticMesh(val originalMesh : UStaticMesh, val boundingBox : FBox, val boundingSphere : FSphere, val lods : Array<CStaticMeshLod>) {
+class CStaticMesh(val originalMesh : UStaticMesh, val boundingBox : FBox, val boundingSphere : FSphere, val lods : List<CStaticMeshLod>) {
     internal fun finalizeMesh() {
         lods.forEach { it.buildNormals() }
     }
 }
 
 class CStaticMeshLod : CBaseMeshLod() {
-    lateinit var verts : Array<CMeshVertex>
+    var verts = emptyArray<CMeshVertex>()
 
     fun allocateVerts(count : Int) {
         verts = Array(count) { CStaticMeshVertex(Vec3(), CPackedNormal(), CPackedNormal(), CMeshUVFloat()) }
@@ -46,7 +46,7 @@ fun UStaticMesh.convertMesh(): CStaticMesh {
     val boundingBox = FBox(bounds.origin - bounds.boxExtent, bounds.origin + bounds.boxExtent)
 
     // convert lods
-    val lods = Array(this.lods.size) { CStaticMeshLod() }
+    val lods = mutableListOf<CStaticMeshLod>()
     for (lodIndex in this.lods.indices) {
         val srcLod = this.lods[lodIndex]
 
@@ -61,7 +61,8 @@ fun UStaticMesh.convertMesh(): CStaticMesh {
         if (numTexCoords > MAX_MESH_UV_SETS)
             throw ParserException("Static mesh has too many UV sets ($numTexCoords)")
 
-        val lod = lods[lodIndex]
+        val lod = CStaticMeshLod()
+        lods.add(lod)
         lod.numTexCoords = numTexCoords
         lod.hasNormals = true
         lod.hasTangents = true

@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.reader
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import kotlin.math.min
 
 @ExperimentalUnsignedTypes
@@ -19,6 +18,12 @@ open class FByteArchive(val data : ByteArray) : FArchive() {
     override fun seek(pos: Int) {
         rangeCheck(pos)
         this.pos = pos
+    }
+
+    override fun skip(n: Long): Long {
+        rangeCheck(pos + n.toInt())
+        this.pos += n.toInt()
+        return n
     }
 
     override fun size() = size

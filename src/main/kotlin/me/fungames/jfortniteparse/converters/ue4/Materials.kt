@@ -86,22 +86,24 @@ class MaterialExport(val matFileName : String, val matFile : String, val texture
     }
 
     fun appendToZip(zos : ZipOutputStream) {
-        val mat = ZipEntry(matFileName)
-        zos.putNextEntry(mat)
-        zos.write(matFile.toByteArray())
-        zos.flush()
-        zos.closeEntry()
+        runCatching {
+            val mat = ZipEntry(matFileName)
+            zos.putNextEntry(mat)
+            zos.write(matFile.toByteArray())
+            zos.flush()
+            zos.closeEntry()
+        }
         val scope = object : CoroutineScope {
             private val job = Job()
             override val coroutineContext = job + Dispatchers.IO
         }
         val exports = textures.mapValues { scope.async { it.value.toPngArray() } }
         for ((key, value) in exports) {
-            val e = ZipEntry("$key.png")
-            zos.putNextEntry(e)
-            zos.write(runBlocking { value.await() })
-            zos.flush()
-            zos.closeEntry()
+            runCatching { val e = ZipEntry("$key.png")
+                zos.putNextEntry(e)
+                zos.write(runBlocking { value.await() })
+                zos.flush()
+                zos.closeEntry() }
         }
         parentExport?.appendToZip(zos)
     }

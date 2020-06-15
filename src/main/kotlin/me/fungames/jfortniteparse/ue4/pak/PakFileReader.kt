@@ -354,8 +354,8 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                     it.ubulk = ubulk
                 files.add(it)
             } else {
-                //if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))
-                files.add(it)
+                if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))
+                    files.add(it)
             }
         }
         this.files = files
@@ -492,7 +492,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             it.compressedStart += offset
             it.compressedEnd += offset
         }
-        return FPakEntry(pakInfo, "", offset, size, uncompressedSize, compressionMethodIndex.toInt(), ByteArray(20), compressionBlocks, encrypted, compressionBlockSize.toInt())
+        return FPakEntry(pakInfo, "", offset, size, uncompressedSize, compressionMethodIndex.toInt(), compressionBlocks, encrypted, compressionBlockSize.toInt())
     }
 
     fun readIndex() : List<GameFile> = if (pakInfo.version >= PakVersion_PathHashIndex) readIndexInternal() else readIndexLegacy()
@@ -554,7 +554,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                     it.ubulk = ubulk
                 files.add(it)
             } else {
-                //if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))
+                if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))
                     files.add(it)
             }
         }

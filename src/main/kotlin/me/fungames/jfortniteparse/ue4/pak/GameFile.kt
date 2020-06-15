@@ -7,13 +7,13 @@ import kotlin.properties.Delegates
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class GameFile(val path : String = "", val pos : Long = 0L, val size : Long = 0L, val uncompressedSize : Long = 0L,
                     val compressionMethod: CompressionMethod = CompressionMethod.None, val compressedBlocks : Array<FPakCompressedBlock> = emptyArray(), val compressionBlockSize : Int = 0,
-                    val isEncrypted : Boolean = false, val pakEntry: FPakEntry, val pakFileName: String
+                    val isEncrypted : Boolean = false, val pakFileName: String
 
 ) {
     constructor(pakEntry: FPakEntry, mountPrefix : String, pakFileName : String) : this(
         mountPrefix + pakEntry.name, pakEntry.pos, pakEntry.size, pakEntry.uncompressedSize,
         pakEntry.compressionMethod, pakEntry.compressionBlocks, pakEntry.compressionBlockSize,
-        pakEntry.isEncrypted, pakEntry, pakFileName
+        pakEntry.isEncrypted, pakFileName
     )
 
     lateinit var uexp : GameFile

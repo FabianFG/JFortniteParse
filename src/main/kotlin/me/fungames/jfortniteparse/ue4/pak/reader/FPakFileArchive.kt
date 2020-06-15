@@ -16,6 +16,12 @@ class FPakFileArchive(val rafile : RandomAccessFile, val file : File) : FPakArch
     override fun seek(pos : Long) { rafile.seek(pos) }
     override fun seek(pos: Int) = seek(pos.toLong())
 
+    override fun skip(n: Long): Long {
+        rangeCheck(pakPos() + n)
+        seek(pakPos() + n)
+        return n
+    }
+
     override fun pakSize() = rafile.length()
     override fun size() = pakSize().toInt()
 

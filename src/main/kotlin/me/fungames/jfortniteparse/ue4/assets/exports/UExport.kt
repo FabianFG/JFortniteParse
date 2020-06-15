@@ -18,4 +18,6 @@ abstract class UExport(val exportType: String) : UClass() {
     }
 
     open fun applyLocres(locres : Locres?) {}
+
+    override fun toString() = name
 }

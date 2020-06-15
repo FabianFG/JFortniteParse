@@ -18,6 +18,9 @@ class FByteBulkData : UClass {
         val bulkDataFlags = header.bulkDataFlags
         data = ByteArray(header.elementCount)
         when {
+            header.elementCount == 0 -> {
+                // Nothing to do here
+            }
             EBulkData.BULKDATA_Unused.check(bulkDataFlags) -> {
                 logger.warn("Bulk with no data")
             }

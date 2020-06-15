@@ -16,7 +16,7 @@ class FPakEntry : UClass {
     var size : Long
     var uncompressedSize : Long
     var compressionMethod : CompressionMethod
-    var hash : ByteArray
+    //var hash : ByteArray
     var compressionBlocks : Array<FPakCompressedBlock>
     var isEncrypted : Boolean = false
     var compressionBlockSize : Int = 0
@@ -70,8 +70,8 @@ class FPakEntry : UClass {
             }
         }
         if (Ar.pakInfo.version < PakVersion_NoTimestamps)
-            Ar.readInt64() // Timestamp
-        hash = Ar.read(20)
+            Ar.skip(8) // Timestamp
+        Ar.skip(20) // Hash
 
         compressionBlocks = emptyArray()
         if (Ar.pakInfo.version >= PakVersion_CompressionEncryption) {
@@ -106,7 +106,7 @@ class FPakEntry : UClass {
         size: Long,
         uncompressedSize: Long,
         compressionMethodIndex: Int,
-        hash: ByteArray,
+        //hash: ByteArray,
         compressionBlocks: Array<FPakCompressedBlock>,
         isEncrypted: Boolean,
         compressionBlockSize: Int
@@ -120,7 +120,7 @@ class FPakEntry : UClass {
         } catch (e : IllegalArgumentException) {
             CompressionMethod.Unknown
         }
-        this.hash = hash
+        //this.hash = hash
         this.compressionBlocks = compressionBlocks
         this.isEncrypted = isEncrypted
         this.compressionBlockSize = compressionBlockSize

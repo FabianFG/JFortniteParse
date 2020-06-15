@@ -21,6 +21,12 @@ class FBytePakArchive(val data : ByteArray, fileName: String, val offsetInPakFil
         this.pos = pos.toInt()
     }
 
+    override fun skip(n: Long): Long {
+        rangeCheck(pos + n.toInt())
+        this.pos += n.toInt()
+        return n
+    }
+
     override fun pakSize() = pakFileSize
 
     override fun pakPos() = offsetInPakFile

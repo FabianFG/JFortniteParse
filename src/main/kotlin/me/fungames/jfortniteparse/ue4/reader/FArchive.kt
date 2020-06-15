@@ -25,6 +25,7 @@ abstract class FArchive : Cloneable, InputStream() {
     abstract fun pos(): Int
 
     abstract override fun read(buffer: ByteArray) : Int
+    abstract override fun skip(n: Long): Long
     override fun read() = read(1)[0].toInt()
     abstract fun printError(): String
 
