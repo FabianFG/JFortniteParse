@@ -6,7 +6,7 @@ plugins {
 }
 
 group "me.fungames"
-version "3.1.1"
+version "3.1.2"
 
 repositories {
     mavenCentral()
@@ -63,7 +63,7 @@ publishing {
 
 
 dependencies {
-    implementation 'me.fungames:JOodle:1.0'
+    implementation 'me.fungames:JOodle:1.1'
     implementation 'me.fungames:KotlinASTC:1.1'
     //implementation 'me.fungames:KotlinSquish:1.0' Somehow broken with alpha values
     implementation 'com.github.memo33:jsquish:1.0'
