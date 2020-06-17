@@ -98,14 +98,15 @@ interface FileProvider {
             .filter { it.path.startsWith("${getGameName()}Game/Content/Localization", ignoreCase = true) && it.path.contains("/${ln.languageCode}/", ignoreCase = true) && it.path.endsWith(".locres") }
         if (files.isEmpty()) return null
         var first : Locres? = null
-        files.forEach {
+        files.forEach { file ->
+            runCatching {
             val f = first
             if (f == null) {
-                first = loadLocres(it)
+                first = loadLocres(file)
             } else {
-                loadLocres(it)?.mergeInto(f)
+                loadLocres(file)?.mergeInto(f)
             }
-        }
+        }.onFailure { logger.warn(it) { "Failed to locres file ${file.getName()}" } } }
         return first
     }
 

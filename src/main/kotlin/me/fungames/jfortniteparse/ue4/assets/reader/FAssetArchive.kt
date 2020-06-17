@@ -14,7 +14,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.*
  * Binary reader for UE4 Assets
  */
 @ExperimentalUnsignedTypes
-class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FByteArchive(data) {
+class FAssetArchive(data : ByteArray, private val provider: FileProvider?, val pkgName : String) : FByteArchive(data) {
 
     //Asset Specific Fields
     lateinit var nameMap : MutableList<FNameEntry>
@@ -38,7 +38,7 @@ class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FBy
     }
 
     override fun clone(): FAssetArchive {
-        val c = FAssetArchive(data, provider)
+        val c = FAssetArchive(data, provider, pkgName)
         c.littleEndian = littleEndian
         c.pos = pos
         payloads.forEach { c.payloads[it.key] = it.value }
@@ -138,5 +138,5 @@ class FAssetArchive(data : ByteArray, private val provider: FileProvider?) : FBy
 
     fun clearImportCache() = importCache.clear()
 
-    override fun printError() = "FAssetArchive Info: pos $pos, stopper $size"
+    override fun printError() = "FAssetArchive Info: pos $pos, stopper $size, package $pkgName"
 }

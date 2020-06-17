@@ -8,6 +8,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_25
 
 @ExperimentalUnsignedTypes
 class USoundWave : UExport {
@@ -26,7 +27,7 @@ class USoundWave : UExport {
         super.init(Ar)
         baseObject = UObject(Ar, exportObject)
         bCooked = Ar.readBoolean()
-        bStreaming = baseObject.getOrDefault("bStreaming", false)
+        bStreaming = baseObject.getOrDefault("bStreaming", Ar.game >= GAME_UE4_25) // TODO check whether default is really true
         if (!bStreaming) {
             if (bCooked) {
                 compressedFormatData = Ar.readTArray { FSoundFormatData(Ar) }

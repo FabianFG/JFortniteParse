@@ -26,7 +26,7 @@ import java.io.File
 import java.io.OutputStream
 
 @ExperimentalUnsignedTypes
-class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, name : String, provider: FileProvider? = null, var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) {
+class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, val name : String, provider: FileProvider? = null, var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) {
 
     companion object {
         val packageMagic = 0x9E2A83C1u
@@ -42,10 +42,6 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     constructor(uasset : File, uexp : File, ubulk : File?, provider: FileProvider? = null, game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : this(uasset.readBytes(), uexp.readBytes(),
         ubulk?.readBytes(), uasset.nameWithoutExtension, provider, game)
 
-    private val uassetAr = FAssetArchive(uasset, provider)
-    private val uexpAr = FAssetArchive(uexp, provider)
-    private val ubulkAr = if (ubulk != null) FAssetArchive(ubulk, provider) else null
-
     val info : FPackageFileSummary
     val nameMap : MutableList<FNameEntry>
     val importMap : MutableList<FObjectImport>
@@ -56,6 +52,9 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     val exports : List<UExport>
 
     init {
+        val uassetAr = FAssetArchive(uasset, provider, name)
+        val uexpAr = FAssetArchive(uexp, provider, name)
+        val ubulkAr = if (ubulk != null) FAssetArchive(ubulk, provider, name) else null
         uassetAr.game = game.game
         uassetAr.ver = game.version
         uexpAr.game = game.game
@@ -118,13 +117,13 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
                 "BlueprintGeneratedClass" -> {
                     val className = it.templateIndex.importObject?.className?.text
                     if (className != null)
-                        readExport(className, it, validPos)
+                        readExport(uexpAr, className, it, validPos)
                     else {
                         logger.warn { "Couldn't find content class of BlueprintGeneratedClass, attempting normal UObject deserialization" }
-                        readExport(exportType, it, validPos)
+                        readExport(uexpAr, exportType, it, validPos)
                     }
                 }
-                else -> readExport(exportType, it, validPos)
+                else -> readExport(uexpAr, exportType, it, validPos)
             }
             if (validPos != uexpAr.pos())
                 logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
@@ -145,7 +144,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
         logger.info("Successfully parsed package : $name")
     }
 
-    fun readExport(exportType : String, it : FObjectExport, validPos : Int) = when(exportType) {
+    fun readExport(uexpAr : FAssetArchive, exportType : String, it : FObjectExport, validPos : Int) = when(exportType) {
         //UE generic export classes
         "Texture2D" -> UTexture2D(uexpAr, it)
         "SoundWave" -> USoundWave(uexpAr, it)
@@ -284,7 +283,7 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, n
     fun write(uasset: File, uexp: File, ubulk: File?) {
         val uassetOut = uasset.outputStream()
         val uexpOut = uexp.outputStream()
-        val ubulkOut = if(this.ubulkAr != null) ubulk?.outputStream() else null
+        val ubulkOut = ubulk?.outputStream()
         write(uassetOut, uexpOut, ubulkOut)
         uassetOut.close()
         uexpOut.close()
