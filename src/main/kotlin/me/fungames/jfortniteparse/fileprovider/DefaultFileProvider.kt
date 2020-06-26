@@ -6,17 +6,17 @@ import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
+import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : AbstractFileProvider() {
-
-    private val localFiles = mutableMapOf<String, File>()
     override val files = mutableMapOf<String, GameFile>()
-    private val unloadedPaks = mutableListOf<PakFileReader>()
-    private val requiredKeys = mutableListOf<FGuid>()
-    private val mountedPaks = mutableListOf<PakFileReader>()
+    val localFiles = mutableMapOf<String, File>()
+    val unloadedPaks = mutableListOf<PakFileReader>()
+    val requiredKeys = mutableListOf<FGuid>()
+    val mountedPaks = mutableListOf<PakFileReader>()
 
     override var defaultLocres : Locres? = null
 
@@ -46,19 +46,18 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
                 } catch (e : ParserException) {
                     logger.error { e.message }
                 }
-            }
-            else if (it.isFile) {
-                    var gamePath = it.absolutePath.substringAfter(this.folder.absolutePath)
-                    if (gamePath.startsWith('\\') || gamePath.startsWith('/'))
-                        gamePath = gamePath.substring(1)
-                    gamePath = gamePath.replace('\\', '/')
-                    localFiles[gamePath.toLowerCase()] = it
+            } else if (it.isFile) {
+                var gamePath = it.absolutePath.substringAfter(this.folder.absolutePath)
+                if (gamePath.startsWith('\\') || gamePath.startsWith('/'))
+                    gamePath = gamePath.substring(1)
+                gamePath = gamePath.replace('\\', '/')
+                localFiles[gamePath.toLowerCase()] = it
             }
         }
     }
 
     override fun requiredKeys() : List<FGuid> = requiredKeys
-    override fun submitKeys(keys : Map<FGuid, String>): Int {
+    override fun submitKeys(keys : Map<FGuid, ByteArray>): Int {
         var countNewMounts = 0
         keys.forEach { (guid, key) ->
             if (requiredKeys.contains(guid)) {
@@ -71,7 +70,7 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
                         unloadedPaks.remove(it)
                         mountedPaks.add(it)
                         countNewMounts++
-                    }
+                    } else logger.warn("The provided encryption key doesn't work with \"" + (if (it.Ar is FPakFileArchive) it.Ar.file else it.fileName) + "\". Skipping.")
                 }
                 if (countNewMounts > oldCountMounts)
                     requiredKeys.remove(guid)

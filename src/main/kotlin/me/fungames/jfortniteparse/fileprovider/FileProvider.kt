@@ -1,10 +1,11 @@
 package me.fungames.jfortniteparse.fileprovider
 
+import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.FGuid
+import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.objects.FPackageIndex
 import me.fungames.jfortniteparse.ue4.assets.objects.FSoftObjectPath
-import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
@@ -22,8 +23,10 @@ interface FileProvider {
     val files : Map<String, GameFile>
 
     fun requiredKeys() : List<FGuid>
-    fun submitKey(guid : FGuid, key : String) = submitKeys(mapOf(guid to key))
-    fun submitKeys(keys : Map<FGuid, String>) : Int
+    fun submitKey(guid : FGuid, key : String) = submitKeysStr(mapOf(guid to key))
+    fun submitKeysStr(keys : Map<FGuid, String>) = submitKeys(keys.mapValues { Aes.parseKey(it.value) })
+    fun submitKey(guid : FGuid, key : ByteArray) = submitKeys(mapOf(guid to key))
+    fun submitKeys(keys : Map<FGuid, ByteArray>) : Int
 
     /**
      * @return the name of the game that is loaded by the provider

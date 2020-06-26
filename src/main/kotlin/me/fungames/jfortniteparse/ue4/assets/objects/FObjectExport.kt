@@ -2,9 +2,11 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.versions.*
 
 @ExperimentalUnsignedTypes
 class FObjectExport : UClass {
@@ -13,7 +15,7 @@ class FObjectExport : UClass {
     var templateIndex: FPackageIndex
     var outerIndex: FPackageIndex
     var objectName: FName
-    var save: UInt
+    var objectFlags: UInt
     var serialSize: Long
     var serialOffset: Long
     var forcedExport: Boolean
@@ -24,33 +26,51 @@ class FObjectExport : UClass {
     var notAlwaysLoadedForEditorGame: Boolean
     var isAsset: Boolean
     var firstExportDependency: Int
-    var serializationBeforeSerializationDependencies: Boolean
-    var createBeforeSerializationDependencies: Boolean
-    var serializationBeforeCreateDependencies: Boolean
-    var createBeforeCreateDependencies: Boolean
+    var serializationBeforeSerializationDependencies: Int
+    var createBeforeSerializationDependencies: Int
+    var serializationBeforeCreateDependencies: Int
+    var createBeforeCreateDependencies: Int
+    @Transient lateinit var exportObject: Lazy<UExport>
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
         classIndex = FPackageIndex(Ar)
         superIndex = FPackageIndex(Ar)
-        templateIndex = FPackageIndex(Ar)
+        templateIndex = if (Ar.ver >= VER_UE4_TemplateIndex_IN_COOKED_EXPORTS) FPackageIndex(Ar) else FPackageIndex()
         outerIndex = FPackageIndex(Ar)
         objectName = Ar.readFName()
-        save = Ar.readUInt32()
-        serialSize = Ar.readInt64()
-        serialOffset = Ar.readInt64()
+        objectFlags = Ar.readUInt32()
+
+        if (Ar.ver < VER_UE4_64BIT_EXPORTMAP_SERIALSIZES) {
+            serialSize = Ar.readInt32().toLong()
+            serialOffset = Ar.readInt32().toLong()
+        } else {
+            serialSize = Ar.readInt64()
+            serialOffset = Ar.readInt64()
+        }
+
         forcedExport = Ar.readBoolean()
         notForClient = Ar.readBoolean()
         notForServer = Ar.readBoolean()
         packageGuid = FGuid(Ar)
         packageFlags = Ar.readUInt32()
-        notAlwaysLoadedForEditorGame = Ar.readBoolean()
-        isAsset = Ar.readBoolean()
-        firstExportDependency = Ar.readInt32()
-        serializationBeforeSerializationDependencies = Ar.readBoolean()
-        createBeforeSerializationDependencies = Ar.readBoolean()
-        serializationBeforeCreateDependencies = Ar.readBoolean()
-        createBeforeCreateDependencies = Ar.readBoolean()
+        notAlwaysLoadedForEditorGame = if (Ar.ver >= VER_UE4_LOAD_FOR_EDITOR_GAME) Ar.readBoolean() else true
+        isAsset = if (Ar.ver >= VER_UE4_COOKED_ASSETS_IN_EDITOR_SUPPORT) Ar.readBoolean() else false
+
+        if (Ar.ver >= VER_UE4_PRELOAD_DEPENDENCIES_IN_COOKED_EXPORTS) {
+            firstExportDependency = Ar.readInt32()
+            serializationBeforeSerializationDependencies = Ar.readInt32()
+            createBeforeSerializationDependencies = Ar.readInt32()
+            serializationBeforeCreateDependencies = Ar.readInt32()
+            createBeforeCreateDependencies = Ar.readInt32()
+        } else {
+            firstExportDependency = -1
+            serializationBeforeSerializationDependencies = 0
+            createBeforeSerializationDependencies = 0
+            serializationBeforeCreateDependencies = 0
+            createBeforeCreateDependencies = 0
+        }
+
         super.complete(Ar)
     }
 
@@ -58,24 +78,35 @@ class FObjectExport : UClass {
         super.initWrite(Ar)
         classIndex.serialize(Ar)
         superIndex.serialize(Ar)
-        templateIndex.serialize(Ar)
+        if (Ar.ver >= VER_UE4_TemplateIndex_IN_COOKED_EXPORTS) templateIndex.serialize(Ar)
         outerIndex.serialize(Ar)
         Ar.writeFName(objectName)
-        Ar.writeUInt32(save)
-        Ar.writeInt64(serialSize)
-        Ar.writeInt64(serialOffset)
+        Ar.writeUInt32(objectFlags)
+
+        if (Ar.ver < VER_UE4_64BIT_EXPORTMAP_SERIALSIZES) {
+            Ar.writeInt32(serialSize.toInt())
+            Ar.writeInt32(serialOffset.toInt())
+        } else {
+            Ar.writeInt64(serialSize)
+            Ar.writeInt64(serialOffset)
+        }
+
         Ar.writeBoolean(forcedExport)
         Ar.writeBoolean(notForClient)
         Ar.writeBoolean(notForServer)
         packageGuid.serialize(Ar)
         Ar.writeUInt32(packageFlags)
-        Ar.writeBoolean(notAlwaysLoadedForEditorGame)
-        Ar.writeBoolean(isAsset)
-        Ar.writeInt32(firstExportDependency)
-        Ar.writeBoolean(serializationBeforeSerializationDependencies)
-        Ar.writeBoolean(createBeforeSerializationDependencies)
-        Ar.writeBoolean(serializationBeforeCreateDependencies)
-        Ar.writeBoolean(createBeforeCreateDependencies)
+        if (Ar.ver >= VER_UE4_LOAD_FOR_EDITOR_GAME) Ar.writeBoolean(notAlwaysLoadedForEditorGame)
+        if (Ar.ver >= VER_UE4_COOKED_ASSETS_IN_EDITOR_SUPPORT) Ar.writeBoolean(isAsset)
+
+        if (Ar.ver >= VER_UE4_PRELOAD_DEPENDENCIES_IN_COOKED_EXPORTS) {
+            Ar.writeInt32(firstExportDependency)
+            Ar.writeInt32(serializationBeforeSerializationDependencies)
+            Ar.writeInt32(createBeforeSerializationDependencies)
+            Ar.writeInt32(serializationBeforeCreateDependencies)
+            Ar.writeInt32(createBeforeCreateDependencies)
+        }
+
         super.completeWrite(Ar)
     }
 
@@ -85,7 +116,7 @@ class FObjectExport : UClass {
         templateIndex: FPackageIndex,
         outerIndex: FPackageIndex,
         objectName: FName,
-        save: UInt,
+        objectFlags: UInt,
         serialSize: Long,
         serialOffset: Long,
         forcedExport: Boolean,
@@ -96,17 +127,17 @@ class FObjectExport : UClass {
         notAlwaysLoadedForEditorGame: Boolean,
         isAsset: Boolean,
         firstExportDependency: Int,
-        serializationBeforeSerializationDependencies: Boolean,
-        createBeforeSerializationDependencies: Boolean,
-        serializationBeforeCreateDependencies: Boolean,
-        createBeforeCreateDependencies: Boolean
+        serializationBeforeSerializationDependencies: Int,
+        createBeforeSerializationDependencies: Int,
+        serializationBeforeCreateDependencies: Int,
+        createBeforeCreateDependencies: Int
     ) {
         this.classIndex = classIndex
         this.superIndex = superIndex
         this.templateIndex = templateIndex
         this.outerIndex = outerIndex
         this.objectName = objectName
-        this.save = save
+        this.objectFlags = objectFlags
         this.serialSize = serialSize
         this.serialOffset = serialOffset
         this.forcedExport = forcedExport

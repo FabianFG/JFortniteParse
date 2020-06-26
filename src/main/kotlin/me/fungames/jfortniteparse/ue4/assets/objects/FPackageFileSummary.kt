@@ -25,8 +25,8 @@ class FPackageFileSummary : UClass {
     var importCount: Int
     var importOffset: Int
     var dependsOffset: Int
-    var stringAssetReferencesCount: Int
-    var stringAssetReferencesOffset: Int
+    var softPackageReferencesCount: Int
+    var softPackageReferencesOffset: Int
     var searchableNamesOffset: Int
     var thumbnailTableOffset: Int
     var guid: FGuid
@@ -68,8 +68,8 @@ class FPackageFileSummary : UClass {
         importCount = Ar.readInt32()
         importOffset = Ar.readInt32()
         dependsOffset = Ar.readInt32()
-        stringAssetReferencesCount = Ar.readInt32()
-        stringAssetReferencesOffset = Ar.readInt32()
+        softPackageReferencesCount = Ar.readInt32()
+        softPackageReferencesOffset = Ar.readInt32()
         searchableNamesOffset = Ar.readInt32()
         thumbnailTableOffset = Ar.readInt32()
         guid = FGuid(Ar)
@@ -118,8 +118,8 @@ class FPackageFileSummary : UClass {
         Ar.writeInt32(importCount)
         Ar.writeInt32(importOffset)
         Ar.writeInt32(dependsOffset)
-        Ar.writeInt32(stringAssetReferencesCount)
-        Ar.writeInt32(stringAssetReferencesOffset)
+        Ar.writeInt32(softPackageReferencesCount)
+        Ar.writeInt32(softPackageReferencesOffset)
         Ar.writeInt32(searchableNamesOffset)
         Ar.writeInt32(thumbnailTableOffset)
         guid.serialize(Ar)
@@ -158,8 +158,8 @@ class FPackageFileSummary : UClass {
         importCount: Int,
         importOffset: Int,
         dependsOffset: Int,
-        stringAssetReferencesCount: Int,
-        stringAssetReferencesOffset: Int,
+        softPackageReferencesCount: Int,
+        softPackageReferencesOffset: Int,
         searchableNamesOffset: Int,
         thumbnailTableOffset: Int,
         guid: FGuid,
@@ -195,8 +195,8 @@ class FPackageFileSummary : UClass {
         this.importCount = importCount
         this.importOffset = importOffset
         this.dependsOffset = dependsOffset
-        this.stringAssetReferencesCount = stringAssetReferencesCount
-        this.stringAssetReferencesOffset = stringAssetReferencesOffset
+        this.softPackageReferencesCount = softPackageReferencesCount
+        this.softPackageReferencesOffset = softPackageReferencesOffset
         this.searchableNamesOffset = searchableNamesOffset
         this.thumbnailTableOffset = thumbnailTableOffset
         this.guid = guid

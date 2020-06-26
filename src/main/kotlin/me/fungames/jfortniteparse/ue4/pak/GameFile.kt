@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.ue4.pak
 
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
-import kotlin.properties.Delegates
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class GameFile(val path : String = "", val pos : Long = 0L, val size : Long = 0L, val uncompressedSize : Long = 0L,
@@ -19,9 +18,11 @@ open class GameFile(val path : String = "", val pos : Long = 0L, val size : Long
     lateinit var uexp : GameFile
     var ubulk : GameFile? = null
 
-    val extension = path.substringAfterLast('.')
-    fun isUE4Package() = extension == "uasset"
-    fun isLocres() = extension == "locres"
+    fun getExtension() = path.substringAfterLast('.')
+    fun isUE4Package(): Boolean {
+        getExtension().apply { return this == "uasset" || this == "umap" }
+    }
+    fun isLocres() = getExtension() == "locres"
 
     fun hasUexp() = ::uexp.isInitialized
     fun hasUbulk() = ubulk != null

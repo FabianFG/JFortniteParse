@@ -32,4 +32,6 @@ class FNameEntry : UClass {
         Ar.writeUInt16(casePreservingHash)
         super.completeWrite(Ar)
     }
+
+    override fun toString() = name
 }
