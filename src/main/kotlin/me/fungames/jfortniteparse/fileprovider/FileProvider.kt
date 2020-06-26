@@ -161,6 +161,8 @@ interface FileProvider {
                 path.startsWith("game/content/") -> path.replaceFirst("game/content/", gameName + "game/content/")
                 path.startsWith("game/config/") -> path.replaceFirst("game/config/", gameName + "game/config/")
                 path.startsWith("game/plugins") -> path.replaceFirst("game/plugins/", gameName + "game/plugins/")
+                // For files like Game/AssetRegistry.bin
+                path.startsWith("game/") && path.substringAfter('/').substringBefore('/').contains('.') -> path.replace("game/", "${gameName}game/")
                 else -> path.replaceFirst("game/", gameName + "game/content/")
             }
         } else if (path.startsWith("engine/")) {
