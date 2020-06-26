@@ -1,0 +1,87 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.50'
+    id 'maven-publish'
+    id "com.jfrog.bintray" version "1.8.1"
+    id 'org.jetbrains.dokka' version '0.10.0'
+}
+
+group "me.fungames"
+version "3.1.7"
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven {
+        url  "https://dl.bintray.com/fungamesleaks/mavenRepo"
+    }
+    maven { url 'https://jitpack.io' }
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    classifier = 'javadoc'
+}
+
+bintray {
+    user = findProperty("bintray.user")
+    key = findProperty('bintray.key')
+    publications = ['maven']
+
+    pkg {
+        repo = 'mavenRepo'
+        name = 'JFortniteParse'
+        userOrg = 'fungamesleaks'
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/FunGamesLeaks/JFortniteParse.git'
+        version {
+            name = version
+            desc = version
+            released  = new Date()
+        }
+    }
+
+}
+
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = "JFortniteParse"
+            groupId = group
+            version = version
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+        }
+    }
+}
+
+
+dependencies {
+    implementation 'me.fungames:JOodle:1.1'
+    implementation 'me.fungames:KotlinASTC:1.1'
+    //implementation 'me.fungames:KotlinSquish:1.0' Somehow broken with alpha values
+    implementation 'com.github.memo33:jsquish:1.0'
+    implementation 'me.fungames:KotlinPointers:1.1'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
+    implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
+    implementation 'io.github.microutils:kotlin-logging:1.7.6'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.2'
+    implementation 'org.apache.logging.log4j:log4j-core:2.13.2'
+    implementation 'com.github.kotlin-graphics:glm:v1.0.1'
+    implementation 'org.objenesis:objenesis:3.1'
+    implementation 'com.tomgibara.bits:bits:2.1.0'
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
