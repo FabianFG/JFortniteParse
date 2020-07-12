@@ -13,7 +13,7 @@ class FMovieSceneEvaluationTreeNode : UClass {
 
     constructor(Ar : FArchive) {
         super.init(Ar)
-        range = TRange(Ar)
+        range = TRange(Ar) { Ar.readInt32() }
         parent = FMovieSceneEvaluationTreeNodeHandle(Ar)
         childrenId = FEvaluationTreeEntryHandle(Ar)
         dataId = FEvaluationTreeEntryHandle(Ar)
@@ -29,7 +29,7 @@ class FMovieSceneEvaluationTreeNode : UClass {
 
     fun serialize(Ar : FArchiveWriter) {
         super.initWrite(Ar)
-        range.serialize(Ar)
+        range.serialize(Ar) { Ar.writeInt32(it) }
         parent.serialize(Ar)
         childrenId.serialize(Ar)
         dataId.serialize(Ar)

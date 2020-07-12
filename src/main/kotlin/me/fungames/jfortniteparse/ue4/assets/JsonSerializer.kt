@@ -98,7 +98,7 @@ object JsonSerializer{
                 "tangentMode" to ob.tangentMode,
                 "tangentWeightMode" to ob.tangentWeightMode,
                 "time" to ob.time,
-                "arrivTangent" to ob.arriveTangent,
+                "arriveTangent" to ob.arriveTangent,
                 "arriveTangentWeight" to ob.arriveTangentWeight,
                 "leaveTangent" to ob.leaveTangent,
                 "leaveTangentWeight" to ob.leaveTangentWeight
@@ -106,7 +106,7 @@ object JsonSerializer{
             is FSimpleCurveKey -> jsonObject("time" to ob.time, "value" to ob.value)
             is FDateTime -> JsonPrimitive(ob.date)
             is FNavAgentSelectorCustomization -> jsonObject("supportedDesc" to ob.supportedDesc.toJson(context))
-            is FVectorMaterialInput -> jsonObject(
+            /*is FVectorMaterialInput -> jsonObject(
                 "parent" to ob.parent.toJson(context),
                 "useConstant" to ob.useConstant,
                 "constant" to ob.constant.toJson(context),
@@ -119,8 +119,8 @@ object JsonSerializer{
                 "constant" to ob.constant.toJson(context),
                 "temp" to ob.temp,
                 "tempType" to ob.tempType
-            )
-            is FMaterialInput -> jsonObject(
+            )*/
+            is FExpressionInput -> jsonObject(
                 "outputIndex" to ob.outputIndex,
                 "inputName" to ob.inputName.toJson(context),
                 "mask" to ob.mask,
