@@ -9,12 +9,15 @@ import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.objects.*
+import java.nio.ByteBuffer
 
 /**
  * Binary reader for UE4 Assets
  */
 @ExperimentalUnsignedTypes
-class FAssetArchive(data : ByteArray, private val provider: FileProvider?, val pkgName : String) : FByteArchive(data) {
+class FAssetArchive(data: ByteBuffer, private val provider : FileProvider?, val pkgName : String) : FByteArchive(data) {
+
+    constructor(data: ByteArray, provider: FileProvider?, pkgName: String) : this(ByteBuffer.wrap(data), provider, pkgName)
 
     //Asset Specific Fields
     lateinit var nameMap : MutableList<FNameEntry>

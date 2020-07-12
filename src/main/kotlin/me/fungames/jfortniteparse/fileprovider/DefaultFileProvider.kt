@@ -10,7 +10,7 @@ import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : AbstractFileProvider() {
+class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : PakFileProvider() {
 
     private val localFiles = mutableMapOf<String, File>()
     override val files = mutableMapOf<String, GameFile>()
@@ -24,7 +24,6 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
     init {
         scanFiles(folder)
     }
-
 
     private fun scanFiles(folder : File) {
         val folderFiles = folder.listFiles() ?: emptyArray()
@@ -56,6 +55,9 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
             }
         }
     }
+
+    override fun mountedPaks() : List<PakFileReader> = mountedPaks
+    override fun unloadedPaks() : List<PakFileReader> = mountedPaks
 
     override fun requiredKeys() : List<FGuid> = requiredKeys
     override fun submitKeys(keys : Map<FGuid, String>): Int {

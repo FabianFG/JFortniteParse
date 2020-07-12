@@ -24,9 +24,10 @@ import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 import java.io.OutputStream
+import java.nio.ByteBuffer
 
 @ExperimentalUnsignedTypes
-class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, val name : String, provider: FileProvider? = null, var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) {
+class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null, val name : String, provider: FileProvider? = null, var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) {
 
     companion object {
         val packageMagic = 0x9E2A83C1u
@@ -38,6 +39,9 @@ class Package(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, v
             .registerTypeAdapter(JsonSerializer.uobjectSerializer)
             .create()
     }
+
+    constructor(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, name : String, provider: FileProvider? = null, game : Ue4Version = Ue4Version.GAME_UE4_LATEST) :
+            this(ByteBuffer.wrap(uasset), ByteBuffer.wrap(uexp), ubulk?.let { ByteBuffer.wrap(it) }, name, provider, game)
 
     constructor(uasset : File, uexp : File, ubulk : File?, provider: FileProvider? = null, game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : this(uasset.readBytes(), uexp.readBytes(),
         ubulk?.readBytes(), uasset.nameWithoutExtension, provider, game)

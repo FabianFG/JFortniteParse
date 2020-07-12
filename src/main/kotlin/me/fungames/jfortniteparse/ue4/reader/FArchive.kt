@@ -40,11 +40,11 @@ abstract class FArchive : Cloneable, InputStream() {
     fun isAtStopper() = pos() == size()
     protected open fun rangeCheck(pos: Int) = (0..size()).contains(pos)
 
-    fun readInt8() = read(1)[0]
+    open fun readInt8() = read(1)[0]
 
     fun readUInt8() = readInt8().toUByte()
 
-    fun readInt16(): Short {
+    open fun readInt16(): Short {
         val data = read(2)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)
@@ -54,7 +54,7 @@ abstract class FArchive : Cloneable, InputStream() {
 
     fun readUInt16() = readInt16().toUShort()
 
-    fun readInt32(): Int {
+    open fun readInt32(): Int {
         val data = read(4)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)
@@ -64,7 +64,7 @@ abstract class FArchive : Cloneable, InputStream() {
 
     fun readUInt32() = readInt32().toUInt()
 
-    fun readInt64(): Long {
+    open fun readInt64(): Long {
         val data = read(8)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)
@@ -74,7 +74,7 @@ abstract class FArchive : Cloneable, InputStream() {
 
     fun readUInt64() = readInt64().toULong()
 
-    fun readFloat32(): Float {
+    open fun readFloat32(): Float {
         val data = read(4)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)
@@ -82,7 +82,7 @@ abstract class FArchive : Cloneable, InputStream() {
         return bb.float
     }
 
-    fun readDouble(): Double {
+    open fun readDouble(): Double {
         val data = read(8)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)

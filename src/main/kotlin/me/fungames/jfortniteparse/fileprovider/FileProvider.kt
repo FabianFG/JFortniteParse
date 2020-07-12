@@ -21,10 +21,6 @@ interface FileProvider {
     var game : Ue4Version
     val files : Map<String, GameFile>
 
-    fun requiredKeys() : List<FGuid>
-    fun submitKey(guid : FGuid, key : String) = submitKeys(mapOf(guid to key))
-    fun submitKeys(keys : Map<FGuid, String>) : Int
-
     /**
      * @return the name of the game that is loaded by the provider
      */

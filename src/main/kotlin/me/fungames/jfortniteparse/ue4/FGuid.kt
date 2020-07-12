@@ -22,12 +22,13 @@ class FGuid : UClass {
 
     constructor(Ar: FArchive) {
         super.init(Ar)
-        val ar = FByteArchive(Ar.read(16))
+        val content = Ar.read(16)
+        val ar = FByteArchive(content)
         part1 = ar.readUInt32()
         part2 = ar.readUInt32()
         part3 = ar.readUInt32()
         part4 = ar.readUInt32()
-        hexString = ar.data.printHexBinary()
+        hexString = content.printHexBinary()
         super.complete(Ar)
     }
 
