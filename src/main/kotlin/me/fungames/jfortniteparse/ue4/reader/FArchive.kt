@@ -24,6 +24,18 @@ abstract class FArchive : Cloneable, InputStream() {
     abstract fun size(): Int
     abstract fun pos(): Int
 
+    open fun readBuffer(size: Int) : ByteBuffer {
+        if (!rangeCheck(pos() + size))
+            throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
+        val buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
+        read(buffer.array())
+        return buffer
+    }
+    open fun readBuffer(buffer: ByteBuffer) {
+        val pos = buffer.position()
+        buffer.put(read(buffer.remaining()))
+        buffer.position(pos)
+    }
     abstract override fun read(buffer: ByteArray) : Int
     abstract override fun skip(n: Long): Long
     override fun read() = read(1)[0].toInt()

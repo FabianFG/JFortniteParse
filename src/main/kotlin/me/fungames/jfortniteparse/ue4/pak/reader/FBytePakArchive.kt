@@ -48,6 +48,13 @@ class FBytePakArchive(val data : ByteBuffer, fileName: String, val offsetInPakFi
 
     override fun pakPos() = offsetInPakFile
 
+    override fun readBuffer(size: Int): ByteBuffer {
+        return data.duplicate().apply {
+            order(data.order())
+            limit(position() + size)
+        }
+    }
+
     override fun read(buffer: ByteArray) : Int {
         val count = min(size - pos, buffer.size)
         if (count == 0) return -1

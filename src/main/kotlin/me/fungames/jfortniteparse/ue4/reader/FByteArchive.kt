@@ -48,6 +48,14 @@ open class FByteArchive(val data : ByteBuffer) : FArchive() {
 
     override fun pos() = pos
 
+
+    override fun readBuffer(size: Int): ByteBuffer {
+        return data.duplicate().apply {
+            order(data.order())
+            limit(position() + size)
+        }
+    }
+
     override fun read(buffer: ByteArray) : Int {
         val count = min(size - pos, buffer.size)
         if (count == 0) return -1
