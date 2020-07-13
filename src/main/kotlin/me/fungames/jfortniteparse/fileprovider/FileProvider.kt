@@ -12,32 +12,34 @@ import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import mu.KotlinLogging
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-interface FileProvider {
+abstract class FileProvider {
 
     companion object {
-        val logger = KotlinLogging.logger("JFortniteParse")
+        val logger = KotlinLogging.logger("FileProvider")
     }
 
-    var game : Ue4Version
-    val files : Map<String, GameFile>
+    abstract var game : Ue4Version
+    protected abstract val files : MutableMap<String, GameFile>
+
+    open fun files() : Map<String, GameFile> = files
 
     /**
      * @return the name of the game that is loaded by the provider
      */
-    fun getGameName() = files.keys.firstOrNull { it.substringBefore('/').endsWith("game") }?.substringBefore("game") ?: ""
+    open fun getGameName() = files.keys.firstOrNull { it.substringBefore('/').endsWith("game") }?.substringBefore("game") ?: ""
     /**
      * Searches for a gamefile by its path
      * @param filePath the path to search for
      * @return the game file or null if it wasn't found
      */
-    fun findGameFile(filePath : String) : GameFile?
+    abstract fun findGameFile(filePath : String) : GameFile?
 
     /**
      * Searches for the game file and then load its contained package
      * @param softObjectPath the soft object reference
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
-    fun loadGameFile(softObjectPath: FSoftObjectPath): Package? {
+    open fun loadGameFile(softObjectPath: FSoftObjectPath): Package? {
         var path = softObjectPath.assetPathName.text
         val lastPart = path.substringAfterLast('/')
         if (lastPart.contains('.'))
@@ -50,7 +52,7 @@ interface FileProvider {
      * @param pkgIndex the package index
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
-    fun loadGameFile(pkgIndex: FPackageIndex) = if (pkgIndex.outerImportObject == null)
+    open fun loadGameFile(pkgIndex: FPackageIndex) = if (pkgIndex.outerImportObject == null)
         null
     else
         loadGameFile(pkgIndex.outerImportObject!!.objectName.text)
@@ -61,7 +63,7 @@ interface FileProvider {
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    fun loadGameFile(filePath : String) : Package?
+    abstract fun loadGameFile(filePath : String) : Package?
 
     /**
      * Loads a UE4 Package
@@ -69,7 +71,7 @@ interface FileProvider {
      * @return the parsed package or null if the file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    fun loadGameFile(file: GameFile): Package?
+    abstract fun loadGameFile(file: GameFile): Package?
 
     /**
      * Searches for the game file and then load its contained locres
@@ -77,7 +79,7 @@ interface FileProvider {
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    fun loadLocres(filePath: String): Locres?
+    abstract fun loadLocres(filePath: String): Locres?
 
     /**
      * Loads a UE4 Locres file
@@ -85,11 +87,11 @@ interface FileProvider {
      * @return the parsed locres or null if the file was not an ue4 locres (.locres)
      */
     @Throws(ParserException::class)
-    fun loadLocres(file: GameFile): Locres?
+    abstract fun loadLocres(file: GameFile): Locres?
 
-    fun getLocresLanguageByPath(filePath: String) = FnLanguage.valueOfLanguageCode(filePath.split("Localization/(.*?)/".toRegex())[1].takeWhile { it != '/' })
+    open fun getLocresLanguageByPath(filePath: String) = FnLanguage.valueOfLanguageCode(filePath.split("Localization/(.*?)/".toRegex())[1].takeWhile { it != '/' })
 
-    fun loadLocres(ln : FnLanguage) : Locres? {
+    open fun loadLocres(ln : FnLanguage) : Locres? {
         val files = files.values
             .filter { it.path.startsWith("${getGameName()}Game/Content/Localization", ignoreCase = true) && it.path.contains("/${ln.languageCode}/", ignoreCase = true) && it.path.endsWith(".locres") }
         if (files.isEmpty()) return null
@@ -111,36 +113,36 @@ interface FileProvider {
      * @param filePath the path to search for
      * @return a map with the files name as key and data as value
      */
-    fun savePackage(filePath: String): Map<String, ByteArray>
+    abstract fun savePackage(filePath: String): Map<String, ByteArray>
 
     /**
      * Saves all parts of this package
      * @param file the game file to save
      * @return a map with the files name as key and data as value
      */
-    fun savePackage(file: GameFile): Map<String, ByteArray>
+    abstract fun savePackage(file: GameFile): Map<String, ByteArray>
 
     /**
      * Searches for the game file and then saves the it
      * @param filePath the game file to save
      * @return the files data
      */
-    fun saveGameFile(filePath : String) : ByteArray?
+    abstract fun saveGameFile(filePath : String) : ByteArray?
 
-    var defaultLocres : Locres?
+    abstract var defaultLocres : Locres?
 
     /**
      * Saves the game file
      * @param file the game file to save
      * @return the files data
      */
-    fun saveGameFile(file: GameFile) : ByteArray
+    abstract fun saveGameFile(file: GameFile) : ByteArray
 
     /**
      * @param filePath the file path to be fixed
      * @return the file path translated into the correct format
      */
-    fun fixPath(filePath: String): String {
+    open fun fixPath(filePath: String): String {
         var path = filePath.toLowerCase()
         path = path.replace('\\', '/')
         if (path.startsWith('/'))

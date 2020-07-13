@@ -8,15 +8,18 @@ import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : PakFileProvider() {
 
     private val localFiles = mutableMapOf<String, File>()
-    override val files = mutableMapOf<String, GameFile>()
-    private val unloadedPaks = mutableListOf<PakFileReader>()
-    private val requiredKeys = mutableListOf<FGuid>()
-    private val mountedPaks = mutableListOf<PakFileReader>()
+    override val files = ConcurrentHashMap<String, GameFile>()
+    override val unloadedPaks = CopyOnWriteArrayList<PakFileReader>()
+    override val requiredKeys = CopyOnWriteArrayList<FGuid>()
+    override val keys = ConcurrentHashMap<FGuid, String>()
+    override val mountedPaks = CopyOnWriteArrayList<PakFileReader>()
 
     override var defaultLocres : Locres? = null
 
@@ -30,7 +33,7 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
         folderFiles.forEach {
             if (it.isDirectory)
                 scanFiles(it)
-            else if (it.isFile && it.extension == "pak") {
+            else if (it.isFile && it.extension.equals("pak", true)) {
                 try {
                     val reader = PakFileReader(it, game.game)
                     if (!reader.isEncrypted()) {
@@ -56,44 +59,11 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
         }
     }
 
-    override fun mountedPaks() : List<PakFileReader> = mountedPaks
-    override fun unloadedPaks() : List<PakFileReader> = mountedPaks
-
-    override fun requiredKeys() : List<FGuid> = requiredKeys
-    override fun submitKeys(keys : Map<FGuid, String>): Int {
-        var countNewMounts = 0
-        keys.forEach { (guid, key) ->
-            if (requiredKeys.contains(guid)) {
-                val oldCountMounts = countNewMounts
-                getUnloadedPakFilesByGuid(guid).forEach {
-                    if (it.testAesKey(key)) {
-                        it.aesKey = key
-                        it.readIndex()
-                        it.files.associateByTo(files, {file -> file.path.toLowerCase()})
-                        unloadedPaks.remove(it)
-                        mountedPaks.add(it)
-                        countNewMounts++
-                    }
-                }
-                if (countNewMounts > oldCountMounts)
-                    requiredKeys.remove(guid)
-            }
-        }
-        return countNewMounts
-    }
-
-    private fun getUnloadedPakFilesByGuid(guid: FGuid) = unloadedPaks.filter { it.pakInfo.encryptionKeyGuid == guid }
-
-    override fun findGameFile(filePath: String): GameFile? {
-        val path = fixPath(filePath)
-        return files[path]
-    }
-
     override fun saveGameFile(filePath: String): ByteArray? {
+        val res = super.saveGameFile(filePath)
+        if (res != null)
+            return res
         val path = fixPath(filePath)
-        val gameFile = findGameFile(path)
-        if (gameFile != null)
-            return saveGameFile(gameFile)
         var file = localFiles[path]
         if (file == null) {
             val justName = path.substringAfterLast('/')
@@ -109,10 +79,5 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
                 }.values.firstOrNull()
         }
         return file?.readBytes()
-    }
-
-    override fun saveGameFile(file: GameFile): ByteArray {
-        val reader = mountedPaks.firstOrNull { it.fileName == file.pakFileName } ?: throw IllegalArgumentException("Couldn't find any possible pak file readers")
-        return reader.extract(file)
     }
 }
