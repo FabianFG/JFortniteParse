@@ -34,12 +34,12 @@ class FBytePakArchive(val data : ByteBuffer, fileName: String, val offsetInPakFi
     }
 
     override fun seek(pos: Long) {
-        rangeCheck(pos.toInt())
+        //rangeCheck(pos.toInt())
         this.pos = pos.toInt()
     }
 
     override fun skip(n: Long): Long {
-        rangeCheck(pos + n.toInt())
+        //rangeCheck(pos + n.toInt())
         this.pos += n.toInt()
         return n
     }

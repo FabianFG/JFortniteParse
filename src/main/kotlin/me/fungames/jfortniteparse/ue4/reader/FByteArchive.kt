@@ -34,12 +34,12 @@ open class FByteArchive(val data : ByteBuffer) : FArchive() {
     }
 
     override fun seek(pos: Int) {
-        rangeCheck(pos)
+        //rangeCheck(pos)
         this.pos = pos
     }
 
     override fun skip(n: Long): Long {
-        rangeCheck(pos + n.toInt())
+        //rangeCheck(pos + n.toInt())
         this.pos += n.toInt()
         return n
     }

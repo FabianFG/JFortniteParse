@@ -25,8 +25,8 @@ abstract class FArchive : Cloneable, InputStream() {
     abstract fun pos(): Int
 
     open fun readBuffer(size: Int) : ByteBuffer {
-        if (!rangeCheck(pos() + size))
-            throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
+        //if (!rangeCheck(pos() + size))
+        //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
         val buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
         read(buffer.array())
         return buffer
@@ -38,19 +38,23 @@ abstract class FArchive : Cloneable, InputStream() {
     }
     abstract override fun read(buffer: ByteArray) : Int
     abstract override fun skip(n: Long): Long
-    override fun read() = read(1)[0].toInt()
+    override fun read() = try {
+        readUInt8().toInt()
+    } catch (t : Throwable) {
+        -1
+    }
     abstract fun printError(): String
 
     open fun read(size: Int): ByteArray {
-        if (!rangeCheck(pos() + size))
-            throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
+        //if (!rangeCheck(pos() + size))
+        //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
         val res = ByteArray(size)
         read(res)
         return res
     }
 
     fun isAtStopper() = pos() == size()
-    protected open fun rangeCheck(pos: Int) = (0..size()).contains(pos)
+    //protected open fun rangeCheck(pos: Int) = (0..size()).contains(pos)
 
     open fun readInt8() = read(1)[0]
 

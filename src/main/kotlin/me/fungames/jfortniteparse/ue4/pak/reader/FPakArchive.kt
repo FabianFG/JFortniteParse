@@ -25,20 +25,20 @@ abstract class FPakArchive(val fileName : String) : FArchive() {
 
     abstract override fun read(buffer: ByteArray) : Int
     override fun readBuffer(size: Int) : ByteBuffer {
-        if (!rangeCheck(pakPos() + size))
-            throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
+        //if (!rangeCheck(pakPos() + size))
+        //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
         val buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
         read(buffer.array())
         return buffer
     }
     override fun read(size: Int): ByteArray {
-        if (!rangeCheck(pakPos() + size))
-            throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
+        //if (!rangeCheck(pakPos() + size))
+        //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
         val res = ByteArray(size)
         read(res)
         return res
     }
-    fun rangeCheck(pos: Long) = (0..pakSize()).contains(pos)
+    //fun rangeCheck(pos: Long) = (0..pakSize()).contains(pos)
 
     override fun printError() = "FPakArchive Info: pos ${pakPos()}, stopper ${pakSize()}"
 
