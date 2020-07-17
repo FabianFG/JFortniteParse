@@ -56,10 +56,10 @@ open class FByteArchive(val data : ByteBuffer) : FArchive() {
         }
     }
 
-    override fun read(buffer: ByteArray) : Int {
-        val count = min(size - pos, buffer.size)
+    override fun read(b: ByteArray, off: Int, len: Int): Int {
+        val count = min(size - pos, len)
         if (count == 0) return -1
-        data.get(buffer, 0, count)
+        data.get(b, off, len)
         return count
     }
 

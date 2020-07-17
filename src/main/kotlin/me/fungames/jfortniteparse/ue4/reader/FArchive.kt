@@ -36,7 +36,9 @@ abstract class FArchive : Cloneable, InputStream() {
         buffer.put(read(buffer.remaining()))
         buffer.position(pos)
     }
-    abstract override fun read(buffer: ByteArray) : Int
+
+    abstract override fun read(b: ByteArray, off: Int, len: Int): Int
+    override fun read(buffer: ByteArray) = read(buffer, 0, buffer.size)
     abstract override fun skip(n: Long): Long
     override fun read() = try {
         readUInt8().toInt()

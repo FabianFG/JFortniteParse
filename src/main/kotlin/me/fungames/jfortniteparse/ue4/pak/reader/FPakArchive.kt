@@ -23,7 +23,6 @@ abstract class FPakArchive(val fileName : String) : FArchive() {
     abstract fun pakPos() : Long
     override fun pos() = pakPos().toInt()
 
-    abstract override fun read(buffer: ByteArray) : Int
     override fun readBuffer(size: Int) : ByteBuffer {
         //if (!rangeCheck(pakPos() + size))
         //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
