@@ -6,6 +6,7 @@ import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
+import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -48,13 +49,12 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
                 } catch (e : ParserException) {
                     logger.error { e.message }
                 }
-            }
-            else if (it.isFile) {
-                    var gamePath = it.absolutePath.substringAfter(this.folder.absolutePath)
-                    if (gamePath.startsWith('\\') || gamePath.startsWith('/'))
-                        gamePath = gamePath.substring(1)
-                    gamePath = gamePath.replace('\\', '/')
-                    localFiles[gamePath.toLowerCase()] = it
+            } else if (it.isFile) {
+                var gamePath = it.absolutePath.substringAfter(this.folder.absolutePath)
+                if (gamePath.startsWith('\\') || gamePath.startsWith('/'))
+                    gamePath = gamePath.substring(1)
+                gamePath = gamePath.replace('\\', '/')
+                localFiles[gamePath.toLowerCase()] = it
             }
         }
     }

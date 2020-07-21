@@ -6,13 +6,13 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 @ExperimentalUnsignedTypes
 class TRange<T> : UClass {
-    var lowerBound : TRangeBound<T>
-    var upperBound : TRangeBound<T>
+    var lowerBound: TRangeBound<T>
+    var upperBound: TRangeBound<T>
 
-    constructor(Ar : FArchive) {
+    constructor(Ar: FArchive, init: () -> T) {
         super.init(Ar)
-        lowerBound = TRangeBound(Ar)
-        upperBound = TRangeBound(Ar)
+        lowerBound = TRangeBound(Ar, init)
+        upperBound = TRangeBound(Ar, init)
         super.complete(Ar)
     }
 
@@ -21,10 +21,10 @@ class TRange<T> : UClass {
         this.upperBound = upperBound
     }
 
-    fun serialize(Ar : FArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter, write: (T) -> Unit) {
         super.initWrite(Ar)
-        lowerBound.serialize(Ar)
-        upperBound.serialize(Ar)
+        lowerBound.serialize(Ar, write)
+        upperBound.serialize(Ar, write)
         super.completeWrite(Ar)
     }
 }

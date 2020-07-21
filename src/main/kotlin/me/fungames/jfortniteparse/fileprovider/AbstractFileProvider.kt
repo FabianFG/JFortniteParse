@@ -33,11 +33,11 @@ abstract class AbstractFileProvider : FileProvider() {
         val gameFile = findGameFile(path)
         if (gameFile != null)
             return loadGameFile(gameFile)
-        if (!path.endsWith(".uasset"))
+        if (!path.endsWith(".uasset") && !path.endsWith(".umap"))
             return null
         val uasset = saveGameFile(path) ?: return null
-        val uexp = saveGameFile(path.substringBeforeLast(".uasset") + ".uexp") ?: return null
-        val ubulk = saveGameFile(path.substringBeforeLast(".uasset") + ".ubulk")
+        val uexp = saveGameFile(path.substringBeforeLast(".") + ".uexp") ?: return null
+        val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
         return try {
             Package(uasset, uexp, ubulk, path, this, game).apply { applyLocres(defaultLocres) }
         } catch (e : ParserException) {
@@ -80,13 +80,13 @@ abstract class AbstractFileProvider : FileProvider() {
         if (gameFile != null)
             return savePackage(gameFile)
         val map = mutableMapOf<String, ByteArray>()
-        if (path.endsWith(".uasset")) {
+        if (path.endsWith(".uasset") || path.endsWith(".umap")) {
             val uasset = saveGameFile(path) ?: return map
             map[path] = uasset
-            val uexpPath = path.substringBeforeLast(".uasset") + ".uexp"
+            val uexpPath = path.substringBeforeLast(".") + ".uexp"
             val uexp = saveGameFile(uexpPath) ?: return map
             map[uexpPath] = uexp
-            val ubulkPath = path.substringBeforeLast(".uasset") + ".ubulk"
+            val ubulkPath = path.substringBeforeLast(".") + ".ubulk"
             val ubulk = saveGameFile(ubulkPath) ?: return map
             map[ubulkPath] = ubulk
         } else {

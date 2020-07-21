@@ -11,7 +11,7 @@ object Aes {
 
     const val BLOCK_SIZE = 16
 
-    private fun parseKey(key: String) : ByteArray {
+    fun parseKey(key: String) : ByteArray {
         val data = if (key.startsWith("0x"))
             key.substring(2).parseHexBinary()
         else

@@ -10,7 +10,7 @@ class FMovieSceneFrameRange : UClass {
 
     constructor(Ar : FArchive) {
         super.init(Ar)
-        value = TRange(Ar)
+        value = TRange(Ar) { Ar.readInt32() }
         super.complete(Ar)
     }
 
@@ -20,7 +20,7 @@ class FMovieSceneFrameRange : UClass {
 
     fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
-        value.serialize(Ar)
+        value.serialize(Ar) { Ar.writeInt32(it) }
         super.completeWrite(Ar)
     }
 }

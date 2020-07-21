@@ -16,7 +16,7 @@ class FMovieSceneSegment : UClass {
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
-        range = TRange(Ar)
+        range = TRange(Ar) { FFrameNumber(Ar) }
         id = Ar.readInt32()
         allowEmpty = Ar.readBoolean()
         impls = Ar.readTArray { UScriptStruct(Ar, "SectionEvaluationData") }
@@ -32,7 +32,7 @@ class FMovieSceneSegment : UClass {
 
     fun serialize(Ar: FAssetArchiveWriter) {
         super.initWrite(Ar)
-        range.serialize(Ar)
+        range.serialize(Ar) { it.serialize(Ar) }
         Ar.writeInt32(id)
         Ar.writeBoolean(allowEmpty)
         Ar.writeTArray(impls) { it.serialize(Ar) }

@@ -7,8 +7,8 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_Latest
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_PathHashIndex
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_RelativeChunkOffsets
-import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
+import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakInfo
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
@@ -48,7 +48,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
     val fileName = Ar.fileName
 
     val pakInfo : FPakInfo = FPakInfo.readPakInfo(Ar)
-    var aesKey : String? = null
+    var aesKey : ByteArray? = null
         /**
          * Sets the aes key for this pak file after testing it
          * @throws InvalidAesKeyException if the given aes key is invalid
@@ -358,10 +358,10 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         val files = mutableListOf<GameFile>()
         tempMap.values.forEach {
             if (it.isUE4Package()) {
-                val uexp = tempMap[it.path.substringBeforeLast(".uasset") + ".uexp"]
+                val uexp = tempMap[it.path.substringBeforeLast(".") + ".uexp"]
                 if(uexp != null)
                     it.uexp = uexp
-                val ubulk = tempMap[it.path.substringBeforeLast(".uasset") + ".ubulk"]
+                val ubulk = tempMap[it.path.substringBeforeLast(".") + ".ubulk"]
                 if(ubulk != null)
                     it.ubulk = ubulk
                 files.add(it)
@@ -372,9 +372,13 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         }
         this.files = files
 
-        logger.info(String.format("Pak %s: %d files (%d encrypted), mount point: \"%s\", version %d",
-            fileName, this.fileCount, this.encryptedFileCount, this.mountPrefix,
-            this.pakInfo.version))
+        // Print statistics
+        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
+        if (encryptedFileCount != 0)
+            stats += " (%d encrypted)".format(encryptedFileCount)
+        if (mountPrefix.contains('/'))
+            stats += ", mount point: \"%s\"".format(mountPrefix)
+        logger.info(stats + ", version %d".format(pakInfo.version))
 
         if (!keepIndexData) {
             this.encodedPakEntries = byteArrayOf()
@@ -558,10 +562,10 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         val files = mutableListOf<GameFile>()
         tempMap.values.forEach {
             if (it.isUE4Package()) {
-                val uexp = tempMap[it.path.substringBeforeLast(".uasset") + ".uexp"]
+                val uexp = tempMap[it.path.substringBeforeLast(".") + ".uexp"]
                 if(uexp != null)
                     it.uexp = uexp
-                val ubulk = tempMap[it.path.substringBeforeLast(".uasset") + ".ubulk"]
+                val ubulk = tempMap[it.path.substringBeforeLast(".") + ".ubulk"]
                 if(ubulk != null)
                     it.ubulk = ubulk
                 files.add(it)
@@ -572,9 +576,14 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         }
         this.files = files
 
-        logger.info(String.format("Pak %s: %d files (%d encrypted), mount point: \"%s\", version %d",
-            fileName, this.fileCount, this.encryptedFileCount, this.mountPrefix,
-            this.pakInfo.version))
+
+        // Print statistics
+        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
+        if (encryptedFileCount != 0)
+            stats += " (%d encrypted)".format(encryptedFileCount)
+        if (mountPrefix.contains('/'))
+            stats += ", mount point: \"%s\"".format(mountPrefix)
+        logger.info(stats + ", version %d".format(pakInfo.version))
         return this.files
     }
 
