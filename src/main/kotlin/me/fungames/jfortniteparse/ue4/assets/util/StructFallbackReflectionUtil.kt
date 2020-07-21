@@ -27,7 +27,7 @@ fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, Ar : FAssetA
     try {
         val result = ObjenesisStd().newInstance(clazz)
         val props = properties.associateBy { it.name.text }
-        for (field in clazz.fields) {
+        for (field in clazz.declaredFields) {
             field.isAccessible = true
             val name =
                     if (field.isAnnotationPresent(StructFieldName::class.java))

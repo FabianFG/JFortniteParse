@@ -20,10 +20,7 @@ class FAssetArchive(data: ByteBuffer, private val provider : FileProvider?, val 
     constructor(data: ByteArray, provider: FileProvider?, pkgName: String) : this(ByteBuffer.wrap(data), provider, pkgName)
 
     //Asset Specific Fields
-    lateinit var nameMap : MutableList<FNameEntry>
-    lateinit var importMap : MutableList<FObjectImport>
-    lateinit var exportMap : MutableList<FObjectExport>
-    lateinit var exports : Map<FObjectExport, Lazy<UExport>>
+    lateinit var owner : Package
 
 
     private val importCache = mutableMapOf<String, Package>()
@@ -31,7 +28,6 @@ class FAssetArchive(data: ByteBuffer, private val provider : FileProvider?, val 
     private var payloads = mutableMapOf<PayloadType, FAssetArchive>()
     var uassetSize = 0
     var uexpSize = 0
-    var info : FPackageFileSummary? = null
 
     fun getPayload(type: PayloadType) = payloads[type] ?: throw ParserException("${type.name} is needed to parse the current package")
     fun addPayload(type: PayloadType, payload : FAssetArchive) {
@@ -61,10 +57,10 @@ class FAssetArchive(data: ByteBuffer, private val provider : FileProvider?, val 
     fun readFName() : FName {
         val nameIndex = this.readInt32()
         val extraIndex = this.readInt32()
-        if (nameIndex in nameMap.indices)
-            return FName(nameMap, nameIndex, extraIndex)
+        if (nameIndex in owner.nameMap.indices)
+            return FName(owner.nameMap, nameIndex, extraIndex)
         else
-            throw ParserException("FName could not be read, requested index $nameIndex, name map size ${nameMap.size}", this)
+            throw ParserException("FName could not be read, requested index $nameIndex, name map size ${owner.nameMap.size}", this)
     }
 
     fun loadImport(path : String) : Package? {
@@ -127,7 +123,7 @@ class FAssetArchive(data: ByteBuffer, private val provider : FileProvider?, val 
         return null
     }
 
-    fun loadExportGeneric(export: FObjectExport) = exports[export]?.value
+    fun loadExportGeneric(export: FObjectExport) = owner.exportsLazy[export]?.value
 
     fun loadObjectGeneric(index : FPackageIndex) : UExport? {
         val import = index.importObject

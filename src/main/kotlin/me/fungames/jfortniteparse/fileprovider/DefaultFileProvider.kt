@@ -19,7 +19,7 @@ class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue
     override val files = ConcurrentHashMap<String, GameFile>()
     override val unloadedPaks = CopyOnWriteArrayList<PakFileReader>()
     override val requiredKeys = CopyOnWriteArrayList<FGuid>()
-    override val keys = ConcurrentHashMap<FGuid, String>()
+    override val keys = ConcurrentHashMap<FGuid, ByteArray>()
     override val mountedPaks = CopyOnWriteArrayList<PakFileReader>()
 
     override var defaultLocres : Locres? = null

@@ -32,6 +32,8 @@ fun ByteArray.printHexBinary() : String {
     return r.toString()
 }
 
+fun ByteArray.printAesKey() = "0x${printHexBinary()}"
+
 private fun hexToBin(ch: Char): Int {
     if (ch in '0'..'9') {
         return ch - '0'

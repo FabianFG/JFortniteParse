@@ -42,7 +42,7 @@ class UStaticMesh : UExport {
         navCollision = Ar.loadObject(if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
             FPackageIndex(Ar)
         else
-            FPackageIndex(0, Ar.importMap, Ar.exportMap))
+            FPackageIndex(0, Ar.owner))
 
         if (!stripFlags.isEditorDataStripped()) {
             if (Ar.ver < VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED) {

@@ -16,10 +16,7 @@ import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
-import me.fungames.jfortniteparse.util.INDEX_NONE
-import me.fungames.jfortniteparse.util.parseHexBinary
-import me.fungames.jfortniteparse.util.toInt64
-import me.fungames.jfortniteparse.util.toUInt32
+import me.fungames.jfortniteparse.util.*
 import me.fungames.kotlinPointers.BytePointer
 import mu.KotlinLogging
 import java.io.File
@@ -60,6 +57,11 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             if (!testAesKey(value))
                 throw InvalidAesKeyException("Given aes key '$value'is not working with '$fileName'")
             field = value
+        }
+    var aesKeyStr : String?
+        get() = aesKey?.printAesKey()
+        set(value) {
+            aesKey = value?.let { Aes.parseKey(it) }
         }
 
     lateinit var mountPrefix : String

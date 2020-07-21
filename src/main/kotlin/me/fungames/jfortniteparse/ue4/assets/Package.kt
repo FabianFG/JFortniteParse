@@ -51,7 +51,7 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
     val importMap : MutableList<FObjectImport>
     val exportMap : MutableList<FObjectExport>
 
-    private val exportsLazy = mutableMapOf<FObjectExport, Lazy<UExport>>()
+    internal val exportsLazy = mutableMapOf<FObjectExport, Lazy<UExport>>()
 
     val exports : List<UExport>
 
@@ -67,11 +67,9 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
         ubulkAr?.ver = game.version
 
         nameMap = mutableListOf()
-        uassetAr.nameMap = nameMap
         importMap = mutableListOf()
-        uassetAr.importMap = importMap
         exportMap = mutableListOf()
-        uassetAr.exportMap = exportMap
+        uassetAr.owner = this
 
         info = FPackageFileSummary(uassetAr)
         if (info.tag != packageMagic)
@@ -92,22 +90,14 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
             exportMap.add(FObjectExport(uassetAr))
 
         //Setup uexp reader
-        uexpAr.nameMap = nameMap
-        uexpAr.importMap = importMap
-        uexpAr.exportMap = exportMap
-        uexpAr.exports = exportsLazy
+        uexpAr.owner = this
         uexpAr.uassetSize = info.totalHeaderSize
-        uexpAr.info = info
 
         //If attached also setup the ubulk reader
         if (ubulkAr != null) {
             ubulkAr.uassetSize = info.totalHeaderSize
             ubulkAr.uexpSize = exportMap.sumBy { it.serialSize.toInt() }
-            ubulkAr.info = info
-            ubulkAr.nameMap = nameMap
-            ubulkAr.importMap = importMap
-            ubulkAr.exportMap = exportMap
-            ubulkAr.exports = exportsLazy
+            ubulkAr.owner = this
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
