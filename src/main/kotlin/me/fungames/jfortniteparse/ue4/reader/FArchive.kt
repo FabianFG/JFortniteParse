@@ -24,27 +24,45 @@ abstract class FArchive : Cloneable, InputStream() {
     abstract fun size(): Int
     abstract fun pos(): Int
 
-    abstract override fun read(buffer: ByteArray) : Int
+    open fun readBuffer(size: Int) : ByteBuffer {
+        //if (!rangeCheck(pos() + size))
+        //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
+        val buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
+        read(buffer.array())
+        return buffer
+    }
+    open fun readBuffer(buffer: ByteBuffer) {
+        val pos = buffer.position()
+        buffer.put(read(buffer.remaining()))
+        buffer.position(pos)
+    }
+
+    abstract override fun read(b: ByteArray, off: Int, len: Int): Int
+    override fun read(buffer: ByteArray) = read(buffer, 0, buffer.size)
     abstract override fun skip(n: Long): Long
-    override fun read() = read(1)[0].toInt()
+    override fun read() = try {
+        readUInt8().toInt()
+    } catch (t : Throwable) {
+        -1
+    }
     abstract fun printError(): String
 
     open fun read(size: Int): ByteArray {
-        if (!rangeCheck(pos() + size))
-            throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
+        //if (!rangeCheck(pos() + size))
+        //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
         val res = ByteArray(size)
         read(res)
         return res
     }
 
     fun isAtStopper() = pos() == size()
-    protected open fun rangeCheck(pos: Int) = (0..size()).contains(pos)
+    //protected open fun rangeCheck(pos: Int) = (0..size()).contains(pos)
 
-    fun readInt8() = read(1)[0]
+    open fun readInt8() = read(1)[0]
 
     fun readUInt8() = readInt8().toUByte()
 
-    fun readInt16(): Short {
+    open fun readInt16(): Short {
         val data = read(2)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)
@@ -54,7 +72,7 @@ abstract class FArchive : Cloneable, InputStream() {
 
     fun readUInt16() = readInt16().toUShort()
 
-    fun readInt32(): Int {
+    open fun readInt32(): Int {
         val data = read(4)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)
@@ -64,7 +82,7 @@ abstract class FArchive : Cloneable, InputStream() {
 
     fun readUInt32() = readInt32().toUInt()
 
-    fun readInt64(): Long {
+    open fun readInt64(): Long {
         val data = read(8)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)
@@ -74,7 +92,7 @@ abstract class FArchive : Cloneable, InputStream() {
 
     fun readUInt64() = readInt64().toULong()
 
-    fun readFloat32(): Float {
+    open fun readFloat32(): Float {
         val data = read(4)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)
@@ -82,7 +100,7 @@ abstract class FArchive : Cloneable, InputStream() {
         return bb.float
     }
 
-    fun readDouble(): Double {
+    open fun readDouble(): Double {
         val data = read(8)
         val bb = ByteBuffer.wrap(data)
         if (this.littleEndian)

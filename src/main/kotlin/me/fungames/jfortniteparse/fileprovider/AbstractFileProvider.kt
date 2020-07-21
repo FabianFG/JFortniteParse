@@ -7,7 +7,7 @@ import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-abstract class AbstractFileProvider : FileProvider {
+abstract class AbstractFileProvider : FileProvider() {
 
     override fun loadGameFile(file: GameFile): Package? {
         if (!file.isUE4Package() || !file.hasUexp())
@@ -21,6 +21,11 @@ abstract class AbstractFileProvider : FileProvider {
             logger.error("Failed to load package ${file.path}", e)
             null
         }
+    }
+
+    override fun findGameFile(filePath: String): GameFile? {
+        val path = fixPath(filePath)
+        return files[path]
     }
 
     override fun loadGameFile(filePath: String): Package? {

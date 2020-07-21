@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -50,6 +51,12 @@ class UCurveTable : UExport {
         this.baseObject = baseObject
         this.curveTableMode = curveTableMode
         this.rows = rows
+    }
+
+    fun toJson(): String {
+        val data =
+            rows.mapKeys { it.key.text }.mapValues { Package.gson.toJsonTree(it.value) }
+        return Package.gson.toJson(data)
     }
 
     enum class ECurveTableMode {
