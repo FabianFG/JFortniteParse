@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.FGuid
-import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.objects.*
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMaterial
@@ -10,10 +9,6 @@ import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMeshLODResour
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.versions.*
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_RENAME_WIDGET_VISIBILITY
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_STATIC_MESH_STORE_NAV_COLLISION
 
 internal const val MAX_STATIC_UV_SETS_UE4 = 8
 internal const val MAX_STATIC_LODS_UE4 = 8
@@ -42,7 +37,7 @@ class UStaticMesh : UExport {
         navCollision = Ar.loadObject(if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
             FPackageIndex(Ar)
         else
-            FPackageIndex(0, Ar.importMap, Ar.exportMap))
+            FPackageIndex())
 
         if (!stripFlags.isEditorDataStripped()) {
             if (Ar.ver < VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED) {

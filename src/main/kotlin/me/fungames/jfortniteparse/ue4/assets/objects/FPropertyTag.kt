@@ -67,7 +67,7 @@ class FPropertyTag : UClass {
                             FPropertyTagType.Type.NORMAL
                         )
                     if (finalPos != Ar.pos()) {
-                        logger.debug("FPropertyTagType $name ($propertyType) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
+                        logger.warn("FPropertyTagType $name ($propertyType) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
                     }
                     //Even if the property wasn't read properly
                     //we don't need to crash here because we know the expected size

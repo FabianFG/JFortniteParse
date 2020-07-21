@@ -56,6 +56,12 @@ class FBox : UClass {
         return min == other.min && max == other.max
     }
 
+    override fun hashCode(): Int {
+        var result = min.hashCode()
+        result = 31 * result + max.hashCode()
+        return result
+    }
+
     operator fun plusAssign(other: FVector) {
         if (isValid) {
             min.x = min(min.x, other.x)
@@ -100,9 +106,10 @@ class FBox : UClass {
         return box
     }
 
-    operator fun get(index: Int): FVector {
-        check(index in 0..1)
-        return if (index == 0) min else max
+    operator fun get(index: Int) = when (index) {
+        0 -> min
+        1 -> max
+        else -> throw IndexOutOfBoundsException()
     }
 
     fun computeSquaredDistanceToPoint(point: FVector) = FVector.computeSquaredDistanceFromBoxToPoint(min, max, point)
@@ -224,7 +231,7 @@ class FBox : UClass {
 
     // fun transformBy(m: FTransform): FBox
 
-    // fun TransformProjectBy(projM: FMatrix): FBox
+    // fun transformProjectBy(projM: FMatrix): FBox
 
     override fun toString() = "IsValid=%s, Min=(%s), Max=(%s)".format(isValid.toString(), min.toString(), max.toString())
 

@@ -3,12 +3,12 @@ package me.fungames.jfortniteparse.ue4.assets.reader
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.util.FName
-import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
-import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.objects.*
+import me.fungames.jfortniteparse.ue4.assets.util.FName
+import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
+import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.nio.ByteBuffer
 
 /**
@@ -23,8 +23,7 @@ class FAssetArchive(data: ByteBuffer, private val provider : FileProvider?, val 
     lateinit var nameMap : MutableList<FNameEntry>
     lateinit var importMap : MutableList<FObjectImport>
     lateinit var exportMap : MutableList<FObjectExport>
-    lateinit var exports : Map<FObjectExport, Lazy<UExport>>
-
+    lateinit var owner: Package
 
     private val importCache = mutableMapOf<String, Package>()
 
@@ -113,12 +112,12 @@ class FAssetArchive(data: ByteBuffer, private val provider : FileProvider?, val 
         val pkg = importCache[fixedPath]
             ?: provider.loadGameFile(fixedPath)?.apply { importCache[fixedPath] = this }
         if (pkg != null) {
-            val export = pkg.exports.firstOrNull {
-                it.export?.classIndex?.name == import.className.text
-                        && it.export?.objectName?.text == import.objectName.text
+            val export = pkg.exportMap.firstOrNull {
+                it.classIndex.name == import.className.text
+                        && it.objectName.text == import.objectName.text
             }
             if (export != null)
-                return export
+                return export.exportObject.value
             else
                 UClass.logger.warn { "Couldn't resolve package index in external package" }
         } else {
@@ -127,7 +126,7 @@ class FAssetArchive(data: ByteBuffer, private val provider : FileProvider?, val 
         return null
     }
 
-    fun loadExportGeneric(export: FObjectExport) = exports[export]?.value
+    fun loadExportGeneric(export: FObjectExport) = export.exportObject.value
 
     fun loadObjectGeneric(index : FPackageIndex) : UExport? {
         val import = index.importObject

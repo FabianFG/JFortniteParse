@@ -153,4 +153,6 @@ class FObjectExport : UClass {
         this.serializationBeforeCreateDependencies = serializationBeforeCreateDependencies
         this.createBeforeCreateDependencies = createBeforeCreateDependencies
     }
+
+    override fun toString() = objectName.text
 }

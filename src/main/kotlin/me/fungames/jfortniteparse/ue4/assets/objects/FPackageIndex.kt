@@ -1,17 +1,17 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 @ExperimentalUnsignedTypes
 class FPackageIndex : UClass {
     var index: Int
-    var importMap : List<FObjectImport>
-    var exportMap : List<FObjectExport>
+    var owner: Package? = null
     val importObject : FObjectImport?
         get() = when {
-            index < 0 -> importMap.getOrNull((index * -1) - 1)
+            index < 0 -> owner?.importMap?.getOrNull((index * -1) - 1)
             //index > 0 -> importMap.getOrNull(index - 1) everything above 0 is an export not an import
             else -> null
         }
@@ -20,7 +20,7 @@ class FPackageIndex : UClass {
 
     val exportObject : FObjectExport?
         get() = when {
-            index > 0 -> exportMap.getOrNull(index - 1)
+            index > 0 -> owner?.exportMap?.getOrNull(index - 1)
             //index < 0 -> exportMap.getOrNull(index - 1) everything below 0 is an import not an export
             else -> null
         }
@@ -34,8 +34,7 @@ class FPackageIndex : UClass {
         super.init(Ar)
         index = Ar.readInt32()
         super.complete(Ar)
-        importMap = Ar.importMap
-        exportMap = Ar.exportMap
+        owner = Ar.owner
     }
 
     fun serialize(Ar: FArchiveWriter) {
@@ -44,10 +43,10 @@ class FPackageIndex : UClass {
         super.completeWrite(Ar)
     }
 
-    constructor(index: Int, importMap: List<FObjectImport>, exportMap : List<FObjectExport>) {
+    constructor(): this(0)
+
+    constructor(index: Int) {
         this.index = index
-        this.importMap = importMap
-        this.exportMap = exportMap
     }
 
     override fun toString() = importObject?.objectName?.text?.let { "Import: $it" }

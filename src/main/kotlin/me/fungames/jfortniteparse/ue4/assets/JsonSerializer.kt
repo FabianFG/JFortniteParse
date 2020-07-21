@@ -3,7 +3,10 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.*
-import com.google.gson.*
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
+import com.google.gson.JsonSerializationContext
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -15,7 +18,7 @@ object JsonSerializer{
         jsonObject(
             "import_map" to arg.context.serialize(arg.src.importMap),
             "export_map" to arg.context.serialize(arg.src.exportMap),
-            "export_properties" to arg.context.serialize(arg.src.exports.map { it.baseObject })
+            "export_properties" to arg.context.serialize(arg.src.exportMap.map { it.exportObject.value.baseObject })
         )
     }
     val importSerializer = jsonSerializer<FObjectImport> {

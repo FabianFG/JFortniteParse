@@ -9,7 +9,7 @@ import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
 @ExperimentalUnsignedTypes
-class UObject : UExport {
+open class UObject : UExport {
     override var baseObject = this
     var properties : MutableList<FPropertyTag>
     var objectGuid : FGuid? = null
