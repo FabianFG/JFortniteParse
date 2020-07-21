@@ -24,6 +24,7 @@ import me.fungames.kotlinPointers.BytePointer
 import mu.KotlinLogging
 import java.io.File
 import java.io.RandomAccessFile
+import java.nio.ByteBuffer
 import kotlin.math.min
 
 
@@ -89,6 +90,17 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
     fun isEncrypted() = pakInfo.encryptedIndex
 
     fun extract(gameFile: GameFile) : ByteArray {
+        val result = extractBuffer(gameFile)
+        return if (result.hasArray())
+            result.array()
+        else {
+            val buf = ByteArray(result.remaining())
+            result[buf]
+            buf
+        }
+    }
+
+    fun extractBuffer(gameFile: GameFile) : ByteBuffer {
         require(gameFile.pakFileName == fileName) { "Wrong pak file reader, required ${gameFile.pakFileName}, this is $fileName" }
         logger.debug("Extracting ${gameFile.getName()} from $fileName at ${gameFile.pos} with size ${gameFile.size}")
         // If this reader is used as a concurrent reader create a clone of the main reader to
@@ -129,11 +141,11 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                     val uncompressedSize = min(gameFile.compressionBlockSize, (gameFile.uncompressedSize - data.size).toInt())
                     data += Compression.decompress(src, uncompressedSize, gameFile.compressionMethod)
                 }
-                return when {
+                return ByteBuffer.wrap(when {
                     data.size > gameFile.uncompressedSize -> data.copyOf(gameFile.uncompressedSize.toInt())
                     data.size == gameFile.uncompressedSize.toInt() -> data
                     else -> throw ParserException("Decompression of ${gameFile.getName()} failed, ${data.size} < ${gameFile.uncompressedSize}")
-                }
+                })
             }
             gameFile.isEncrypted -> {
                 logger.debug("${gameFile.getName()} is encrypted, decrypting")
@@ -147,9 +159,9 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                 var decrypted = Aes.decrypt(encryptedData, key)
                 if (decrypted.size != gameFile.size.toInt())
                     decrypted = decrypted.copyOf(gameFile.size.toInt())
-                return decrypted
+                return ByteBuffer.wrap(decrypted)
             }
-            else -> return exAr.read(gameFile.size.toInt())
+            else -> return exAr.readBuffer(gameFile.size.toInt())
         }
     }
 

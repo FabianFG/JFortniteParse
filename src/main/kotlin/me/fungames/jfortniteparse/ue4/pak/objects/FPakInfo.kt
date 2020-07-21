@@ -47,20 +47,21 @@ class FPakInfo : UClass {
     constructor(Ar : FPakArchive, maxNumCompressionMethods : Int = 4) {
         super.init(Ar)
 
+        val data = Ar.readAndCreateReader(size + maxNumCompressionMethods * 32)
         // New FPakInfo fields
-        encryptionKeyGuid = FGuid(Ar)
-        encryptedIndex = Ar.readFlag()
+        encryptionKeyGuid = FGuid(data)
+        encryptedIndex = data.readFlag()
 
         // Old FPakInfoFields
-        val magic = Ar.readUInt32()
+        val magic = data.readUInt32()
         if (magic != PAK_MAGIC)
-            throw ParserException("Invalid pak file magic", Ar)
-        version = Ar.readInt32()
-        indexOffset = Ar.readInt64()
-        indexSize = Ar.readInt64()
-        indexHash = Ar.read(20)
+            throw ParserException("Invalid pak file magic", data)
+        version = data.readInt32()
+        indexOffset = data.readInt64()
+        indexSize = data.readInt64()
+        indexHash = data.read(20)
         if (this.version in PakVersion_FrozenIndex until PakVersion_PathHashIndex) {
-            indexIsFrozen = Ar.readBoolean()
+            indexIsFrozen = data.readBoolean()
             if (indexIsFrozen) {
                 logger.warn { "Frozen PakFile Index" }
             }
@@ -69,7 +70,7 @@ class FPakInfo : UClass {
         if (this.version >= PakVersion_FNameBasedCompressionMethod) {
             compressionMethods.add("None")
             for (i in 0 until maxNumCompressionMethods) {
-                val d = Ar.read(32)
+                val d = data.read(32)
                 val str = d.takeWhile { it != 0.toByte() }.toByteArray().toString(Charsets.UTF_8)
                 if (str.isBlank())
                     break

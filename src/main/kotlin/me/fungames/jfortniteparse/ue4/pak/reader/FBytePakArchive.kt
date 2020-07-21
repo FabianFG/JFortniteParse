@@ -1,13 +1,30 @@
 package me.fungames.jfortniteparse.ue4.pak.reader
 
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.math.min
 
 @ExperimentalUnsignedTypes
-class FBytePakArchive(val data : ByteArray, fileName: String, val offsetInPakFile : Long, val pakFileSize : Long) : FPakArchive(fileName) {
-    override var littleEndian = true
+class FBytePakArchive(val data : ByteBuffer, fileName: String, val offsetInPakFile : Long, val pakFileSize : Long) : FPakArchive(fileName) {
+    init {
+        data.order(ByteOrder.LITTLE_ENDIAN)
+    }
 
-    private var pos = 0
-    private val size = data.size
+    constructor(data : ByteArray, fileName: String, offsetInPakFile : Long, pakFileSize : Long) : this(ByteBuffer.wrap(data), fileName, offsetInPakFile, pakFileSize)
+
+    override var littleEndian : Boolean
+        get() = data.order() == ByteOrder.LITTLE_ENDIAN
+        set(value) {
+            if (value)
+                data.order(ByteOrder.LITTLE_ENDIAN)
+            else
+                data.order(ByteOrder.BIG_ENDIAN)
+        }
+
+    private var pos : Int
+        get() = data.position()
+        set(value) { data.position(value) }
+    private val size = data.limit()
 
     override fun clone(): FBytePakArchive {
         val clone = FBytePakArchive(data, fileName, offsetInPakFile, pakFileSize)
@@ -17,12 +34,12 @@ class FBytePakArchive(val data : ByteArray, fileName: String, val offsetInPakFil
     }
 
     override fun seek(pos: Long) {
-        rangeCheck(pos.toInt())
+        //rangeCheck(pos.toInt())
         this.pos = pos.toInt()
     }
 
     override fun skip(n: Long): Long {
-        rangeCheck(pos + n.toInt())
+        //rangeCheck(pos + n.toInt())
         this.pos += n.toInt()
         return n
     }
@@ -31,11 +48,17 @@ class FBytePakArchive(val data : ByteArray, fileName: String, val offsetInPakFil
 
     override fun pakPos() = offsetInPakFile
 
-    override fun read(buffer: ByteArray) : Int {
-        val count = min(size - pos, buffer.size)
+    override fun readBuffer(size: Int): ByteBuffer {
+        return data.duplicate().apply {
+            order(data.order())
+            limit(position() + size)
+        }
+    }
+
+    override fun read(b: ByteArray, off: Int, len: Int): Int {
+        val count = min(size - pos, len)
         if (count == 0) return -1
-        data.copyInto(buffer, 0, pos, pos + count)
-        pos += count
+        data.get(b, off, len)
         return count
     }
 }
