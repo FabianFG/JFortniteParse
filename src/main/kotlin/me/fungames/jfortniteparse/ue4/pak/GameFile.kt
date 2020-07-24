@@ -23,6 +23,7 @@ open class GameFile(val path : String = "", val pos : Long = 0L, val size : Long
         getExtension().apply { return this == "uasset" || this == "umap" }
     }
     fun isLocres() = getExtension() == "locres"
+    fun isAssetRegistry() = getExtension() == "bin"
 
     fun hasUexp() = ::uexp.isInitialized
     fun hasUbulk() = ubulk != null

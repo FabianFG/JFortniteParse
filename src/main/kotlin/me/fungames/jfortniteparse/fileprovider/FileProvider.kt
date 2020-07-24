@@ -9,6 +9,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
+import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import mu.KotlinLogging
 
@@ -89,6 +90,20 @@ abstract class FileProvider {
      */
     @Throws(ParserException::class)
     abstract fun loadLocres(file: GameFile): Locres?
+
+    /**
+     * Searches for the game file and then loads a UE4 AssetRegistry file
+     * @param filePath the path to search for
+     * @return the parsed asset registry
+     */
+    abstract fun loadAssetRegistry(filePath: String) : AssetRegistry?
+
+    /**
+     * Loads a UE4 AssetRegistry file
+     * @param file the game file to load
+     * @return the parsed asset registry
+     */
+    abstract fun loadAssetRegistry(file: GameFile) : AssetRegistry?
 
     open fun getLocresLanguageByPath(filePath: String) = FnLanguage.valueOfLanguageCode(filePath.split("Localization/(.*?)/".toRegex())[1].takeWhile { it != '/' })
 
