@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.fileprovider
 
 import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.encryption.aes.Aes
+import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
@@ -38,16 +39,17 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
             if (requiredKeys.contains(guid)) {
                 unloadedPaksByGuid(guid).forEach { reader ->
                     tasks.add(async { runCatching {
-                        if (reader.testAesKey(key)) {
-                            reader.aesKey = key
-                            reader.readIndex()
-                            reader.files.associateByTo(files, {file -> file.path.toLowerCase()})
-                            unloadedPaks.remove(reader)
-                            mountedPaks.add(reader)
-                            countNewMounts.getAndIncrement()
-                            reader
-                        } else null
-                    }.onFailure { logger.warn(it) { "Uncaught exception while loading pak file ${reader.fileName.substringAfterLast('/')}" } }.getOrNull() })
+                        reader.aesKey = key
+                        reader.readIndex()
+                        reader.files.associateByTo(files, {file -> file.path.toLowerCase()})
+                        unloadedPaks.remove(reader)
+                        mountedPaks.add(reader)
+                        countNewMounts.getAndIncrement()
+                        reader
+                    }.onFailure {
+                        if (it !is InvalidAesKeyException)
+                            logger.warn(it) { "Uncaught exception while loading pak file ${reader.fileName.substringAfterLast('/')}" }
+                    }.getOrNull() })
                 }
             }
         }

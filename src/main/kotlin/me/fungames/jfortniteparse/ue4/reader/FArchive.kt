@@ -130,7 +130,8 @@ abstract class FArchive : Cloneable, InputStream() {
         } else {
             if (length == 0)
                 return ""
-            val string = read(length - 1).toString(Charsets.UTF_8)
+            String
+            val string = Charsets.UTF_8.decode(readBuffer(length - 1)).toString()
             if (readUInt8() != 0.toUByte())
                 throw ParserException("Serialized FString is not null-terminated", this)
             //if (string == "") For re-serializing replacing actually empty strings with these ones to detect the difference, causes issues with locres
@@ -141,7 +142,7 @@ abstract class FArchive : Cloneable, InputStream() {
     }
 
     inline fun <reified K, reified V> readTMap(length: Int, init : (FArchive) -> Pair<K,V>): MutableMap<K, V> {
-        val res = mutableMapOf<K, V>()
+        val res = HashMap<K, V>(length)
         for (i in 0 until length) {
             val (key, value) = init(this)
             res[key] = value

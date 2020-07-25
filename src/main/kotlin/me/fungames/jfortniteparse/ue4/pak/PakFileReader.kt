@@ -37,8 +37,8 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
     constructor(file : File, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(FPakFileArchive(RandomAccessFile(file, "r"), file).apply { this.game = game; this.ver = GAME_UE4_GET_AR_VER(game) })
     constructor(filePath : String, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(File(filePath), game)
 
-    var encodedPakEntries: ByteArray = byteArrayOf()
-        private set
+    //var encodedPakEntries: ByteArray = byteArrayOf()
+    //    private set
 
     var concurrent = false
 
@@ -46,18 +46,6 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
 
     val pakInfo : FPakInfo = FPakInfo.readPakInfo(Ar)
     var aesKey : ByteArray? = null
-        /**
-         * Sets the aes key for this pak file after testing it
-         * @throws InvalidAesKeyException if the given aes key is invalid
-         */
-        @Throws(InvalidAesKeyException::class)
-        set(value) {
-            if (value == null)
-                return
-            if (!testAesKey(value))
-                throw InvalidAesKeyException("Given aes key '$value'is not working with '$fileName'")
-            field = value
-        }
     var aesKeyStr : String?
         get() = aesKey?.printAesKey()
         set(value) {
@@ -73,12 +61,12 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
     lateinit var files : List<GameFile>
         private set
 
-    var pathHashSeed = 0UL
+    //var pathHashSeed = 0UL
 
-    var hasPathHashIndex = false
+    //var hasPathHashIndex = false
     lateinit var pathHashIndex : FPathHashIndex
 
-    var hasFullDirectoryIndex = false
+    //var hasFullDirectoryIndex = false
     lateinit var directoryIndex : FDirectoryIndex
 
     init {
@@ -186,6 +174,343 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
      */
     fun testAesKey(key : String) = testAesKey((if (key.startsWith("0x")) key.substring(2) else key).parseHexBinary())
 
+    private fun readIndexUpdated() : List<GameFile> {
+        // Prepare primary index and decrypt if necessary
+        Ar.seek(pakInfo.indexOffset)
+        val primaryIndex = if (isEncrypted()) {
+            val key = this.aesKey
+            if (key != null) {
+                val encryptedIndex = Ar.read(pakInfo.indexSize.toInt())
+                Aes.decrypt(encryptedIndex, key)
+            } else
+                throw ParserException("Reading an encrypted index requires a valid aes key")
+        } else
+            Ar.read(pakInfo.indexSize.toInt())
+
+        val primaryIndexAr = Ar.createReader(primaryIndex, pakInfo.indexOffset)
+        primaryIndexAr.pakInfo = Ar.pakInfo
+
+        mountPrefix = runCatching { primaryIndexAr.readString().substringAfter("../../../") }.getOrElse {
+            throw InvalidAesKeyException("Given aes key '$aesKeyStr'is not working with '$fileName'", it)
+        }
+
+        val fileCount = primaryIndexAr.readInt32()
+        primaryIndexAr.skip(8) // PathHashSeed
+
+        if (!primaryIndexAr.readBoolean())
+            throw ParserException("No path hash index")
+
+        primaryIndexAr.skip(36) // PathHashIndexOffset (long) + PathHashIndexSize (long) + PathHashIndexHash (20 bytes)
+
+        if (!primaryIndexAr.readBoolean())
+            throw ParserException("No directory index")
+
+        val directoryIndexOffset = primaryIndexAr.readInt64()
+        val directoryIndexSize = primaryIndexAr.readInt64()
+        primaryIndexAr.skip(20) // Directory Index hash
+
+        val encodedPakEntriesSize = primaryIndexAr.readInt32()
+        val encodedPakEntries = primaryIndexAr.readBuffer(encodedPakEntriesSize)
+
+        if (primaryIndexAr.readInt32() < 0)
+            throw ParserException("Corrupt pak PrimaryIndex detected!")
+
+        Ar.seek(directoryIndexOffset)
+        val directoryIndexData = if (isEncrypted()) {
+            val key = this.aesKey
+            if (key != null) {
+                val encryptedIndex = Ar.read(directoryIndexSize.toInt())
+                Aes.decrypt(encryptedIndex, key)
+            } else
+                throw ParserException("Reading an encrypted index requires a valid aes key")
+        } else
+            Ar.read(directoryIndexSize.toInt())
+
+        val directoryIndexAr = Ar.createReader(directoryIndexData, directoryIndexOffset)
+        val directoryIndex = directoryIndexAr.readTMap {
+            it.readString() to it.readTMap { it2 ->
+                it2.readString() to it2.readInt32()
+            }
+        }
+
+        val encodedPakEntriesAr = FByteArchive(encodedPakEntries)
+        val begin = encodedPakEntriesAr.pos()
+
+        val tempMap = HashMap<String, GameFile>(fileCount)
+        var finalFileCount = 0
+        for ((dirName, dirContent) in directoryIndex) {
+            for ((fileName, offset) in dirContent) {
+                val path = dirName + fileName
+                encodedPakEntriesAr.seek(begin + offset)
+                val entry = readBitEntry(encodedPakEntriesAr)
+                entry.name = path
+                if(entry.isEncrypted)
+                    encryptedFileCount++
+                val gameFile = GameFile(entry, mountPrefix, this.fileName)
+                tempMap[mountPrefix + path] = gameFile
+                if (!path.endsWith(".uexp") && !path.endsWith(".ubulk"))
+                    finalFileCount++
+            }
+        }
+
+        val files = ArrayList<GameFile>(finalFileCount)
+        tempMap.values.forEach {
+            if (it.isUE4Package()) {
+                val uexp = tempMap[it.path.substringBeforeLast(".") + ".uexp"]
+                if(uexp != null)
+                    it.uexp = uexp
+                val ubulk = tempMap[it.path.substringBeforeLast(".") + ".ubulk"]
+                if(ubulk != null)
+                    it.ubulk = ubulk
+                files.add(it)
+            } else {
+                if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))
+                    files.add(it)
+            }
+        }
+        this.files = files
+
+        // Print statistics
+        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
+        if (encryptedFileCount != 0)
+            stats += " (%d encrypted)".format(encryptedFileCount)
+        if (mountPrefix.contains('/'))
+            stats += ", mount point: \"%s\"".format(mountPrefix)
+        logger.info(stats + ", version %d".format(pakInfo.version))
+
+        return files
+    }
+
+    private fun readBitEntry(Ar : FByteArchive): FPakEntry {
+        // Grab the big bitfield value:
+        // Bit 31 = Offset 32-bit safe?
+        // Bit 30 = Uncompressed size 32-bit safe?
+        // Bit 29 = Size 32-bit safe?
+        // Bits 28-23 = Compression method
+        // Bit 22 = Encrypted
+        // Bits 21-6 = Compression blocks count
+        // Bits 5-0 = Compression block size
+
+        val compressionMethodIndex : UInt
+        var compressionBlockSize : UInt
+        val offset : Long
+        val uncompressedSize : Long
+        val size : Long
+        val encrypted : Boolean
+        val compressionBlocks : Array<FPakCompressedBlock>
+
+        val value = Ar.readUInt32()
+
+        // Filter out the CompressionMethod.
+        compressionMethodIndex = (value shr 23) and 0x3fu
+
+        // Test for 32-bit safe values. Grab it, or memcpy the 64-bit value
+        // to avoid alignment exceptions on platforms requiring 64-bit alignment
+        // for 64-bit variables.
+        //
+
+        // Read the Offset.
+        val isOffset32BitSafe = (value and (1u shl 31)) != 0u
+        offset = if (isOffset32BitSafe) {
+            Ar.readUInt32().toLong()
+        } else {
+            Ar.readInt64()
+        }
+
+        // Read the UncompressedSize.
+        val isUncompressedSize32BitSafe = (value and (1u shl 30)) != 0u
+        uncompressedSize = if (isUncompressedSize32BitSafe) {
+            Ar.readUInt32().toLong()
+        } else {
+            Ar.readInt64()
+        }
+
+        // Fill in the Size.
+        size = if (compressionMethodIndex != 0u) {
+            // Size is only present if compression is applied.
+            val isSize32BitSafe = (value and (1u shl 29)) != 0u
+            if (isSize32BitSafe) {
+                Ar.readUInt32().toLong()
+            } else {
+                Ar.readInt64()
+            }
+        } else {
+            // The Size is the same thing as the UncompressedSize when
+            // CompressionMethod == COMPRESS_None.
+            uncompressedSize
+        }
+
+        // Filter the encrypted flag.
+        encrypted = (value and (1u shl 22)) != 0u
+
+        // This should clear out any excess CompressionBlocks that may be valid in the user's
+        // passed in entry.
+        val compressionBlocksCount = (value shr 6) and 0xffffu
+
+        compressionBlocks = Array(compressionBlocksCount.toInt()) { FPakCompressedBlock(0L, 0L) }
+
+        // Filter the compression block size or use the UncompressedSize if less that 64k.
+        compressionBlockSize = 0u
+        if (compressionBlocksCount > 0u) {
+            compressionBlockSize = if (uncompressedSize < 65536) uncompressedSize.toUInt() else ((value and 0x3fu) shl 11)
+        }
+
+        // Set bDeleteRecord to false, because it obviously isn't deleted if we are here.
+        //deleted = false Not needed
+
+        // Base offset to the compressed data
+        val baseOffset = if (pakInfo.version >= PakVersion_RelativeChunkOffsets) 0 else offset
+
+        // Handle building of the CompressionBlocks array.
+        if (compressionBlocks.size == 1 && !encrypted) {
+            // If the number of CompressionBlocks is 1, we didn't store any extra information.
+            // Derive what we can from the entry's file offset and size.
+            val compressedBlock = compressionBlocks[0]
+            compressedBlock.compressedStart = baseOffset + FPakEntry.getSerializedSize(pakInfo.version, compressionMethodIndex.toInt(), compressionBlocksCount.toInt())
+            compressedBlock.compressedEnd = compressedBlock.compressedStart + size
+        } else if (compressionBlocks.isNotEmpty()) {
+            // Get the right pointer to start copying the CompressionBlocks information from.
+
+            // Alignment of the compressed blocks
+            val compressedBlockAlignment = if (encrypted) Aes.BLOCK_SIZE else 1
+
+            // CompressedBlockOffset is the starting offset. Everything else can be derived from there.
+            var compressedBlockOffset = baseOffset + FPakEntry.getSerializedSize(pakInfo.version, compressionMethodIndex.toInt(), compressionBlocksCount.toInt())
+            for (compressionBlockIndex in compressionBlocks.indices) {
+                val compressedBlock = compressionBlocks[compressionBlockIndex]
+                compressedBlock.compressedStart = compressedBlockOffset
+                compressedBlock.compressedEnd = (compressedBlockOffset.toUInt() + Ar.readUInt32()).toLong()
+                val align = compressedBlock.compressedEnd - compressedBlock.compressedStart
+                compressedBlockOffset += align + compressedBlockAlignment - (align % compressedBlockAlignment)
+            }
+        }
+        //TODO There is some kind of issue here, compression blocks are sometimes going to far by one byte
+        compressionBlocks.forEach {
+            it.compressedStart += offset
+            it.compressedEnd += offset
+        }
+        return FPakEntry(pakInfo, "", offset, size, uncompressedSize, compressionMethodIndex.toInt(), compressionBlocks, encrypted, compressionBlockSize.toInt())
+    }
+
+    fun readIndex() : List<GameFile> = if (pakInfo.version >= PakVersion_PathHashIndex) readIndexUpdated() else readIndexLegacy()
+
+    private fun readIndexLegacy() : List<GameFile> {
+
+        // Prepare index and decrypt if necessary
+        Ar.seek(pakInfo.indexOffset)
+        val index = if (isEncrypted()) {
+            val key = this.aesKey
+            if (key != null) {
+                val encryptedIndex = Ar.read(pakInfo.indexSize.toInt())
+                Aes.decrypt(encryptedIndex, key)
+            } else
+                throw ParserException("Reading an encrypted index requires a valid aes key")
+        } else
+            Ar.read(pakInfo.indexSize.toInt())
+
+        val indexAr = Ar.createReader(index, pakInfo.indexOffset)
+        indexAr.pakInfo = Ar.pakInfo
+
+        // Read the index
+        var mountPoint = runCatching { indexAr.readString() }.getOrElse {
+            throw InvalidAesKeyException("Given aes key '$aesKeyStr'is not working with '$fileName'", it)
+        }
+        var badMountPoint = false
+        if (!mountPoint.startsWith("../../.."))
+            badMountPoint = true
+        else
+            mountPoint = mountPoint.replaceFirst("../../..", "")
+        if (mountPoint[0] != '/' || (mountPoint.length > 1 && mountPoint[1] == '.'))
+            badMountPoint = true
+        if (badMountPoint) {
+            logger.warn("Pak \"$fileName\" has strange mount point \"$mountPoint\", mounting to root")
+            mountPoint = "/"
+        }
+        if (mountPoint.startsWith('/'))
+            mountPoint = mountPoint.substring(1)
+        this.mountPrefix = mountPoint
+
+        this.fileCount = indexAr.readInt32()
+        this.encryptedFileCount = 0
+
+        val tempMap = mutableMapOf<String, GameFile>()
+        for (indexCount in 0 until fileCount) {
+            val entry = FPakEntry(indexAr, true)
+            val gameFile = GameFile(entry, mountPrefix, fileName)
+            if (gameFile.isEncrypted)
+                this.encryptedFileCount++
+            tempMap[gameFile.path] = gameFile
+        }
+
+        val files = mutableListOf<GameFile>()
+        tempMap.values.forEach {
+            if (it.isUE4Package()) {
+                val uexp = tempMap[it.path.substringBeforeLast(".") + ".uexp"]
+                if(uexp != null)
+                    it.uexp = uexp
+                val ubulk = tempMap[it.path.substringBeforeLast(".") + ".ubulk"]
+                if(ubulk != null)
+                    it.ubulk = ubulk
+                files.add(it)
+            } else {
+                if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))
+                    files.add(it)
+            }
+        }
+        this.files = files
+
+
+        // Print statistics
+        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
+        if (encryptedFileCount != 0)
+            stats += " (%d encrypted)".format(encryptedFileCount)
+        if (mountPrefix.contains('/'))
+            stats += ", mount point: \"%s\"".format(mountPrefix)
+        logger.info(stats + ", version %d".format(pakInfo.version))
+        return this.files
+    }
+
+    companion object {
+
+        val logger = KotlinLogging.logger("PakFile")
+
+        fun isValidIndex(bytes: ByteArray) : Boolean {
+            val testAr = FByteArchive(bytes)
+            val stringLength = testAr.readInt32()
+            if (stringLength > 128 || stringLength < -128)
+                return false
+            // Calculate the pos of the null terminator for this string
+            // Then read the null terminator byte and check whether it is actually 0
+            return when {
+                stringLength == 0 -> testAr.readInt8() == 0.toByte()
+                stringLength < 0 -> {
+                    // UTF16
+                    val nullTerminatorPos = 4 - (stringLength - 1) * 2
+                    testAr.seek(nullTerminatorPos)
+                    testAr.readInt16() == 0.toShort()
+                }
+                else -> {
+                    // UTF8
+                    val nullTerminatorPos = 4 + stringLength - 1
+                    testAr.seek(nullTerminatorPos)
+                    testAr.readInt8() == 0.toByte()
+                }
+            }
+        }
+
+        fun testAesKey(bytes : ByteArray, key : ByteArray) =
+            isValidIndex(Aes.decrypt(bytes, key))
+    }
+
+
+
+
+
+
+    /**
+     * This method is following the ue reading of the index.
+     * Therefore it might be more stable but it's slower
+     */
     private fun readIndexInternal() : List<GameFile> {
         // Prepare primary index and decrypt if necessary
         Ar.seek(pakInfo.indexOffset)
@@ -203,7 +528,9 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         primaryIndexAr.pakInfo = Ar.pakInfo
 
         // Read the index
-        var mountPoint = primaryIndexAr.readString()
+        var mountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
+            throw InvalidAesKeyException("Given aes key '$aesKeyStr'is not working with '$fileName'", it)
+        }
         var badMountPoint = false
         if (!mountPoint.startsWith("../../.."))
             badMountPoint = true
@@ -221,7 +548,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
 
         this.fileCount = primaryIndexAr.readInt32()
         this.encryptedFileCount = 0
-        this.pathHashSeed = primaryIndexAr.readUInt64()
+        val pathHashSeed = primaryIndexAr.readUInt64()
 
         var readerHasPathHashIndex = primaryIndexAr.readBoolean()
         var pathHashIndexOffset = INDEX_NONE.toLong()
@@ -244,7 +571,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             readerHasFullDirectoryIndex = readerHasFullDirectoryIndex && fullDirectoryIndexOffset != INDEX_NONE.toLong()
         }
 
-        encodedPakEntries = primaryIndexAr.readTArray { it.readInt8() }.toByteArray()
+        val encodedPakEntries = primaryIndexAr.readTArray { it.readInt8() }.toByteArray()
 
         val filesNum = primaryIndexAr.readInt32()
         if (filesNum < 0) {
@@ -307,7 +634,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                 Ar.read(pathHashIndexSize.toInt())
             pathHashIndex.copyInto(pathHashIndexData)
             this.pathHashIndex = pathHashIndexAr.readTMap { it.readUInt64() to it.readInt32() }
-            hasPathHashIndex = true
+            //hasPathHashIndex = true
         }
 
         if (!readFullDirectoryIndex) {
@@ -317,7 +644,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                         it2 -> it2.readString() to it2.readInt32()
                 }
             }
-            hasFullDirectoryIndex = false
+            //hasFullDirectoryIndex = false
         } else {
             if (Ar.pakSize() < (fullDirectoryIndexOffset + fullDirectoryIndexSize)) {
                 throw ParserException("FullDirectoryIndex out of range: ${Ar.pakSize()} < $fullDirectoryIndexOffset + $fullDirectoryIndexSize")
@@ -342,13 +669,15 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                         it2 -> it2.readString() to it2.readInt32()
                 }
             }
-            hasFullDirectoryIndex = true
+            //hasFullDirectoryIndex = true
         }
 
+        val encodedPakEntriesAr = FByteArchive(encodedPakEntries)
         for ((dirName, dirContent) in directoryIndex) {
             for ((fileName, offset) in dirContent) {
                 val path = dirName + fileName
-                val entry = readBitEntry(offset)
+                encodedPakEntriesAr.seek(offset)
+                val entry = readBitEntry(encodedPakEntriesAr)
                 entry.name = path
                 if(entry.isEncrypted)
                     encryptedFileCount++
@@ -383,7 +712,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         logger.info(stats + ", version %d".format(pakInfo.version))
 
         if (!keepIndexData) {
-            this.encodedPakEntries = byteArrayOf()
+            //this.encodedPakEntries = byteArrayOf()
             this.directoryIndex = emptyMap()
             this.pathHashIndex = emptyMap()
         }
@@ -391,230 +720,6 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         return this.files
     }
 
-    private fun readBitEntry(entryOffset : Int): FPakEntry {
-        // Grab the big bitfield value:
-        // Bit 31 = Offset 32-bit safe?
-        // Bit 30 = Uncompressed size 32-bit safe?
-        // Bit 29 = Size 32-bit safe?
-        // Bits 28-23 = Compression method
-        // Bit 22 = Encrypted
-        // Bits 21-6 = Compression blocks count
-        // Bits 5-0 = Compression block size
-
-        val compressionMethodIndex : UInt
-        var compressionBlockSize : UInt
-        val offset : Long
-        val uncompressedSize : Long
-        val size : Long
-        val encrypted : Boolean
-        val compressionBlocks : Array<FPakCompressedBlock>
-
-        var sourcePtr = BytePointer(encodedPakEntries)
-        sourcePtr += entryOffset
-        val value = sourcePtr.toUInt32()
-        sourcePtr += 4
-
-        // Filter out the CompressionMethod.
-        compressionMethodIndex = (value shr 23) and 0x3fu
-
-        // Test for 32-bit safe values. Grab it, or memcpy the 64-bit value
-        // to avoid alignment exceptions on platforms requiring 64-bit alignment
-        // for 64-bit variables.
-        //
-
-        // Read the Offset.
-        val isOffset32BitSafe = (value and (1u shl 31)) != 0u
-        if (isOffset32BitSafe) {
-            offset = sourcePtr.toUInt32().toLong()
-            sourcePtr += 4
-        } else {
-            offset = sourcePtr.toInt64()
-            sourcePtr += 8
-        }
-
-        // Read the UncompressedSize.
-        val isUncompressedSize32BitSafe = (value and (1u shl 30)) != 0u
-        if (isUncompressedSize32BitSafe) {
-            uncompressedSize = sourcePtr.toUInt32().toLong()
-            sourcePtr += 4
-        } else {
-            uncompressedSize = sourcePtr.toInt64()
-            sourcePtr += 8
-        }
-
-        // Fill in the Size.
-        if (compressionMethodIndex != 0u) {
-            // Size is only present if compression is applied.
-            val isSize32BitSafe = (value and (1u shl 29)) != 0u
-            if (isSize32BitSafe) {
-                size = sourcePtr.toUInt32().toLong()
-                sourcePtr += 4
-            } else {
-                size = sourcePtr.toInt64()
-                sourcePtr += 8
-            }
-        } else {
-            // The Size is the same thing as the UncompressedSize when
-            // CompressionMethod == COMPRESS_None.
-            size = uncompressedSize
-        }
-
-        // Filter the encrypted flag.
-        encrypted = (value and (1u shl 22)) != 0u
-
-        // This should clear out any excess CompressionBlocks that may be valid in the user's
-        // passed in entry.
-        val compressionBlocksCount = (value shr 6) and 0xffffu
-
-        compressionBlocks = Array(compressionBlocksCount.toInt()) { FPakCompressedBlock(0L, 0L) }
-
-        // Filter the compression block size or use the UncompressedSize if less that 64k.
-        compressionBlockSize = 0u
-        if (compressionBlocksCount > 0u) {
-            compressionBlockSize = if (uncompressedSize < 65536) uncompressedSize.toUInt() else ((value and 0x3fu) shl 11)
-        }
-
-        // Set bDeleteRecord to false, because it obviously isn't deleted if we are here.
-        //deleted = false Not needed
-
-        // Base offset to the compressed data
-        val baseOffset = if (pakInfo.version >= PakVersion_RelativeChunkOffsets) 0 else offset
-
-        // Handle building of the CompressionBlocks array.
-        if (compressionBlocks.size == 1 && !encrypted) {
-            // If the number of CompressionBlocks is 1, we didn't store any extra information.
-            // Derive what we can from the entry's file offset and size.
-            val compressedBlock = compressionBlocks[0]
-            compressedBlock.compressedStart = baseOffset + FPakEntry.getSerializedSize(pakInfo.version, compressionMethodIndex.toInt(), compressionBlocksCount.toInt())
-            compressedBlock.compressedEnd = compressedBlock.compressedStart + size
-        } else if (compressionBlocks.isNotEmpty()) {
-            // Get the right pointer to start copying the CompressionBlocks information from.
-            var compressionBlockSizePtr = sourcePtr + 0
-
-            // Alignment of the compressed blocks
-            val compressedBlockAlignment = if (encrypted) Aes.BLOCK_SIZE else 1
-
-            // CompressedBlockOffset is the starting offset. Everything else can be derived from there.
-            var compressedBlockOffset = baseOffset + FPakEntry.getSerializedSize(pakInfo.version, compressionMethodIndex.toInt(), compressionBlocksCount.toInt())
-            for (compressionBlockIndex in compressionBlocks.indices) {
-                val compressedBlock = compressionBlocks[compressionBlockIndex]
-                compressedBlock.compressedStart = compressedBlockOffset
-                compressedBlock.compressedEnd = (compressedBlockOffset.toUInt() + compressionBlockSizePtr.toUInt32()).toLong()
-                compressionBlockSizePtr += 4
-                val align = compressedBlock.compressedEnd - compressedBlock.compressedStart
-                compressedBlockOffset += align + compressedBlockAlignment - (align % compressedBlockAlignment)
-            }
-        }
-        //TODO There is some kind of issue here, compression blocks are sometimes going to far by one byte
-        compressionBlocks.forEach {
-            it.compressedStart += offset
-            it.compressedEnd += offset
-        }
-        return FPakEntry(pakInfo, "", offset, size, uncompressedSize, compressionMethodIndex.toInt(), compressionBlocks, encrypted, compressionBlockSize.toInt())
-    }
-
-    fun readIndex() : List<GameFile> = if (pakInfo.version >= PakVersion_PathHashIndex) readIndexInternal() else readIndexLegacy()
-
-    private fun readIndexLegacy() : List<GameFile> {
-
-        // Prepare index and decrypt if necessary
-        Ar.seek(pakInfo.indexOffset)
-        val index = if (isEncrypted()) {
-            val key = this.aesKey
-            if (key != null) {
-                val encryptedIndex = Ar.read(pakInfo.indexSize.toInt())
-                Aes.decrypt(encryptedIndex, key)
-            } else
-                throw ParserException("Reading an encrypted index requires a valid aes key")
-        } else
-            Ar.read(pakInfo.indexSize.toInt())
-
-        val indexAr = Ar.createReader(index, pakInfo.indexOffset)
-        indexAr.pakInfo = Ar.pakInfo
-
-        // Read the index
-        var mountPoint = indexAr.readString()
-        var badMountPoint = false
-        if (!mountPoint.startsWith("../../.."))
-            badMountPoint = true
-        else
-            mountPoint = mountPoint.replaceFirst("../../..", "")
-        if (mountPoint[0] != '/' || (mountPoint.length > 1 && mountPoint[1] == '.'))
-            badMountPoint = true
-        if (badMountPoint) {
-            logger.warn("Pak \"$fileName\" has strange mount point \"$mountPoint\", mounting to root")
-            mountPoint = "/"
-        }
-        if (mountPoint.startsWith('/'))
-            mountPoint = mountPoint.substring(1)
-        this.mountPrefix = mountPoint
-
-        this.fileCount = indexAr.readInt32()
-        this.encryptedFileCount = 0
-
-        val tempMap = mutableMapOf<String, GameFile>()
-        for (indexCount in 0 until fileCount) {
-            val entry = FPakEntry(indexAr, true)
-            val gameFile = GameFile(entry, mountPrefix, fileName)
-            if (gameFile.isEncrypted)
-                this.encryptedFileCount++
-            tempMap[gameFile.path] = gameFile
-        }
-
-        val files = mutableListOf<GameFile>()
-        tempMap.values.forEach {
-            if (it.isUE4Package()) {
-                val uexp = tempMap[it.path.substringBeforeLast(".") + ".uexp"]
-                if(uexp != null)
-                    it.uexp = uexp
-                val ubulk = tempMap[it.path.substringBeforeLast(".") + ".ubulk"]
-                if(ubulk != null)
-                    it.ubulk = ubulk
-                files.add(it)
-            } else {
-                if (!it.path.endsWith(".uexp") && !it.path.endsWith(".ubulk"))
-                    files.add(it)
-            }
-        }
-        this.files = files
 
 
-        // Print statistics
-        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
-        if (encryptedFileCount != 0)
-            stats += " (%d encrypted)".format(encryptedFileCount)
-        if (mountPrefix.contains('/'))
-            stats += ", mount point: \"%s\"".format(mountPrefix)
-        logger.info(stats + ", version %d".format(pakInfo.version))
-        return this.files
-    }
-
-    companion object {
-
-        val logger = KotlinLogging.logger("PakFile")
-
-        fun testAesKey(bytes : ByteArray, key : ByteArray) : Boolean {
-            val testAr = FByteArchive(Aes.decrypt(bytes, key))
-            val stringLength = testAr.readInt32()
-            if (stringLength > 128 || stringLength < -128)
-                return false
-            // Calculate the pos of the null terminator for this string
-            // Then read the null terminator byte and check whether it is actually 0
-            return when {
-                stringLength == 0 -> testAr.readInt8() == 0.toByte()
-                stringLength < 0 -> {
-                    // UTF16
-                    val nullTerminatorPos = 4 - (stringLength - 1) * 2
-                    testAr.seek(nullTerminatorPos)
-                    testAr.readInt16() == 0.toShort()
-                }
-                else -> {
-                    // UTF8
-                    val nullTerminatorPos = 4 + stringLength - 1
-                    testAr.seek(nullTerminatorPos)
-                    testAr.readInt8() == 0.toByte()
-                }
-            }
-        }
-    }
 }

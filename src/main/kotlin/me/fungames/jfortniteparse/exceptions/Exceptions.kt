@@ -4,7 +4,7 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import java.lang.RuntimeException
 
-class ParserException(override val message: String?, override val cause: Throwable? = null) : Exception() {
+open class ParserException(override val message: String?, override val cause: Throwable? = null) : Exception() {
     @ExperimentalUnsignedTypes
     constructor(message: String, Ar : FArchive, cause: Throwable? = null) : this(
         """
@@ -21,5 +21,5 @@ class ParserException(override val message: String?, override val cause: Throwab
     )
 }
 
-class InvalidAesKeyException(override val message: String?, override val cause: Throwable? = null) : RuntimeException()
+class InvalidAesKeyException(override val message: String?, override val cause: Throwable? = null) : ParserException(message, cause)
 class UnknownCompressionMethodException(override val message: String?, override val cause: Throwable? = null) : RuntimeException()

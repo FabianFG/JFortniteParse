@@ -52,6 +52,7 @@ class FBytePakArchive(val data : ByteBuffer, fileName: String, val offsetInPakFi
         return data.duplicate().apply {
             order(data.order())
             limit(position() + size)
+            pos += size
         }
     }
 
@@ -61,4 +62,11 @@ class FBytePakArchive(val data : ByteBuffer, fileName: String, val offsetInPakFi
         data.get(b, off, len)
         return count
     }
+
+    override fun readDouble() = data.double
+    override fun readFloat32() = data.float
+    override fun readInt8() = data.get()
+    override fun readInt16() = data.short
+    override fun readInt32() = data.int
+    override fun readInt64() = data.long
 }

@@ -53,6 +53,7 @@ open class FByteArchive(val data : ByteBuffer) : FArchive() {
         return data.duplicate().apply {
             order(data.order())
             limit(position() + size)
+            pos += size
         }
     }
 
