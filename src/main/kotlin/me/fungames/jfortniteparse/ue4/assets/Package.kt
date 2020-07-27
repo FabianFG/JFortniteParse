@@ -6,21 +6,21 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.UClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.exports.*
+import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.*
 import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
+import me.fungames.jfortniteparse.ue4.assets.objects.FObjectImport
+import me.fungames.jfortniteparse.ue4.assets.objects.FPackageFileSummary
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
+import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectImport
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageFileSummary
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 import java.io.OutputStream
@@ -28,6 +28,7 @@ import java.nio.ByteBuffer
 
 @ExperimentalUnsignedTypes
 class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null, val name : String, provider: FileProvider? = null, var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) {
+
     companion object {
         val packageMagic = 0x9E2A83C1u
         val gson = GsonBuilder()
@@ -49,9 +50,10 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
     val nameMap : MutableList<FNameEntry>
     val importMap : MutableList<FObjectImport>
     val exportMap : MutableList<FObjectExport>
-    val exports
-        get() = exportMap.map { it.exportObject.value }
-    val dependsMap : MutableList<Array<FPackageIndex>>
+
+    internal val exportsLazy = mutableMapOf<FObjectExport, Lazy<UExport>>()
+
+    val exports : List<UExport>
 
     init {
         val uassetAr = FAssetArchive(uasset, provider, name)
@@ -63,50 +65,44 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
         uexpAr.ver = game.version
         ubulkAr?.game = game.game
         ubulkAr?.ver = game.version
+
+        nameMap = mutableListOf()
+        importMap = mutableListOf()
+        exportMap = mutableListOf()
         uassetAr.owner = this
 
         info = FPackageFileSummary(uassetAr)
         if (info.tag != packageMagic)
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
 
+
         uassetAr.seek(this.info.nameOffset)
-        nameMap = MutableList(info.nameCount) { FNameEntry(uassetAr) }
-        uassetAr.nameMap = nameMap
+        for (i in 0 until info.nameCount)
+            nameMap.add(FNameEntry(uassetAr))
+
 
         uassetAr.seek(this.info.importOffset)
-        importMap = MutableList(info.importCount) { FObjectImport(uassetAr) }
-        uassetAr.importMap = importMap
+        for (i in 0 until info.importCount)
+            importMap.add(FObjectImport(uassetAr))
 
         uassetAr.seek(this.info.exportOffset)
-        exportMap = MutableList(info.exportCount) { FObjectExport(uassetAr) }
-        uassetAr.exportMap = exportMap
-
-        dependsMap = if (info.dependsOffset != 0) {
-            uassetAr.seek(this.info.dependsOffset)
-            MutableList(info.exportCount) { uassetAr.readTArray { FPackageIndex(uassetAr) } }
-        } else mutableListOf()
+        for (i in 0 until info.exportCount)
+            exportMap.add(FObjectExport(uassetAr))
 
         //Setup uexp reader
-        uexpAr.nameMap = nameMap
-        uexpAr.importMap = importMap
-        uexpAr.exportMap = exportMap
-        uexpAr.uassetSize = info.totalHeaderSize
-        uexpAr.info = info
         uexpAr.owner = this
+        uexpAr.uassetSize = info.totalHeaderSize
 
         //If attached also setup the ubulk reader
         if (ubulkAr != null) {
             ubulkAr.uassetSize = info.totalHeaderSize
             ubulkAr.uexpSize = exportMap.sumBy { it.serialSize.toInt() }
-            ubulkAr.info = info
-            ubulkAr.nameMap = nameMap
-            ubulkAr.importMap = importMap
-            ubulkAr.exportMap = exportMap
+            ubulkAr.owner = this
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
-            uexpAr.owner = this
         }
 
-        exportMap.forEach { it.exportObject = lazy {
+        exports = mutableListOf()
+        exportMap.forEach { exportsLazy[it] = lazy {
             val origPos = uexpAr.pos()
             val exportType = it.classIndex.name.substringAfter("Default__")
             uexpAr.seekRelative(it.serialOffset.toInt())
@@ -123,7 +119,6 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
                 }
                 else -> readExport(uexpAr, exportType, it, validPos)
             }
-            export.owner = this
             if (validPos != uexpAr.pos())
                 logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
             else
@@ -131,11 +126,16 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
             uexpAr.seek(origPos)
             export
         } }
+        exportsLazy.values.forEach {
+            val value = it.value
+            if (!exports.contains(value))
+                exports.add(value)
+        }
         matchValorantCharacterAbilities()
         uassetAr.clearImportCache()
         uexpAr.clearImportCache()
         ubulkAr?.clearImportCache()
-        logger.debug("Successfully parsed package : $name")
+        logger.info("Successfully parsed package : $name")
     }
 
     fun readExport(uexpAr : FAssetArchive, exportType : String, it : FObjectExport, validPos : Int) = when(exportType) {
@@ -164,7 +164,6 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
         "FortTokenType", "FortWorkerType",
         "FortDailyRewardScheduleTokenDefinition",
         "FortAbilityKit" -> ItemDefinition(uexpAr, it)
-        "Level" -> ULevel(uexpAr, it)
         else -> {
             if (exportType.contains("ItemDefinition")) {
                 ItemDefinition(uexpAr, it)

@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.encryption.aes
 
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
+import me.fungames.jfortniteparse.util.ModByteArrayOutputStream
 import me.fungames.jfortniteparse.util.parseHexBinary
 import java.io.ByteArrayOutputStream
 import javax.crypto.Cipher
@@ -26,7 +27,7 @@ object Aes {
         val cipher = Cipher.getInstance("AES/CBC/NoPadding")
         val secretKeySpec = SecretKeySpec(key, "AES")
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, IvParameterSpec(ByteArray(BLOCK_SIZE)))
-        val out = ByteArrayOutputStream()
+        val out = ModByteArrayOutputStream(encrypted.size)
         for (i in encrypted.indices step BLOCK_SIZE)
             out.write(cipher.doFinal(encrypted.copyOfRange(i, i + BLOCK_SIZE)))
         return out.toByteArray()
@@ -36,11 +37,9 @@ object Aes {
         val cipher = Cipher.getInstance("AES/CBC/NoPadding")
         val secretKeySpec = SecretKeySpec(key, "AES")
         cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, IvParameterSpec(ByteArray(BLOCK_SIZE)))
-        val out = ByteArrayOutputStream()
+        val out = ModByteArrayOutputStream(decrypted.size)
         for (i in decrypted.indices step BLOCK_SIZE)
             out.write(cipher.doFinal(decrypted.copyOfRange(i, i + BLOCK_SIZE)))
         return out.toByteArray()
     }
-
-
 }

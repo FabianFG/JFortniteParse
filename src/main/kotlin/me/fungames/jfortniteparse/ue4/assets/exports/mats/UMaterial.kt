@@ -29,7 +29,7 @@ class UMaterial(Ar: FAssetArchive, exportObject: FObjectExport, validPos: Int) :
     fun scanForTextures(Ar: FAssetArchive) {
         //!! NOTE: this code will not work when textures are located in the same package - they don't present in import table
         //!! but could be found in export table. That's true for Simplygon-generated materials.
-        for (imp in Ar.importMap) {
+        for (imp in Ar.owner.importMap) {
             if (imp.className.text.startsWith("Texture", true))
                 Ar.loadImport<UTexture>(imp)?.let { referencedTextures.add(it) }
         }

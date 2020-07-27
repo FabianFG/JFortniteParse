@@ -2,10 +2,12 @@ package me.fungames.jfortniteparse.fileprovider
 
 import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.encryption.aes.Aes
-import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
+import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
-import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
+import me.fungames.jfortniteparse.util.printAesKey
+import me.fungames.jfortniteparse.util.printHexBinary
 import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -19,11 +21,12 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     protected abstract val requiredKeys : MutableList<FGuid>
     protected abstract val keys : MutableMap<FGuid, ByteArray>
     open fun keys() : Map<FGuid, ByteArray> = keys
+    open fun keysStr() : Map<FGuid, String> = keys.mapValues { it.value.printAesKey() }
     open fun requiredKeys() : List<FGuid> = requiredKeys
     open fun unloadedPaks() : List<PakFileReader> = unloadedPaks
     open fun mountedPaks() : List<PakFileReader> = mountedPaks
-    open fun submitKey(guid : FGuid, key : String) = submitKeys(mapOf(guid to Aes.parseKey(key)))
-    open fun submitKeysStr(keys : Map<FGuid, String>) = runBlocking { submitKeys(keys.mapValues { Aes.parseKey(it.value) }) }
+    open fun submitKey(guid : FGuid, key : String) = submitKeysStr(mapOf(guid to key))
+    open fun submitKeysStr(keys : Map<FGuid, String>) = submitKeys(keys.mapValues { Aes.parseKey(it.value) })
     open fun submitKey(guid : FGuid, key : ByteArray) = submitKeys(mapOf(guid to key))
     open fun submitKeys(keys : Map<FGuid, ByteArray>) = runBlocking { submitKeysAsync(keys).await() }
 
@@ -36,19 +39,17 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
             if (requiredKeys.contains(guid)) {
                 unloadedPaksByGuid(guid).forEach { reader ->
                     tasks.add(async { runCatching {
-                        if (reader.testAesKey(key)) {
-                            reader.aesKey = key
-                            reader.readIndex()
-                            reader.files.associateByTo(files, {file -> file.path.toLowerCase()})
-                            unloadedPaks.remove(reader)
-                            mountedPaks.add(reader)
-                            countNewMounts.getAndIncrement()
-                            reader
-                        } else {
-                            logger.warn("The provided encryption key doesn't work with \"" + (if (reader.Ar is FPakFileArchive) reader.Ar.file else reader.fileName) + "\". Skipping.")
-                            null
-                        }
-                    }.onFailure { logger.warn(it) { "Uncaught exception while loading pak file ${reader.fileName.substringAfterLast('/')}" } }.getOrNull() })
+                        reader.aesKey = key
+                        reader.readIndex()
+                        reader.files.associateByTo(files, {file -> file.path.toLowerCase()})
+                        unloadedPaks.remove(reader)
+                        mountedPaks.add(reader)
+                        countNewMounts.getAndIncrement()
+                        reader
+                    }.onFailure {
+                        if (it !is InvalidAesKeyException)
+                            logger.warn(it) { "Uncaught exception while loading pak file ${reader.fileName.substringAfterLast('/')}" }
+                    }.getOrNull() })
                 }
             }
         }

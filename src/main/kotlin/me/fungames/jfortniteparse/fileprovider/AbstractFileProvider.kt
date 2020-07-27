@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
+import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 abstract class AbstractFileProvider : FileProvider() {
@@ -69,6 +70,34 @@ abstract class AbstractFileProvider : FileProvider() {
             Locres(locres, file.path, getLocresLanguageByPath(file.path))
         } catch (e : Exception) {
             logger.error("Failed to load locres ${file.path}", e)
+            null
+        }
+    }
+
+    override fun loadAssetRegistry(filePath: String): AssetRegistry? {
+        val path = fixPath(filePath)
+        val gameFile = findGameFile(path)
+        if (gameFile != null)
+            return loadAssetRegistry(gameFile)
+        if (!path.endsWith(".bin"))
+            return null
+        val locres = saveGameFile(path) ?: return null
+        return try {
+            AssetRegistry(locres, path)
+        } catch (e : ParserException) {
+            logger.error("Failed to load asset registry $path", e)
+            null
+        }
+    }
+
+    override fun loadAssetRegistry(file: GameFile): AssetRegistry? {
+        if (!file.isAssetRegistry())
+            return null
+        val locres = saveGameFile(file)
+        return try {
+            AssetRegistry(locres, file.path)
+        } catch (e : Exception) {
+            logger.error("Failed to load asset registry ${file.path}", e)
             null
         }
     }

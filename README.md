@@ -16,7 +16,8 @@ I provide active support for the following games
 - Load and export **static meshes** with their materials to pskx files
 - Load and export **materials** with their textures to mat files
 - Convert cosmetics into images providing all of their details with or without variants
-- Locres support for asset files
+- Locres (Translation files) support for asset files
+- AssetRegistry.bin support (used to find export classes without needing to serialize the asset)
 - A file provider for providing comfortable loading of asset files
 - **Valorant Support** Load valorant assets and pak files and convert its characters to images with their details and abilities
 #### Usage
@@ -162,7 +163,7 @@ pkg.applyLocres(locres)
 <dependency>
 	<groupId>me.fungames</groupId>
 	<artifactId>JFortniteParse</artifactId>
-	<version>3.1.15</version>
+	<version>3.2.1</version>
 </dependency>
 ```
 ##### Gradle
@@ -176,7 +177,7 @@ repositories {
 ```
 - Add the dependency
 ```groovy
-implementation 'me.fungames:JFortniteParse:3.1.15'
+implementation 'me.fungames:JFortniteParse:3.2.1'
 ```
 
 ### Fortnite Text Hotfixes
@@ -208,4 +209,5 @@ implementation 'me.fungames:JFortniteParseTextHotfixes:1.3.9'
 
 ### Contributors
 - [Asval](https://github.com/iAmAsval)
+- [Amrsatrio](https://github.com/Amrsatrio)
 

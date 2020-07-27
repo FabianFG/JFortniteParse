@@ -16,7 +16,7 @@
         <logger name="Oodle" level="info" additivity="false">
             <AppenderRef ref="console"/>
         </logger>
-        <logger name="PakFile" level="info" additivity="false">
+        <logger name="PakFile" level="debug" additivity="false">
             <AppenderRef ref="console"/>
         </logger>
     </Loggers>

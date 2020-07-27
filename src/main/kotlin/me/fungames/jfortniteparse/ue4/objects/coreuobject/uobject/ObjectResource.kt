@@ -119,7 +119,6 @@ class FObjectExport : FObjectResource {
     var createBeforeSerializationDependencies: Int
     var serializationBeforeCreateDependencies: Int
     var createBeforeCreateDependencies: Int
-    @Transient lateinit var exportObject: Lazy<UExport>
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
