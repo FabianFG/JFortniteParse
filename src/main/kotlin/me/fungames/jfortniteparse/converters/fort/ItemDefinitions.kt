@@ -15,7 +15,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortMtxOfferData
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.util.cut
 import me.fungames.jfortniteparse.util.drawCenteredString
 import me.fungames.jfortniteparse.util.scale

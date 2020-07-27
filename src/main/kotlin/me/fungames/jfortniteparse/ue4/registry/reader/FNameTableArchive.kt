@@ -1,8 +1,8 @@
 package me.fungames.jfortniteparse.ue4.registry.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FNameEntry
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import kotlin.math.min
 

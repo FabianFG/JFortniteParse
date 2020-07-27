@@ -15,7 +15,6 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.*
 import me.fungames.jfortniteparse.ue4.objects.detailcustomizations.FNavAgentSelectorCustomization
 import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
@@ -25,6 +24,7 @@ import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
 import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceLegacyObjectReference
 import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.*
+import me.fungames.jfortniteparse.ue4.objects.uobject.*
 
 object JsonSerializer {
     val packageConverter = jsonSerializer<Package> { arg ->

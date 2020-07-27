@@ -5,8 +5,8 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 open class UObject : UExport {

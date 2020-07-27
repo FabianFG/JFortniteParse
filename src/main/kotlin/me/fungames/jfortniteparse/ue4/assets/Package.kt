@@ -16,10 +16,10 @@ import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FNameEntry
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectImport
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageFileSummary
+import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageFileSummary
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 import java.io.OutputStream

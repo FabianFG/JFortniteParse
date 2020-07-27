@@ -6,10 +6,10 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectImport
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.nio.ByteBuffer
 

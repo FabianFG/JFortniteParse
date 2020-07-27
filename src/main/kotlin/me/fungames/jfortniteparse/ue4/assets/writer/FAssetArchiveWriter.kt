@@ -2,10 +2,10 @@ package me.fungames.jfortniteparse.ue4.assets.writer
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FNameEntry
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectImport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
@@ -47,7 +47,7 @@ open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter(
             throw ParserException("FName does not have a valid value, value in name map : ${nameMap[i.index].name}, value in fname : ${i.text}", this)
         }
         writeInt32(i.index)
-        writeInt32(i.extraIndex)
+        writeInt32(i.number)
     }
 
     override fun write(buffer: ByteArray) {

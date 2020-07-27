@@ -6,7 +6,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 open class UMaterialInterface : UUnrealMaterial {

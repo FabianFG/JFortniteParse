@@ -9,7 +9,7 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 enum class EFormatArgumentType { Int, UInt, Float, Double, Text, Gender }

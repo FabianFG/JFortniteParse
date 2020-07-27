@@ -7,10 +7,10 @@ import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FSoftObjectPath
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.UInterfaceProperty
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
+import me.fungames.jfortniteparse.ue4.objects.uobject.UInterfaceProperty
 import java.lang.reflect.Array
 
 @ExperimentalUnsignedTypes

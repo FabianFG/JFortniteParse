@@ -10,8 +10,8 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FBoxSphereBounds
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.versions.*

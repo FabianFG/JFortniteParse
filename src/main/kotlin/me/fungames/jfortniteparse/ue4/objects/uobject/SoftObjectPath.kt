@@ -1,8 +1,9 @@
-package me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject
+package me.fungames.jfortniteparse.ue4.objects.uobject
 
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 /**
  * A struct that contains a string reference to an object, either a top level asset or a subobject.

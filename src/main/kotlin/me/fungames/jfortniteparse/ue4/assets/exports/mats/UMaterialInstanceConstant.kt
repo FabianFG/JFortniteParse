@@ -7,7 +7,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.structs.FTextureParameterVa
 import me.fungames.jfortniteparse.ue4.assets.objects.structs.FVectorParameterValue
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 class UMaterialInstanceConstant(Ar: FAssetArchive, exportObject: FObjectExport) : UMaterialInstance(Ar, exportObject) {

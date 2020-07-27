@@ -8,7 +8,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 open class FExpressionInput : UClass {
     /** Index into Expression's outputs array that this input is connected to. */

@@ -3,8 +3,8 @@ package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.FRenderingObjectVersion
 
 @ExperimentalUnsignedTypes
