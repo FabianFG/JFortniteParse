@@ -17,7 +17,7 @@ open class FMovieSceneEvaluationTree : UClass {
         super.complete(Ar)
     }
 
-    constructor(rootNode: FMovieSceneEvaluationTreeNode, childNodes: TEvaluationTreeEntryContainer<FMovieSceneEvaluationTreeNode>) : super() {
+    constructor(rootNode: FMovieSceneEvaluationTreeNode, childNodes: TEvaluationTreeEntryContainer<FMovieSceneEvaluationTreeNode>) {
         this.rootNode = rootNode
         this.childNodes = childNodes
     }

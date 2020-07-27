@@ -1,4 +1,4 @@
-package me.fungames.jfortniteparse.ue4.assets.objects
+package me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject
 
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 @ExperimentalUnsignedTypes
 class FNameEntry : UClass {
-
     var name: String
     var nonCasePreservingHash: UShort
     var casePreservingHash: UShort

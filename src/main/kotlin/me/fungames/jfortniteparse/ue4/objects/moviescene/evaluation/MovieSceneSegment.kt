@@ -61,7 +61,7 @@ class FMovieSceneSegment : UClass {
         super.complete(Ar)
     }
 
-    constructor(range: TRange<FFrameNumber>, id: Int, allowEmpty: Boolean, impls: Array<FStructFallback>) : super() {
+    constructor(range: TRange<FFrameNumber>, id: Int, allowEmpty: Boolean, impls: Array<FStructFallback>) {
         this.range = range
         this.id = id
         this.allowEmpty = allowEmpty

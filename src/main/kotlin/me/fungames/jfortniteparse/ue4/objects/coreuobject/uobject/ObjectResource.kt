@@ -57,8 +57,9 @@ class FPackageIndex : UClass {
 
     constructor() : this(0)
 
-    constructor(index: Int) {
+    constructor(index: Int, owner: Package? = null) {
         this.index = index
+        this.owner = owner
     }
 
     override fun toString() = importObject?.objectName?.text?.let { "Import: $it" }
@@ -119,6 +120,7 @@ class FObjectExport : FObjectResource {
     var createBeforeSerializationDependencies: Int
     var serializationBeforeCreateDependencies: Int
     var createBeforeCreateDependencies: Int
+    @Transient lateinit var exportObject: Lazy<UExport>
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)

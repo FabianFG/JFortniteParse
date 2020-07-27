@@ -1,31 +1,31 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.FGuid
-import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
-import me.fungames.jfortniteparse.ue4.assets.objects.*
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMaterial
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMeshLODResources
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.math.FBoxSphereBounds
+import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator
+import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
+import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.versions.*
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_RENAME_WIDGET_VISIBILITY
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_STATIC_MESH_STORE_NAV_COLLISION
 
 internal const val MAX_STATIC_UV_SETS_UE4 = 8
 internal const val MAX_STATIC_LODS_UE4 = 8
 
 @ExperimentalUnsignedTypes
-class UStaticMesh : UExport {
-    override var baseObject: UObject
-    var stripFlags : FStripDataFlags
-    var bodySetup : UExport? // UBodySetup
-    var navCollision : UExport? // UNavCollision
-    var lightingGuid : FGuid
-    var sockets : Array<UExport?>
+class UStaticMesh : UObject {
+    var stripFlags: FStripDataFlags
+    var bodySetup: UExport? // UBodySetup
+    var navCollision: UExport? // UNavCollision
+    var lightingGuid: FGuid
+    var sockets: Array<UExport?>
     var lods = emptyArray<FStaticMeshLODResources>()
     var bounds = FBoxSphereBounds(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f), 0f)
     var lodsShareStaticLighting = false
@@ -33,16 +33,16 @@ class UStaticMesh : UExport {
     var staticMaterials = emptyArray<FStaticMaterial>()
     var materials = emptyArray<UMaterialInterface>()
 
-    constructor(Ar: FAssetArchive, exportObject : FObjectExport, validPos : Int) : super(exportObject) {
-        super.init(Ar)
-        baseObject = UObject(Ar, exportObject)
+    constructor(Ar: FAssetArchive, exportObject: FObjectExport, validPos: Int) : super(Ar, exportObject) {
         stripFlags = FStripDataFlags(Ar)
         val cooked = Ar.readBoolean()
         bodySetup = Ar.loadObject(FPackageIndex(Ar))
-        navCollision = Ar.loadObject(if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
-            FPackageIndex(Ar)
-        else
-            FPackageIndex(0, Ar.owner))
+        navCollision = Ar.loadObject(
+            if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
+                FPackageIndex(Ar)
+            else
+                FPackageIndex(0, Ar.owner)
+        )
 
         if (!stripFlags.isEditorDataStripped()) {
             if (Ar.ver < VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED) {
@@ -79,7 +79,7 @@ class UStaticMesh : UExport {
                         stripped = stripFlags2.isDataStrippedForServer()
                         if (Ar.game >= GAME_UE4(21)) {
                             // 4.21 uses additional strip flag for distance field
-                            val distanceFieldDataStripFlag : UByte = 1u
+                            val distanceFieldDataStripFlag: UByte = 1u
                             stripped = stripped or stripFlags2.isClassDataStripped(distanceFieldDataStripFlag)
                         }
                     }
@@ -106,7 +106,7 @@ class UStaticMesh : UExport {
             if (FRenderingObjectVersion.get(Ar) < FRenderingObjectVersion.TextureStreamingMeshUVChannelData) {
                 // StreamingTextureFactors
                 // StreamingTextureFactor for each UV set
-                for(i in 0 until MAX_STATIC_UV_SETS_UE4)
+                for (i in 0 until MAX_STATIC_UV_SETS_UE4)
                     Ar.readFloat32()
                 Ar.readFloat32() // MaxStreamingTextureFactor
             }
@@ -154,10 +154,8 @@ class UStaticMesh : UExport {
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
-        baseObject.serialize(Ar)
+        super.serialize(Ar)
         super.completeWrite(Ar)
         throw ParserException("Serializing UStaticMesh not supported")
     }
-
 }

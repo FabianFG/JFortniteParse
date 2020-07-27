@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.util
 
-import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FNameEntry
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class FName(private val nameMap: List<FNameEntry>, val index: Int, val extraIndex: Int) {

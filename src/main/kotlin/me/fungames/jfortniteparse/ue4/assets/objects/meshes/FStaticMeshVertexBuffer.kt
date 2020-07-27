@@ -73,7 +73,7 @@ class FStaticMeshVertexBuffer : UClass {
         useFullPrecisionUVs: Boolean,
         useHighPrecisionTangentBasis: Boolean,
         uv: Array<FStaticMeshUVItem>
-    ) : super() {
+    ) {
         this.stripFlags = stripFlags
         this.numTexCoords = numTexCoords
         this.stride = stride

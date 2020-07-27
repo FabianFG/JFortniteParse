@@ -8,18 +8,18 @@ import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 abstract class UExport(val exportType: String) : UClass() {
-    abstract var baseObject : UObject
+    abstract var baseObject: UObject
     abstract fun serialize(Ar: FAssetArchiveWriter)
-    var export : FObjectExport? = null
+    var export: FObjectExport? = null
     var name = exportType
     var owner: Package? = null
 
-    constructor(exportObject : FObjectExport) : this(exportObject.classIndex.name) {
+    constructor(exportObject: FObjectExport) : this(exportObject.classIndex.name) {
         export = exportObject
         name = exportObject.objectName.text
     }
 
-    open fun applyLocres(locres : Locres?) {}
+    open fun applyLocres(locres: Locres?) {}
 
     override fun toString() = name
 }

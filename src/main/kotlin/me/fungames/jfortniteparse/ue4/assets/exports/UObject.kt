@@ -11,43 +11,42 @@ import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
 @ExperimentalUnsignedTypes
 open class UObject : UExport {
     override var baseObject = this
-    var properties : MutableList<FPropertyTag>
-    var objectGuid : FGuid? = null
+    var properties: MutableList<FPropertyTag>
+    var objectGuid: FGuid? = null
     var readGuid = false
 
     constructor(Ar: FAssetArchive, exportType: String, readGuid: Boolean = true) : super(exportType) {
         super.init(Ar)
-        properties =
-            deserializeProperties(Ar)
+        properties = deserializeProperties(Ar)
         if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
             objectGuid = FGuid(Ar)
         super.complete(Ar)
     }
 
-    constructor(Ar: FAssetArchive, exportObject : FObjectExport, readGuid : Boolean = true) : super(exportObject) {
+    constructor(Ar: FAssetArchive, exportObject: FObjectExport, readGuid: Boolean = true) : super(exportObject) {
         super.init(Ar)
-        properties =
-            deserializeProperties(Ar)
+        properties = deserializeProperties(Ar)
         if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
             objectGuid = FGuid(Ar)
         super.complete(Ar)
     }
 
-    inline fun <reified T> set(name: String, value : T) {
-        if(getOrNull<T>(name) != null)
+    inline fun <reified T> set(name: String, value: T) {
+        if (getOrNull<T>(name) != null)
             properties.first { it.name.text == name }.setTagTypeValue(value)
     }
 
-    inline fun <reified T> getOrDefault(name : String, default : T, Ar: FAssetArchive? = null) : T {
-        val value : T? = getOrNull(name, Ar)
+    inline fun <reified T> getOrDefault(name: String, default: T, Ar: FAssetArchive? = null): T {
+        val value: T? = getOrNull(name, Ar)
         return value ?: default
     }
 
-    inline fun <reified T> getOrNull(name : String, Ar: FAssetArchive? = null) = properties.firstOrNull { it.name.text == name }?.getTagTypeValue<T>(Ar)
+    inline fun <reified T> getOrNull(name: String, Ar: FAssetArchive? = null) = properties.firstOrNull { it.name.text == name }?.getTagTypeValue<T>(Ar)
 
-    inline fun <reified T> get(name: String, Ar: FAssetArchive? = null) : T = getOrNull(name, Ar) ?: throw KotlinNullPointerException("$name must be not-null")
+    inline fun <reified T> get(name: String, Ar: FAssetArchive? = null): T = getOrNull(name, Ar) ?: throw KotlinNullPointerException("$name must be not-null")
 
     override fun serialize(Ar: FAssetArchiveWriter) {
+        super.initWrite(Ar)
         serializeProperties(
             Ar,
             properties
@@ -56,6 +55,7 @@ open class UObject : UExport {
             Ar.writeBoolean(objectGuid != null)
             if (objectGuid != null) objectGuid?.serialize(Ar)
         }
+        super.completeWrite(Ar)
     }
 
     companion object {
@@ -66,7 +66,7 @@ open class UObject : UExport {
             Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
         }
 
-        fun deserializeProperties(Ar : FAssetArchive) : MutableList<FPropertyTag> {
+        fun deserializeProperties(Ar: FAssetArchive): MutableList<FPropertyTag> {
             val properties = mutableListOf<FPropertyTag>()
             while (true) {
                 val tag = FPropertyTag(Ar, true)
@@ -78,7 +78,7 @@ open class UObject : UExport {
         }
     }
 
-    constructor(properties : MutableList<FPropertyTag>, objectGuid : FGuid?, exportType: String) : super(exportType) {
+    constructor(properties: MutableList<FPropertyTag>, objectGuid: FGuid?, exportType: String) : super(exportType) {
         this.properties = properties
         this.objectGuid = objectGuid
     }

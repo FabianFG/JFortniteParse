@@ -75,7 +75,7 @@ class FTextLocalizationResourceString : UClass {
         super.completeWrite(Ar)
     }
 
-    constructor(data: String, refCount: Int) : super() {
+    constructor(data: String, refCount: Int) {
         this.data = data
         this.refCount = refCount
     }
@@ -100,7 +100,7 @@ class FTextKey : UClass {
         super.completeWrite(Ar)
     }
 
-    constructor(stringHash: UInt, text: String) : super() {
+    constructor(stringHash: UInt, text: String) {
         this.stringHash = stringHash
         this.text = text
     }

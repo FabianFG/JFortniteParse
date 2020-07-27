@@ -1,12 +1,11 @@
 package me.fungames.jfortniteparse.ue4.registry.objects
 
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 @ExperimentalUnsignedTypes
-class FAssetRegistryVersion(Ar : FArchive) : UClass(), Comparable<FAssetRegistryVersion.Type> {
-
+class FAssetRegistryVersion(Ar: FArchive) : UClass(), Comparable<FAssetRegistryVersion.Type> {
     companion object {
         val versionGuid = FGuid(0x717F9EE7u, 0xE9B0493Au, 0x88B39132u, 0x1B388107u)
     }
@@ -22,19 +21,12 @@ class FAssetRegistryVersion(Ar : FArchive) : UClass(), Comparable<FAssetRegistry
 
         companion object {
             fun latest() = values().last()
-            fun safeValue(ordinal : Int) = runCatching { values()[ordinal] }
-                .getOrDefault(latest())
+            fun safeValue(ordinal: Int) = runCatching { values()[ordinal] }.getOrDefault(latest())
         }
     }
 
     val guid = FGuid(Ar)
-    val version = if (guid == versionGuid)
-        Type.safeValue(
-            Ar.readInt32()
-        )
-    else
-        Type.latest()
+    val version = if (guid == versionGuid) Type.safeValue(Ar.readInt32()) else Type.latest()
 
-    override fun compareTo(other: Type) =
-        version.ordinal.compareTo(other.ordinal)
+    override fun compareTo(other: Type) = version.ordinal.compareTo(other.ordinal)
 }

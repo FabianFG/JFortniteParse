@@ -64,7 +64,7 @@ class FText : UClass {
         FTextHistory.Base(nameSpace, key, sourceString)
     )
 
-    constructor(flags: UInt, historyType: ETextHistoryType, textHistory: FTextHistory) : super() {
+    constructor(flags: UInt, historyType: ETextHistoryType, textHistory: FTextHistory) {
         this.flags = flags
         this.historyType = historyType
         this.textHistory = textHistory
@@ -180,7 +180,7 @@ sealed class FTextHistory : UClass() {
             super.complete(Ar)
         }
 
-        constructor(sourceFmt: FText, arguments: Array<FFormatArgumentValue>) : super() {
+        constructor(sourceFmt: FText, arguments: Array<FFormatArgumentValue>) {
             this.sourceFmt = sourceFmt
             this.arguments = arguments
         }

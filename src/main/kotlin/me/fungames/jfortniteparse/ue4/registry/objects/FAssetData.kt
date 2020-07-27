@@ -4,8 +4,7 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.registry.reader.FNameTableArchive
 
 @ExperimentalUnsignedTypes
-class FAssetData(Ar : FNameTableArchive) : UClass() {
-
+class FAssetData(Ar: FNameTableArchive) : UClass() {
     // Serialize out the asset info
     val objectPath = Ar.readFName()
     val packagePath = Ar.readFName()

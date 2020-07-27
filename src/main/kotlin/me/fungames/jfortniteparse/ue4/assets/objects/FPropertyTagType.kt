@@ -263,8 +263,8 @@ sealed class FPropertyTagType(val propertyType: String) {
                         // Type.NORMAL -> ByteProperty(Ar.readFName().index.toUByte(), propertyType)
                         Type.NORMAL -> { // FIXME: this is a hack to match John Wick Parse's output
                             val nameIndex = Ar.readInt32()
-                            if (nameIndex in Ar.nameMap.indices)
-                                NameProperty(FName(Ar.nameMap, nameIndex, Ar.readInt32()), propertyType)
+                            if (nameIndex in Ar.owner.nameMap.indices)
+                                NameProperty(FName(Ar.owner.nameMap, nameIndex, Ar.readInt32()), propertyType)
                             else
                                 ByteProperty(nameIndex.toUByte(), propertyType)
                         }

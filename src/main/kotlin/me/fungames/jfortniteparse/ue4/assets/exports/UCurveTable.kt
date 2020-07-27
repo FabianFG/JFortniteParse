@@ -36,8 +36,7 @@ class UCurveTable : UObject {
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
-        baseObject.serialize(Ar)
+        super.serialize(Ar)
         Ar.writeTMap(rows) { key, value ->
             Ar.writeFName(key)
             serializeProperties(Ar, value.properties)
