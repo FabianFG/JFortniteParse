@@ -1,13 +1,11 @@
 package me.fungames.jfortniteparse.fileprovider
 
-import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.assets.Package
-import me.fungames.jfortniteparse.ue4.assets.objects.FPackageIndex
-import me.fungames.jfortniteparse.ue4.assets.objects.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version

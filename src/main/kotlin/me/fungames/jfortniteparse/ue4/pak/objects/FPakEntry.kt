@@ -110,7 +110,7 @@ class FPakEntry : UClass {
         compressionBlocks: Array<FPakCompressedBlock>,
         isEncrypted: Boolean,
         compressionBlockSize: Int
-    ) : super() {
+    ) {
         this.name = name
         this.pos = pos
         this.size = size

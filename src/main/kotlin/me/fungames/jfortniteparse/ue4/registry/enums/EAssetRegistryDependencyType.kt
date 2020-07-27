@@ -1,9 +1,7 @@
 package me.fungames.jfortniteparse.ue4.registry.enums
 
 class EAssetRegistryDependencyType private constructor(val int : Int) {
-
     companion object {
-
         // Doesn't really exist
         val Referencers = EAssetRegistryDependencyType(0x00)
 

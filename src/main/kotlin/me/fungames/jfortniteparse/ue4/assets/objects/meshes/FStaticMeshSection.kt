@@ -3,7 +3,7 @@ package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.FRenderingObjectVersion
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_25
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 @ExperimentalUnsignedTypes
@@ -15,7 +15,7 @@ class FStaticMeshSection : UClass {
     var maxVertexIndex : Int
     var enableCollision : Boolean
     var castShadow : Boolean
-    var forceOpague : Boolean
+    var forceOpaque : Boolean
 
     constructor(Ar: FArchive) {
         super.init(Ar)
@@ -26,7 +26,7 @@ class FStaticMeshSection : UClass {
         maxVertexIndex = Ar.readInt32()
         enableCollision = Ar.readBoolean()
         castShadow = Ar.readBoolean()
-        forceOpague = if (FRenderingObjectVersion.get(Ar) >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField)
+        forceOpaque = if (FRenderingObjectVersion.get(Ar) >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField)
             Ar.readBoolean()
         else
             false
@@ -42,8 +42,8 @@ class FStaticMeshSection : UClass {
         Ar.writeInt32(maxVertexIndex)
         Ar.writeBoolean(enableCollision)
         Ar.writeBoolean(castShadow)
-        if (Ar.game >= GAME_UE4_25)
-            Ar.writeBoolean(forceOpague)
+        if (Ar.game >= GAME_UE4(25))
+            Ar.writeBoolean(forceOpaque)
         super.completeWrite(Ar)
     }
 
@@ -64,6 +64,6 @@ class FStaticMeshSection : UClass {
         this.maxVertexIndex = maxVertexIndex
         this.enableCollision = enableCollision
         this.castShadow = castShadow
-        this.forceOpague = forceOpague
+        this.forceOpaque = forceOpague
     }
 }

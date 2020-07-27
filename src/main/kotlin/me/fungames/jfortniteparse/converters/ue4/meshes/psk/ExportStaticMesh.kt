@@ -12,7 +12,6 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.util.zip.Deflater
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 

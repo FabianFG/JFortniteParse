@@ -86,5 +86,7 @@ internal const val VER_UE4_23 = 517
 internal const val VER_UE4_ADDED_PACKAGE_OWNER = 518
 internal const val VER_UE4_24 = 518
 internal const val VER_UE4_25 = 518
+internal const val VER_UE4_SKINWEIGHT_PROFILE_DATA_LAYOUT_CHANGES = 519
+internal const val VER_UE4_26 = 519
 // look for NEW_ENGINE_VERSION over the code to find places where version constants should be inserted.
 // LATEST_SUPPORTED_UE4_VERSION should be updated too.

@@ -1,18 +1,18 @@
 package me.fungames.jfortniteparse.ue4.registry.objects
 
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.util.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.registry.reader.FNameTableArchive
 
 @ExperimentalUnsignedTypes
-class FAssetIdentifier(Ar : FNameTableArchive) : UClass() {
-    var packageName : FName? = null
+class FAssetIdentifier(Ar: FNameTableArchive) : UClass() {
+    var packageName: FName? = null
         private set
-    var primaryAssetType : FName? = null
+    var primaryAssetType: FName? = null
         private set
-    var objectName : FName? = null
+    var objectName: FName? = null
         private set
-    var valueName : FName? = null
+    var valueName: FName? = null
         private set
 
     init {

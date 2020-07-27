@@ -4,6 +4,8 @@ package me.fungames.jfortniteparse.converters.ue4.textures
 
 import com.github.memo33.jsquish.Squish
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.FTexture2DMipMap
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.FTexturePlatformData
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.kotlinASTC.ASTCCodecImage
@@ -49,18 +51,23 @@ private fun rgbBufferToImage(rgb: ByteArray, width: Int, height: Int): BufferedI
 }
 
 @Throws(IllegalArgumentException::class)
-@Synchronized
-fun UTexture.toBufferedImage() : BufferedImage {
+fun UTexture.toBufferedImage(): BufferedImage {
     if (this !is UTexture2D) throw ParserException("Can only convert UTexture2D so far")
     val texture = getFirstTexture()
     val mip = getFirstMip()
+    return rgbaBufferToImage(texture.toPixelArray(mip), mip.sizeX, mip.sizeY)
+}
+
+@Throws(IllegalArgumentException::class)
+@Synchronized
+fun FTexturePlatformData.toPixelArray(mip: FTexture2DMipMap = getFirstMip()): ByteArray {
     val data = mip.data.data
     val width = mip.sizeX
     val height = mip.sizeY
     val format = try {
-        PixelFormatInfo.valueOf(texture.pixelFormat)
+        PixelFormatInfo.valueOf(pixelFormat)
     } catch (e : IllegalArgumentException) {
-        throw IllegalArgumentException("Unknown pixel format: ${texture.pixelFormat}")
+        throw IllegalArgumentException("Unknown pixel format: ${pixelFormat}")
     }
 
     val pixelSize = if (format.float) 16 else 4
@@ -164,10 +171,9 @@ fun UTexture.toBufferedImage() : BufferedImage {
             decompressed.copyInto(dst, 0, 0, width * height * 4)
         }
         PixelFormatInfo.PF_BC5 -> {
-            val rgb = readBC5(data, width, height)
-            return rgbBufferToImage(rgb, width, height)
+            return readBC5(data, width, height)
         }
     }
 
-    return rgbaBufferToImage(dst, width, height)
+    return dst
 }

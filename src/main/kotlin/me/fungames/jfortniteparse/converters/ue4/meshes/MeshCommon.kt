@@ -5,9 +5,9 @@ package me.fungames.jfortniteparse.converters.ue4.meshes
 import glm_.vec3.Vec3
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
-import me.fungames.jfortniteparse.ue4.assets.objects.FColor
-import me.fungames.jfortniteparse.ue4.assets.objects.FPackedNormal
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FMeshUVFloat
+import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
+import me.fungames.jfortniteparse.ue4.objects.rendercore.FPackedNormal
 import kotlin.math.round
 
 internal const val MAX_MESH_UV_SETS = 8

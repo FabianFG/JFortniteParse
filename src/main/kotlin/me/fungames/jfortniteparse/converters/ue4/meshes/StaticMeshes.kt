@@ -3,15 +3,11 @@
 package me.fungames.jfortniteparse.converters.ue4.meshes
 
 import glm_.vec3.Vec3
-import glm_.vec4.Vec4
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh
-import me.fungames.jfortniteparse.ue4.assets.objects.FBox
-import me.fungames.jfortniteparse.ue4.assets.objects.FColor
-import me.fungames.jfortniteparse.ue4.assets.objects.FPackedNormal
-import me.fungames.jfortniteparse.ue4.assets.objects.FSphere
+import me.fungames.jfortniteparse.ue4.objects.core.math.FBox
+import me.fungames.jfortniteparse.ue4.objects.core.math.FSphere
 
 
 class CStaticMesh(val originalMesh : UStaticMesh, val boundingBox : FBox, val boundingSphere : FSphere, val lods : List<CStaticMeshLod>) {

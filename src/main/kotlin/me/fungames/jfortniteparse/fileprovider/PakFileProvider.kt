@@ -3,11 +3,10 @@ package me.fungames.jfortniteparse.fileprovider
 import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
-import me.fungames.jfortniteparse.ue4.FGuid
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
 import me.fungames.jfortniteparse.util.printAesKey
-import me.fungames.jfortniteparse.util.printHexBinary
 import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -16,23 +15,23 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     private val job = Job()
     override val coroutineContext = job + Dispatchers.IO
 
-    protected abstract val unloadedPaks : MutableList<PakFileReader>
-    protected abstract val mountedPaks : MutableList<PakFileReader>
-    protected abstract val requiredKeys : MutableList<FGuid>
-    protected abstract val keys : MutableMap<FGuid, ByteArray>
-    open fun keys() : Map<FGuid, ByteArray> = keys
-    open fun keysStr() : Map<FGuid, String> = keys.mapValues { it.value.printAesKey() }
-    open fun requiredKeys() : List<FGuid> = requiredKeys
-    open fun unloadedPaks() : List<PakFileReader> = unloadedPaks
-    open fun mountedPaks() : List<PakFileReader> = mountedPaks
-    open fun submitKey(guid : FGuid, key : String) = submitKeysStr(mapOf(guid to key))
-    open fun submitKeysStr(keys : Map<FGuid, String>) = submitKeys(keys.mapValues { Aes.parseKey(it.value) })
-    open fun submitKey(guid : FGuid, key : ByteArray) = submitKeys(mapOf(guid to key))
-    open fun submitKeys(keys : Map<FGuid, ByteArray>) = runBlocking { submitKeysAsync(keys).await() }
+    protected abstract val unloadedPaks: MutableList<PakFileReader>
+    protected abstract val mountedPaks: MutableList<PakFileReader>
+    protected abstract val requiredKeys: MutableList<FGuid>
+    protected abstract val keys: MutableMap<FGuid, ByteArray>
+    open fun keys(): Map<FGuid, ByteArray> = keys
+    open fun keysStr(): Map<FGuid, String> = keys.mapValues { it.value.printAesKey() }
+    open fun requiredKeys(): List<FGuid> = requiredKeys
+    open fun unloadedPaks(): List<PakFileReader> = unloadedPaks
+    open fun mountedPaks(): List<PakFileReader> = mountedPaks
+    open fun submitKey(guid: FGuid, key: String) = submitKeysStr(mapOf(guid to key))
+    open fun submitKeysStr(keys: Map<FGuid, String>) = submitKeys(keys.mapValues { Aes.parseKey(it.value) })
+    open fun submitKey(guid: FGuid, key: ByteArray) = submitKeys(mapOf(guid to key))
+    open fun submitKeys(keys: Map<FGuid, ByteArray>) = runBlocking { submitKeysAsync(keys).await() }
 
     open fun unloadedPaksByGuid(guid: FGuid) = unloadedPaks.filter { it.pakInfo.encryptionKeyGuid == guid }
 
-    open fun submitKeysAsync(newKeys: Map<FGuid, ByteArray>) : Deferred<Int> {
+    open fun submitKeysAsync(newKeys: Map<FGuid, ByteArray>): Deferred<Int> {
         val countNewMounts = AtomicInteger()
         val tasks = mutableListOf<Deferred<PakFileReader?>>()
         newKeys.forEach { (guid, key) ->

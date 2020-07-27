@@ -2,9 +2,7 @@
 
 package me.fungames.jfortniteparse.converters.ue4.meshes.psk
 
-import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.converters.ue4.MaterialExport
-import me.fungames.jfortniteparse.converters.ue4.export
 import me.fungames.jfortniteparse.converters.ue4.meshes.*
 import me.fungames.jfortniteparse.converters.ue4.meshes.psk.common.VChunkHeader
 import me.fungames.jfortniteparse.converters.ue4.meshes.psk.psk.VMaterial
@@ -13,10 +11,9 @@ import me.fungames.jfortniteparse.converters.ue4.meshes.psk.psk.VTriangle16
 import me.fungames.jfortniteparse.converters.ue4.meshes.psk.psk.VVertex
 import me.fungames.jfortniteparse.converters.ue4.meshes.psk.pskx.VTriangle32
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.assets.objects.FColor
+import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.MIRROR_MESH
-import kotlin.coroutines.CoroutineContext
 
 fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, verts : Array<CMeshVertex>, indices : CIndexBuffer, share: CVertexShare, materialExports : MutableList<MaterialExport>) {
     val mainHdr = VChunkHeader()
@@ -123,7 +120,8 @@ fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, ver
         val tex = sections[i].material
         //!! this will not handle (UMaterialWithPolyFlags->Material==NULL) correctly - will make MaterialName=="None"
         val materialName = tex?.name ?: "material_${i}"
-        if (tex != null) materialExports.add(tex.export())
+        // MOD: Do not export materials, we handle it ourselves
+        // if (tex != null) materialExports.add(tex.export())
         val m = VMaterial(materialName, i, 0u, 0, 0u, 0, 0)
         m.serialize(Ar)
     }

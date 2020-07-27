@@ -4,11 +4,9 @@ import me.fungames.jfortniteparse.converters.ue4.CMaterialParams
 import me.fungames.jfortniteparse.ue4.assets.enums.EMobileSpecularMask
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
-import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 open class UMaterialInterface : UUnrealMaterial {

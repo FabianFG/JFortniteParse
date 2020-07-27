@@ -1,9 +1,25 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.math.*
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
+import me.fungames.jfortniteparse.ue4.objects.detailcustomizations.FNavAgentSelectorCustomization
+import me.fungames.jfortniteparse.ue4.objects.engine.*
+import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurveKey
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
+import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceObjectReferenceMap
+import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationKey
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationTemplate
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneSegment
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEvaluationDataTree
 
 @ExperimentalUnsignedTypes
 class UScriptStruct : UClass {
@@ -20,15 +36,17 @@ class UScriptStruct : UClass {
             "Color" -> FColor(Ar)
             "LinearColor" -> FLinearColor(Ar)
             "SoftObjectPath", "SoftClassPath" -> FSoftObjectPath(Ar)
-            "Box" -> FBox(Ar)
-            "Vector2D", "Box2D" -> FVector2D(Ar)
-            "Quat" -> FQuat(Ar)
             "Vector" -> FVector(Ar)
+            "Vector2D" -> FVector2D(Ar)
             "Vector4" -> FVector4(Ar)
+            "Box" -> FBox(Ar)
+            "Box2D" -> FBox2D(Ar)
             "Rotator" -> FRotator(Ar)
+            "Quat" -> FQuat(Ar)
             "IntVector" -> FIntVector(Ar)
-            "PerPlatformFloat" -> FPerPlatformFloat(Ar)
             "PerPlatformInt" -> FPerPlatformInt(Ar)
+            "PerPlatformFloat" -> FPerPlatformFloat(Ar)
+            "PerPlatformBool" -> FPerPlatformBool(Ar)
             "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
             "LevelSequenceObjectReferenceMap" -> FLevelSequenceObjectReferenceMap(Ar)
             "FrameNumber" -> FFrameNumber(Ar)
@@ -65,22 +83,24 @@ class UScriptStruct : UClass {
 
     fun serialize(Ar: FAssetArchiveWriter) {
         super.initWrite(Ar)
-        when(val structType = structType) {
+        when (val structType = structType) {
             is FIntPoint -> structType.serialize(Ar)
             is FGuid -> structType.serialize(Ar)
             is FGameplayTagContainer -> structType.serialize(Ar)
             is FColor -> structType.serialize(Ar)
             is FLinearColor -> structType.serialize(Ar)
             is FSoftObjectPath -> structType.serialize(Ar)
-            is FBox -> structType.serialize(Ar)
-            is FVector2D -> structType.serialize(Ar)
-            is FQuat -> structType.serialize(Ar)
             is FVector -> structType.serialize(Ar)
+            is FVector2D -> structType.serialize(Ar)
             is FVector4 -> structType.serialize(Ar)
+            is FBox -> structType.serialize(Ar)
+            is FBox2D -> structType.serialize(Ar)
             is FRotator -> structType.serialize(Ar)
+            is FQuat -> structType.serialize(Ar)
             is FIntVector -> structType.serialize(Ar)
-            is FPerPlatformFloat -> structType.serialize(Ar)
             is FPerPlatformInt -> structType.serialize(Ar)
+            is FPerPlatformFloat -> structType.serialize(Ar)
+            is FPerPlatformBool -> structType.serialize(Ar)
             is FWeightedRandomSampler -> structType.serialize(Ar)
             is FLevelSequenceObjectReferenceMap -> structType.serialize(Ar)
             is FStructFallback -> structType.serialize(Ar)

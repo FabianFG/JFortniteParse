@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.pak.reader
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakInfo
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER

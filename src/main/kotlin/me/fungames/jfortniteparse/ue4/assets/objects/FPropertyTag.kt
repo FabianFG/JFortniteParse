@@ -1,11 +1,11 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 @ExperimentalUnsignedTypes
 class FPropertyTag : UClass {
@@ -26,27 +26,13 @@ class FPropertyTag : UClass {
             size = Ar.readInt32()
             arrayIndex = Ar.readInt32()
             tagData = when (propertyType.text) {
-                "StructProperty" -> FPropertyTagData.StructProperty(
-                    Ar
-                )
-                "BoolProperty" -> FPropertyTagData.BoolProperty(
-                    Ar
-                )
-                "EnumProperty" -> FPropertyTagData.EnumProperty(
-                    Ar
-                )
-                "ByteProperty" -> FPropertyTagData.ByteProperty(
-                    Ar
-                )
-                "ArrayProperty" -> FPropertyTagData.ArrayProperty(
-                    Ar
-                )
-                "MapProperty" -> FPropertyTagData.MapProperty(
-                    Ar
-                )
-                "SetProperty" -> FPropertyTagData.BoolProperty(
-                    Ar
-                )
+                "StructProperty" -> FPropertyTagData.StructProperty(Ar)
+                "BoolProperty" -> FPropertyTagData.BoolProperty(Ar)
+                "EnumProperty" -> FPropertyTagData.EnumProperty(Ar)
+                "ByteProperty" -> FPropertyTagData.ByteProperty(Ar)
+                "ArrayProperty" -> FPropertyTagData.ArrayProperty(Ar)
+                "MapProperty" -> FPropertyTagData.MapProperty(Ar)
+                "SetProperty" -> FPropertyTagData.BoolProperty(Ar)
                 else -> null
             }
 
@@ -67,14 +53,14 @@ class FPropertyTag : UClass {
                             FPropertyTagType.Type.NORMAL
                         )
                     if (finalPos != Ar.pos()) {
-                        logger.debug("FPropertyTagType $name ($propertyType) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
+                        logger.warn("FPropertyTagType $name (${tagData ?: propertyType}) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
                     }
                     //Even if the property wasn't read properly
                     //we don't need to crash here because we know the expected size
                     Ar.seek(finalPos)
                 } catch (e: ParserException) {
                     if (finalPos != Ar.pos()) {
-                        logger.warn("Failed to read FPropertyTagType $name ($propertyType), skipping it, please report", e)
+                        logger.warn("Failed to read FPropertyTagType $name (${tagData ?: propertyType}), skipping it, please report", e)
                     }
                     //Also no need to crash here, just seek to the desired offset
                     Ar.seek(finalPos)

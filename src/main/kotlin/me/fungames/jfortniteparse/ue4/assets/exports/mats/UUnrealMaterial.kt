@@ -2,7 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets.exports.mats
 
 import me.fungames.jfortniteparse.converters.ue4.CMaterialParams
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 abstract class UUnrealMaterial(export : FObjectExport) : UExport(export) {

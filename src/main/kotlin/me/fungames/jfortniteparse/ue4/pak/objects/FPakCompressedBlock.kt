@@ -23,8 +23,7 @@ class FPakCompressedBlock : UClass {
         super.completeWrite(Ar)
     }
 
-
-    constructor(compressedStart: Long, compressedEnd: Long) : super() {
+    constructor(compressedStart: Long, compressedEnd: Long) {
         this.compressedStart = compressedStart
         this.compressedEnd = compressedEnd
     }

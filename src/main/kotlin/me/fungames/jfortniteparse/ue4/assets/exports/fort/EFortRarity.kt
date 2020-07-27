@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.fort
 
-import me.fungames.jfortniteparse.ue4.assets.objects.FText
+import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 
 enum class EFortRarity(val rarityName : FText) {
 

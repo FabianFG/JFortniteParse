@@ -10,7 +10,7 @@ import me.fungames.jfortniteparse.ue4.assets.enums.ETextureChannel
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UUnrealMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
-import me.fungames.jfortniteparse.ue4.assets.objects.FLinearColor
+import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
 import me.fungames.jfortniteparse.util.toPngArray
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream

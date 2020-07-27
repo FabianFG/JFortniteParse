@@ -3,14 +3,30 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.*
-import com.google.gson.*
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
+import com.google.gson.JsonSerializationContext
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.*
-import me.fungames.jfortniteparse.ue4.assets.util.FName
+import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
+import me.fungames.jfortniteparse.ue4.objects.core.math.*
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.detailcustomizations.FNavAgentSelectorCustomization
+import me.fungames.jfortniteparse.ue4.objects.engine.*
+import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurveKey
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
+import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceLegacyObjectReference
+import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.*
+import me.fungames.jfortniteparse.ue4.objects.uobject.*
 
-object JsonSerializer{
+object JsonSerializer {
     val packageConverter = jsonSerializer<Package> { arg ->
         jsonObject(
             "import_map" to arg.context.serialize(arg.src.importMap),
@@ -34,13 +50,13 @@ object JsonSerializer{
     }
 
     @Suppress("EXPERIMENTAL_API_USAGE")
-    fun FPropertyTagType.toJson(context: JsonSerializationContext) : JsonElement {
+    fun FPropertyTagType.toJson(context: JsonSerializationContext): JsonElement {
         return this.getTagTypeValueLegacy().toJson(context)
     }
 
     @Suppress("EXPERIMENTAL_API_USAGE")
-    fun Any.toJson(context: JsonSerializationContext) : JsonElement {
-        return when(val ob = this) {
+    fun Any.toJson(context: JsonSerializationContext): JsonElement {
+        return when (val ob = this) {
             //Basic Tag Types
             is Enum<*> -> JsonPrimitive(ob.name)
             is Array<*> -> jsonArray(ob.map { it?.toJson(context) })
@@ -82,8 +98,9 @@ object JsonSerializer{
             is FVector -> jsonObject("X" to ob.x, "Y" to ob.y, "Z" to ob.z)
             is FVector4 -> jsonObject("X" to ob.x, "Y" to ob.y, "Z" to ob.z, "W" to ob.w)
             is FRotator -> jsonObject("Pitch" to ob.pitch, "Yaw" to ob.yaw, "Roll" to ob.roll)
-            is FPerPlatformFloat -> JsonPrimitive(ob.value)
             is FPerPlatformInt -> JsonPrimitive(ob.value.toLong())
+            is FPerPlatformFloat -> JsonPrimitive(ob.value)
+            is FPerPlatformBool -> JsonPrimitive(ob.value)
             is FWeightedRandomSampler -> jsonObject("alias" to ob.alias.toJson(context), "prob" to ob.prob.toJson(context), "totalWeight" to ob.totalWeight)
             is FLevelSequenceLegacyObjectReference -> jsonObject(
                 "keyGuid" to ob.keyGuid.toJson(context),
@@ -141,12 +158,13 @@ object JsonSerializer{
                 "upperBound" to ob.upperBound.toJson(context)
             )
             is TRangeBound<*> -> jsonObject(
-                "boundType" to ob.boundType,
+                "type" to ob.type,
                 "value" to ob.value
             )
             is FSectionEvaluationDataTree -> ob.tree.toJson(context)
             is TMovieSceneEvaluationTree<*> -> jsonObject(
-                "baseTree" to ob.baseTree.toJson(context),
+                "rootNode" to ob.rootNode.toJson(context),
+                "childNodes" to ob.childNodes.toJson(context),
                 "data" to ob.data.toJson(context)
             )
             is FMovieSceneEvaluationTree -> jsonObject(
@@ -165,7 +183,7 @@ object JsonSerializer{
             )
             is FEvaluationTreeEntryHandle -> JsonPrimitive(ob.entryIndex)
 
-            is FEntry -> jsonObject(
+            is TEvaluationTreeEntryContainer.FEntry -> jsonObject(
                 "startIndex" to ob.startIndex,
                 "size" to ob.size,
                 "capacity" to ob.capacity
@@ -190,7 +208,7 @@ object JsonSerializer{
     @Suppress("EXPERIMENTAL_API_USAGE")
     val uobjectSerializer = jsonSerializer<UObject> {
         val ob = jsonObject("exportType" to it.src.exportType)
-        it.src.properties.forEach {pTag ->
+        it.src.properties.forEach { pTag ->
             val tagValue = pTag.tag ?: return@forEach
             ob[pTag.name.text] = tagValue.toJson(it.context)
         }

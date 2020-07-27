@@ -1,9 +1,8 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.objects.FVector
+import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 @ExperimentalUnsignedTypes
 class FPositionVertexBuffer : UClass {

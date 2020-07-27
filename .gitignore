@@ -1,5 +1,8 @@
 /.gradle
-/build
-/gradle.properties
-/src/test
 /.idea
+/bin
+/build
+/gradle
+/gradle.properties
+/out
+/src/test

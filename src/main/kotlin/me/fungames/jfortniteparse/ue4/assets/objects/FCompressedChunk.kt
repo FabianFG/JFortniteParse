@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
+// from Linker.h
 @ExperimentalUnsignedTypes
 class FCompressedChunk : UClass {
     var uncompressedOffset: Int

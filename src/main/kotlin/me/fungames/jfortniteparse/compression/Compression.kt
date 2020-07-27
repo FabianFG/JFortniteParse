@@ -6,7 +6,6 @@ import me.fungames.oodle.Oodle
 import java.io.ByteArrayInputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.Inflater
-import java.util.zip.InflaterInputStream
 
 object Compression {
     fun decompress(compressed : ByteArray, decompressedSize : Int, method : CompressionMethod) : ByteArray {

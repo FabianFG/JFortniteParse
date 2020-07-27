@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.fileprovider
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.fileprovider.FileProvider.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile

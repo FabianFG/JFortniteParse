@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.ue4.pak.reader
 
 import java.io.File
 import java.io.RandomAccessFile
-import kotlin.math.min
 
 @ExperimentalUnsignedTypes
 class FPakFileArchive(val rafile : RandomAccessFile, val file : File) : FPakArchive(file.name) {

@@ -6,29 +6,27 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.UClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.exports.*
-import me.fungames.jfortniteparse.ue4.assets.exports.ItemDefinition
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.*
-import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectImport
-import me.fungames.jfortniteparse.ue4.assets.objects.FPackageFileSummary
-import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageFileSummary
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 import java.io.OutputStream
 import java.nio.ByteBuffer
 
 @ExperimentalUnsignedTypes
-class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null, val name : String, provider: FileProvider? = null, var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) {
-
+class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, val name: String, provider: FileProvider? = null, var game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
     companion object {
         val packageMagic = 0x9E2A83C1u
         val gson = GsonBuilder()
@@ -40,20 +38,23 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
             .create()
     }
 
-    constructor(uasset : ByteArray, uexp : ByteArray, ubulk : ByteArray? = null, name : String, provider: FileProvider? = null, game : Ue4Version = Ue4Version.GAME_UE4_LATEST) :
+    constructor(uasset: ByteArray, uexp: ByteArray, ubulk: ByteArray? = null, name: String, provider: FileProvider? = null, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) :
             this(ByteBuffer.wrap(uasset), ByteBuffer.wrap(uexp), ubulk?.let { ByteBuffer.wrap(it) }, name, provider, game)
 
-    constructor(uasset : File, uexp : File, ubulk : File?, provider: FileProvider? = null, game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : this(uasset.readBytes(), uexp.readBytes(),
-        ubulk?.readBytes(), uasset.nameWithoutExtension, provider, game)
+    constructor(uasset: File, uexp: File, ubulk: File?, provider: FileProvider? = null, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) : this(
+        uasset.readBytes(), uexp.readBytes(), ubulk?.readBytes(),
+        uasset.nameWithoutExtension, provider, game
+    )
 
-    val info : FPackageFileSummary
-    val nameMap : MutableList<FNameEntry>
-    val importMap : MutableList<FObjectImport>
-    val exportMap : MutableList<FObjectExport>
+    val info: FPackageFileSummary
+    val nameMap: MutableList<FNameEntry>
+    val importMap: MutableList<FObjectImport>
+    val exportMap: MutableList<FObjectExport>
 
-    internal val exportsLazy = mutableMapOf<FObjectExport, Lazy<UExport>>()
+    //internal val exportsLazy = mutableMapOf<FObjectExport, Lazy<UExport>>()
 
-    val exports : List<UExport>
+    val exports//: List<UExport>
+        get() = exportMap.map { it.exportObject.value }
 
     init {
         val uassetAr = FAssetArchive(uasset, provider, name)
@@ -101,8 +102,9 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
-        exports = mutableListOf()
-        exportMap.forEach { exportsLazy[it] = lazy {
+        exportMap.forEach { it.exportObject = lazy {
+        /*exports = mutableListOf()
+        exportMap.forEach { exportsLazy[it] = lazy {*/
             val origPos = uexpAr.pos()
             val exportType = it.classIndex.name.substringAfter("Default__")
             uexpAr.seekRelative(it.serialOffset.toInt())
@@ -126,11 +128,11 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
             uexpAr.seek(origPos)
             export
         } }
-        exportsLazy.values.forEach {
+        /*exportsLazy.values.forEach {
             val value = it.value
             if (!exports.contains(value))
                 exports.add(value)
-        }
+        }*/
         matchValorantCharacterAbilities()
         uassetAr.clearImportCache()
         uexpAr.clearImportCache()
@@ -138,7 +140,7 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
         logger.info("Successfully parsed package : $name")
     }
 
-    fun readExport(uexpAr : FAssetArchive, exportType : String, it : FObjectExport, validPos : Int) = when(exportType) {
+    fun readExport(uexpAr: FAssetArchive, exportType: String, it: FObjectExport, validPos: Int) = when (exportType) {
         //UE generic export classes
         "Texture2D" -> UTexture2D(uexpAr, it)
         "SoundWave" -> USoundWave(uexpAr, it)
@@ -148,6 +150,7 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
         "StaticMesh" -> UStaticMesh(uexpAr, it, validPos)
         "Material" -> UMaterial(uexpAr, it, validPos)
         "MaterialInstanceConstant" -> UMaterialInstanceConstant(uexpAr, it)
+        "Level" -> ULevel(uexpAr, it)
         //Valorant specific classes
         "CharacterUIData" -> CharacterUIData(uexpAr, it)
         "CharacterAbilityUIData" -> CharacterAbilityUIData(uexpAr, it)
@@ -200,7 +203,7 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
      */
     inline fun <reified T : UExport> getExportsOfType() = exports.filterIsInstance<T>()
 
-    fun applyLocres(locres : Locres?) {
+    fun applyLocres(locres: Locres?) {
         exports.forEach { it.applyLocres(locres) }
     }
 
