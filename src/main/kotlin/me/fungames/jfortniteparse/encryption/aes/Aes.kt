@@ -3,7 +3,6 @@ package me.fungames.jfortniteparse.encryption.aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.util.ModByteArrayOutputStream
 import me.fungames.jfortniteparse.util.parseHexBinary
-import java.io.ByteArrayOutputStream
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec

@@ -5,9 +5,9 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.UScriptMap
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
 

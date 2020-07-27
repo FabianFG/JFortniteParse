@@ -3,11 +3,11 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.UInterfaceProperty

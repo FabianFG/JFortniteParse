@@ -9,8 +9,6 @@ import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_PathHashIndex
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
-import kotlin.math.max
-import kotlin.math.min
 
 @ExperimentalUnsignedTypes
 class FPakInfo : UClass {

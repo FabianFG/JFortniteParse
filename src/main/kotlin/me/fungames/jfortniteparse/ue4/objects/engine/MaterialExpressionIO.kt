@@ -4,11 +4,11 @@ package me.fungames.jfortniteparse.ue4.objects.engine
 
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
 
 open class FExpressionInput : UClass {
     /** Index into Expression's outputs array that this input is connected to. */

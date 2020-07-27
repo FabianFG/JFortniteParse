@@ -3,9 +3,9 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes

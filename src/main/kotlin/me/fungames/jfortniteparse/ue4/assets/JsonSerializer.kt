@@ -10,7 +10,6 @@ import com.google.gson.JsonSerializationContext
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.*
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.math.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime

@@ -3,10 +3,10 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.EFortRarity
 import me.fungames.jfortniteparse.ue4.assets.exports.fort.FortCosmeticVariant
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FSoftObjectPath

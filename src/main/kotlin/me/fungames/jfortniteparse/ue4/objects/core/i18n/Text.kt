@@ -6,10 +6,10 @@ import me.fungames.jfortniteparse.ue4.assets.enums.EDateTimeStyle
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UStringTable
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 enum class EFormatArgumentType { Int, UInt, Float, Double, Text, Gender }
