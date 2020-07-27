@@ -7,8 +7,8 @@ import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.resources.Resources
 import me.fungames.jfortniteparse.ue4.assets.enums.valorant.ECharacterAbilitySlot
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
-import me.fungames.jfortniteparse.ue4.assets.exports.valorant.CharacterDataAsset
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.CharacterAbilityUIData
+import me.fungames.jfortniteparse.ue4.assets.exports.valorant.CharacterDataAsset
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.CharacterRoleDataAsset
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.CharacterUIData
 import me.fungames.jfortniteparse.util.cut

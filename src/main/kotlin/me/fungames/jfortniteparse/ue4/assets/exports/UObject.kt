@@ -1,12 +1,12 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.FGuid
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 open class UObject : UExport {
@@ -16,17 +16,21 @@ open class UObject : UExport {
     var readGuid = false
 
     constructor(Ar: FAssetArchive, exportType: String, readGuid: Boolean = true) : super(exportType) {
+        super.init(Ar)
         properties =
             deserializeProperties(Ar)
         if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
             objectGuid = FGuid(Ar)
+        super.complete(Ar)
     }
 
     constructor(Ar: FAssetArchive, exportObject : FObjectExport, readGuid : Boolean = true) : super(exportObject) {
+        super.init(Ar)
         properties =
             deserializeProperties(Ar)
         if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
             objectGuid = FGuid(Ar)
+        super.complete(Ar)
     }
 
     inline fun <reified T> set(name: String, value : T) {

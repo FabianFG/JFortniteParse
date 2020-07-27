@@ -11,12 +11,16 @@ import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.exports.valorant.*
-import me.fungames.jfortniteparse.ue4.assets.objects.*
+import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectImport
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageFileSummary
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 import java.io.OutputStream
@@ -131,7 +135,7 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
         uassetAr.clearImportCache()
         uexpAr.clearImportCache()
         ubulkAr?.clearImportCache()
-        logger.info("Successfully parsed package : $name")
+        logger.debug("Successfully parsed package : $name")
     }
 
     fun readExport(uexpAr : FAssetArchive, exportType : String, it : FObjectExport, validPos : Int) = when(exportType) {
@@ -160,6 +164,7 @@ class Package(uasset : ByteBuffer, uexp : ByteBuffer, ubulk : ByteBuffer? = null
         "FortTokenType", "FortWorkerType",
         "FortDailyRewardScheduleTokenDefinition",
         "FortAbilityKit" -> ItemDefinition(uexpAr, it)
+        "Level" -> ULevel(uexpAr, it)
         else -> {
             if (exportType.contains("ItemDefinition")) {
                 ItemDefinition(uexpAr, it)

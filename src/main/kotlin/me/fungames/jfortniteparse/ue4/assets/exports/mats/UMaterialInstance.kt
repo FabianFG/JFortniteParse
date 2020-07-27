@@ -1,9 +1,8 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.mats
 
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.objects.structs.FMaterialInstanceBasePropertyOverrides
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 open class UMaterialInstance(Ar: FAssetArchive, exportObject: FObjectExport) : UMaterialInterface(Ar, exportObject) {

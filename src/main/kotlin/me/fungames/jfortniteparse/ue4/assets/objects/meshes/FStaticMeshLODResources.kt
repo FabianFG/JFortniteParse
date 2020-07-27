@@ -4,9 +4,9 @@ package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
-import me.fungames.jfortniteparse.ue4.assets.objects.FDistanceFieldVolumeData
-import me.fungames.jfortniteparse.ue4.assets.objects.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
+import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4

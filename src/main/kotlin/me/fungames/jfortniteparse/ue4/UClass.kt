@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4
 
-import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import mu.KotlinLogging

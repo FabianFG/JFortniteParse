@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.manifests.objects
 
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 @ExperimentalUnsignedTypes

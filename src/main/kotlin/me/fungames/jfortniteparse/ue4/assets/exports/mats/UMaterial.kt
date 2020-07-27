@@ -3,8 +3,8 @@ package me.fungames.jfortniteparse.ue4.assets.exports.mats
 import me.fungames.jfortniteparse.converters.ue4.CMaterialParams
 import me.fungames.jfortniteparse.ue4.assets.enums.EBlendMode
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_BASE
 
 @ExperimentalUnsignedTypes

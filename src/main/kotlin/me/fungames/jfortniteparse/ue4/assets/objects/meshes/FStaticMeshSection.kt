@@ -3,7 +3,7 @@ package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.FRenderingObjectVersion
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_25
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 @ExperimentalUnsignedTypes
@@ -42,7 +42,7 @@ class FStaticMeshSection : UClass {
         Ar.writeInt32(maxVertexIndex)
         Ar.writeBoolean(enableCollision)
         Ar.writeBoolean(castShadow)
-        if (Ar.game >= GAME_UE4_25)
+        if (Ar.game >= GAME_UE4(25))
             Ar.writeBoolean(forceOpaque)
         super.completeWrite(Ar)
     }

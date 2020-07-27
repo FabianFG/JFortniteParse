@@ -1,9 +1,25 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.math.*
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FSoftObjectPath
+import me.fungames.jfortniteparse.ue4.objects.detailcustomizations.FNavAgentSelectorCustomization
+import me.fungames.jfortniteparse.ue4.objects.engine.*
+import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurveKey
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
+import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceObjectReferenceMap
+import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationKey
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationTemplate
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneSegment
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEvaluationDataTree
 
 @ExperimentalUnsignedTypes
 class UScriptStruct : UClass {
@@ -27,8 +43,9 @@ class UScriptStruct : UClass {
             "Vector4" -> FVector4(Ar)
             "Rotator" -> FRotator(Ar)
             "IntVector" -> FIntVector(Ar)
-            "PerPlatformFloat" -> FPerPlatformFloat(Ar)
             "PerPlatformInt" -> FPerPlatformInt(Ar)
+            "PerPlatformFloat" -> FPerPlatformFloat(Ar)
+            "PerPlatformBool" -> FPerPlatformBool(Ar)
             "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
             "LevelSequenceObjectReferenceMap" -> FLevelSequenceObjectReferenceMap(Ar)
             "FrameNumber" -> FFrameNumber(Ar)
@@ -65,7 +82,7 @@ class UScriptStruct : UClass {
 
     fun serialize(Ar: FAssetArchiveWriter) {
         super.initWrite(Ar)
-        when(val structType = structType) {
+        when (val structType = structType) {
             is FIntPoint -> structType.serialize(Ar)
             is FGuid -> structType.serialize(Ar)
             is FGameplayTagContainer -> structType.serialize(Ar)
@@ -79,8 +96,9 @@ class UScriptStruct : UClass {
             is FVector4 -> structType.serialize(Ar)
             is FRotator -> structType.serialize(Ar)
             is FIntVector -> structType.serialize(Ar)
-            is FPerPlatformFloat -> structType.serialize(Ar)
             is FPerPlatformInt -> structType.serialize(Ar)
+            is FPerPlatformFloat -> structType.serialize(Ar)
+            is FPerPlatformBool -> structType.serialize(Ar)
             is FWeightedRandomSampler -> structType.serialize(Ar)
             is FLevelSequenceObjectReferenceMap -> structType.serialize(Ar)
             is FStructFallback -> structType.serialize(Ar)

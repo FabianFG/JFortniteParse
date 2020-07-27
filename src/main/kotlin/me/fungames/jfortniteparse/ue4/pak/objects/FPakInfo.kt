@@ -1,8 +1,8 @@
 package me.fungames.jfortniteparse.ue4.pak.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_FNameBasedCompressionMethod
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_FrozenIndex
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_PathHashIndex

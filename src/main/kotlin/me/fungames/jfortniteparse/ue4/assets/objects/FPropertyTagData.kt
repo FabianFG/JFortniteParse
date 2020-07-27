@@ -1,16 +1,17 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 @ExperimentalUnsignedTypes
 sealed class FPropertyTagData : UClass() {
-
     abstract fun serialize(Ar: FAssetArchiveWriter)
+
+    override fun toString(): String = javaClass.simpleName
 
     class StructProperty(Ar: FAssetArchive) : FPropertyTagData() {
         var nameData: FName
@@ -29,6 +30,8 @@ sealed class FPropertyTagData : UClass() {
             guid.serialize(Ar)
             super.completeWrite(Ar)
         }
+
+        override fun toString(): String = "${super.toString()} ($nameData)"
     }
 
     class BoolProperty(Ar: FArchive) : FPropertyTagData() {

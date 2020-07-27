@@ -1,13 +1,19 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.FGuid
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
-import me.fungames.jfortniteparse.ue4.assets.objects.*
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMaterial
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMeshLODResources
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.math.FBoxSphereBounds
+import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator
+import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
+import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.versions.*
 
 internal const val MAX_STATIC_UV_SETS_UE4 = 8

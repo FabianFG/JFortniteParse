@@ -1,9 +1,9 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.structs
 
-import me.fungames.jfortniteparse.ue4.assets.objects.FLinearColor
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
 import me.fungames.jfortniteparse.ue4.assets.util.StructFieldName
+import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
 
 @ExperimentalUnsignedTypes
 @StructFallbackClass

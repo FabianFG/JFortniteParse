@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -8,6 +7,10 @@ import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FSoftObjectPath
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.UInterfaceProperty
 import java.lang.reflect.Array
 
 @ExperimentalUnsignedTypes
@@ -257,7 +260,14 @@ sealed class FPropertyTagType(val propertyType: String) {
                 }
                 "ByteProperty" -> {
                     return when(type) {
-                        Type.NORMAL -> ByteProperty(Ar.readFName().index.toUByte(), propertyType)
+                        // Type.NORMAL -> ByteProperty(Ar.readFName().index.toUByte(), propertyType)
+                        Type.NORMAL -> { // FIXME: this is a hack to match John Wick Parse's output
+                            val nameIndex = Ar.readInt32()
+                            if (nameIndex in Ar.nameMap.indices)
+                                NameProperty(FName(Ar.nameMap, nameIndex, Ar.readInt32()), propertyType)
+                            else
+                                ByteProperty(nameIndex.toUByte(), propertyType)
+                        }
                         Type.MAP -> ByteProperty(Ar.readUInt32().toUByte(), propertyType)
                         Type.ARRAY -> ByteProperty(Ar.readUInt8(), propertyType)
                     }
@@ -282,8 +292,8 @@ sealed class FPropertyTagType(val propertyType: String) {
                 "Int8Property" -> return Int8Property(Ar.readInt8(), propertyType)
                 "Int16Property" -> return Int16Property(Ar.readInt16(), propertyType)
                 "Int64Property" -> return Int64Property(Ar.readInt64(), propertyType)
-                "MulticastDelegateProperty" -> throw ParserException("MulticastDelegateProperty not implemented yet")
-                "LazyObjectProperty" -> throw ParserException("LazyObjectProperty not implemented yet")
+                /*"MulticastDelegateProperty" -> throw ParserException("MulticastDelegateProperty not implemented yet")
+                "LazyObjectProperty" -> throw ParserException("LazyObjectProperty not implemented yet")*/
 
                 else -> {
                     UClass.logger.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
@@ -414,5 +424,4 @@ sealed class FPropertyTagType(val propertyType: String) {
         MAP,
         ARRAY
     }
-
 }

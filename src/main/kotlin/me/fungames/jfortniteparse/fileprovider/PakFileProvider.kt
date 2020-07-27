@@ -2,9 +2,10 @@ package me.fungames.jfortniteparse.fileprovider
 
 import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.encryption.aes.Aes
-import me.fungames.jfortniteparse.ue4.FGuid
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
+import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("EXPERIMENTAL_API_USAGE")
@@ -43,7 +44,10 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
                             mountedPaks.add(reader)
                             countNewMounts.getAndIncrement()
                             reader
-                        } else null
+                        } else {
+                            logger.warn("The provided encryption key doesn't work with \"" + (if (reader.Ar is FPakFileArchive) reader.Ar.file else reader.fileName) + "\". Skipping.")
+                            null
+                        }
                     }.onFailure { logger.warn(it) { "Uncaught exception while loading pak file ${reader.fileName.substringAfterLast('/')}" } }.getOrNull() })
                 }
             }

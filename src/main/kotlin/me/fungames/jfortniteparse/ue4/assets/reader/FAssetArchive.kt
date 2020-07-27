@@ -5,9 +5,13 @@ import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
-import me.fungames.jfortniteparse.ue4.assets.objects.*
+import me.fungames.jfortniteparse.ue4.assets.objects.FNameEntry
 import me.fungames.jfortniteparse.ue4.assets.util.FName
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FObjectImport
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageFileSummary
+import me.fungames.jfortniteparse.ue4.objects.coreuobject.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.nio.ByteBuffer
 

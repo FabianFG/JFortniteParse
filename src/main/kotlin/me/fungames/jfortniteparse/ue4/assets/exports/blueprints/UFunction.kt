@@ -1,14 +1,5 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.blueprints
 
-import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.enums.EFunctionFlags
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.assets.objects.FObjectExport
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
-import me.fungames.jfortniteparse.ue4.reader.FArchive
-
 /*
 @ExperimentalUnsignedTypes
 class UFunction : UExport {
