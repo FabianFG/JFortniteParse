@@ -5,6 +5,52 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import java.awt.Color
 
+/**
+ * A linear, 32-bit/component floating point RGBA color.
+ */
+@ExperimentalUnsignedTypes
+class FLinearColor : UClass {
+    var r: Float
+    var g: Float
+    var b: Float
+    var a: Float
+
+    constructor(Ar: FArchive) {
+        super.init(Ar)
+        r = Ar.readFloat32()
+        g = Ar.readFloat32()
+        b = Ar.readFloat32()
+        a = Ar.readFloat32()
+        super.complete(Ar)
+    }
+
+    fun serialize(Ar: FArchiveWriter) {
+        super.initWrite(Ar)
+        Ar.writeFloat32(r)
+        Ar.writeFloat32(g)
+        Ar.writeFloat32(b)
+        Ar.writeFloat32(a)
+        super.completeWrite(Ar)
+    }
+
+    fun toColor() = Color(r, g, b, a)
+
+    constructor(r: Float, g: Float, b: Float, a: Float) {
+        this.r = r
+        this.g = g
+        this.b = b
+        this.a = a
+    }
+
+    override fun toString() = "(R=%f,G=%f,B=%f,A=%f)".format(r, g, b, a)
+}
+
+/**
+ * Stores a color with 8 bits of precision per channel.
+ *
+ * Note: Linear color values should always be converted to gamma space before stored in an FColor, as 8 bits of precision is not enough to store linear space colors!
+ * This can be done with FLinearColor.toFColor(true)
+ */
 @ExperimentalUnsignedTypes
 class FColor : UClass {
     var r: UByte
@@ -40,39 +86,23 @@ class FColor : UClass {
         this.b = b
         this.a = a
     }
-}
 
-@ExperimentalUnsignedTypes
-class FLinearColor : UClass {
-    var r: Float
-    var g: Float
-    var b: Float
-    var a: Float
+    /**
+     * Converts this color value to a hexadecimal string.
+     *
+     * The format of the string is RRGGBBAA.
+     *
+     * @return Hexadecimal string.
+     * @see fromHex
+     * @see toString
+     */
+    fun toHex() = "%02X%02X%02X%02X".format(r, g, b, a)
 
-    constructor(Ar: FArchive) {
-        super.init(Ar)
-        r = Ar.readFloat32()
-        g = Ar.readFloat32()
-        b = Ar.readFloat32()
-        a = Ar.readFloat32()
-        super.complete(Ar)
-    }
-
-    fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
-        Ar.writeFloat32(r)
-        Ar.writeFloat32(g)
-        Ar.writeFloat32(b)
-        Ar.writeFloat32(a)
-        super.completeWrite(Ar)
-    }
-
-    fun toColor() = Color(r, g, b, a)
-
-    constructor(r: Float, g: Float, b: Float, a: Float) {
-        this.r = r
-        this.g = g
-        this.b = b
-        this.a = a
-    }
+    /**
+     * Converts this color value to a string.
+     *
+     * @return The string representation.
+     * @see toHex
+     */
+    override fun toString() = "(R=%i,G=%i,B=%i,A=%i)".format(r, g, b, a)
 }
