@@ -121,6 +121,7 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
                 }
                 else -> readExport(uexpAr, exportType, it, validPos)
             }
+            export.owner = this
             if (validPos != uexpAr.pos())
                 logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
             else
@@ -133,7 +134,7 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
             if (!exports.contains(value))
                 exports.add(value)
         }*/
-        matchValorantCharacterAbilities()
+        //matchValorantCharacterAbilities()
         uassetAr.clearImportCache()
         uexpAr.clearImportCache()
         ubulkAr?.clearImportCache()

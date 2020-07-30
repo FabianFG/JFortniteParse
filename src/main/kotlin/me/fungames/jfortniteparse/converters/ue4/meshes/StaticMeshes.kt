@@ -2,15 +2,14 @@
 
 package me.fungames.jfortniteparse.converters.ue4.meshes
 
-import glm_.vec3.Vec3
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh
 import me.fungames.jfortniteparse.ue4.objects.core.math.FBox
 import me.fungames.jfortniteparse.ue4.objects.core.math.FSphere
+import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 
-
-class CStaticMesh(val originalMesh : UStaticMesh, val boundingBox : FBox, val boundingSphere : FSphere, val lods : List<CStaticMeshLod>) {
+class CStaticMesh(val originalMesh: UStaticMesh, val boundingBox: FBox, val boundingSphere: FSphere, val lods: List<CStaticMeshLod>) {
     internal fun finalizeMesh() {
         lods.forEach { it.buildNormals() }
     }
@@ -19,8 +18,8 @@ class CStaticMesh(val originalMesh : UStaticMesh, val boundingBox : FBox, val bo
 class CStaticMeshLod : CBaseMeshLod() {
     var verts = emptyArray<CMeshVertex>()
 
-    fun allocateVerts(count : Int) {
-        verts = Array(count) { CStaticMeshVertex(Vec3(), CPackedNormal(), CPackedNormal(), CMeshUVFloat()) }
+    fun allocateVerts(count: Int) {
+        verts = Array(count) { CStaticMeshVertex(FVector(), CPackedNormal(), CPackedNormal(), CMeshUVFloat()) }
         numVerts = count
         allocateUVBuffers()
     }
@@ -32,7 +31,7 @@ class CStaticMeshLod : CBaseMeshLod() {
     }
 }
 
-class CStaticMeshVertex(position: Vec3, normal: CPackedNormal, tangent: CPackedNormal, uv: CMeshUVFloat) :
+class CStaticMeshVertex(position: FVector, normal: CPackedNormal, tangent: CPackedNormal, uv: CMeshUVFloat) :
     CMeshVertex(position, normal, tangent, uv)
 
 fun UStaticMesh.convertMesh(): CStaticMesh {
@@ -79,7 +78,7 @@ fun UStaticMesh.convertMesh(): CStaticMesh {
             val suv = srcLod.vertexBuffer.uv[i]
             val v = lod.verts[i]
 
-            v.position = srcLod.positionVertexBuffer.verts[i].toVec3()
+            v.position = srcLod.positionVertexBuffer.verts[i].run { FVector(x, y, z) }
             unpackNormals(suv.normal, v)
             // copy UV
             v.uv = CMeshUVFloat(suv.uv[0])

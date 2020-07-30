@@ -1,21 +1,34 @@
-package me.fungames.jfortniteparse.ue4.assets.exports
+package me.fungames.jfortniteparse.ue4.objects.engine
 
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
+/** URL structure. */
 @ExperimentalUnsignedTypes
 class FURL : UClass {
     /*companion object {
-        val urlConfig = URLConfig()
+        val urlConfig = FUrlConfig()
     }*/
 
+    /** Protocol, i.e. "unreal" or "http". */
     var protocol: String
+
+    /** Optional hostname, i.e. "204.157.115.40" or "unreal.epicgames.com", blank if local. */
     var host: String
-    var map: String
-    var portal: String
-    var op: Array<String>
+
+    /** Optional host port. */
     var port: Int
+
     var valid: Int
+
+    /** Map name, i.e. "SkyCity", default is "Entry". */
+    var map: String
+
+    /** Options. */
+    var op: Array<String>
+
+    /** Portal to enter through, default is "". */
+    var portal: String
 
     constructor(Ar: FArchive) {
         protocol = Ar.readString()
@@ -37,9 +50,12 @@ class FURL : UClass {
         this.valid = valid
     }
 
-    /*override fun toString() = toString(true)
+    /*override fun toString() = toString(false)
 
-    fun toString(fullyQualified: Boolean): String {
+    /**
+	 * Convert this URL to text.
+     */
+    fun toString(fullyQualified: Boolean = false): String {
         var result = ""
 
         // Emit protocol.
@@ -76,9 +92,12 @@ class FURL : UClass {
         }
 
         return result
-    }
+    }*/
 
-    fun getHostPortString(): String {
+    /**
+     * Prepares the Host and Port values into a standards compliant string
+     */
+    /*fun getHostPortString(): String {
         var result = ""
         val bNotUsingDefaultPort = (port != urlConfig.defaultPort)
 
@@ -101,9 +120,25 @@ class FURL : UClass {
         return result
     }
 
-    class URLConfig {
-        var defaultProtocol = "xx"
-        var defaultHost = "xx"
-        var defaultPort = 0
+    /**
+     * Helper for obtaining the default Url configuration
+     */
+    class FUrlConfig : UClass {
+        var defaultProtocol: String
+        var defaultName: String
+        var defaultHost: String
+        var defaultPortal: String
+        var defaultSaveExt: String
+        var defaultPort: int
+
+        /**
+         * Initialize with defaults from ini
+         */
+        fun init()
+
+        /**
+         * Reset state
+         */
+        fun reset()
     }*/
 }
