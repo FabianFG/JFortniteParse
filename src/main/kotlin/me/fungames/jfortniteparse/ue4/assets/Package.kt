@@ -134,7 +134,8 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
             if (!exports.contains(value))
                 exports.add(value)
         }*/
-        //matchValorantCharacterAbilities()
+        if (provider?.game == Ue4Version.GAME_VALORANT)
+            matchValorantCharacterAbilities()
         uassetAr.clearImportCache()
         uexpAr.clearImportCache()
         ubulkAr?.clearImportCache()
