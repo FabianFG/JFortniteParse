@@ -2,41 +2,39 @@
 
 package me.fungames.jfortniteparse.converters.ue4.meshes
 
-import glm_.vec3.Vec3
+import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.util.INDEX_NONE
-import me.fungames.jfortniteparse.util.set
 import me.fungames.kotlinPointers.asPointer
 import kotlin.math.floor
 
 // structure which helps to share vertices between wedges
 class CVertexShare {
-
-    val points = mutableListOf<Vec3>()
+    val points = mutableListOf<FVector>()
     val normals = mutableListOf<CPackedNormal>()
-    val extraInfos  = mutableListOf<UInt>()
+    val extraInfos = mutableListOf<UInt>()
     var wedgeToVert = mutableListOf<Int>()
-    lateinit var vertToWedge : IntArray
+    lateinit var vertToWedge: IntArray
     var wedgeIndex = 0
 
     // hashing
-    var mins = Vec3()
-    var maxs = Vec3()
-    lateinit var extents : Vec3
+    var mins = FVector()
+    var maxs = FVector()
+    lateinit var extents: FVector
     val hash = IntArray(16384) { -1 }
-    lateinit var hashNext : IntArray
+    lateinit var hashNext: IntArray
 
-    fun prepare(verts : Array<CMeshVertex>) {
+    fun prepare(verts: Array<CMeshVertex>) {
         vertToWedge = IntArray(verts.size)
 
         // compute bounds for better hashing
         computeBounds(verts)
         extents = maxs - mins
-        extents[0] += 1; extents[1] += 1; extents[2] += 1; // avoid zero divide
+        extents[0] += 1f; extents[1] += 1f; extents[2] += 1f; // avoid zero divide
         // initialize Hash and HashNext with -1
         hashNext = IntArray(verts.size) { -1 }
     }
 
-    fun computeBounds(verts: Array<CMeshVertex>, updateBounds : Boolean = false) {
+    fun computeBounds(verts: Array<CMeshVertex>, updateBounds: Boolean = false) {
         if (verts.isEmpty()) {
             if (!updateBounds) {
                 mins.set(0f, 0f, 0f)
@@ -66,7 +64,7 @@ class CVertexShare {
         }
     }
 
-    fun addVertex(pos : Vec3, normal: CPackedNormal, extraInfo : UInt = 0u): Int {
+    fun addVertex(pos: FVector, normal: CPackedNormal, extraInfo: UInt = 0u): Int {
         var pointIndex: Int
 
         normal.data = normal.data and 0xFFFFFFu         // clear W component which is used for binormal computation
