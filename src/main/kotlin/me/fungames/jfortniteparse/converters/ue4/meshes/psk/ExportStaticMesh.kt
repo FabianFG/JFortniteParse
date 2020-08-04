@@ -43,9 +43,9 @@ class StaticMeshExport(val fileName : String, val pskx : ByteArray, val material
     }
 }
 
-fun CStaticMesh.export() = exportLods().firstOrNull()
+fun CStaticMesh.export(exportLods : Boolean = false, exportMaterials : Boolean = true) = exportLods(exportLods, exportMaterials).firstOrNull()
 
-fun CStaticMesh.exportLods(exportLods : Boolean = false) : List<StaticMeshExport> {
+fun CStaticMesh.exportLods(exportLods : Boolean = false, exportMaterials : Boolean = true) : List<StaticMeshExport> {
     if (lods.isEmpty()) {
         UClass.logger.warn { "Mesh ${originalMesh.name} has 0 lods" }
         return emptyList()
@@ -66,16 +66,16 @@ fun CStaticMesh.exportLods(exportLods : Boolean = false) : List<StaticMeshExport
         val writer = FByteArchiveWriter()
         writer.ver = 128 // less than UE3 version (required at least for VJointPos structure)
 
-        val materialExports = mutableListOf<MaterialExport>()
+        val materialExports = if (exportMaterials) mutableListOf<MaterialExport>() else null
 
         exportStaticMeshLod(lods[lod], writer, materialExports)
 
-        exports.add(StaticMeshExport(fileName, writer.toByteArray(), materialExports))
+        exports.add(StaticMeshExport(fileName, writer.toByteArray(), materialExports ?: mutableListOf()))
     }
     return exports
 }
 
-private fun exportStaticMeshLod(lod : CStaticMeshLod, Ar : FArchiveWriter, materialExports : MutableList<MaterialExport>) {
+private fun exportStaticMeshLod(lod : CStaticMeshLod, Ar : FArchiveWriter, materialExports : MutableList<MaterialExport>?) {
     val share = CVertexShare()
 
     val boneHdr = VChunkHeader()

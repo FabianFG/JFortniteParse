@@ -3,6 +3,7 @@
 package me.fungames.jfortniteparse.converters.ue4.meshes.psk
 
 import me.fungames.jfortniteparse.converters.ue4.MaterialExport
+import me.fungames.jfortniteparse.converters.ue4.export
 import me.fungames.jfortniteparse.converters.ue4.meshes.*
 import me.fungames.jfortniteparse.converters.ue4.meshes.psk.common.VChunkHeader
 import me.fungames.jfortniteparse.converters.ue4.meshes.psk.psk.VMaterial
@@ -15,7 +16,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.MIRROR_MESH
 
-fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, verts : Array<CMeshVertex>, indices : CIndexBuffer, share: CVertexShare, materialExports : MutableList<MaterialExport>) {
+fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, verts : Array<CMeshVertex>, indices : CIndexBuffer, share: CVertexShare, materialExports : MutableList<MaterialExport>?) {
     val mainHdr = VChunkHeader()
     val ptsHdr = VChunkHeader()
     val wedgHdr = VChunkHeader()
@@ -120,8 +121,7 @@ fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, ver
         val tex = sections[i].material
         //!! this will not handle (UMaterialWithPolyFlags->Material==NULL) correctly - will make MaterialName=="None"
         val materialName = tex?.name ?: "material_${i}"
-        // MOD: Do not export materials, we handle it ourselves
-        // if (tex != null) materialExports.add(tex.export())
+        if (tex != null) materialExports?.add(tex.export())
         val m = VMaterial(materialName, i, 0u, 0, 0u, 0, 0)
         m.serialize(Ar)
     }
