@@ -15,17 +15,14 @@ import java.lang.reflect.Array
 
 @ExperimentalUnsignedTypes
 sealed class FPropertyTagType(val propertyType: String) {
-
-    inline fun <reified T> getTagTypeValue(Ar: FAssetArchive? = null) : T? {
-        val value = getTagTypeValue(T::class.java, Ar)
-        return if (value is T)
-            value
-        else
-            null
+    inline fun <reified T> getTagTypeValue(): T? {
+        val value = getTagTypeValue(T::class.java)
+        return if (value is T) value else null
     }
 
-    fun getTagTypeValue(clazz: Class<*>, Ar: FAssetArchive? = null) : Any? {
-        @Suppress("DEPRECATION") val value = getTagTypeValueLegacy()
+    @Suppress("DEPRECATION", "UNCHECKED_CAST")
+    fun <T> getTagTypeValue(clazz: Class<T>): T? {
+        val value = getTagTypeValueLegacy()
         return when {
             clazz.isAssignableFrom(value::class.java) -> value
             value is Boolean && clazz == Boolean::class.javaPrimitiveType -> value
@@ -36,12 +33,12 @@ sealed class FPropertyTagType(val propertyType: String) {
             value is Long && clazz == Long::class.javaPrimitiveType -> value
             value is Float && clazz == Float::class.javaPrimitiveType -> value
             value is Double && clazz == Double::class.javaPrimitiveType -> value
-            value is FStructFallback && clazz.isAnnotationPresent(StructFallbackClass::class.java) -> value.mapToClass(clazz, Ar)
+            value is FStructFallback && clazz.isAnnotationPresent(StructFallbackClass::class.java) -> value.mapToClass(clazz)
             value is UScriptArray && clazz.isArray -> {
                 val content = clazz.componentType
                 val array = Array.newInstance(content, value.data.size)
                 value.contents.forEachIndexed { i, tag ->
-                    val data = tag.getTagTypeValue(content, Ar)
+                    val data = tag.getTagTypeValue(content)
                     if (data != null)
                         Array.set(array, i, data)
                     else
@@ -49,14 +46,15 @@ sealed class FPropertyTagType(val propertyType: String) {
                 }
                 array
             }
-            value is FPackageIndex && UExport::class.java.isAssignableFrom(clazz) && Ar != null -> {
-                val export = Ar.loadObjectGeneric(value)
-                if (export != null && clazz.isAssignableFrom(export::class.java))
-                    export
-                else
-                    null
+            value is FPackageIndex && UExport::class.java.isAssignableFrom(clazz) -> {
+                val export = value.owner?.provider?.loadObject(value)
+                if (export != null && clazz.isAssignableFrom(export::class.java)) export else null
             }
-            clazz.isEnum && this is EnumProperty -> {
+            value is FSoftObjectPath && UExport::class.java.isAssignableFrom(clazz) -> {
+                val export = value.owner?.provider?.loadObject(value)
+                if (export != null && clazz.isAssignableFrom(export::class.java)) export else null
+            }
+            this is EnumProperty && clazz.isEnum -> {
                 val storedEnum = this.name.text
                 if (clazz.simpleName != storedEnum.substringBefore("::"))
                     null
@@ -70,7 +68,7 @@ sealed class FPropertyTagType(val propertyType: String) {
             }
             //TODO maybe also add Map
             else -> null
-        }
+        } as T
     }
 
     @Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
@@ -102,7 +100,7 @@ sealed class FPropertyTagType(val propertyType: String) {
         }
     }
 
-    fun setTagTypeValue(value : Any?) {
+    fun setTagTypeValue(value: Any?) {
         if (value == null)
             return
         when(this) {

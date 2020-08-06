@@ -18,6 +18,10 @@ class FPropertyTag : UClass {
     var propertyGuid: FGuid? = null
     var tag: FPropertyTagType? = null
 
+    constructor(name: FName) {
+        this.name = name
+    }
+
     constructor(Ar: FAssetArchive, readData: Boolean) {
         super.init(Ar)
         name = Ar.readFName()
@@ -70,24 +74,24 @@ class FPropertyTag : UClass {
         super.complete(Ar)
     }
 
-    fun getTagTypeValue(clazz: Class<*>, Ar: FAssetArchive? = null) : Any? {
+    fun <T> getTagTypeValue(clazz: Class<T>): T? {
         if (tag == null)
             throw IllegalArgumentException("This tag was read without data")
-        return tag?.getTagTypeValue(clazz, Ar)
+        return tag?.getTagTypeValue(clazz)
     }
 
-    inline fun <reified T> getTagTypeValue(Ar: FAssetArchive? = null) : T? {
+    inline fun <reified T> getTagTypeValue(): T? {
         if (tag == null)
             throw IllegalArgumentException("This tag was read without data")
-        return tag?.getTagTypeValue<T>(Ar)
+        return tag?.getTagTypeValue()
     }
 
     @Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
     fun getTagTypeValueLegacy() = tag?.getTagTypeValueLegacy() ?: throw IllegalArgumentException("This tag was read without data")
 
-    fun setTagTypeValue(value : Any?) = tag?.setTagTypeValue(value)
+    fun setTagTypeValue(value: Any?) = tag?.setTagTypeValue(value)
 
-    fun serialize(Ar: FAssetArchiveWriter, writeData : Boolean) {
+    fun serialize(Ar: FAssetArchiveWriter, writeData: Boolean) {
         super.initWrite(Ar)
         Ar.writeFName(name)
         if (name.text != "None") {

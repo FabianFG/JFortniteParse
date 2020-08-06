@@ -1,9 +1,9 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 /**
  * A struct that contains a string reference to an object, either a top level asset or a subobject.
@@ -18,12 +18,14 @@ class FSoftObjectPath : UClass {
 
     /** Optional FString for subobject within an asset. This is the sub path after the : */
     var subPathString: String
+    var owner: Package? = null
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
         assetPathName = Ar.readFName()
         subPathString = Ar.readString()
         super.complete(Ar)
+        owner = Ar.owner
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
@@ -46,4 +48,6 @@ class FSoftObjectPath : UClass {
         } else {
             "$assetPathName:$subPathString"
         }
+
+    inline fun <reified T> load() = owner?.provider?.loadObject<T>(this)
 }

@@ -1,17 +1,13 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.structs
 
 import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
-import me.fungames.jfortniteparse.ue4.assets.util.StructFieldName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 @StructFallbackClass
 class FScalarParameterValue(
-    @StructFieldName("ParameterName")
-    val parameterName : FName?,
-    @StructFieldName("ParameterValue")
-    val parameterValue : Float,
-    @StructFieldName("ParameterInfo")
-    val parameterInfo : FMaterialParameterInfo
+    val ParameterName: FName?,
+    val ParameterValue: Float,
+    val ParameterInfo: FMaterialParameterInfo
 ) {
-    fun getName() = parameterName?.text ?: parameterInfo.name.text
+    fun getName() = ParameterName?.text ?: ParameterInfo.Name.text
 }

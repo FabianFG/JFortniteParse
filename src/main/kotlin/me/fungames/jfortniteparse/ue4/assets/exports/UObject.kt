@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -10,25 +11,24 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
 open class UObject : UExport {
-    override var baseObject = this
-    var properties: MutableList<FPropertyTag>
+    lateinit var properties: MutableList<FPropertyTag>
     var objectGuid: FGuid? = null
     var readGuid = false
 
-    constructor(Ar: FAssetArchive, exportType: String, readGuid: Boolean = true) : super(exportType) {
-        super.init(Ar)
-        properties = deserializeProperties(Ar)
-        if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
-            objectGuid = FGuid(Ar)
-        super.complete(Ar)
+    constructor(exportObject: FObjectExport, readGuid: Boolean = true) : super(exportObject) {
+        this.readGuid = readGuid
     }
 
-    constructor(Ar: FAssetArchive, exportObject: FObjectExport, readGuid: Boolean = true) : super(exportObject) {
-        super.init(Ar)
-        properties = deserializeProperties(Ar)
-        if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
-            objectGuid = FGuid(Ar)
-        super.complete(Ar)
+    /** Arbitrary UObject construction */
+    constructor() : this(mutableListOf(), null, "") {
+        exportType = javaClass.simpleName
+        name = javaClass.simpleName
+    }
+
+    /** For use in UDataTable and UCurveTable */
+    constructor(properties: MutableList<FPropertyTag>, objectGuid: FGuid?, exportType: String) : super(exportType) {
+        this.properties = properties
+        this.objectGuid = objectGuid
     }
 
     inline fun <reified T> set(name: String, value: T) {
@@ -36,21 +36,29 @@ open class UObject : UExport {
             properties.first { it.name.text == name }.setTagTypeValue(value)
     }
 
-    inline fun <reified T> getOrDefault(name: String, default: T, Ar: FAssetArchive? = null): T {
-        val value: T? = getOrNull(name, Ar)
+    inline fun <reified T> getOrDefault(name: String, default: T): T {
+        val value: T? = getOrNull(name)
         return value ?: default
     }
 
-    inline fun <reified T> getOrNull(name: String, Ar: FAssetArchive? = null) = properties.firstOrNull { it.name.text == name }?.getTagTypeValue<T>(Ar)
+    fun <T> getOrNull(name: String, clazz: Class<T>): T? = properties.firstOrNull { it.name.text == name }?.getTagTypeValue(clazz)
 
-    inline fun <reified T> get(name: String, Ar: FAssetArchive? = null): T = getOrNull(name, Ar) ?: throw KotlinNullPointerException("$name must be not-null")
+    inline fun <reified T> getOrNull(name: String) = getOrNull(name, T::class.java)
+
+    inline fun <reified T> get(name: String): T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
+
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        super.init(Ar)
+        properties = deserializeProperties(Ar)
+        if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
+            objectGuid = FGuid(Ar)
+        super.complete(Ar)
+        mapToClass(properties, javaClass, this)
+    }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
         super.initWrite(Ar)
-        serializeProperties(
-            Ar,
-            properties
-        )
+        serializeProperties(Ar, properties)
         if (readGuid) {
             Ar.writeBoolean(objectGuid != null)
             if (objectGuid != null) objectGuid?.serialize(Ar)
@@ -59,13 +67,6 @@ open class UObject : UExport {
     }
 
     companion object {
-        fun serializeProperties(Ar: FAssetArchiveWriter, properties: List<FPropertyTag>) {
-            properties.forEach {
-                it.serialize(Ar, true)
-            }
-            Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
-        }
-
         fun deserializeProperties(Ar: FAssetArchive): MutableList<FPropertyTag> {
             val properties = mutableListOf<FPropertyTag>()
             while (true) {
@@ -76,10 +77,10 @@ open class UObject : UExport {
             }
             return properties
         }
-    }
 
-    constructor(properties: MutableList<FPropertyTag>, objectGuid: FGuid?, exportType: String) : super(exportType) {
-        this.properties = properties
-        this.objectGuid = objectGuid
+        fun serializeProperties(Ar: FAssetArchiveWriter, properties: List<FPropertyTag>) {
+            properties.forEach { it.serialize(Ar, true) }
+            Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
+        }
     }
 }

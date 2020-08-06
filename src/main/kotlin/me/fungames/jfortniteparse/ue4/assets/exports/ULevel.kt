@@ -1,32 +1,25 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.engine.FURL
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 
 @ExperimentalUnsignedTypes
-class ULevel : UObject {
-    var url: FURL
-    var actors: Array<UExport?> // Array<AActor?>
+class ULevel(exportObject: FObjectExport) : UObject(exportObject) {
+    lateinit var url: FURL
+    lateinit var actors: Array<UExport?> // Array<AActor?>
 //    var model: UModel?
-//    var modelComponents: Array<FPackageIndex> // UModelComponent
+//    lateinit var modelComponents: Array<FPackageIndex> // UModelComponent
 
-    constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(Ar, exportObject) {
-        actors = Ar.readTArray { Ar.loadObject<UExport>(FPackageIndex(Ar)) }
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        super.deserialize(Ar, validPos)
+        actors = Ar.readTArray { FPackageIndex(Ar).run { Ar.provider?.loadObject(this) } }
         url = FURL(Ar)
 //        model = Ar.loadObject<UModel>(FPackageIndex(Ar))
 //        modelComponents = Ar.readTArray { FPackageIndex(Ar) }
 //        navListStart = TODO continue, at least we can grab the actors array
         super.complete(Ar)
-    }
-
-    override fun serialize(Ar: FAssetArchiveWriter) {
-        super.serialize(Ar)
-        super.completeWrite(Ar)
-        throw ParserException("Serializing ULevel not supported")
     }
 }
 

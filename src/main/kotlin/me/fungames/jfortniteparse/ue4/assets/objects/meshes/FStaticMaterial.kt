@@ -16,7 +16,7 @@ class FStaticMaterial : UClass {
 
     constructor(Ar : FAssetArchive) {
         super.init(Ar)
-        materialInterface = Ar.loadObject(FPackageIndex(Ar))
+        materialInterface = FPackageIndex(Ar).run { Ar.provider?.loadObject<UMaterialInterface>(this) }
         materialSlotName = Ar.readFName()
         if (FRenderingObjectVersion.get(Ar) >= FRenderingObjectVersion.TextureStreamingMeshUVChannelData)
             uvChannelData = FMeshUVChannelInfo(Ar)

@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.fileprovider
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
@@ -12,16 +11,12 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class DefaultFileProvider(val folder : File, override var game : Ue4Version = Ue4Version.GAME_UE4_LATEST) : PakFileProvider() {
-
     private val localFiles = mutableMapOf<String, File>()
     override val files = ConcurrentHashMap<String, GameFile>()
     override val unloadedPaks = CopyOnWriteArrayList<PakFileReader>()
     override val requiredKeys = CopyOnWriteArrayList<FGuid>()
     override val keys = ConcurrentHashMap<FGuid, ByteArray>()
     override val mountedPaks = CopyOnWriteArrayList<PakFileReader>()
-
-    override var defaultLocres : Locres? = null
-
 
     init {
         scanFiles(folder)

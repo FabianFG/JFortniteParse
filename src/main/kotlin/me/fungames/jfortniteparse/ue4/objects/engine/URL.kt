@@ -53,7 +53,7 @@ class FURL : UClass {
     /*override fun toString() = toString(false)
 
     /**
-	 * Convert this URL to text.
+     * Convert this URL to text.
      */
     fun toString(fullyQualified: Boolean = false): String {
         var result = ""

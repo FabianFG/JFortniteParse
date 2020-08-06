@@ -24,10 +24,9 @@ class FText : UClass {
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
         flags = Ar.readUInt32()
-        historyType =
-            ETextHistoryType.valueOfByte(Ar.readInt8())
+        historyType = ETextHistoryType.valueOfByte(Ar.readInt8())
         textHistory = when (historyType) {
-            ETextHistoryType.None -> FTextHistory.None()
+            ETextHistoryType.None -> FTextHistory.None(Ar)
             ETextHistoryType.Base -> FTextHistory.Base(Ar)
             ETextHistoryType.NamedFormat,
             ETextHistoryType.OrderedFormat -> FTextHistory.OrderedFormat(Ar)
@@ -71,12 +70,6 @@ class FText : UClass {
         this.text = textHistory.text
     }
 
-    fun applyLocres(locres: Locres?) {
-        val history = textHistory
-        if (locres != null && history is FTextHistory.Base)
-            text = locres.texts.stringData[history.nameSpace]?.get(history.key) ?: return
-    }
-
     fun textForLocres(locres: Locres?): String {
         val history = textHistory
         return if (history is FTextHistory.Base)
@@ -87,9 +80,20 @@ class FText : UClass {
 
 @ExperimentalUnsignedTypes
 sealed class FTextHistory : UClass() {
-    class None : FTextHistory() {
+    class None : FTextHistory {
+        private var unk: Int
         override val text = ""
-        override fun serialize(Ar: FAssetArchiveWriter) {}
+
+        constructor(Ar: FArchive) {
+            super.init(Ar)
+            unk = Ar.readInt32() // TODO is this bHasCultureInvariantString?
+            super.complete(Ar)
+        }
+
+        override fun serialize(Ar: FAssetArchiveWriter) {
+            super.initWrite(Ar)
+            Ar.writeInt32(unk)
+            super.completeWrite(Ar)}
     }
 
     class Base : FTextHistory {
@@ -238,7 +242,7 @@ sealed class FTextHistory : UClass() {
             super.init(Ar)
             this.tableId = Ar.readFName()
             this.key = Ar.readString()
-            val table = Ar.loadImport(tableId.text)?.getExportOfTypeOrNull<UStringTable>() ?: throw ParserException("Failed to load string table '$tableId'")
+            val table = Ar.provider?.loadObject<UStringTable>(tableId.text) ?: throw ParserException("Failed to load string table '$tableId'")
             text = table.entries[key] ?: throw ParserException("Didn't find needed in key in string table")
             super.complete(Ar)
         }

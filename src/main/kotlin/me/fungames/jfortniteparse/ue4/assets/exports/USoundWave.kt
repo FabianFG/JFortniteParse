@@ -11,20 +11,21 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 
 @ExperimentalUnsignedTypes
-class USoundWave : UObject {
-    var bCooked: Boolean
-    var bStreaming: Boolean
+class USoundWave(exportObject: FObjectExport) : UObject(exportObject) {
+    var bCooked: Boolean = false
+    var bStreaming: Boolean? = null
 
     var compressedFormatData: Array<FSoundFormatData>? = null
     var rawData: FByteBulkData? = null
-    var compressedDataGuid: FGuid
+    lateinit var compressedDataGuid: FGuid
     var format: FName? = null
     var streamedAudioChunks: Array<FStreamedAudioChunk>? = null
 
-    constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(Ar, exportObject) {
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        super.deserialize(Ar, validPos)
         bCooked = Ar.readBoolean()
-        bStreaming = baseObject.getOrDefault("bStreaming", Ar.game >= GAME_UE4(25)) // TODO check whether default is really true
-        if (!bStreaming) {
+        bStreaming = bStreaming ?: (Ar.game >= GAME_UE4(25)) // TODO check whether default is really true
+        if (!bStreaming!!) {
             if (bCooked) {
                 compressedFormatData = Ar.readTArray { FSoundFormatData(Ar) }
                 format = compressedFormatData?.firstOrNull()?.formatName
@@ -44,7 +45,7 @@ class USoundWave : UObject {
     override fun serialize(Ar: FAssetArchiveWriter) {
         super.serialize(Ar)
         Ar.writeBoolean(bCooked)
-        if (!bStreaming) {
+        if (!bStreaming!!) {
             if (bCooked) {
                 val compressedFormatData = this.compressedFormatData ?: throw ParserException("A non-streamed cooked audio needs compressed format data", Ar)
                 Ar.writeTArray(compressedFormatData) { it.serialize(Ar) }
@@ -62,24 +63,6 @@ class USoundWave : UObject {
             Ar.writeTArrayWithoutSize(streamedAudioChunks) { it.serialize(Ar) }
         }
         super.completeWrite(Ar)
-    }
-
-    constructor(
-        bCooked: Boolean,
-        bStreaming: Boolean,
-        compressedFormatData: Array<FSoundFormatData>? = null,
-        rawData: FByteBulkData? = null,
-        compressedDataGuid: FGuid,
-        format: FName? = null,
-        streamedAudioChunks: Array<FStreamedAudioChunk>? = null
-    ) : super(mutableListOf(), null, "SoundWave") {
-        this.bCooked = bCooked
-        this.bStreaming = bStreaming
-        this.compressedFormatData = compressedFormatData
-        this.rawData = rawData
-        this.compressedDataGuid = compressedDataGuid
-        this.format = format
-        this.streamedAudioChunks = streamedAudioChunks
     }
 }
 

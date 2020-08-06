@@ -4,7 +4,6 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.objects.FStructFallback
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
-import me.fungames.jfortniteparse.ue4.assets.util.StructFieldName
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.TRange
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
@@ -27,16 +26,13 @@ enum class ESectionEvaluationFlags(val value: UByte) {
 @StructFallbackClass
 class FSectionEvaluationData(
     /** The implementation index we should evaluate (index into FMovieSceneEvaluationTrack::ChildTemplates) */
-    @StructFieldName("ImplIndex")
-    val implIndex: Int,
+    val ImplIndex: Int,
 
     /** A forced time to evaluate this section at */
-    @StructFieldName("ForcedTime")
-    var forcedTime: FFrameNumber,
+    var ForcedTime: FFrameNumber,
 
     /** Additional flags for evaluating this section */
-    @StructFieldName("Flags")
-    var flags: ESectionEvaluationFlags
+    var Flags: ESectionEvaluationFlags
 )
 
 /**

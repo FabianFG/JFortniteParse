@@ -5,20 +5,16 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
-
 typealias FMetaDataMap = MutableMap<FName, String>
 
 @ExperimentalUnsignedTypes
-class UStringTable : UExport {
-    override var baseObject: UObject
+class UStringTable(exportObject: FObjectExport) : UObject(exportObject) {
+    lateinit var tableNamespace: String
+    lateinit var entries: MutableMap<String, String>
+    lateinit var keysToMetadata: MutableMap<String, FMetaDataMap>
 
-    var tableNamespace : String
-    var entries: MutableMap<String, String>
-    var keysToMetadata : MutableMap<String, FMetaDataMap>
-
-    constructor(Ar: FAssetArchive, exportObject : FObjectExport) : super(exportObject) {
-        super.init(Ar)
-        baseObject = UObject(Ar, exportObject)
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        super.deserialize(Ar, validPos)
         tableNamespace = Ar.readString()
         entries = Ar.readTMap { Ar.readString() to Ar.readString() }
         keysToMetadata = Ar.readTMap { Ar.readString() to Ar.readTMap { Ar.readFName() to Ar.readString() } }
@@ -26,8 +22,7 @@ class UStringTable : UExport {
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
-        baseObject.serialize(Ar)
+        super.serialize(Ar)
         Ar.writeString(tableNamespace)
         Ar.writeTMap(entries) { key, value ->
             Ar.writeString(key)
@@ -42,5 +37,4 @@ class UStringTable : UExport {
         }
         super.completeWrite(Ar)
     }
-
 }
