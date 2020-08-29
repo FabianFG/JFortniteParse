@@ -2,16 +2,14 @@ package me.fungames.jfortniteparse.ue4.assets.exports.blueprints
 
 /*
 @ExperimentalUnsignedTypes
-class UFunction : UExport {
-    override var baseObject: UObject
-    var functionFlags : EFunctionFlags
+class UFunction(exportObject: FObjectExport) : UObject(exportObject) {
+    var functionFlags: EFunctionFlags
 
-    var eventGraphFunction : UFunction
-    var eventGraphCallOffset : Int
+    var eventGraphFunction: UFunction
+    var eventGraphCallOffset: Int
 
-    constructor(Ar: FAssetArchive, exportObject : FObjectExport) : super(exportObject) {
-        super.init(Ar)
-        baseObject = UObject(Ar, exportObject, false)
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        super.deserialize(Ar, validPos)
         functionFlags = EFunctionFlags.valueOfFlag(Ar.readUInt32())
 
         // Replication info
@@ -23,9 +21,4 @@ class UFunction : UExport {
         eventGraphCallOffset = Ar.readInt32()
         super.complete(Ar)
     }
-
-    override fun serialize(Ar: FAssetArchiveWriter) {
-
-    }
-
 }*/

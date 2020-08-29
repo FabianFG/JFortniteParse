@@ -10,22 +10,22 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FBoxSphereBounds
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.*
 
 internal const val MAX_STATIC_UV_SETS_UE4 = 8
 internal const val MAX_STATIC_LODS_UE4 = 8
 
 @ExperimentalUnsignedTypes
-class UStaticMesh : UObject {
-    var stripFlags: FStripDataFlags
-    var bodySetup: UExport? // UBodySetup
-    var navCollision: UExport? // UNavCollision
-    var lightingGuid: FGuid
-    var sockets: Array<UExport?>
+class UStaticMesh(exportObject: FObjectExport) : UObject(exportObject) {
+    lateinit var stripFlags: FStripDataFlags
+    var bodySetup: UExport? = null // UBodySetup
+    var navCollision: UExport? = null// UNavCollision
+    lateinit var lightingGuid: FGuid
+    lateinit var sockets: Array<UExport?>
     var lods = emptyArray<FStaticMeshLODResources>()
     var bounds = FBoxSphereBounds(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f), 0f)
     var lodsShareStaticLighting = false
@@ -33,16 +33,15 @@ class UStaticMesh : UObject {
     var staticMaterials = emptyArray<FStaticMaterial>()
     var materials = emptyArray<UMaterialInterface>()
 
-    constructor(Ar: FAssetArchive, exportObject: FObjectExport, validPos: Int) : super(Ar, exportObject) {
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        super.deserialize(Ar, validPos)
         stripFlags = FStripDataFlags(Ar)
         val cooked = Ar.readBoolean()
-        bodySetup = Ar.loadObject(FPackageIndex(Ar))
-        navCollision = Ar.loadObject(
-            if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
-                FPackageIndex(Ar)
-            else
-                FPackageIndex(0, Ar.owner)
-        )
+        bodySetup = FPackageIndex(Ar).run { Ar.provider?.loadObject(this) }
+        navCollision = (if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
+            FPackageIndex(Ar)
+        else
+            FPackageIndex(0, Ar.owner)).run { Ar.provider?.loadObject(this) }
 
         if (!stripFlags.isEditorDataStripped()) {
             if (Ar.ver < VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED) {
@@ -53,7 +52,7 @@ class UStaticMesh : UObject {
             Ar.readUInt32() // highResSourceMeshCRC
         }
         lightingGuid = FGuid(Ar)
-        sockets = Ar.readTArray { Ar.loadObject<UExport>(FPackageIndex(Ar)) }
+        sockets = Ar.readTArray { FPackageIndex(Ar).run { Ar.provider?.loadObject<UExport>(this) } }
         if (!stripFlags.isEditorDataStripped()) {
             //TODO https://github.com/gildor2/UEViewer/blob/master/Unreal/UnMesh4.cpp#L2382
             throw ParserException("Static Mesh with Editor Data not implemented yet")

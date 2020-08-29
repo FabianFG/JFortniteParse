@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.ue4.assets.exports.tex
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -12,20 +11,16 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 
 @ExperimentalUnsignedTypes
-class UTexture2D : UTexture {
+class UTexture2D(exportObject: FObjectExport) : UTexture(exportObject) {
+    lateinit var flag1: FStripDataFlags
+    lateinit var flag2: FStripDataFlags
+    var cooked: Boolean = true
+    lateinit var textures: MutableMap<FTexturePlatformData, FName>
 
-    override var baseObject: UObject
-    var flag1 : FStripDataFlags
-    var flag2 : FStripDataFlags
-    var cooked : Boolean
-    var textures : MutableMap<FTexturePlatformData, FName>
-
-    constructor(Ar: FAssetArchive, exportObject : FObjectExport) : super(exportObject) {
-        super.init(Ar)
-        baseObject = UObject(Ar, exportObject)
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        super.deserialize(Ar, validPos)
         flag1 = FStripDataFlags(Ar)
         flag2 = FStripDataFlags(Ar)
-
         cooked = Ar.readBoolean()
         textures = mutableMapOf()
         if (cooked) {
@@ -44,11 +39,10 @@ class UTexture2D : UTexture {
     }
 
     fun getFirstMip() = getFirstTexture().getFirstMip()
-    fun getFirstTexture() = if (textures.isNotEmpty()) textures.keys.first() else throw IllegalStateException("No Textures found in this UTexture2D")
+    fun getFirstTexture() = if (textures.isNotEmpty()) textures.keys.first() else throw IllegalStateException("No textures found in this UTexture2D")
 
     override fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
-        baseObject.serialize(Ar)
+        super.serialize(Ar)
         flag1.serialize(Ar)
         flag2.serialize(Ar)
         Ar.writeBoolean(cooked)
@@ -63,33 +57,18 @@ class UTexture2D : UTexture {
         Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
         super.completeWrite(Ar)
     }
-
-    constructor(
-        exportType: FObjectExport,
-        baseObject: UObject,
-        flag1: FStripDataFlags,
-        flag2: FStripDataFlags,
-        cooked: Boolean,
-        textures: MutableMap<FTexturePlatformData, FName>
-    ) : super(exportType) {
-        this.baseObject = baseObject
-        this.flag1 = flag1
-        this.flag2 = flag2
-        this.cooked = cooked
-        this.textures = textures
-    }
 }
 
 @ExperimentalUnsignedTypes
 class FTexturePlatformData : UClass {
-    var sizeX : Int
-    var sizeY : Int
-    var numSlices : Int
-    var pixelFormat : String
-    var firstMip : Int
-    var mipCount : Int
-    var mips : MutableList<FTexture2DMipMap>
-    var isVirtual : Boolean = false
+    var sizeX: Int
+    var sizeY: Int
+    var numSlices: Int
+    var pixelFormat: String
+    var firstMip: Int
+    var mipCount: Int
+    var mips: MutableList<FTexture2DMipMap>
+    var isVirtual: Boolean = false
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
@@ -109,7 +88,7 @@ class FTexturePlatformData : UClass {
 
         if (Ar.game >= GAME_UE4(23)) {
             isVirtual = Ar.readBoolean()
-            if(isVirtual) {
+            if (isVirtual) {
                 throw ParserException("Texture is virtual, not implemented", Ar)
             }
         }
@@ -126,16 +105,16 @@ class FTexturePlatformData : UClass {
         Ar.writeString(pixelFormat)
         Ar.writeInt32(firstMip)
         Ar.writeInt32(mipCount)
-        mips.forEach {it.serialize(Ar)}
+        mips.forEach { it.serialize(Ar) }
         if (Ar.game >= GAME_UE4(23)) {
             Ar.writeBoolean(isVirtual)
-            if(isVirtual)
+            if (isVirtual)
                 throw ParserException("Texture is virtual, not implemented", Ar)
         }
         super.completeWrite(Ar)
     }
 
-    constructor(sizeX: Int, sizeY: Int, numSlices : Int, pixelFormat : String, firstMip : Int, mipCount : Int, mips : MutableList<FTexture2DMipMap>, isVirtual : Boolean) {
+    constructor(sizeX: Int, sizeY: Int, numSlices: Int, pixelFormat: String, firstMip: Int, mipCount: Int, mips: MutableList<FTexture2DMipMap>, isVirtual: Boolean) {
         this.sizeX = sizeX
         this.sizeY = sizeY
         this.numSlices = numSlices
@@ -149,12 +128,12 @@ class FTexturePlatformData : UClass {
 
 @ExperimentalUnsignedTypes
 class FTexture2DMipMap : UClass {
-    var cooked : Boolean
-    var data : FByteBulkData
-    var sizeX : Int
-    var sizeY : Int
-    var sizeZ : Int
-    var u : String? = null
+    var cooked: Boolean
+    var data: FByteBulkData
+    var sizeX: Int
+    var sizeY: Int
+    var sizeZ: Int
+    var u: String? = null
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
@@ -178,7 +157,7 @@ class FTexture2DMipMap : UClass {
         super.completeWrite(Ar)
     }
 
-    constructor(cooked : Boolean, data: FByteBulkData, sizeX : Int, sizeY : Int, sizeZ : Int, u : String?) {
+    constructor(cooked: Boolean, data: FByteBulkData, sizeX: Int, sizeY: Int, sizeZ: Int, u: String?) {
         this.cooked = cooked
         this.data = data
         this.sizeX = sizeX

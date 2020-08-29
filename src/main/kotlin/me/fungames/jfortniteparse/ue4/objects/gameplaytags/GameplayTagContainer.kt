@@ -24,9 +24,7 @@ class FGameplayTagContainer : UClass {
     fun serialize(Ar: FAssetArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeUInt32(gameplayTags.size.toUInt())
-        gameplayTags.forEach {
-            Ar.writeFName(it)
-        }
+        gameplayTags.forEach { Ar.writeFName(it) }
         super.completeWrite(Ar)
     }
 

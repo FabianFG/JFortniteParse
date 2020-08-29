@@ -1,26 +1,26 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.mats
 
-import me.fungames.jfortniteparse.converters.ue4.CMaterialParams
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.objects.structs.FScalarParameterValue
 import me.fungames.jfortniteparse.ue4.assets.objects.structs.FTextureParameterValue
 import me.fungames.jfortniteparse.ue4.assets.objects.structs.FVectorParameterValue
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.converters.CMaterialParams
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
-class UMaterialInstanceConstant(Ar: FAssetArchive, exportObject: FObjectExport) : UMaterialInstance(Ar, exportObject) {
+class UMaterialInstanceConstant : UMaterialInstance {
+    val ScalarParameterValues = emptyArray<FScalarParameterValue>()
+    val TextureParameterValues = emptyArray<FTextureParameterValue>()
+    val VectorParameterValues = emptyArray<FVectorParameterValue>()
 
-    val scalarParameterValues = baseObject.getOrDefault<Array<FScalarParameterValue>>("ScalarParameterValues", emptyArray(), Ar)
-    val textureParameterValues = baseObject.getOrDefault<Array<FTextureParameterValue>>("TextureParameterValues", emptyArray(), Ar)
-    val vectorParameterValues = baseObject.getOrDefault<Array<FVectorParameterValue>>("VectorParameterValues", emptyArray(), Ar)
+    constructor() : super()
+    constructor(exportObject: FObjectExport) : super(exportObject)
 
     override fun getParams(params: CMaterialParams) {
-
         // get params from linked UMaterial3
-        if (parent != null && parent != this)
-            parent.getParams(params)
+        if (Parent != null && Parent != this)
+            Parent.getParams(params)
 
         super.getParams(params)
 
@@ -35,67 +35,75 @@ class UMaterialInstanceConstant(Ar: FAssetArchive, exportObject: FObjectExport) 
         var cubeWeight = 0
         var maskWeight = 0
 
-        fun diffuse(check : Boolean, weight : Int, tex : UTexture) {
+        fun diffuse(check: Boolean, weight: Int, tex: UTexture) {
             if (check && weight > diffWeight) {
                 params.diffuse = tex
                 diffWeight = weight
             }
         }
-        fun normal(check : Boolean, weight : Int, tex : UTexture) {
+
+        fun normal(check: Boolean, weight: Int, tex: UTexture) {
             if (check && weight > normWeight) {
                 params.normal = tex
                 normWeight = weight
             }
         }
-        fun specular(check : Boolean, weight : Int, tex : UTexture) {
+
+        fun specular(check: Boolean, weight: Int, tex: UTexture) {
             if (check && weight > specWeight) {
                 params.specular = tex
                 specWeight = weight
             }
         }
-        fun specPow(check : Boolean, weight : Int, tex : UTexture) {
+
+        fun specPow(check: Boolean, weight: Int, tex: UTexture) {
             if (check && weight > specPowWeight) {
                 params.specPower = tex
                 specPowWeight = weight
             }
         }
-        fun opacity(check : Boolean, weight : Int, tex : UTexture) {
+
+        fun opacity(check: Boolean, weight: Int, tex: UTexture) {
             if (check && weight > opWeight) {
                 params.opacity = tex
                 opWeight = weight
             }
         }
-        fun emissive(check : Boolean, weight : Int, tex : UTexture) {
+
+        fun emissive(check: Boolean, weight: Int, tex: UTexture) {
             if (check && weight > emWeight) {
                 params.emissive = tex
                 emWeight = weight
             }
         }
-        fun cubeMap(check : Boolean, weight : Int, tex : UTexture) {
+
+        fun cubeMap(check: Boolean, weight: Int, tex: UTexture) {
             if (check && weight > cubeWeight) {
                 params.cube = tex
                 cubeWeight = weight
             }
         }
-        fun bakedMask(check : Boolean, weight : Int, tex : UTexture) {
+
+        fun bakedMask(check: Boolean, weight: Int, tex: UTexture) {
             if (check && weight > maskWeight) {
                 params.mask = tex
                 maskWeight = weight
             }
         }
-        fun emissiveColor(check : Boolean, weight : Int, color : FLinearColor) {
+
+        fun emissiveColor(check: Boolean, weight: Int, color: FLinearColor) {
             if (check && weight > emcWeight) {
                 params.emissiveColor = color
                 emcWeight = weight
             }
         }
 
-        if (textureParameterValues.isNotEmpty())
+        if (TextureParameterValues.isNotEmpty())
             params.opacity = null                   // it's better to disable opacity mask from parent material
 
-        for (p in textureParameterValues) {
+        for (p in TextureParameterValues) {
             val name = p.getName()
-            val tex = p.parameterValue ?: continue
+            val tex = p.ParameterValue ?: continue
 
             if (name.contains("detail", true)) continue     // details normal etc
 
@@ -114,15 +122,15 @@ class UMaterialInstanceConstant(Ar: FAssetArchive, exportObject: FObjectExport) 
             opacity(name.contains("alpha", true), 100, tex)
         }
 
-        for (p in vectorParameterValues) {
+        for (p in VectorParameterValues) {
             val name = p.getName()
-            val color = p.parameterValue ?: continue
+            val color = p.ParameterValue ?: continue
             emissiveColor(name.contains("Emissive", true), 100, color)
         }
 
         // try to get diffuse texture when nothing found
-        if (params.diffuse == null && textureParameterValues.size == 1)
-            params.diffuse = textureParameterValues[0].parameterValue
+        if (params.diffuse == null && TextureParameterValues.size == 1)
+            params.diffuse = TextureParameterValues[0].ParameterValue
     }
 
     override fun appendReferencedTextures(outTextures: MutableList<UUnrealMaterial>, onlyRendered: Boolean) {
@@ -130,12 +138,12 @@ class UMaterialInstanceConstant(Ar: FAssetArchive, exportObject: FObjectExport) 
             // default implementation does that
             super.appendReferencedTextures(outTextures, onlyRendered)
         } else {
-            for (value in textureParameterValues) {
-                val tex = value.parameterValue
+            for (value in TextureParameterValues) {
+                val tex = value.ParameterValue
                 if (tex != null && !outTextures.contains(tex))
                     outTextures.add(tex)
             }
-            if (parent != null && parent != this) parent.appendReferencedTextures(outTextures, onlyRendered)
+            if (Parent != null && Parent != this) Parent.appendReferencedTextures(outTextures, onlyRendered)
         }
     }
 }

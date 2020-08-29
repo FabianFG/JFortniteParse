@@ -4,29 +4,28 @@ import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.gson.GsonBuilder
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
+import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.ue4.UClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.exports.*
-import me.fungames.jfortniteparse.ue4.assets.exports.fort.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
-import me.fungames.jfortniteparse.ue4.assets.exports.valorant.*
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
-import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageFileSummary
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import me.fungames.jfortniteparse.valorant.exports.*
 import java.io.File
 import java.io.OutputStream
 import java.nio.ByteBuffer
 
 @ExperimentalUnsignedTypes
-class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, val name: String, provider: FileProvider? = null, var game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
+class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, val name: String, val provider: FileProvider? = null, var game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
     companion object {
         val packageMagic = 0x9E2A83C1u
         val gson = GsonBuilder()
@@ -106,22 +105,16 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
         /*exports = mutableListOf()
         exportMap.forEach { exportsLazy[it] = lazy {*/
             val origPos = uexpAr.pos()
-            val exportType = it.classIndex.name.substringAfter("Default__")
+            val exportType = it.classIndex.run { when {
+                index > 0 -> exportObject!!.superIndex.resource?.objectName
+                index < 0 -> importObject!!.objectName
+                else -> null
+            } } ?: throw ParserException("Can't get class name")
             uexpAr.seekRelative(it.serialOffset.toInt())
             val validPos = (uexpAr.pos() + it.serialSize).toInt()
-            val export = when(exportType) {
-                "BlueprintGeneratedClass" -> {
-                    val className = it.templateIndex.importObject?.className?.text
-                    if (className != null)
-                        readExport(uexpAr, className, it, validPos)
-                    else {
-                        logger.warn { "Couldn't find content class of BlueprintGeneratedClass, attempting normal UObject deserialization" }
-                        readExport(uexpAr, exportType, it, validPos)
-                    }
-                }
-                else -> readExport(uexpAr, exportType, it, validPos)
-            }
+            val export = constructExport(exportType.text, it)
             export.owner = this
+            export.deserialize(uexpAr, validPos)
             if (validPos != uexpAr.pos())
                 logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
             else
@@ -134,57 +127,51 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
             if (!exports.contains(value))
                 exports.add(value)
         }*/
-        if (provider?.game == Ue4Version.GAME_VALORANT)
-            matchValorantCharacterAbilities()
-        uassetAr.clearImportCache()
-        uexpAr.clearImportCache()
-        ubulkAr?.clearImportCache()
         logger.info("Successfully parsed package : $name")
     }
 
-    fun readExport(uexpAr: FAssetArchive, exportType: String, it: FObjectExport, validPos: Int) = when (exportType) {
-        //UE generic export classes
-        "Texture2D" -> UTexture2D(uexpAr, it)
-        "SoundWave" -> USoundWave(uexpAr, it)
-        "DataTable" -> UDataTable(uexpAr, it)
-        "CurveTable" -> UCurveTable(uexpAr, it)
-        "StringTable" -> UStringTable(uexpAr, it)
-        "StaticMesh" -> UStaticMesh(uexpAr, it, validPos)
-        "Material" -> UMaterial(uexpAr, it, validPos)
-        "MaterialInstanceConstant" -> UMaterialInstanceConstant(uexpAr, it)
-        "Level" -> ULevel(uexpAr, it)
-        //Valorant specific classes
-        "CharacterUIData" -> CharacterUIData(uexpAr, it)
-        "CharacterAbilityUIData" -> CharacterAbilityUIData(uexpAr, it)
-        "BaseCharacterPrimaryDataAsset_C", "CharacterDataAsset" -> CharacterDataAsset(uexpAr, it)
-        "CharacterRoleDataAsset" -> CharacterRoleDataAsset(uexpAr, it)
-        "CharacterRoleUIData" -> CharacterRoleUIData(uexpAr, it)
-        //Fortnite Specific Classes
-        "FortMtxOfferData" -> FortMtxOfferData(uexpAr, it)
-        "FortItemCategory" -> FortItemCategory(uexpAr, it)
-        "CatalogMessaging" -> FortCatalogMessaging(uexpAr, it)
-        "FortItemSeriesDefinition" -> FortItemSeriesDefinition(uexpAr, it)
-        "AthenaItemWrapDefinition", "FortBannerTokenType",
-        "FortVariantTokenType", "FortHeroType",
-        "FortTokenType", "FortWorkerType",
+    fun constructExport(exportType: String, it: FObjectExport) = when (exportType) {
+        // UE generic export classes
+        // "BlueprintGeneratedClass" -> UBlueprintGeneratedClass(it)
+        "CurveTable" -> UCurveTable(it)
+        "DataTable" -> UDataTable(it)
+        "Level" -> ULevel(it)
+        "Material" -> UMaterial(it)
+        "MaterialInstanceConstant" -> UMaterialInstanceConstant(it)
+        "SoundWave" -> USoundWave(it)
+        "Texture2D" -> UTexture2D(it)
+        "StaticMesh" -> UStaticMesh(it)
+        "StringTable" -> UStringTable(it)
+        // Valorant specific classes
+        "CharacterAbilityUIData" -> CharacterAbilityUIData(it)
+        "BaseCharacterPrimaryDataAsset_C",
+        "CharacterDataAsset" -> CharacterDataAsset(it)
+        "CharacterRoleDataAsset" -> CharacterRoleDataAsset(it)
+        "CharacterRoleUIData" -> CharacterRoleUIData(it)
+        "CharacterUIData" -> CharacterUIData(it)
+        // Fortnite specific classes
+        "AthenaCharacterItemDefinition" -> AthenaCharacterItemDefinition(it)
+        "AthenaEmojiItemDefinition" -> AthenaEmojiItemDefinition(it)
+        "AthenaPickaxeItemDefinition" -> AthenaPickaxeItemDefinition(it)
+        "CatalogMessaging" -> FortCatalogMessaging(it)
+        "FortItemCategory" -> FortItemCategory(it)
+        "FortItemSeriesDefinition" -> FortItemSeriesDefinition(it)
+        "FortMtxOfferData" -> FortMtxOfferData(it)
+        "AthenaItemWrapDefinition",
+        "FortAbilityKit",
+        "FortBannerTokenType",
         "FortDailyRewardScheduleTokenDefinition",
-        "FortAbilityKit" -> ItemDefinition(uexpAr, it)
+        "FortHeroType",
+        "FortTokenType",
+        "FortVariantTokenType",
+        "FortWorkerType" -> FortItemDefinition(it)
         else -> {
             if (exportType.contains("ItemDefinition")) {
-                ItemDefinition(uexpAr, it)
+                FortItemDefinition(it)
             } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
-                FortCosmeticVariant(uexpAr, it)
+                FortCosmeticVariant(it)
             } else
-                UObject(uexpAr, it)
-        }
-    }
-
-    private fun matchValorantCharacterAbilities() {
-        val uiData = getExportOfTypeOrNull<CharacterUIData>() ?: return
-        uiData.abilitiesWithIndex.forEach { slot, i ->
-            val export = exports.getOrNull(i - 1)
-            if (export != null && export is CharacterAbilityUIData)
-                uiData.abilities[slot] = export
+                UObject(it)
         }
     }
 
@@ -204,10 +191,6 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
      * @return the all exports of the given type
      */
     inline fun <reified T : UExport> getExportsOfType() = exports.filterIsInstance<T>()
-
-    fun applyLocres(locres: Locres?) {
-        exports.forEach { it.applyLocres(locres) }
-    }
 
     fun toJson() = gson.toJson(this)!!
 

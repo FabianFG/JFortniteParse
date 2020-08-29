@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.versions.*
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
@@ -41,6 +40,9 @@ class FPackageIndex : UClass {
         get() = importObject?.objectName?.text
             ?: exportObject?.objectName?.text
             ?: index.toString()
+
+    val resource: FObjectResource?
+        get() = importObject ?: exportObject
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
@@ -83,6 +85,8 @@ class FPackageIndex : UClass {
         result = 31 * result + (owner?.hashCode() ?: 0)
         return result
     }
+
+    inline fun <reified T> load() = owner?.provider?.loadObject<T>(this)
 }
 
 /**

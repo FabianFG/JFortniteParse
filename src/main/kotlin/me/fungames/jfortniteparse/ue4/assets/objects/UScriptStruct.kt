@@ -7,7 +7,6 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.objects.detailcustomizations.FNavAgentSelectorCustomization
 import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
@@ -20,6 +19,7 @@ import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneE
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationTemplate
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneSegment
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEvaluationDataTree
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 
 @ExperimentalUnsignedTypes
 class UScriptStruct : UClass {

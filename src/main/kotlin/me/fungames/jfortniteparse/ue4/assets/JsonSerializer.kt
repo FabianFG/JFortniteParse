@@ -31,7 +31,9 @@ object JsonSerializer {
         jsonObject(
             "import_map" to arg.context.serialize(arg.src.importMap),
             "export_map" to arg.context.serialize(arg.src.exportMap),
-            "export_properties" to arg.context.serialize(arg.src.exports.map { it.baseObject })
+            "export_properties" to arg.context.serialize(arg.src.exports.map {
+                if (it is UObject) it else UObject(mutableListOf(), null, it.exportType)
+            })
         )
     }
     val importSerializer = jsonSerializer<FObjectImport> {

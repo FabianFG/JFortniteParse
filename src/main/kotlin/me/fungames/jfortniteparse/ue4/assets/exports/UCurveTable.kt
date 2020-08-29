@@ -3,16 +3,19 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
-class UCurveTable : UObject {
-    var curveTableMode: ECurveTableMode
-    var rows: MutableMap<FName, UObject>
+class UCurveTable(exportObject: FObjectExport) : UObject(exportObject) {
+    lateinit var curveTableMode: ECurveTableMode
+    lateinit var rows: MutableMap<FName, UObject>
 
-    constructor(Ar: FAssetArchive, exportObject: FObjectExport) : super(Ar, exportObject) { // When loading, this should load our RowCurve!
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        // When loading, this should load our RowCurve!
+        super.deserialize(Ar, validPos)
         val numRows = Ar.readInt32()
         curveTableMode = when (Ar.readUInt8().toInt()) {
             0 -> ECurveTableMode.Empty
@@ -21,16 +24,11 @@ class UCurveTable : UObject {
             else -> throw ParserException("Unsupported curve mode", Ar)
         }
         rows = Ar.readTMap(numRows) {
-            val rowType = when (curveTableMode) {
+            Ar.readFName() to UObject(deserializeProperties(Ar), null, when (curveTableMode) {
                 ECurveTableMode.Empty -> "Empty"
                 ECurveTableMode.SimpleCurves -> "SimpleCurveKey"
                 ECurveTableMode.RichCurves -> "RichCurveKey"
-            }
-            Ar.readFName() to UObject(
-                deserializeProperties(Ar),
-                null,
-                rowType
-            )
+            }).apply { mapToClass(properties, javaClass, this) }
         }
         super.complete(Ar)
     }
@@ -43,12 +41,6 @@ class UCurveTable : UObject {
         }
         super.completeWrite(Ar)
     }
-
-    /*constructor(exportType: String, baseObject: UObject, curveTableMode: ECurveTableMode, rows: MutableMap<FName, UObject>) : super(exportType) {
-        this.baseObject = baseObject
-        this.curveTableMode = curveTableMode
-        this.rows = rows
-    }*/
 
     fun toJson(): String {
         val data =

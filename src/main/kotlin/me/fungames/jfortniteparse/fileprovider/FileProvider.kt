@@ -1,9 +1,13 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package me.fungames.jfortniteparse.fileprovider
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.pak.GameFile
@@ -11,9 +15,7 @@ import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import mu.KotlinLogging
 
-@Suppress("EXPERIMENTAL_API_USAGE")
 abstract class FileProvider {
-
     companion object {
         val logger = KotlinLogging.logger("FileProvider")
     }
@@ -27,35 +29,13 @@ abstract class FileProvider {
      * @return the name of the game that is loaded by the provider
      */
     open fun getGameName() = files.keys.firstOrNull { it.substringBefore('/').endsWith("game") }?.substringBefore("game") ?: ""
+
     /**
      * Searches for a gamefile by its path
      * @param filePath the path to search for
      * @return the game file or null if it wasn't found
      */
     abstract fun findGameFile(filePath : String) : GameFile?
-
-    /**
-     * Searches for the game file and then load its contained package
-     * @param softObjectPath the soft object reference
-     * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
-     */
-    open fun loadGameFile(softObjectPath: FSoftObjectPath): Package? {
-        var path = softObjectPath.assetPathName.text
-        val lastPart = path.substringAfterLast('/')
-        if (lastPart.contains('.'))
-           path = path.substringBeforeLast('.')
-        return loadGameFile(path)
-    }
-
-    /**
-     * Searches for the game file and then load its contained package
-     * @param pkgIndex the package index
-     * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
-     */
-    open fun loadGameFile(pkgIndex: FPackageIndex) = if (pkgIndex.outerImportObject == null)
-        null
-    else
-        loadGameFile(pkgIndex.outerImportObject!!.objectName.text)
 
     /**
      * Searches for the game file and then load its contained package
@@ -72,6 +52,77 @@ abstract class FileProvider {
      */
     @Throws(ParserException::class)
     abstract fun loadGameFile(file: GameFile): Package?
+
+    // Load object by object path string
+    inline fun <reified T> loadObject(objectPath: String?): T? {
+        if (objectPath == null) return null
+        val loaded = loadObject(objectPath) ?: return null
+        return if (loaded is T) loaded else null
+    }
+
+    fun loadObject(objectPath: String?): UExport? {
+        if (objectPath == null) return null
+        var packagePath = objectPath
+        val objectName: String
+        val dotIndex = packagePath.indexOf('.')
+        if (dotIndex == -1) { // use the package name as object name
+            objectName = packagePath.substringAfterLast('/')
+        } else { // packagePath.objectName
+            objectName = packagePath.substring(dotIndex + 1)
+            packagePath = packagePath.substring(0, dotIndex)
+        }
+        val pkg = loadGameFile(packagePath) // TODO allow reading umaps via this route, currently fixPath() only appends .uasset
+        if (pkg != null) {
+            val export = pkg.exportMap.firstOrNull { it.objectName.text == objectName }
+            if (export != null) return export.exportObject.value
+            else logger.warn { "Couldn't find object in external package" }
+        } else logger.warn { "Failed to load SoftObjectPath" }
+        return null
+    }
+
+    // Load object by FSoftObjectPath
+    inline fun <reified T> loadObject(softObjectPath: FSoftObjectPath?): T? {
+        if (softObjectPath == null) return null
+        val loaded = loadObject(softObjectPath) ?: return null
+        return if (loaded is T) loaded else null
+    }
+
+    fun loadObject(softObjectPath: FSoftObjectPath?) = softObjectPath?.run { loadObject(softObjectPath.assetPathName.text) }
+
+    // Load object by FPackageIndex
+    inline fun <reified T> loadObject(index: FPackageIndex?): T? {
+        if (index == null) return null
+        val loaded = loadObject(index) ?: return null
+        return if (loaded is T) loaded else null
+    }
+
+    fun loadObject(index: FPackageIndex?): UExport? {
+        if (index == null || index.index == 0) return null
+        val import = index.importObject
+        if (import != null) return loadImport(import)
+        val export = index.exportObject
+        if (export != null) return export.exportObject.value
+        return null
+    }
+
+    // Load object by FObjectImport
+    inline fun <reified T> loadImport(import: FObjectImport?): T? {
+        if (import == null) return null
+        val loaded = loadImport(import) ?: return null
+        return if (loaded is T) loaded else null
+    }
+
+    fun loadImport(import: FObjectImport?): UExport? {
+        //The needed export is located in another asset, try to load it
+        if (import == null || import.outerIndex.importObject == null) return null
+        val pkg = loadGameFile(import.outerIndex.importObject!!.objectName.text)
+        if (pkg != null) {
+            val export = pkg.exportMap.firstOrNull { it.classIndex.name == import.className.text && it.objectName.text == import.objectName.text }
+            if (export != null) return export.exportObject.value
+            else logger.warn { "Couldn't find object in external package" }
+        } else logger.warn { "Failed to load referenced import" }
+        return null
+    }
 
     /**
      * Searches for the game file and then load its contained locres
@@ -142,8 +193,6 @@ abstract class FileProvider {
      * @return the files data
      */
     abstract fun saveGameFile(filePath : String) : ByteArray?
-
-    abstract var defaultLocres : Locres?
 
     /**
      * Saves the game file

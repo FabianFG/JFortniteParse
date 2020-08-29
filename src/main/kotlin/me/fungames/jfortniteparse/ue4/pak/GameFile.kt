@@ -4,10 +4,13 @@ import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
 
 @Suppress("EXPERIMENTAL_API_USAGE")
-open class GameFile(val path : String = "", val pos : Long = 0L, val size : Long = 0L, val uncompressedSize : Long = 0L,
-                    val compressionMethod: CompressionMethod = CompressionMethod.None, val compressedBlocks : Array<FPakCompressedBlock> = emptyArray(), val compressionBlockSize : Int = 0,
-                    val isEncrypted : Boolean = false, val pakFileName: String
-
+open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 0L,
+                    val uncompressedSize: Long = 0L,
+                    val compressionMethod: CompressionMethod = CompressionMethod.None,
+                    val compressedBlocks: Array<FPakCompressedBlock> = emptyArray(),
+                    val compressionBlockSize: Int = 0,
+                    val isEncrypted: Boolean = false,
+                    val pakFileName: String
 ) {
     constructor(pakEntry: FPakEntry, mountPrefix : String, pakFileName : String) : this(
         mountPrefix + pakEntry.name, pakEntry.pos, pakEntry.size, pakEntry.uncompressedSize,
@@ -19,9 +22,7 @@ open class GameFile(val path : String = "", val pos : Long = 0L, val size : Long
     var ubulk : GameFile? = null
 
     fun getExtension() = path.substringAfterLast('.')
-    fun isUE4Package(): Boolean {
-        getExtension().apply { return this == "uasset" || this == "umap" }
-    }
+    fun isUE4Package() = getExtension().run { this == "uasset" || this == "umap" }
     fun isLocres() = getExtension() == "locres"
     fun isAssetRegistry() = getExtension() == "bin"
 
@@ -58,5 +59,4 @@ open class GameFile(val path : String = "", val pos : Long = 0L, val size : Long
         result = 31 * result + compressionMethod.hashCode()
         return result
     }
-
 }
