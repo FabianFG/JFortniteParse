@@ -16,6 +16,7 @@ class FStaticMeshSection : UClass {
     var enableCollision : Boolean
     var castShadow : Boolean
     var forceOpaque : Boolean
+    var visibleInRayTracing : Boolean
 
     constructor(Ar: FArchive) {
         super.init(Ar)
@@ -27,6 +28,10 @@ class FStaticMeshSection : UClass {
         enableCollision = Ar.readBoolean()
         castShadow = Ar.readBoolean()
         forceOpaque = if (FRenderingObjectVersion.get(Ar) >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField)
+            Ar.readBoolean()
+        else
+            false
+        visibleInRayTracing = if (Ar.game >= GAME_UE4(26))
             Ar.readBoolean()
         else
             false
@@ -55,7 +60,8 @@ class FStaticMeshSection : UClass {
         maxVertexIndex: Int,
         enableCollision: Boolean,
         castShadow: Boolean,
-        forceOpague: Boolean
+        forceOpague: Boolean,
+        visibleInRayTracing : Boolean
     ) {
         this.materialIndex = materialIndex
         this.firstIndex = firstIndex
@@ -65,5 +71,6 @@ class FStaticMeshSection : UClass {
         this.enableCollision = enableCollision
         this.castShadow = castShadow
         this.forceOpaque = forceOpague
+        this.visibleInRayTracing = visibleInRayTracing
     }
 }

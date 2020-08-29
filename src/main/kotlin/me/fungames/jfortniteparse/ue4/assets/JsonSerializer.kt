@@ -158,7 +158,7 @@ object JsonSerializer {
                 "upperBound" to ob.upperBound.toJson(context)
             )
             is TRangeBound<*> -> jsonObject(
-                "type" to ob.type,
+                "type" to ob.type.name,
                 "value" to ob.value
             )
             is FSectionEvaluationDataTree -> ob.tree.toJson(context)

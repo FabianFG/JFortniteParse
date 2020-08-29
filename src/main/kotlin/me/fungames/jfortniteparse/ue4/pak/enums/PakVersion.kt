@@ -10,5 +10,6 @@ const val PakVersion_EncryptionKeyGuid = 7              // ... allows to use mul
 const val PakVersion_FNameBasedCompressionMethod = 8    // UE4.22+ - use string instead of enum for compression method
 const val PakVersion_FrozenIndex = 9
 const val PakVersion_PathHashIndex = 10
-const val PakVersion_Last = 11
+const val PakVersion_Fnv64BugFix = 11
+const val PakVersion_Last = 12
 const val PakVersion_Latest = PakVersion_Last - 1
