@@ -73,7 +73,7 @@ abstract class FileProvider {
         }
         val pkg = loadGameFile(packagePath) // TODO allow reading umaps via this route, currently fixPath() only appends .uasset
         if (pkg != null) {
-            val export = pkg.exportMap.firstOrNull { it.objectName.text.equals(objectName,true) }
+            val export = pkg.exportMap.firstOrNull { it.objectName.text.equals(objectName, true) }
             if (export != null) return export.exportObject.value
             else logger.warn { "Couldn't find object in external package" }
         } else logger.warn { "Failed to load SoftObjectPath" }
