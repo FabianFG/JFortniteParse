@@ -6,7 +6,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 @ExperimentalUnsignedTypes
-class FGameplayTagContainer : UClass {
+class FGameplayTagContainer : UClass, Iterable<FName> {
     var gameplayTags: MutableList<FName>
 
     constructor(Ar: FAssetArchive) {
@@ -31,4 +31,6 @@ class FGameplayTagContainer : UClass {
     constructor(gameplayTags: MutableList<FName>) {
         this.gameplayTags = gameplayTags
     }
+
+    override fun iterator() = gameplayTags.iterator()
 }

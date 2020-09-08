@@ -57,11 +57,12 @@ class FText : UClass {
 
     override fun toString() = text
 
-    @Suppress("EXPERIMENTAL_UNSIGNED_LITERALS")
-    constructor(nameSpace: String, key: String, sourceString: String, flags: UInt = 0u, historyType: ETextHistoryType = ETextHistoryType.Base) : this(
-        flags, historyType,
-        FTextHistory.Base(nameSpace, key, sourceString)
-    )
+    constructor(sourceString: String) : this("", "", sourceString)
+
+    constructor(namespace: String, key: String, sourceString: String) : this(namespace, key, sourceString, 0u, ETextHistoryType.Base)
+
+    constructor(namespace: String, key: String, sourceString: String, flags: UInt = 0u, historyType: ETextHistoryType = ETextHistoryType.Base) :
+        this(flags, historyType, FTextHistory.Base(namespace, key, sourceString))
 
     constructor(flags: UInt, historyType: ETextHistoryType, textHistory: FTextHistory) {
         this.flags = flags
@@ -73,7 +74,7 @@ class FText : UClass {
     fun textForLocres(locres: Locres?): String {
         val history = textHistory
         return if (history is FTextHistory.Base)
-            locres?.texts?.stringData?.get(history.nameSpace)?.get(history.key) ?: text
+            locres?.texts?.stringData?.get(history.namespace)?.get(history.key) ?: text
         else text
     }
 }
@@ -97,7 +98,7 @@ sealed class FTextHistory : UClass() {
     }
 
     class Base : FTextHistory {
-        var nameSpace: String
+        var namespace: String
         var key: String
         var sourceString: String
         override val text: String
@@ -105,21 +106,21 @@ sealed class FTextHistory : UClass() {
 
         constructor(Ar: FArchive) {
             super.init(Ar)
-            this.nameSpace = Ar.readString()
+            this.namespace = Ar.readString()
             this.key = Ar.readString()
             this.sourceString = Ar.readString()
             super.complete(Ar)
         }
 
-        constructor(nameSpace: String, key: String, sourceString: String) {
-            this.nameSpace = nameSpace
+        constructor(namespace: String, key: String, sourceString: String) {
+            this.namespace = namespace
             this.key = key
             this.sourceString = sourceString
         }
 
         override fun serialize(Ar: FAssetArchiveWriter) {
             super.initWrite(Ar)
-            Ar.writeString(nameSpace)
+            Ar.writeString(namespace)
             Ar.writeString(key)
             Ar.writeString(sourceString)
             super.completeWrite(Ar)

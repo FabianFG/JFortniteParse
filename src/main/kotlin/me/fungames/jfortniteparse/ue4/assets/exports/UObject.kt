@@ -15,6 +15,7 @@ open class UObject : UExport {
     var objectGuid: FGuid? = null
     var readGuid = false
 
+    @JvmOverloads
     constructor(exportObject: FObjectExport, readGuid: Boolean = true) : super(exportObject) {
         this.readGuid = readGuid
     }

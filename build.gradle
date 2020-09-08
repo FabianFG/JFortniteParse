@@ -1,12 +1,14 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.3.50'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.0'
     id 'maven-publish'
-    id "com.jfrog.bintray" version "1.8.1"
+    id "com.jfrog.bintray" version "1.8.5"
     id 'org.jetbrains.dokka' version '0.10.0'
 }
 
 group "me.fungames"
 version "3.2.4"
+
+sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -70,11 +72,11 @@ dependencies {
     implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.tomgibara.bits:bits:2.1.0'
-    implementation 'io.github.microutils:kotlin-logging:1.7.6'
-    implementation 'org.apache.logging.log4j:log4j-core:2.13.2'
-    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.2'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2'
+    implementation 'io.github.microutils:kotlin-logging:1.8.3'
+    implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9'
     implementation 'org.objenesis:objenesis:3.1'
 }
 
