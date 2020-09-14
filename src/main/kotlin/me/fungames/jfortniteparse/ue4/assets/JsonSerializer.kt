@@ -3,13 +3,11 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.*
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonPrimitive
-import com.google.gson.JsonSerializationContext
+import com.google.gson.*
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.*
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.math.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
@@ -27,15 +25,6 @@ import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
 
 object JsonSerializer {
-    val packageConverter = jsonSerializer<Package> { arg ->
-        jsonObject(
-            "import_map" to arg.context.serialize(arg.src.importMap),
-            "export_map" to arg.context.serialize(arg.src.exportMap),
-            "export_properties" to arg.context.serialize(arg.src.exports.map {
-                if (it is UObject) it else UObject(mutableListOf(), null, it.exportType)
-            })
-        )
-    }
     val importSerializer = jsonSerializer<FObjectImport> {
         jsonObject(
             "class_name" to it.src.className.text,
@@ -52,12 +41,12 @@ object JsonSerializer {
     }
 
     @Suppress("EXPERIMENTAL_API_USAGE")
-    fun FPropertyTagType.toJson(context: JsonSerializationContext): JsonElement {
-        return this.getTagTypeValueLegacy().toJson(context)
+    fun FPropertyTagType.toJson(context: Gson, locres: Locres? = null): JsonElement {
+        return this.getTagTypeValueLegacy().toJson(context, locres)
     }
 
     @Suppress("EXPERIMENTAL_API_USAGE")
-    fun Any.toJson(context: JsonSerializationContext): JsonElement {
+    fun Any.toJson(context: Gson, locres: Locres? = null): JsonElement {
         return when (val ob = this) {
             //Basic Tag Types
             is Enum<*> -> JsonPrimitive(ob.name)
@@ -75,7 +64,7 @@ object JsonSerializer {
             is Float -> JsonPrimitive(ob)
             is String -> JsonPrimitive(ob)
             is FName -> JsonPrimitive(ob.text)
-            is FText -> jsonObject("historyType" to ob.historyType.toJson(context), "finalText" to ob.text, "value" to context.serialize(ob.textHistory))
+            is FText -> jsonObject("historyType" to ob.historyType.toJson(context), "finalText" to ob.textForLocres(locres), "value" to context.toJsonTree(ob.textHistory))
             is FPackageIndex -> JsonPrimitive(ob.name)
             is UInterfaceProperty -> JsonPrimitive(ob.interfaceNumber.toInt())
             is FSoftObjectPath -> jsonObject("assetPath" to ob.assetPathName.text, "subPath" to ob.subPathString)
@@ -205,15 +194,5 @@ object JsonSerializer {
             is FMovieSceneEvaluationTemplate -> JsonPrimitive(ob.value.toLong())
             else -> throw ParserException("Unknown tag value ${ob::class.java.simpleName}, cannot be serialized to json")
         }
-    }
-
-    @Suppress("EXPERIMENTAL_API_USAGE")
-    val uobjectSerializer = jsonSerializer<UObject> {
-        val ob = jsonObject("exportType" to it.src.exportType)
-        it.src.properties.forEach { pTag ->
-            val tagValue = pTag.tag ?: return@forEach
-            ob[pTag.name.text] = tagValue.toJson(it.context)
-        }
-        ob
     }
 }

@@ -1,10 +1,17 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
+import com.github.salomonbrys.kotson.jsonObject
+import com.github.salomonbrys.kotson.set
+import com.google.gson.Gson
+import com.google.gson.JsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
+import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
@@ -65,6 +72,15 @@ open class UObject : UExport {
             if (objectGuid != null) objectGuid?.serialize(Ar)
         }
         super.completeWrite(Ar)
+    }
+
+    fun toJson(context: Gson = Package.gson, locres: Locres? = null) : JsonObject {
+        val ob = jsonObject("exportType" to exportType)
+        properties.forEach { pTag ->
+            val tagValue = pTag.tag ?: return@forEach
+            ob[pTag.name.text] = tagValue.toJson(context, locres)
+        }
+        return ob
     }
 
     companion object {

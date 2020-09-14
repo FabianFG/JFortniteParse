@@ -1,11 +1,13 @@
 package me.fungames.jfortniteparse.ue4.assets
 
+import com.github.salomonbrys.kotson.jsonObject
 import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.gson.GsonBuilder
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.ue4.UClass.Companion.logger
+import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.exports.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
@@ -14,6 +16,7 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
@@ -30,10 +33,8 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
         val packageMagic = 0x9E2A83C1u
         val gson = GsonBuilder()
             .setPrettyPrinting()
-            .registerTypeAdapter(JsonSerializer.packageConverter)
             .registerTypeAdapter(JsonSerializer.importSerializer)
             .registerTypeAdapter(JsonSerializer.exportSerializer)
-            .registerTypeAdapter(JsonSerializer.uobjectSerializer)
             .create()
     }
 
@@ -192,7 +193,13 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
      */
     inline fun <reified T : UExport> getExportsOfType() = exports.filterIsInstance<T>()
 
-    fun toJson() = gson.toJson(this)!!
+    fun toJson(locres: Locres? = null) = gson.toJson(jsonObject(
+        "import_map" to gson.toJsonTree(importMap),
+        "export_map" to gson.toJsonTree(exportMap),
+        "export_properties" to gson.toJsonTree(exports.map {
+            it.takeIf { it is UObject }?.toJson(gson, locres)
+        })
+    ))
 
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
     private fun updateHeader() {
