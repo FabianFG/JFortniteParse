@@ -60,7 +60,7 @@ class FStaticMeshSection : UClass {
         maxVertexIndex: Int,
         enableCollision: Boolean,
         castShadow: Boolean,
-        forceOpague: Boolean,
+        forceOpaque: Boolean,
         visibleInRayTracing : Boolean
     ) {
         this.materialIndex = materialIndex
@@ -70,7 +70,7 @@ class FStaticMeshSection : UClass {
         this.maxVertexIndex = maxVertexIndex
         this.enableCollision = enableCollision
         this.castShadow = castShadow
-        this.forceOpaque = forceOpague
+        this.forceOpaque = forceOpaque
         this.visibleInRayTracing = visibleInRayTracing
     }
 }
