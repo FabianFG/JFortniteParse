@@ -11,7 +11,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 
 @ExperimentalUnsignedTypes
 open class FortItemDefinition : UObject {
-    var ItemVariants = arrayOf<FortCosmeticVariant>()
+    var ItemVariants = arrayOf<FortCosmeticVariant?>()
     var Rarity = EFortRarity.Uncommon
     var DisplayName: FText? = null
     var ShortDescription: FText? = null

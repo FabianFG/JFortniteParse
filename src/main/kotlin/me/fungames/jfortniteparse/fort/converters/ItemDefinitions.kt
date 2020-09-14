@@ -118,7 +118,7 @@ fun FortItemDefinition.createContainer(
     val seriesIcon = seriesDef?.BackgroundTexture?.load<UTexture2D>()?.toBufferedImage()
     if (loadVariants) {
         this.ItemVariants.forEach { variants ->
-            variants.variants.forEach {
+            variants?.variants?.forEach {
                 it.previewImage?.load<UTexture2D>()?.apply { it.previewIcon = toBufferedImage() }
             }
         }
@@ -135,7 +135,7 @@ open class SetName(
 
 class ItemDefinitionContainer(val itemDefinition: FortItemDefinition, var icon: BufferedImage, var rarityText: FText, var isFeaturedIcon: Boolean, val setName: SetName?, var seriesIcon: BufferedImage?, var seriesDef: FortItemSeriesDefinition?) : Cloneable {
     val variantsLoaded: Boolean
-        get() = itemDefinition.ItemVariants.firstOrNull { variant -> variant.variants.firstOrNull { it.previewIcon != null } != null } != null
+        get() = itemDefinition.ItemVariants.firstOrNull { variant -> variant?.variants?.firstOrNull { it.previewIcon != null } != null } != null
 
     fun getImage(locres: Locres? = null) = getImage(this, locres)
     fun getImageWithVariants(locres: Locres? = null) = getImageWithVariants(this, locres)
@@ -182,8 +182,9 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
 
     //Remove numeric and pattern channels (used for soccer skins, cannot be displayed properly)
     vars.removeIf {
-        it.variantChannelTag?.text == "Cosmetics.Variant.Channel.Pattern" || it.variantChannelTag?.text == "Cosmetics.Variant.Channel.Numeric"
-                || it.variantChannelTag?.text?.contains("PATTERN") == true || it.variantChannelTag?.text?.contains("NUMBER") == true
+        it?.variantChannelTag?.text == "Cosmetics.Variant.Channel.Pattern" || it?.variantChannelTag?.text == "Cosmetics.Variant.Channel.Numeric"
+                || it?.variantChannelTag?.text?.contains("PATTERN") == true || it?.variantChannelTag?.text?.contains("NUMBER") == true
+                || it?.exportType == "FortCosmeticRichColorVariant"
     }
 
     var numChannels = vars.size
@@ -195,7 +196,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
     val availableX = variantsX - (numChannels * g.fontMetrics.height)
 
     val totalRows = vars.sumBy {
-        var count = it.variants.size
+        var count = it?.variants?.size ?: 0
         if (count < variantsMaxPerRow)
             return@sumBy 1
         while (count % variantsMaxPerRow != 0)
@@ -206,8 +207,8 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
 
     var cY = 35
     vars.forEach {
-        val varCount = it.variants.size
-        val channelName = it.variantChannelName?.textForLocres(locres)
+        val varCount = it?.variants?.size ?: 0
+        val channelName = it?.variantChannelName?.textForLocres(locres)
         if (channelName != null) {
             g.font = burbank.deriveFont(25f)
             g.paint = Color.WHITE
@@ -221,8 +222,8 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
         else
             maxVarSize
         for (i in 0 until varCount) {
-            val varContainer = it.variants[i]
-            var varIcon = varContainer.previewIcon ?: continue
+            val varContainer = it?.variants?.get(i)
+            var varIcon = varContainer?.previewIcon ?: continue
             if (varIcon.width != varSize || varIcon.height != varSize)
                 varIcon = varIcon.scale(varSize, varSize)
             if (cX + varSize > variantsBeginX + variantsX) {
