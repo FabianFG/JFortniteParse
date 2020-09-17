@@ -49,6 +49,7 @@ object JsonSerializer {
     fun Any.toJson(context: Gson, locres: Locres? = null): JsonElement {
         return when (val ob = this) {
             //Basic Tag Types
+            is UObject -> ob.toJson(context, locres)
             is Enum<*> -> JsonPrimitive(ob.name)
             is Array<*> -> jsonArray(ob.map { it?.toJson(context) })
             is Iterable<*> -> jsonArray(ob.map { it?.toJson(context) })
