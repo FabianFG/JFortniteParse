@@ -24,7 +24,7 @@ class FFileIoStoreContainerFile {
 
 class FFileIoStoreBuffer {
     var next: FFileIoStoreBuffer? = null
-    var memory: ByteArray? = null
+    var memory: BytePointer? = null
     var priority = IoDispatcherPriority_Count
 }
 
@@ -82,7 +82,7 @@ class FFileIoStoreReadRequest {
     var buffer: FFileIoStoreBuffer? = null
     val compressedBlocks = mutableListOf<FFileIoStoreCompressedBlock>()
     var compressedBlocksRefCount = 0u
-    lateinit var immediateScatter: FFileIoStoreBlockScatter
+    val immediateScatter = FFileIoStoreBlockScatter()
     var priority = IoDispatcherPriority_Count
     var bIsCacheable = false
     var bFailed = false
@@ -132,4 +132,81 @@ class FFileIoStoreResolvedRequest {
     lateinit var request: FIoRequestImpl
     var resolvedOffset = 0uL
     var resolvedSize = 0uL
+}
+
+class FFileIoStoreBufferAllocator {
+    private var bufferMemory: BytePointer? = null
+    private val buffersCritical = Object()
+    private var firstFreeBuffer: FFileIoStoreBuffer? = null
+
+    fun initialize(memorySize: Int, bufferSize: Int/*, bufferAlignment: Int*/) {
+        val bufferCount = memorySize / bufferSize
+        val memorySize = bufferCount * bufferSize
+        bufferMemory = BytePointer(memorySize)//reinterpret_cast<uint8*>(FMemory::Malloc(MemorySize, bufferAlignment))
+        for (bufferIndex in 0 until bufferCount) {
+            val buffer = FFileIoStoreBuffer()
+            buffer.memory = bufferMemory!! + bufferIndex * bufferSize
+            buffer.next = firstFreeBuffer
+            firstFreeBuffer = buffer
+        }
+    }
+
+    fun allocBuffer(): FFileIoStoreBuffer? {
+        val buffer = firstFreeBuffer
+        if (buffer != null) {
+            firstFreeBuffer = buffer.next
+            return buffer
+        }
+        return null
+    }
+
+    fun freeBuffer(buffer: FFileIoStoreBuffer) {
+        synchronized(buffersCritical) {
+            buffer.next = firstFreeBuffer
+            firstFreeBuffer = buffer
+        }
+    }
+}
+
+class FFileIoStoreRequestQueue {
+    private val byPriority = Array(IoDispatcherPriority_Count.ordinal) { FByPriority() }
+
+    fun peek(): FFileIoStoreReadRequest? {
+        for (priority in IoDispatcherPriority_Count.ordinal - 1 downTo 0) {
+            val queue = byPriority[priority]
+            if (queue.head != null) {
+                return queue.head
+            }
+        }
+        return null
+    }
+
+    fun pop(request: FFileIoStoreReadRequest) {
+        check(request.priority < IoDispatcherPriority_Count)
+        val queue = byPriority[request.priority.ordinal]
+        check(queue.head == request)
+        queue.head = queue.head!!.next
+        if (queue.head == null) {
+            queue.tail = null
+        }
+        request.next = null
+    }
+
+    fun push(request: FFileIoStoreReadRequest) {
+        check(request.priority < IoDispatcherPriority_Count)
+        val queue = byPriority[request.priority.ordinal]
+        if (queue.tail != null) {
+            queue.tail!!.next = request
+            queue.tail = request
+        } else {
+            queue.head = request
+            queue.tail = request
+        }
+        request.next = null
+    }
+
+    private class FByPriority {
+        var head: FFileIoStoreReadRequest? = null
+        var tail: FFileIoStoreReadRequest? = null
+    }
 }

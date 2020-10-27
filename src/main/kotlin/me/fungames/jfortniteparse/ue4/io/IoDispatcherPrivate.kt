@@ -2,6 +2,9 @@ package me.fungames.jfortniteparse.ue4.io
 
 import java.util.concurrent.atomic.AtomicInteger
 
+typealias FIoDispatcherEventQueue = FGenericIoDispatcherEventQueue
+typealias FFileIoStoreImpl = FGenericFileIoStoreImpl
+
 enum class EIoStoreResolveResult {
     IoStoreResolveResult_OK,
     IoStoreResolveResult_NotFound
@@ -21,7 +24,7 @@ class FIoRequestImpl : FIoRequest {
     var batch: FIoBatchImpl? = null
     var nextRequest: FIoRequestImpl? = null
     var batchNextRequest: FIoRequestImpl? = null
-    override lateinit var status: FIoStatusException // TODO change to FIoStatus
+    override lateinit var status: FIoStatus
     override lateinit var chunkId: FIoChunkId
     lateinit var options: FIoReadOptions
     lateinit var ioBuffer: BytePointer
@@ -34,5 +37,5 @@ class FIoRequestImpl : FIoRequest {
         get() = status.isOk
 
     override fun getResultOrThrow() =
-        if (status.isOk) ioBuffer else throw status
+        if (status.isOk) ioBuffer else throw FIoStatusException(status)
 }

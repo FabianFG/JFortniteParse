@@ -6,15 +6,16 @@ import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_Count
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_NotFound
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_OK
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
-import java.io.RandomAccessFile
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 
-val LOGGER: Logger = LoggerFactory.getLogger("IoDispatcher")
+val LOG_IO_DISPATCHER: Logger = LoggerFactory.getLogger("IoDispatcher")
 
 class FFileIoStoreCompressionContext {
     var next: FFileIoStoreCompressionContext? = null
@@ -22,22 +23,44 @@ class FFileIoStoreCompressionContext {
     var uncompressedBuffer: BytePointer? = null
 }
 
-class FFileIoStoreReader {
-    //lateinit var platformImpl: FFileIoStoreImpl&
-    lateinit var toc: MutableMap<FIoChunkId, FIoOffsetAndLength>
-    lateinit var containerFile: FFileIoStoreContainerFile
+class FFileIoStoreEncryptionKeys {
+    fun interface FKeyRegisteredCallback {
+        fun onKeyRegistered(guid: FGuid, key: ByteArray)
+    }
+
+    private val encryptionKeysByGuid = ConcurrentHashMap<FGuid, ByteArray>()
+    private var keyRegisteredCallback: FKeyRegisteredCallback? = null
+
+    fun getEncryptionKey(guid: FGuid): ByteArray? {
+        return encryptionKeysByGuid[guid]
+        // retrieve key from core delegate, not implemented here
+    }
+
+    fun setKeyRegisteredCallback(callback: FKeyRegisteredCallback) {
+        keyRegisteredCallback = callback
+    }
+
+    private fun registerEncryptionKey(guid: FGuid, key: ByteArray) {
+        encryptionKeysByGuid[guid] = key
+        keyRegisteredCallback?.onKeyRegistered(guid, key)
+    }
+}
+
+class FFileIoStoreReader(val platformImpl: FFileIoStoreImpl) {
+    val toc = mutableMapOf<FIoChunkId, FIoOffsetAndLength>()
+    val containerFile = FFileIoStoreContainerFile()
     lateinit var containerId: FIoContainerId
     var index = 0u
     var order = 0
 
     fun initialize(environment: FIoStoreEnvironment) {
-        LOGGER.info("Reading toc: ${environment.path}")
+        LOG_IO_DISPATCHER.info("Reading toc: ${environment.path}")
 
         val containerFilePath = environment.path + ".ucas"
         val tocFilePath = environment.path + ".utoc"
 
         try {
-            containerFile.fileHandle = RandomAccessFile(containerFilePath, "r")
+            containerFile.fileHandle = platformImpl.openContainer(containerFilePath)
             containerFile.fileSize = containerFile.fileHandle.length().toULong()
         } catch (e: FileNotFoundException) {
             throw FIoStatusException(EIoErrorCode.FileOpenFailed, "Failed to open IoStore container file '$containerFilePath'")
@@ -97,7 +120,19 @@ class FFileIoStoreReader {
 }
 
 class FFileIoStore : Runnable {
+    companion object {
+        @JvmStatic
+        fun isValidEnvironment(environment: FIoStoreEnvironment) =
+            File(environment.path + ".utoc").exists()
+    }
+
     private var readBufferSize = 0uL
+    private val eventQueue: FIoDispatcherEventQueue
+    private val bufferAllocator = FFileIoStoreBufferAllocator()
+    private val requestQueue = FFileIoStoreRequestQueue()
+    private val platformImpl: FFileIoStoreImpl
+    private val bIsMultithreaded: Boolean
+    private val bStopRequested = AtomicBoolean(false)
     private val ioStoreReadersLock = Object()
     private val unorderedIoStoreReaders = mutableListOf<FFileIoStoreReader>()
     private val orderedIoStoreReaders = mutableListOf<FFileIoStoreReader>()
@@ -109,21 +144,60 @@ class FFileIoStore : Runnable {
     private var readyForDecompressionTail: FFileIoStoreCompressedBlock? = null
     private val decompressedBlocksCritical = Object()
     private var firstDecompressedBlock: FFileIoStoreCompressedBlock? = null
+    private val encryptionKeys = FFileIoStoreEncryptionKeys()
     private var completedRequestsHead: FIoRequestImpl? = null
     private var completedRequestsTail: FIoRequestImpl? = null
     private var submittedRequestsCount = 0u
     private var completedRequestsCount = 0u
 
+    constructor(eventQueue: FIoDispatcherEventQueue, /*signatureErrorEvent: FIoSignatureErrorEvent,*/ bIsMultithreaded: Boolean) {
+        this.eventQueue = eventQueue
+        //this.signatureErrorEvent = signatureErrorEvent
+        this.platformImpl = FFileIoStoreImpl(eventQueue, bufferAllocator/*, blockCache*/)
+        this.bIsMultithreaded = bIsMultithreaded
+        encryptionKeys.setKeyRegisteredCallback { guid, key ->
+            synchronized(ioStoreReadersLock) {
+                for (reader in unorderedIoStoreReaders) {
+                    if (reader.isEncrypted && reader.encryptionKey == null && reader.encryptionKeyGuid == guid) {
+                        LOG_IO_DISPATCHER.info("Updating container '%d' with encryption key guid '%s'", reader.containerId.value().toLong(), guid.toString())
+                        reader.encryptionKey = key
+                    }
+                }
+            }
+        }
+    }
+
+    fun initialize() {
+        readBufferSize = if (GIoDispatcherBufferSizeKB > 0) GIoDispatcherBufferSizeKB.toULong() shl 10 else 256uL shl 10
+
+        val bufferMemorySize = GIoDispatcherBufferMemoryMB shl 20
+        val bufferSize = GIoDispatcherBufferSizeKB shl 10
+        //val bufferAlignment = GIoDispatcherBufferAlignment
+        bufferAllocator.initialize(bufferMemorySize, bufferSize/*, bufferAlignment*/)
+
+        //val cacheMemorySize = GIoDispatcherCacheSizeMB shl 20
+        //blockCache.initialize(cacheMemorySize, bufferSize)
+
+        val decompressionContextCount = if (GIoDispatcherDecompressionWorkerCount > 0) GIoDispatcherDecompressionWorkerCount else 4
+        for (contextIndex in 0 until decompressionContextCount) {
+            val context = FFileIoStoreCompressionContext()
+            context.next = firstFreeCompressionContext
+            firstFreeCompressionContext = context
+        }
+
+        Thread(this, "IoService").start()
+    }
+
     fun mount(environment: FIoStoreEnvironment): FIoContainerId {
-        val reader = FFileIoStoreReader()
+        val reader = FFileIoStoreReader(platformImpl)
         reader.initialize(environment)
 
         if (reader.isEncrypted) {
-            val encryptionKey = ByteArray(0)
+            val encryptionKey = encryptionKeys.getEncryptionKey(reader.encryptionKeyGuid)
             if (encryptionKey != null) {
                 reader.encryptionKey = encryptionKey
             } else { // TODO GetBaseFilename
-                LOGGER.warn("Mounting container '%s' with invalid encryption key".format(environment.path.substringAfterLast(File.separatorChar)))
+                LOG_IO_DISPATCHER.warn("Mounting container '%s' with invalid encryption key".format(environment.path.substringAfterLast(File.separatorChar)))
             }
         }
 
@@ -149,38 +223,36 @@ class FFileIoStore : Runnable {
             val resolvedRequest = FFileIoStoreResolvedRequest()
             resolvedRequest.request = request
             for (reader in orderedIoStoreReaders) {
-                val offsetAndLength = reader.resolve(resolvedRequest.request.chunkId)
-                if (offsetAndLength != null) {
-                    val requestedOffset = resolvedRequest.request.options.offset
-                    resolvedRequest.resolvedOffset = offsetAndLength.offset + requestedOffset
-                    if (requestedOffset > offsetAndLength.length) {
-                        resolvedRequest.resolvedSize = 0u
-                    } else {
-                        resolvedRequest.resolvedSize = min(resolvedRequest.request.options.size, offsetAndLength.length - requestedOffset)
-                    }
-
-                    request.unfinishedReadsCount = 0
-                    if (resolvedRequest.resolvedSize > 0u) {
-                        val targetVa = request.options.targetVa
-                        if (targetVa != null) {
-                            resolvedRequest.request.ioBuffer = targetVa //FIoBuffer(FIoBuffer::Wrap, TargetVa, ResolvedRequest.ResolvedSize)
-                        } else {
-                            resolvedRequest.request.ioBuffer = BytePointer(resolvedRequest.resolvedSize.toInt())
-                        }
-
-                        /*val customRequests = FFileIoStoreReadRequestList()
-                        if (platformImpl.CreateCustomRequests(reader.containerFile, resolvedRequest, customRequests)) {
-                            synchronized(pendingRequestsCritical) {
-                                pendingRequests.add(customRequests)
-                            }
-                            onNewPendingRequestsAdded()
-                        } else {*/
-                        readBlocks(reader, resolvedRequest)
-                        //}
-                    }
-
-                    return IoStoreResolveResult_OK
+                val offsetAndLength = reader.resolve(resolvedRequest.request.chunkId) ?: continue
+                val requestedOffset = resolvedRequest.request.options.offset
+                resolvedRequest.resolvedOffset = offsetAndLength.offset + requestedOffset
+                if (requestedOffset > offsetAndLength.length) {
+                    resolvedRequest.resolvedSize = 0u
+                } else {
+                    resolvedRequest.resolvedSize = min(resolvedRequest.request.options.size, offsetAndLength.length - requestedOffset)
                 }
+
+                request.unfinishedReadsCount = 0
+                if (resolvedRequest.resolvedSize > 0u) {
+                    val targetVa = request.options.targetVa
+                    if (targetVa != null) {
+                        resolvedRequest.request.ioBuffer = targetVa //FIoBuffer(FIoBuffer::Wrap, TargetVa, ResolvedRequest.ResolvedSize)
+                    } else {
+                        resolvedRequest.request.ioBuffer = BytePointer(resolvedRequest.resolvedSize.toInt())
+                    }
+
+                    val customRequests = FFileIoStoreReadRequestList()
+                    if (platformImpl.createCustomRequests(reader.containerFile, resolvedRequest, customRequests)) {
+                        synchronized(pendingRequestsCritical) {
+                            pendingRequests.append(customRequests)
+                        }
+                        onNewPendingRequestsAdded()
+                    } else {
+                        readBlocks(reader, resolvedRequest)
+                    }
+                }
+
+                return IoStoreResolveResult_OK
             }
 
             return IoStoreResolveResult_NotFound
@@ -211,12 +283,12 @@ class FFileIoStore : Runnable {
     }
 
     fun getCompletedRequests(): FIoRequestImpl? {
-        /*if (!bIsMultithreaded) {
+        if (!bIsMultithreaded) {
             while (platformImpl.startRequests(requestQueue));
-        }*/
+        }
 
         val completedRequests = FFileIoStoreReadRequestList()
-//		platformImpl.getCompletedRequests(completedRequests)
+        platformImpl.getCompletedRequests(completedRequests)
         var completedRequest = completedRequests.head
         while (completedRequest != null) {
             ++completedRequestsCount
@@ -239,7 +311,7 @@ class FFileIoStore : Runnable {
                         }
 
                         val src = completedRequest.buffer!!.memory
-                        var srcOff = 0
+                        var srcOff = completedRequest.buffer!!.memory!!.pos
                         val dst = compressedBlock.compressedDataBuffer!!
                         var dstOff = 0
                         var copySize = completedRequest.size
@@ -338,25 +410,36 @@ class FFileIoStore : Runnable {
         return result
     }
 
+    fun init(): Boolean {
+        return true
+    }
+
     override fun run() {
-        TODO("Not yet implemented")
+        while (!bStopRequested.get()) {
+            processIncomingRequests()
+            if (!platformImpl.startRequests(requestQueue)) {
+                //updateAsyncIOMinimumPriority()
+                eventQueue.serviceWait()
+            }
+        }
+    }
+
+    fun stop() {
+        bStopRequested.set(true)
+        eventQueue.serviceNotify()
     }
 
     private fun onNewPendingRequestsAdded() {
-        /*if (bIsMultithreaded) {
+        if (bIsMultithreaded) {
             eventQueue.serviceNotify()
-        } else {*/
-        processIncomingRequests()
-        //}
+        } else {
+            processIncomingRequests()
+        }
     }
 
     private fun readBlocks(reader: FFileIoStoreReader, resolvedRequest: FFileIoStoreResolvedRequest) {
-        /*TStringBuilder<256> ScopeName;
-        ScopeName.Appendf(TEXT("ReadBlock %d"), BlockIndex);
-        TRACE_CPUPROFILER_EVENT_SCOPE_TEXT(*ScopeName);*/
-
-        if (reader.isEncrypted && reader.encryptionKey != null && reader.encryptionKey!!.size != 32) {
-            LOGGER.error("Reading from encrypted container (ID = '%d') with invalid encryption key (Guid = '%s')".format(reader.containerId.id.toInt(), reader.encryptionKeyGuid.toString()))
+        if (reader.isEncrypted && reader.encryptionKey == null) {
+            LOG_IO_DISPATCHER.error("Reading from encrypted container (ID = '%d') with invalid encryption key (Guid = '%s')".format(reader.containerId.value().toInt(), reader.encryptionKeyGuid.toString()))
             return
         }
         val containerFile = reader.containerFile
@@ -453,8 +536,8 @@ class FFileIoStore : Runnable {
     }
 
     private fun freeBuffer(buffer: FFileIoStoreBuffer) {
-        /*TODO bufferAllocator.freeBuffer(buffer)
-        eventQueue.serviceNotify()*/
+        bufferAllocator.freeBuffer(buffer)
+        eventQueue.serviceNotify()
     }
 
     private fun allocCompressionContext(): FFileIoStoreCompressionContext? {
@@ -480,7 +563,7 @@ class FFileIoStore : Runnable {
             val rawBlock = compressedBlock.singleRawBlock
             check(compressedBlock.rawOffset >= rawBlock.offset)
             val offsetInBuffer = compressedBlock.rawOffset - rawBlock.offset
-            BytePointer(rawBlock.buffer!!.memory!!) + offsetInBuffer.toInt()
+            rawBlock.buffer!!.memory!! + offsetInBuffer.toInt()
         }
         /*if (CompressedBlock.SignatureHash)
         {
@@ -512,7 +595,7 @@ class FFileIoStore : Runnable {
                 Aes.decryptData(compressedBuffer, compressedBlock.rawSize.toInt(), compressedBlock.encryptionKey!!)
             }
             val uncompressedBuffer: BytePointer
-            if (compressedBlock.compressionMethod == FName.NAME_None/*.isNone()*/) {
+            if (compressedBlock.compressionMethod.isNone()) {
                 uncompressedBuffer = compressedBuffer
             } else {
                 if (compressionContext.uncompressedBufferSize < compressedBlock.uncompressedSize) {
@@ -525,7 +608,7 @@ class FFileIoStore : Runnable {
                 try {
                     uncompressMemory(compressedBlock.compressionMethod, uncompressedBuffer, compressedBlock.uncompressedSize.toInt(), compressedBuffer, compressedBlock.compressedSize.toInt())
                 } catch (e: Exception) {
-                    LOGGER.warn("Failed decompressing block", e)
+                    LOG_IO_DISPATCHER.warn("Failed decompressing block", e)
                     compressedBlock.bFailed = true
                 }
             }
@@ -540,7 +623,7 @@ class FFileIoStore : Runnable {
                 compressedBlock.next = firstDecompressedBlock
                 firstDecompressedBlock = compressedBlock
 
-//				eventQueue.dispatcherNotify()
+                eventQueue.dispatcherNotify()
             }
         }
     }
@@ -587,13 +670,13 @@ class FFileIoStore : Runnable {
         while (requestToSchedule != null) {
             val nextRequest = requestToSchedule!!.next
             requestToSchedule!!.next = null
-//			requestQueue.push(requestToSchedule!!) TODO
+            requestQueue.push(requestToSchedule!!)
             ++submittedRequestsCount
 
             requestToSchedule = nextRequest
         }
 
-//		updateAsyncIOMinimumPriority()
+        //updateAsyncIOMinimumPriority()
     }
 
     class FBlockMaps {

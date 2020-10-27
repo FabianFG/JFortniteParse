@@ -13,7 +13,7 @@ fun main() {
             try {
                 reader.initialize(File(paksDir, it.substringBeforeLast('.')).path, mapOf(FGuid.mainGuid to Aes.parseKey("0xab32bab083f7d923a33aa768bc64b64bf62488948bd49fe61d95343492252558")))
             } catch (e: FIoStatusException) {
-                if (e.errorCode != EIoErrorCode.FileOpenFailed) {
+                if (e.status.errorCode != EIoErrorCode.FileOpenFailed) {
                     throw e
                 }
             }

@@ -1,37 +1,44 @@
-package me.fungames.jfortniteparse.ue4.io
+package me.fungames.jfortniteparse.ue4.io.al2
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
+// TODO move to uobject
 @ExperimentalUnsignedTypes
-class FIoContainerId {
+class FPackageId {
     companion object {
         @JvmStatic
-        private val INVALID_ID = (-1).toULong()
+        val INVALID_ID = 0u.inv()
+
+        @JvmStatic
+        fun fromIndex(index: UInt) = FPackageId(index)
     }
 
     private var id = INVALID_ID
 
     constructor()
 
-    constructor(id: ULong) {
+    private constructor(id: UInt) {
         this.id = id
     }
 
     constructor(Ar: FArchive) {
-        id = Ar.readUInt64()
+        id = Ar.readUInt32()
     }
-
-    fun value() = id
 
     fun isValid() = id != INVALID_ID
 
-    operator fun compareTo(other: FIoContainerId) = id.compareTo(other.id)
+    fun toIndex(): UInt {
+        check(id != INVALID_ID)
+        return id
+    }
+
+    fun toIndexForDebugging() = id
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as FIoContainerId
+        other as FPackageId
 
         if (id != other.id) return false
 

@@ -3,39 +3,60 @@ package me.fungames.jfortniteparse.ue4.io
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_NotFound
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_OK
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.util.printHexBinary
+import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
+
+val GIoDispatcherBufferSizeKB = 256
+val GIoDispatcherBufferAlignment = 4096
+val GIoDispatcherBufferMemoryMB = 8
+val GIoDispatcherDecompressionWorkerCount = 4
+val GIoDispatcherCacheSizeMB = 0
 
 /**
  * I/O error code.
  */
-enum class EIoErrorCode {
-    Ok,
-    Unknown,
-    InvalidCode,
-    Cancelled,
-    FileOpenFailed,
-    FileNotOpen,
-    ReadError,
-    WriteError,
-    NotFound,
-    CorruptToc,
-    UnknownChunkID,
-    InvalidParameter,
-    SignatureError
+enum class EIoErrorCode(val text: String) {
+    Ok("OK"),
+    Unknown("Unknown Status"),
+    InvalidCode("Invalid Code"),
+    Cancelled("Cancelled"),
+    FileOpenFailed("FileOpen Failed"),
+    FileNotOpen("File Not Open"),
+    ReadError("Read Error"),
+    WriteError("Write Error"),
+    NotFound("Not Found"),
+    CorruptToc("Corrupt Toc"),
+    UnknownChunkID("Unknown ChunkID"),
+    InvalidParameter("Invalid Parameter"),
+    SignatureError("SignatureError")
 }
 
-class FIoStatusException(val errorCode: EIoErrorCode, errorMessage: String? = null, cause: Throwable? = null) : Exception(errorMessage, cause) {
+class FIoStatus(val errorCode: EIoErrorCode, val errorMessage: String = "") {
     companion object {
-        inline fun ok() = FIoStatusException(EIoErrorCode.Ok, "OK")
-        inline fun unknown() = FIoStatusException(EIoErrorCode.Unknown, "Unknown Status")
-        inline fun invalid() = FIoStatusException(EIoErrorCode.InvalidCode, "Invalid Code")
+        val OK = FIoStatus(EIoErrorCode.Ok, "OK")
+        val UNKNOWN = FIoStatus(EIoErrorCode.Unknown, "Unknown Status")
+        val INVALID = FIoStatus(EIoErrorCode.InvalidCode, "Invalid Code")
     }
 
     inline val isOk get() = errorCode == EIoErrorCode.Ok
     inline val isCompleted get() = errorCode != EIoErrorCode.Unknown
+    override fun toString() = "$errorMessage (${errorCode.text})"
+    inline fun toException() = FIoStatusException(this)
+}
+
+class FIoStatusException : IOException {
+    val status: FIoStatus
+
+    constructor(status: FIoStatus, cause: Throwable? = null) : super(status.toString(), cause) {
+        this.status = status
+    }
+
+    constructor(errorCode: EIoErrorCode, errorMessage: String = "", cause: Throwable? = null) : this(FIoStatus(errorCode, errorMessage), cause)
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -90,6 +111,8 @@ class FIoChunkId {
     }
 
     inline fun isValid() = this != INVALID_CHUNK_ID
+
+    override fun toString() = id.printHexBinary()
 }
 
 /**
@@ -117,8 +140,7 @@ fun createIoChunkId(chunkId: ULong, chunkIndex: UShort, ioChunkType: EIoChunkTyp
 
     data.putLong(chunkId.toLong())
     data.putShort(chunkIndex.toShort())
-    data.position(11)
-    data.put(ioChunkType.ordinal.toByte())
+    data.put(11, ioChunkType.ordinal.toByte())
 
     return FIoChunkId(data.array(), 12)
 }
@@ -156,15 +178,12 @@ class FIoBatchReadOptions {
 
 interface FIoRequest {
     val isOk: Boolean
-    val status: FIoStatusException
+    val status: FIoStatus
     val chunkId: FIoChunkId
     fun getResultOrThrow(): BytePointer
 }
 
-interface FIoReadCallback {
-    fun onSuccess(ioBuffer: BytePointer)
-    fun onFailure(e: FIoStatusException)
-}
+typealias FIoReadCallback = (Result<BytePointer>) -> Unit
 
 enum class EIoDispatcherPriority {
     IoDispatcherPriority_Low,
@@ -223,37 +242,122 @@ class FIoBatch {
     fun issueWithCallback(options: FIoBatchReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback) {
         dispatcher!!.setupBatchForContiguousRead(impl!!, options.targetVa, callback)
     }
+
+    fun waitRequests() { // original name: Wait
+        while (impl!!.unfinishedRequestsCount.get() > 0) {
+            Thread.sleep(0)
+        }
+    }
+
+    fun cancel() {
+        throw NotImplementedError() // unimplemented()
+    }
 }
 
 class FIoDispatcherMountedContainer(
-	val environment: FIoStoreEnvironment,
-	val containerId: FIoContainerId
+    val environment: FIoStoreEnvironment,
+    val containerId: FIoContainerId
 )
+
+interface FOnContainerMountedCallback {
+    fun onContainerMounted(container: FIoDispatcherMountedContainer)
+}
+
+private var GIoDispatcher: FIoDispatcher? = null
 
 /**
  * I/O dispatcher
  */
-object FIoDispatcher {
-    private val impl: FIoDispatcherImpl? = null
+class FIoDispatcher private constructor() {
+    private val impl = FIoDispatcherImpl(false /*FGenericPlatformProcess.supportsMultithreading()*/)
 
-    fun mount(environment: FIoStoreEnvironment) = impl!!.mount(environment)
-    fun newBatch() = FIoBatch(impl!!, impl.allocBatch())
+    fun mount(environment: FIoStoreEnvironment) = impl.mount(environment)
+
+    fun newBatch() = FIoBatch(impl, impl.allocBatch())
+
+    fun freeBatch(batch: FIoBatch) {
+        impl.freeBatch(batch.impl)
+        batch.impl = null
+    }
+
+    fun readWithCallback(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback) {
+        impl.readWithCallback(chunkId, options, priority, callback)
+    }
+
+    fun doesChunkExist(chunkId: FIoChunkId) = impl.doesChunkExist(chunkId)
+
+    fun getSizeForChunk(chunkId: FIoChunkId) = impl.getSizeForChunk(chunkId)
+
+    val mountedContainers get() = impl.mountedContainers
+
+    fun addOnContainerMountedListener(listener: FOnContainerMountedCallback) {
+        impl.containerMountedCallbacks.add(listener)
+    }
+
+    fun removeOnContainerMountedListener(listener: FOnContainerMountedCallback) {
+        impl.containerMountedCallbacks.remove(listener)
+    }
+
+    companion object {
+        @JvmStatic
+        fun isValidEnvironment(environment: FIoStoreEnvironment) =
+            FFileIoStore.isValidEnvironment(environment)
+
+        @JvmStatic
+        fun isInitialized() = GIoDispatcher != null
+
+        @JvmStatic
+        fun initialize() {
+            GIoDispatcher = FIoDispatcher()
+            //impl.initialize()
+        }
+
+        @JvmStatic
+        fun initializePostSettings() {
+            check(GIoDispatcher != null)
+            try {
+                GIoDispatcher!!.impl.initializePostSettings()
+            } catch (e: FIoStatusException) {
+                LOG_IO_DISPATCHER.error("Failed to initialize IoDispatcher")
+            }
+        }
+
+        @JvmStatic
+        fun shutdown() {
+            GIoDispatcher = null
+        }
+
+        @JvmStatic
+        fun get() = GIoDispatcher!!
+    }
 }
 
-class FIoDispatcherImpl {
-    private val fileIoStore = FFileIoStore()
+class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
+    val eventQueue = FIoDispatcherEventQueue()
+
+    private val fileIoStore = FFileIoStore(eventQueue, bIsMultithreaded)
     private val waitingLock = Object()
     private var waitingRequestsHead: FIoRequestImpl? = null
     private var waitingRequestsTail: FIoRequestImpl? = null
-    private val mountedContainers = Collections.synchronizedList(mutableListOf<FIoDispatcherMountedContainer>())
+    private val bStopRequested = AtomicBoolean(false)
+    internal val mountedContainers: MutableList<FIoDispatcherMountedContainer> = Collections.synchronizedList(mutableListOf<FIoDispatcherMountedContainer>())
     private var pendingIoRequestsCount = 0uL
+    internal val containerMountedCallbacks = mutableListOf<FOnContainerMountedCallback>()
+
+    fun initialize() {}
+
+    fun initializePostSettings(): Boolean {
+        fileIoStore.initialize()
+        if (bIsMultithreaded) Thread(this, "IoDispatcher").start()
+        return true
+    }
 
     fun allocRequest(chunkId: FIoChunkId, options: FIoReadOptions): FIoRequestImpl {
         val request = FIoRequestImpl()
 
         request.chunkId = chunkId
         request.options = options
-        request.status = FIoStatusException.unknown()
+        request.status = FIoStatus.UNKNOWN
 
         return request
     }
@@ -272,22 +376,36 @@ class FIoDispatcherImpl {
         }
 
         check(batch.tailRequest!!.batchNextRequest == null)
-        batch.unfinishedRequestsCount.getAndIncrement()
+        batch.unfinishedRequestsCount.incrementAndGet()
 
         return request
     }
 
     fun allocBatch() = FIoBatchImpl()
 
-    fun onNewWaitingRequestsAdded() {
-        /*if (bIsMultithreaded) {
-            eventQueue.dispatcherNotify()
-        } else {*/
-        processIncomingRequests()
-        while (pendingIoRequestsCount > 0u) {
-            processCompletedRequests()
+    fun freeBatch(batch: FIoBatchImpl?) {
+        if (batch != null) {
+            var request = batch.headRequest
+
+            while (request != null) {
+                val tmp = request
+                request = request.batchNextRequest
+//                freeRequest(tmp)
+            }
+
+//            batchAllocator.destroy(batch)
         }
-        //}
+    }
+
+    fun onNewWaitingRequestsAdded() {
+        if (bIsMultithreaded) {
+            eventQueue.dispatcherNotify()
+        } else {
+            processIncomingRequests()
+            while (pendingIoRequestsCount > 0u) {
+                processCompletedRequests()
+            }
+        }
     }
 
     fun readWithCallback(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback) {
@@ -297,8 +415,8 @@ class FIoDispatcherImpl {
         request.nextRequest = null
         synchronized(waitingLock) {
             if (waitingRequestsTail == null) {
+                waitingRequestsHead = request
                 waitingRequestsTail = request
-                waitingRequestsHead = waitingRequestsTail
             } else {
                 waitingRequestsTail!!.nextRequest = request
                 waitingRequestsTail = request
@@ -310,7 +428,7 @@ class FIoDispatcherImpl {
     fun mount(environment: FIoStoreEnvironment) {
         val containerId = fileIoStore.mount(environment)
         val mountedContainer = FIoDispatcherMountedContainer(environment, containerId)
-        //eventBus?.post(ContainerMountedEvent(mountedContainer))
+        containerMountedCallbacks.forEach { it.onContainerMounted(mountedContainer) }
         mountedContainers.add(mountedContainer)
     }
 
@@ -395,7 +513,7 @@ class FIoDispatcherImpl {
         while (completedRequestsHead != null) {
             val nextRequest = completedRequestsHead.nextRequest
             completeRequest(completedRequestsHead)
-            completedRequestsHead = nextRequest!!
+            completedRequestsHead = nextRequest
             --pendingIoRequestsCount
         }
     }
@@ -403,16 +521,16 @@ class FIoDispatcherImpl {
     private fun completeRequest(request: FIoRequestImpl) {
         if (!request.status.isCompleted) {
             if (request.bFailed) {
-                request.status = FIoStatusException(EIoErrorCode.ReadError)
+                request.status = FIoStatus(EIoErrorCode.ReadError)
             } else {
-                request.status = FIoStatusException(EIoErrorCode.Ok)
+                request.status = FIoStatus(EIoErrorCode.Ok)
             }
         }
-        request.callback?.apply {
+        if (request.callback != null) {
             if (request.status.isOk) {
-                onSuccess(request.ioBuffer)
+                request.callback!!(Result.success(request.ioBuffer))
             } else {
-                onFailure(request.status)
+                request.callback!!(Result.failure(request.status.toException()))
             }
         }
 
@@ -436,7 +554,7 @@ class FIoDispatcherImpl {
         // Since the requests will be processed in order we can just check the tail request
         check(batch.tailRequest!!.status.isCompleted)
 
-        var status = FIoStatusException(EIoErrorCode.Ok)
+        var status = FIoStatus(EIoErrorCode.Ok)
         // Check the requests in the batch to see if we need to report an error status
         var request = batch.headRequest
         while (request != null && status.isOk) {
@@ -446,9 +564,9 @@ class FIoDispatcherImpl {
 
         // Return the buffer if there are no errors, or the failed status if there were
         if (status.isOk) {
-            batch.callback!!.onSuccess(batch.ioBuffer)
+            batch.callback!!(Result.success(batch.ioBuffer))
         } else {
-            batch.callback!!.onFailure(status)
+            batch.callback!!(Result.failure(status.toException()))
         }
     }
 
@@ -484,9 +602,12 @@ class FIoDispatcherImpl {
                 val result = fileIoStore.resolve(request)
                 if (result != IoStoreResolveResult_OK) {
                     request.status = result.toStatus()
+                    completeRequest(request) // MOD: if the given chunk ID does not exist, don't forget to complete the request
+                    continue
                 }
             } else {
-                request.status = FIoStatusException(EIoErrorCode.InvalidParameter, "FIoChunkId is not valid")
+                request.status = FIoStatus(EIoErrorCode.InvalidParameter, "FIoChunkId is not valid")
+                completeRequest(request) // MOD: same with above
                 continue
             }
 
@@ -496,14 +617,34 @@ class FIoDispatcherImpl {
             processCompletedRequests()
         }
     }
+
+    //private fun init() = true
+
+    override fun run() {
+        //FMemory.setupTLSCachesOnCurrentThread()
+        while (!bStopRequested.get()) {
+            if (pendingIoRequestsCount > 0u) {
+                eventQueue.dispatcherWaitForIo()
+            } else {
+                eventQueue.dispatcherWait()
+            }
+            processIncomingRequests()
+            processCompletedRequests()
+        }
+    }
+
+    fun stop() {
+        bStopRequested.set(true)
+        eventQueue.dispatcherNotify()
+    }
 }
 
 /** A utility function to convert a EIoStoreResolveResult to the corresponding FIoStatus. */
-fun EIoStoreResolveResult.toStatus(): FIoStatusException {
+fun EIoStoreResolveResult.toStatus(): FIoStatus {
     return when (this) {
-		IoStoreResolveResult_OK -> FIoStatusException(EIoErrorCode.Ok)
-		IoStoreResolveResult_NotFound -> FIoStatusException(EIoErrorCode.NotFound)
-        else -> FIoStatusException(EIoErrorCode.Unknown)
+        IoStoreResolveResult_OK -> FIoStatus(EIoErrorCode.Ok)
+        IoStoreResolveResult_NotFound -> FIoStatus(EIoErrorCode.NotFound)
+        else -> FIoStatus(EIoErrorCode.Unknown)
     }
 }
 
@@ -554,11 +695,11 @@ interface FIoDirectoryIndexReader {
 }
 
 class FIoStoreTocChunkInfo(
-	val id: FIoChunkId,
-	val hash: FIoChunkHash,
-	val offset: ULong,
-	val size: ULong,
-	val bForceUncompressed: Boolean,
-	val bIsMemoryMapped: Boolean,
-	val bIsCompressed: Boolean
+    val id: FIoChunkId,
+    val hash: FIoChunkHash,
+    val offset: ULong,
+    val size: ULong,
+    val bForceUncompressed: Boolean,
+    val bIsMemoryMapped: Boolean,
+    val bIsCompressed: Boolean
 )

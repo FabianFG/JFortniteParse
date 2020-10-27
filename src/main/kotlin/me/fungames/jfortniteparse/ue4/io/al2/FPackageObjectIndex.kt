@@ -1,4 +1,4 @@
-package me.fungames.jfortniteparse.ue4.io
+package me.fungames.jfortniteparse.ue4.io.al2
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 

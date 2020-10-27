@@ -10,7 +10,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.oodle.Oodle
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileNotFoundException
@@ -91,12 +90,12 @@ class FIoStoreTocHeader {
 class FIoOffsetAndLength {
     // We use 5 bytes for offset and size, this is enough to represent
     // an offset and size of 1PB
-    private val offsetAndLength = ByteArray(5 + 5)
+    private var offsetAndLength = UByteArray(5 + 5)
 
     constructor()
 
     constructor(Ar: FArchive) {
-        Ar.read(offsetAndLength)
+        offsetAndLength = Ar.read(offsetAndLength.size).toUByteArray()
     }
 
     var offset: ULong
@@ -106,11 +105,11 @@ class FIoOffsetAndLength {
                 (offsetAndLength[1].toULong() shl 24) or
                 (offsetAndLength[0].toULong() shl 32))
         set(value) {
-            offsetAndLength[0] = (value shr 32).toByte()
-            offsetAndLength[1] = (value shr 24).toByte()
-            offsetAndLength[2] = (value shr 16).toByte()
-            offsetAndLength[3] = (value shr 8).toByte()
-            offsetAndLength[4] = (value shr 0).toByte()
+            offsetAndLength[0] = (value shr 32).toUByte()
+            offsetAndLength[1] = (value shr 24).toUByte()
+            offsetAndLength[2] = (value shr 16).toUByte()
+            offsetAndLength[3] = (value shr 8).toUByte()
+            offsetAndLength[4] = (value shr 0).toUByte()
         }
     var length: ULong
         get() = (offsetAndLength[9].toULong() or
@@ -119,11 +118,11 @@ class FIoOffsetAndLength {
                 (offsetAndLength[6].toULong() shl 24) or
                 (offsetAndLength[5].toULong() shl 32))
         set(value) {
-            offsetAndLength[5] = (value shr 32).toByte()
-            offsetAndLength[6] = (value shr 24).toByte()
-            offsetAndLength[7] = (value shr 16).toByte()
-            offsetAndLength[8] = (value shr 8).toByte()
-            offsetAndLength[9] = (value shr 0).toByte()
+            offsetAndLength[5] = (value shr 32).toUByte()
+            offsetAndLength[6] = (value shr 24).toUByte()
+            offsetAndLength[7] = (value shr 16).toUByte()
+            offsetAndLength[8] = (value shr 8).toUByte()
+            offsetAndLength[9] = (value shr 0).toUByte()
         }
 }
 
@@ -226,10 +225,6 @@ class FIoStoreToc {
 // class FIoStoreWriterImpl
 
 class FIoStoreReaderImpl {
-    companion object {
-        val LOGGER = LoggerFactory.getLogger("IoDispatcher")
-    }
-
     private val toc = FIoStoreToc()
     private var decryptionKey = ByteArray(0)
     private lateinit var containerFileHandle: RandomAccessFile
@@ -378,8 +373,8 @@ class FIoStoreTocResource {
     lateinit var chunkOffsetLengths: MutableList<FIoOffsetAndLength>
     lateinit var compressionBlocks: MutableList<FIoStoreTocCompressedBlockEntry>
     lateinit var compressionMethods: MutableList<FName>
-    lateinit var chunkBlockSignatures: MutableList<ByteArray> // FSHAHash
-    lateinit var chunkMetas: MutableList<FIoStoreTocEntryMeta>
+    var chunkBlockSignatures = mutableListOf<ByteArray>() // FSHAHash
+    var chunkMetas = mutableListOf<FIoStoreTocEntryMeta>()
     var directoryIndexBuffer: ByteArray? = null
 
     fun read(tocFile: File, readOptions: Int) {
@@ -408,7 +403,9 @@ class FIoStoreTocResource {
             val hashSize = tocBuffer.readInt32()
             tocBuffer.skip(hashSize.toLong()) // actually: var tocSignature = reader.ReadBytes(hashSize);
             tocBuffer.skip(hashSize.toLong()) // actually: var blockSignature = reader.ReadBytes(hashSize);
-            chunkBlockSignatures = MutableList(header.tocCompressedBlockEntryCount.toInt()) { tocBuffer.read(20) }
+            for (i in 0 until header.tocCompressedBlockEntryCount.toInt()) {
+                chunkBlockSignatures.add(tocBuffer.read(20))
+            }
 
             // You could verify hashes here but nah
         }
@@ -423,7 +420,9 @@ class FIoStoreTocResource {
 
         // Meta
         if ((readOptions and TOC_READ_OPTION_READ_TOC_META) != 0) {
-            chunkMetas = MutableList(header.tocEntryCount.toInt()) { FIoStoreTocEntryMeta(tocBuffer) }
+            for (i in 0 until header.tocEntryCount.toInt()) {
+                chunkMetas.add(FIoStoreTocEntryMeta(tocBuffer))
+            }
         }
     }
 }
@@ -459,18 +458,6 @@ fun main() {
     }*/
 
     println("h")
-    if (true) return
-    val logger = LoggerFactory.getLogger("PakFile")
-
-//	if (FIoDIspatcher.isInitialized) {
-    val ioStoreEnvironment = FIoStoreEnvironment(pakFilename)
-    try {
-        FIoDispatcher.mount(ioStoreEnvironment)
-        logger.info("Mounted IoStore environment \"%s\"".format(ioStoreEnvironment.path))
-    } catch (e: FIoStatusException) {
-        logger.warn("Failed to mount IoStore environment \"%s\" [%s]".format(ioStoreEnvironment.path, ioStoreEnvironment.toString()))
-    }
-//	}
 }
 
 fun iterateDirectoryIndex(directory: FIoDirectoryIndexHandle, path: String, reader: FIoDirectoryIndexReader, visit: (filePath: String, tocEntryIndex: UInt) -> Boolean): Boolean {

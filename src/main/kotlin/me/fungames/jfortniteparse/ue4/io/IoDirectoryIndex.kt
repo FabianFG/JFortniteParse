@@ -47,7 +47,7 @@ class FIoDirectoryIndexResource {
 class FIoDirectoryIndexReaderImpl(buffer: ByteArray, decryptionKey: ByteArray) : FIoDirectoryIndexReader {
     var directoryIndex = buffer.run {
         if (buffer.isEmpty()) {
-            throw FIoStatusException.invalid()
+            throw FIoStatus.INVALID.toException()
         }
         FIoDirectoryIndexResource(FByteArchive(if (decryptionKey.size == 32) {
             Aes.decrypt(buffer, decryptionKey)
