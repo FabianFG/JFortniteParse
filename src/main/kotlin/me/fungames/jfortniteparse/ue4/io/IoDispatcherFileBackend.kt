@@ -20,7 +20,7 @@ val LOG_IO_DISPATCHER: Logger = LoggerFactory.getLogger("IoDispatcher")
 class FFileIoStoreCompressionContext {
     var next: FFileIoStoreCompressionContext? = null
     var uncompressedBufferSize = 0uL
-    var uncompressedBuffer: BytePointer? = null
+    var uncompressedBuffer: ByteArray? = null
 }
 
 class FFileIoStoreEncryptionKeys {
@@ -237,8 +237,9 @@ class FFileIoStore : Runnable {
                     val targetVa = request.options.targetVa
                     if (targetVa != null) {
                         resolvedRequest.request.ioBuffer = targetVa //FIoBuffer(FIoBuffer::Wrap, TargetVa, ResolvedRequest.ResolvedSize)
+                        resolvedRequest.request.ioBufferOff = request.options.targetVaOff
                     } else {
-                        resolvedRequest.request.ioBuffer = BytePointer(resolvedRequest.resolvedSize.toInt())
+                        resolvedRequest.request.ioBuffer = ByteArray(resolvedRequest.resolvedSize.toInt())
                     }
 
                     val customRequests = FFileIoStoreReadRequestList()
@@ -556,14 +557,18 @@ class FFileIoStore : Runnable {
     private fun scatterBlock(compressedBlock: FFileIoStoreCompressedBlock, bIsAsync: Boolean) {
         val compressionContext = compressedBlock.compressionContext
         check(compressionContext != null)
-        val compressedBuffer = if (compressedBlock.rawBlocksCount > 1u) {
+        val compressedBuffer: ByteArray
+        val compressedBufferOff: Int
+        if (compressedBlock.rawBlocksCount > 1u) {
             check(compressedBlock.compressedDataBuffer != null)
-            BytePointer(compressedBlock.compressedDataBuffer!!)
+            compressedBuffer = compressedBlock.compressedDataBuffer!!
+            compressedBufferOff = 0
         } else {
             val rawBlock = compressedBlock.singleRawBlock
             check(compressedBlock.rawOffset >= rawBlock.offset)
             val offsetInBuffer = compressedBlock.rawOffset - rawBlock.offset
-            rawBlock.buffer!!.memory!! + offsetInBuffer.toInt()
+            compressedBuffer = rawBlock.buffer!!.memory!!.asArray()
+            compressedBufferOff = rawBlock.buffer!!.memory!!.pos + offsetInBuffer.toInt()
         }
         /*if (CompressedBlock.SignatureHash)
         {
@@ -592,21 +597,24 @@ class FFileIoStore : Runnable {
         }*/
         if (!compressedBlock.bFailed) {
             if (compressedBlock.encryptionKey != null/*.isValid()*/) {
-                Aes.decryptData(compressedBuffer, compressedBlock.rawSize.toInt(), compressedBlock.encryptionKey!!)
+                Aes.decryptData(compressedBuffer, compressedBufferOff, compressedBlock.rawSize.toInt(), compressedBlock.encryptionKey!!)
             }
-            val uncompressedBuffer: BytePointer
+            val uncompressedBuffer: ByteArray
+            val uncompressedBufferOff: Int
             if (compressedBlock.compressionMethod.isNone()) {
                 uncompressedBuffer = compressedBuffer
+                uncompressedBufferOff = compressedBufferOff
             } else {
                 if (compressionContext.uncompressedBufferSize < compressedBlock.uncompressedSize) {
                     //free(compressionContext.uncompressedBuffer)
-                    compressionContext.uncompressedBuffer = BytePointer(compressedBlock.uncompressedSize.toInt())
+                    compressionContext.uncompressedBuffer = ByteArray(compressedBlock.uncompressedSize.toInt())
                     compressionContext.uncompressedBufferSize = compressedBlock.uncompressedSize.toULong()
                 }
                 uncompressedBuffer = compressionContext.uncompressedBuffer!!
+                uncompressedBufferOff = 0
 
                 try {
-                    uncompressMemory(compressedBlock.compressionMethod, uncompressedBuffer, compressedBlock.uncompressedSize.toInt(), compressedBuffer, compressedBlock.compressedSize.toInt())
+                    uncompressMemory(compressedBlock.compressionMethod, uncompressedBuffer, uncompressedBufferOff, compressedBlock.uncompressedSize.toInt(), compressedBuffer, compressedBufferOff, compressedBlock.compressedSize.toInt())
                 } catch (e: Exception) {
                     LOG_IO_DISPATCHER.warn("Failed decompressing block", e)
                     compressedBlock.bFailed = true
@@ -614,7 +622,7 @@ class FFileIoStore : Runnable {
             }
 
             for (scatter in compressedBlock.scatterList) {
-                System.arraycopy(uncompressedBuffer.asArray(), uncompressedBuffer.pos + scatter.srcOffset.toInt(), scatter.request!!.ioBuffer.asArray(), scatter.request!!.ioBuffer.pos + scatter.dstOffset.toInt(), scatter.size.toInt())
+                System.arraycopy(uncompressedBuffer, uncompressedBufferOff + scatter.srcOffset.toInt(), scatter.request!!.ioBuffer, scatter.request!!.ioBufferOff + scatter.dstOffset.toInt(), scatter.size.toInt())
             }
         }
 

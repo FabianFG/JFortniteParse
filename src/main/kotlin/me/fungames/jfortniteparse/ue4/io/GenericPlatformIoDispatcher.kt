@@ -45,17 +45,20 @@ class FGenericFileIoStoreImpl(
     }
 
     fun startRequests(requestQueue: FFileIoStoreRequestQueue): Boolean {
-        //LOG_IO_DISPATCHER.debug("startRequests()")
         val nextRequest = requestQueue.peek() ?: return false
 
-        val dest = if (nextRequest.immediateScatter.request == null) {
+        val dest: ByteArray
+        val destOff: Int
+        if (nextRequest.immediateScatter.request == null) {
             nextRequest.buffer = bufferAllocator.allocBuffer()
             if (nextRequest.buffer == null) {
                 return false
             }
-            nextRequest.buffer!!.memory!!
+            dest = nextRequest.buffer!!.memory!!.asArray()
+            destOff = nextRequest.buffer!!.memory!!.pos
         } else {
-            nextRequest.immediateScatter.request!!.ioBuffer + nextRequest.immediateScatter.dstOffset.toInt()
+            dest = nextRequest.immediateScatter.request!!.ioBuffer
+            destOff = nextRequest.immediateScatter.request!!.ioBufferOff + nextRequest.immediateScatter.dstOffset.toInt()
         }
 
         requestQueue.pop(nextRequest)
@@ -72,7 +75,7 @@ class FGenericFileIoStoreImpl(
                 continue
             }
             try {
-                fileHandle.read(dest.asArray(), dest.pos, nextRequest.size.toInt())
+                fileHandle.read(dest, destOff, nextRequest.size.toInt())
             } catch (e: IOException) {
                 LOG_IO_DISPATCHER.warn("Failed reading %d bytes at offset %d (Retries: %d)".format(nextRequest.size.toLong(), nextRequest.offset.toLong(), retryCount - 1), e)
                 continue

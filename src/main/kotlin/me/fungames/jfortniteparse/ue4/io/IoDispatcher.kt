@@ -152,7 +152,8 @@ class FIoReadOptions {
         private set
     var size = 0uL.inv()
         private set
-    var targetVa: BytePointer? = null
+    var targetVa: ByteArray? = null
+    var targetVaOff = 0
     private var flags = 0
 
     constructor()
@@ -171,7 +172,7 @@ class FIoReadOptions {
 //////////////////////////////////////////////////////////////////////////
 
 class FIoBatchReadOptions {
-    var targetVa: BytePointer? = null
+    var targetVa: ByteArray? = null
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -180,10 +181,10 @@ interface FIoRequest {
     val isOk: Boolean
     val status: FIoStatus
     val chunkId: FIoChunkId
-    fun getResultOrThrow(): BytePointer
+    fun getResultOrThrow(): ByteArray
 }
 
-typealias FIoReadCallback = (Result<BytePointer>) -> Unit
+typealias FIoReadCallback = (Result<ByteArray>) -> Unit
 
 enum class EIoDispatcherPriority {
     IoDispatcherPriority_Low,
@@ -239,8 +240,9 @@ class FIoBatch {
      *
      * @return This methods had the capacity to fail so the return value should be checked.
      */
-    fun issueWithCallback(options: FIoBatchReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback) {
+    fun issueWithCallback(options: FIoBatchReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback? = null) {
         dispatcher!!.setupBatchForContiguousRead(impl!!, options.targetVa, callback)
+        dispatcher!!.issueBatch(impl!!, priority)
     }
 
     fun waitRequests() { // original name: Wait
@@ -442,11 +444,11 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
             throw FIoStatusException(EIoErrorCode.InvalidParameter, "FIoChunkId is not valid")
         }
 
-    fun iterateBatch(batch: FIoBatchImpl, inCallbackFunction: (FIoRequestImpl) -> Boolean) {
+    fun iterateBatch(batch: FIoBatchImpl, callbackFunction: (FIoRequestImpl) -> Boolean) {
         var request = batch.headRequest
 
         while (request != null) {
-            val bDoContinue = inCallbackFunction(request)
+            val bDoContinue = callbackFunction(request)
 
             request = if (bDoContinue) request.batchNextRequest else null
         }
@@ -470,7 +472,7 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
         onNewWaitingRequestsAdded()
     }
 
-    fun setupBatchForContiguousRead(batch: FIoBatchImpl, inTargetVa: BytePointer?, inCallback: FIoReadCallback) {
+    fun setupBatchForContiguousRead(batch: FIoBatchImpl, targetVa: ByteArray?, callback: FIoReadCallback?) {
         // Create the buffer
         var totalSize = 0uL
         var request = batch.headRequest
@@ -483,29 +485,31 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
         }
 
         // Set up memory buffers
-        batch.ioBuffer = inTargetVa ?: BytePointer(totalSize.toInt())
+        batch.ioBuffer = targetVa ?: ByteArray(totalSize.toInt())
 
         val dstBuffer = batch.ioBuffer
 
         // Now assign to each request
-        val ptr = BytePointer(dstBuffer)
+        val ptr = dstBuffer
+        var ptrOff = 0
         var request1 = batch.headRequest
         while (request1 != null) {
             if (request1.options.targetVa != null) {
                 throw FIoStatusException(EIoErrorCode.InvalidParameter, "A FIoBatch reading to a contiguous buffer cannot contain FIoRequests that have a TargetVa")
             }
 
-            request1.options.targetVa = batch.ioBuffer
+            request1.options.targetVa = ptr
+            request1.options.targetVaOff = ptrOff
 
             try {
-                ptr += min(getSizeForChunk(request1.chunkId), request1.options.size).toInt()
+                ptrOff += min(getSizeForChunk(request1.chunkId), request1.options.size).toInt()
             } catch (ignored: FIoStatusException) {
             }
             request1 = request1.batchNextRequest
         }
 
         // Set up callback
-        batch.callback = inCallback
+        batch.callback = callback
     }
 
     private fun processCompletedRequests() {

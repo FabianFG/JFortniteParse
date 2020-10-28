@@ -9,7 +9,7 @@ class FAsyncLoadingThread2 {
     val globalPackageStore = FPackageStore(ioDispatcher, globalNameMap)
 
     fun lazyInitializeFromLoadPackage() {
-        //globalNameMap.loadGlobal(ioDispatcher)
+        globalNameMap.loadGlobal(ioDispatcher)
         if (GIsInitialLoad) {
             globalPackageStore.setupInitialLoadData()
         }

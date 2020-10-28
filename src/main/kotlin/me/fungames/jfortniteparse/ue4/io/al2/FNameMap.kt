@@ -28,7 +28,7 @@ class FNameMap {
         val nameBuffer = nameRequest.getResultOrThrow()
         val hashBuffer = hashRequest.getResultOrThrow()
 
-        load(nameBuffer.asArray(), hashBuffer.asArray(), FMappedName.EType.Global)
+        load(nameBuffer, hashBuffer, FMappedName.EType.Global)
 
         ioDispatcher.freeBatch(batch)
     }
@@ -65,46 +65,4 @@ class FNameMap {
         val nameEntry = nameEntries[mappedName.getIndex().toInt()]
         return FMinimalName(nameEntry, mappedName.number.toInt())
     }
-}
-
-// TODO move to UnrealNames
-fun loadNameBatch(OutNames: MutableList<FNameEntryId>, NameData: ByteArray, HashData: ByteArray) {
-    /*check(IsAligned(NameData.GetData(), sizeof(uint64)))
-    check(IsAligned(HashData.GetData(), sizeof(uint64)))
-    check(IsAligned(HashData.Num(), sizeof(uint64)))
-    check(HashData.size > 0)
-
-    const uint8* NameIt = NameData.GetData()
-    const uint8* NameEnd = NameData.GetData() + NameData.Num()
-
-    const uint64* HashDataIt = reinterpret_cast<const uint64*>(HashData.GetData())
-    uint64 HashVersion = INTEL_ORDER64(HashDataIt[0])
-    TArrayView<const uint64> Hashes = MakeArrayView(HashDataIt + 1, HashData.Num() / sizeof(uint64) - 1)
-
-    OutNames.Empty(Hashes.Num())
-
-//    GetNamePoolPostInit().BatchLock()
-
-    if (HashVersion == FNameHash::AlgorithmId)
-    {
-        for (uint64 Hash : Hashes)
-        {
-            check(NameIt < NameEnd)
-            FNameSerializedView Name = LoadNameHeader(*//* in-out *//* NameIt)
-            OutNames.Add(BatchLoadNameWithHash(Name, INTEL_ORDER64(Hash)))
-        }
-    }
-    else
-    {
-        while (NameIt < NameEnd)
-        {
-            FNameSerializedView Name = LoadNameHeader(*//* in-out *//* NameIt)
-            OutNames.Add(BatchLoadNameWithoutHash(Name))
-        }
-
-    }
-
-//    GetNamePoolPostInit().BatchUnlock()
-
-    check(NameIt == NameEnd)*/
 }

@@ -27,35 +27,37 @@ class FAsyncPackageDesc2 {
      */
     var diskPackageName: FName
 
-    // The custom package name from the LoadPackage call is only used for temp packages,
-    // if set, it will be used as the runtime UPackage name
+    /**
+     * The custom package name from the LoadPackage call is only used for temp packages,
+     * if set, it will be used as the runtime UPackage name
+     */
     var customPackageName: FName
 
     /** Set from the package summary */
     var sourcePackageName = FName.NAME_None
 
-    ///** Delegate called on completion of loading. This delegate can only be created and consumed on the game thread  */
+    ///** Delegate called on completion of loading. This delegate can only be created and consumed on the game thread */
     //var packageLoadedDelegate: FLoadPackageAsyncDelegate? = null
 
     constructor(
-        RequestID: Int,
-        PackageIdToLoad: FPackageId,
-        StoreEntry: FPackageStoreEntry,
-        DiskPackageName: FName = FName(),
-        PackageId: FPackageId = FPackageId(),
-        CustomName: FName = FName(),
+        requestID: Int,
+        packageIdToLoad: FPackageId,
+        storeEntry: FPackageStoreEntry,
+        diskPackageName: FName = FName(),
+        packageId: FPackageId = FPackageId(),
+        customName: FName = FName(),
         //completionDelegate: FLoadPackageAsyncDelegate
     ) {
-        this.requestID = RequestID
-        this.storeEntry = StoreEntry
-        this.diskPackageId = PackageIdToLoad
-        this.customPackageId = PackageId
-        this.diskPackageName = DiskPackageName
-        this.customPackageName = CustomName
+        this.requestID = requestID
+        this.storeEntry = storeEntry
+        this.diskPackageId = packageIdToLoad
+        this.customPackageId = packageId
+        this.diskPackageName = diskPackageName
+        this.customPackageName = customName
         //this.packageLoadedDelegate = completionDelegate
     }
 
-    /** This constructor does not modify the package loaded delegate as this is not safe outside the game thread  */
+    /** This constructor does not modify the package loaded delegate as this is not safe outside the game thread */
     constructor(oldPackage: FAsyncPackageDesc2) {
         requestID = oldPackage.requestID
         storeEntry = oldPackage.storeEntry
@@ -66,41 +68,32 @@ class FAsyncPackageDesc2 {
         sourcePackageName = oldPackage.sourcePackageName
     }
 
-    ///** This constructor will explicitly copy the package loaded delegate and invalidate the old one  */
+    ///** This constructor will explicitly copy the package loaded delegate and invalidate the old one */
     /*constructor(oldPackage: FAsyncPackageDesc2, packageLoadedDelegate: FLoadPackageAsyncDelegate) : this(oldPackage) {
         this.packageLoadedDelegate = packageLoadedDelegate
     }*/
 
-    fun setDiskPackageName(SerializedDiskPackageName: FName, SerializedSourcePackageName: FName) {
-        check(diskPackageName.isNone() || diskPackageName == SerializedDiskPackageName)
-        check(sourcePackageName.isNone() || sourcePackageName == SerializedSourcePackageName)
-        diskPackageName = SerializedDiskPackageName
-        sourcePackageName = SerializedSourcePackageName
+    fun setDiskPackageName(serializedDiskPackageName: FName, serializedSourcePackageName: FName) {
+        check(diskPackageName.isNone() || diskPackageName == serializedDiskPackageName)
+        check(sourcePackageName.isNone() || sourcePackageName == serializedSourcePackageName)
+        diskPackageName = serializedDiskPackageName
+        sourcePackageName = serializedSourcePackageName
     }
 
-    fun canBeImported(): Boolean {
-        return customPackageName.isNone()
-    }
+    fun canBeImported() = customPackageName.isNone()
 
     /**
      * The UPackage name is used by the engine and game code for in-memory and network communication.
      */
-    fun getUPackageName(): FName {
-        if (!customPackageName.isNone()) {
-            // temp packages
-            return customPackageName
-        } else if (!sourcePackageName.isNone()) {
-            // localized packages
-            return sourcePackageName
-        }
-        // normal packages
-        return diskPackageName
+    fun getUPackageName() = when {
+        !customPackageName.isNone() -> customPackageName // temp packages
+        !sourcePackageName.isNone() -> sourcePackageName // localized packages
+        else -> diskPackageName // normal packages
     }
 
     /**
      * The AsyncPackage id is used by the loader as a key in AsyncPackageLookup to track active load requests,
      * which in turn is used for looking up packages for setting up serialized arcs (mostly post load dependencies).
      */
-    inline fun getAsyncPackageId() =
-        if (customPackageId.isValid()) customPackageId else diskPackageId
+    inline fun getAsyncPackageId() = if (customPackageId.isValid()) customPackageId else diskPackageId
 }

@@ -5,6 +5,7 @@ package me.fungames.jfortniteparse.ue4.io
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_Count
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.kotlinPointers.BytePointer
 import java.io.RandomAccessFile
 
 class FFileIoStoreContainerFile {
@@ -135,7 +136,7 @@ class FFileIoStoreResolvedRequest {
 }
 
 class FFileIoStoreBufferAllocator {
-    private var bufferMemory: BytePointer? = null
+    private lateinit var bufferMemory: BytePointer
     private val buffersCritical = Object()
     private var firstFreeBuffer: FFileIoStoreBuffer? = null
 
@@ -145,7 +146,7 @@ class FFileIoStoreBufferAllocator {
         bufferMemory = BytePointer(memorySize)//reinterpret_cast<uint8*>(FMemory::Malloc(MemorySize, bufferAlignment))
         for (bufferIndex in 0 until bufferCount) {
             val buffer = FFileIoStoreBuffer()
-            buffer.memory = bufferMemory!! + bufferIndex * bufferSize
+            buffer.memory = bufferMemory + bufferIndex * bufferSize
             buffer.next = firstFreeBuffer
             firstFreeBuffer = buffer
         }

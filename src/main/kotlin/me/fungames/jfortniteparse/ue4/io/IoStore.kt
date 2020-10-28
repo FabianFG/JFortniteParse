@@ -174,7 +174,7 @@ class FIoStoreTocCompressedBlockEntry {
 
     var compressedSize: UInt
         get() {
-            val size = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).position(1 * 4 /*+ 1*/).int.toUInt()
+            val size = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).apply { position(1 * 4 /*+ 1*/) }.int.toUInt()
             return (size shr SizeShift.toInt()) and SizeMask
         }
         set(value) {
@@ -183,7 +183,7 @@ class FIoStoreTocCompressedBlockEntry {
 
     var uncompressedSize: UInt
         get() {
-            val uncompressedSize = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).position(2 * 4 /*+ 2*/).int.toUInt()
+            val uncompressedSize = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).apply { position(2 * 4 /*+ 2*/) }.int.toUInt()
             return uncompressedSize and SizeMask
         }
         set(value) {
@@ -192,7 +192,7 @@ class FIoStoreTocCompressedBlockEntry {
 
     var compressionMethodIndex: UByte
         get() {
-            val index = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).position(2 * 4 /*+ 2*/).int.toUInt()
+            val index = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).apply { position(2 * 4 /*+ 2*/) }.int.toUInt()
             return (index shr SizeBits.toInt()).toUByte()
         }
         set(value) {
@@ -505,9 +505,7 @@ inline operator fun String.div(other: String) = pathAppend(other)
 inline fun align(value: ULong, alignment: ULong) = value + alignment - 1u and (alignment - 1u).inv()
 inline fun align(value: UInt, alignment: ULong) = value + alignment - 1u and (alignment - 1u).inv()
 inline fun align(value: UInt, alignment: UInt) = value + alignment - 1u and (alignment - 1u).inv()
-inline fun uncompressMemory(formatName: FName, uncompressedBuffer: BytePointer, uncompressedSize: Int, compressedBuffer: BytePointer, compressedSize: Int) {
-    uncompressMemory(formatName, uncompressedBuffer.asArray(), uncompressedBuffer.pos, uncompressedSize, compressedBuffer.asArray(), compressedBuffer.pos, compressedSize)
-}
+inline fun isAligned(value: Int, alignment: Int) = value and (alignment - 1) <= 0
 
 fun uncompressMemory(formatName: FName, uncompressedBuffer: ByteArray, uncompressedBufferOff: Int, uncompressedSize: Int, compressedBuffer: ByteArray, compressedBufferOff: Int, compressedSize: Int) {
     when (formatName.text) {

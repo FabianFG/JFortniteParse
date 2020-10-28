@@ -15,7 +15,7 @@ class FIoBatchImpl {
     var tailRequest: FIoRequestImpl? = null
 
     // Used for contiguous reads
-    lateinit var ioBuffer: BytePointer
+    lateinit var ioBuffer: ByteArray
     var callback: FIoReadCallback? = null
     val unfinishedRequestsCount = AtomicInteger()
 }
@@ -27,7 +27,8 @@ class FIoRequestImpl : FIoRequest {
     override lateinit var status: FIoStatus
     override lateinit var chunkId: FIoChunkId
     lateinit var options: FIoReadOptions
-    lateinit var ioBuffer: BytePointer
+    lateinit var ioBuffer: ByteArray
+    var ioBufferOff = 0
     var callback: FIoReadCallback? = null
     var unfinishedReadsCount = 0
     lateinit var priority: EIoDispatcherPriority

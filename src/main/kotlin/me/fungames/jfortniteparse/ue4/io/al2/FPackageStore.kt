@@ -38,20 +38,18 @@ class FPackageStore(
     }
 
     fun setupInitialLoadData() {
-        val initialLoadIoBuffer: BytePointer
-        val initialLoadEvent = CompletableFuture<BytePointer>()
+        val initialLoadIoBuffer: ByteArray
+        val initialLoadEvent = CompletableFuture<ByteArray>()
 
         ioDispatcher.readWithCallback(
-            createIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalMeta),
+            createIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta),
             FIoReadOptions(),
             IoDispatcherPriority_High
-        ) {
-            initialLoadEvent.complete(it)
-        }
+        ) { initialLoadEvent.complete(it) }
 
         initialLoadIoBuffer = initialLoadEvent.await()
 
-        val initialLoadArchive = FByteArchive(ByteBuffer.wrap(initialLoadIoBuffer.asArray(), initialLoadIoBuffer.pos, initialLoadIoBuffer.size))
+        val initialLoadArchive = FByteArchive(ByteBuffer.wrap(initialLoadIoBuffer))
         for (i in 0 until initialLoadArchive.readInt32()) {
             importStore.scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive))
         }
@@ -95,7 +93,7 @@ class FPackageStore(
                 val ioBuffer = it.getOrThrow()
 
                 thread {
-                    val Ar = FByteArchive(ByteBuffer.wrap(ioBuffer.asArray(), ioBuffer.pos, ioBuffer.size))
+                    val Ar = FByteArchive(ByteBuffer.wrap(ioBuffer))
 
                     val containerHeader = FContainerHeader(Ar)
 
@@ -116,8 +114,8 @@ class FPackageStore(
                         }
 
                         var localizedPackages: FSourceToLocalizedPackageIdMap? = null
-                        for (CultureName in currentCultureNames) {
-                            localizedPackages = containerHeader.culturePackageMap[CultureName]
+                        for (cultureName in currentCultureNames) {
+                            localizedPackages = containerHeader.culturePackageMap[cultureName]
                             if (localizedPackages != null) {
                                 break
                             }

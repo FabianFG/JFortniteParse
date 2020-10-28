@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.encryption.aes
 
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
-import me.fungames.jfortniteparse.ue4.io.BytePointer
 import me.fungames.jfortniteparse.util.ModByteArrayOutputStream
 import me.fungames.jfortniteparse.util.parseHexBinary
 import javax.crypto.Cipher
@@ -45,10 +44,6 @@ object Aes {
 
     inline fun decryptData(contents: ByteArray, key: ByteArray) {
         decryptData(contents, 0, contents.size, key)
-    }
-
-    inline fun decryptData(contents: BytePointer, numBytes: Int, key: ByteArray) {
-        decryptData(contents.asArray(), contents.pos, numBytes, key)
     }
 
     fun decryptData(contents: ByteArray, offBytes: Int, numBytes: Int, key: ByteArray) {
