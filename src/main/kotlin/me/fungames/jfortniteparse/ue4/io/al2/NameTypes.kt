@@ -15,6 +15,11 @@ class FNameEntryId(var value: UInt = 0u) {
 }
 
 /**
+ * This struct is only used during loading/saving and is not part of the runtime costs
+ */
+class FNameEntrySerialized(val name: String)
+
+/**
  * The minimum amount of data required to reconstruct a name
  * This is smaller than FName, but you lose the case-preserving behavior
  */

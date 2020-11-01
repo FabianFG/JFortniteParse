@@ -47,8 +47,8 @@ object Aes {
     }
 
     fun decryptData(contents: ByteArray, offBytes: Int, numBytes: Int, key: ByteArray) {
-        Cipher.getInstance("AES/CBC/NoPadding").apply {
-            init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), IvParameterSpec(ByteArray(BLOCK_SIZE)))
+        Cipher.getInstance("AES/ECB/NoPadding").apply {
+            init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"))
             for (i in offBytes until offBytes + numBytes step BLOCK_SIZE)
                 doFinal(contents, i, BLOCK_SIZE, contents, i)
         }

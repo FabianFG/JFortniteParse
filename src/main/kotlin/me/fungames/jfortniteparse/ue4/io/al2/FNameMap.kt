@@ -3,7 +3,6 @@ package me.fungames.jfortniteparse.ue4.io.al2
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
-@ExperimentalUnsignedTypes
 class FNameMap {
     private val nameEntries = mutableListOf<FNameEntryId>()
     private var nameMapType = FMappedName.EType.Global
@@ -11,8 +10,8 @@ class FNameMap {
     fun loadGlobal(ioDispatcher: FIoDispatcher) {
         check(nameEntries.isEmpty())
 
-        val namesId = createIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNames)
-        val hashesId = createIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNameHashes)
+        val namesId = FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNames)
+        val hashesId = FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNameHashes)
 
         val batch = ioDispatcher.newBatch()
         val nameRequest = batch.read(namesId, FIoReadOptions())
@@ -44,8 +43,7 @@ class FNameMap {
         check(mappedName.getType() == nameMapType)
         check(mappedName.getIndex() < nameEntries.size.toUInt())
         val nameEntry = nameEntries[mappedName.getIndex().toInt()]
-        // return FName.createFromDisplayId(nameEntry, mappedName.getNumber())
-        return FName.dummy("TODO")
+        return FName.createFromDisplayId(nameEntry, mappedName.number.toInt())
     }
 
     fun tryGetName(mappedName: FMappedName): FName? {
@@ -53,8 +51,7 @@ class FNameMap {
         val index = mappedName.getIndex()
         if (index < nameEntries.size.toUInt()) {
             val nameEntry = nameEntries[mappedName.getIndex().toInt()]
-            // return FName.createFromDisplayId(nameEntry, mappedName.getNumber())
-            return FName.dummy("TODO")
+            return FName.createFromDisplayId(nameEntry, mappedName.number.toInt())
         }
         return null
     }

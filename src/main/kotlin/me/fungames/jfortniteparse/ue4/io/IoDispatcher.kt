@@ -2,8 +2,8 @@ package me.fungames.jfortniteparse.ue4.io
 
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_NotFound
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_OK
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.util.printHexBinary
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -33,9 +33,13 @@ enum class EIoErrorCode(val text: String) {
     CorruptToc("Corrupt Toc"),
     UnknownChunkID("Unknown ChunkID"),
     InvalidParameter("Invalid Parameter"),
-    SignatureError("SignatureError")
+    SignatureError("SignatureError"),
+    InvalidEncryptionKey("Invalid Encryption Key")
 }
 
+/**
+ * I/O status with error code and message.
+ */
 class FIoStatus(val errorCode: EIoErrorCode, val errorMessage: String = "") {
     companion object {
         val OK = FIoStatus(EIoErrorCode.Ok, "OK")
@@ -67,7 +71,7 @@ class FIoStatusException : IOException {
 class FIoStoreEnvironment(var path: String, var order: Int = 0)
 
 class FIoChunkHash {
-    private val hash = ByteArray(32)
+    /*private*/ val hash = ByteArray(32)
 
     constructor(Ar: FArchive) {
         Ar.read(hash)
@@ -84,12 +88,19 @@ class FIoChunkId {
         private inline fun createEmptyId() = FIoChunkId(ByteArray(12), 12)
     }
 
-    private var id = ByteArray(12)
+    /*private*/ var id = ByteArray(12)
 
     constructor(id: ByteArray, size: Int) {
         check(size == 12)
         this.id = id
     }
+
+    constructor(chunkId: ULong, chunkIndex: UShort, ioChunkType: EIoChunkType) : this(
+        ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
+            .putLong(chunkId.toLong())
+            .putShort(chunkIndex.toShort())
+            .put(11, ioChunkType.ordinal.toByte())
+            .array(), 12)
 
     constructor(Ar: FArchive) {
         Ar.read(id)
@@ -111,8 +122,6 @@ class FIoChunkId {
     }
 
     inline fun isValid() = this != INVALID_CHUNK_ID
-
-    override fun toString() = id.printHexBinary()
 }
 
 /**
@@ -130,19 +139,6 @@ enum class EIoChunkType {
     LoaderGlobalNames,
     LoaderGlobalNameHashes,
     ContainerHeader
-}
-
-/**
- * Creates a chunk identifier,
- */
-fun createIoChunkId(chunkId: ULong, chunkIndex: UShort, ioChunkType: EIoChunkType): FIoChunkId {
-    val data = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
-
-    data.putLong(chunkId.toLong())
-    data.putShort(chunkIndex.toShort())
-    data.put(11, ioChunkType.ordinal.toByte())
-
-    return FIoChunkId(data.array(), 12)
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -261,7 +257,7 @@ class FIoDispatcherMountedContainer(
     val containerId: FIoContainerId
 )
 
-interface FOnContainerMountedCallback {
+interface FOnContainerMountedListener {
     fun onContainerMounted(container: FIoDispatcherMountedContainer)
 }
 
@@ -273,7 +269,8 @@ private var GIoDispatcher: FIoDispatcher? = null
 class FIoDispatcher private constructor() {
     private val impl = FIoDispatcherImpl(false /*FGenericPlatformProcess.supportsMultithreading()*/)
 
-    fun mount(environment: FIoStoreEnvironment) = impl.mount(environment)
+    fun mount(environment: FIoStoreEnvironment, encryptionKeyGuid: FGuid, encryptionKey: ByteArray?) =
+        impl.mount(environment, encryptionKeyGuid, encryptionKey)
 
     fun newBatch() = FIoBatch(impl, impl.allocBatch())
 
@@ -292,12 +289,14 @@ class FIoDispatcher private constructor() {
 
     val mountedContainers get() = impl.mountedContainers
 
-    fun addOnContainerMountedListener(listener: FOnContainerMountedCallback) {
-        impl.containerMountedCallbacks.add(listener)
+    val totalLoaded get() = impl.totalLoaded
+
+    fun addOnContainerMountedListener(listener: FOnContainerMountedListener) {
+        impl.containerMountedListeners.add(listener)
     }
 
-    fun removeOnContainerMountedListener(listener: FOnContainerMountedCallback) {
-        impl.containerMountedCallbacks.remove(listener)
+    fun removeOnContainerMountedListener(listener: FOnContainerMountedListener) {
+        impl.containerMountedListeners.remove(listener)
     }
 
     companion object {
@@ -343,8 +342,10 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
     private var waitingRequestsTail: FIoRequestImpl? = null
     private val bStopRequested = AtomicBoolean(false)
     internal val mountedContainers: MutableList<FIoDispatcherMountedContainer> = Collections.synchronizedList(mutableListOf<FIoDispatcherMountedContainer>())
+    internal val containerMountedListeners = mutableListOf<FOnContainerMountedListener>()
     private var pendingIoRequestsCount = 0uL
-    internal val containerMountedCallbacks = mutableListOf<FOnContainerMountedCallback>()
+    internal var totalLoaded = 0
+        private set
 
     fun initialize() {}
 
@@ -427,10 +428,10 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
         onNewWaitingRequestsAdded()
     }
 
-    fun mount(environment: FIoStoreEnvironment) {
-        val containerId = fileIoStore.mount(environment)
+    fun mount(environment: FIoStoreEnvironment, encryptionKeyGuid: FGuid, encryptionKey: ByteArray?) {
+        val containerId = fileIoStore.mount(environment, encryptionKeyGuid, encryptionKey)
         val mountedContainer = FIoDispatcherMountedContainer(environment, containerId)
-        containerMountedCallbacks.forEach { it.onContainerMounted(mountedContainer) }
+        containerMountedListeners.forEach { it.onContainerMounted(mountedContainer) }
         mountedContainers.add(mountedContainer)
     }
 
@@ -533,6 +534,7 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
         if (request.callback != null) {
             if (request.status.isOk) {
                 request.callback!!(Result.success(request.ioBuffer))
+                totalLoaded += request.options.size.toInt()
             } else {
                 request.callback!!(Result.failure(request.status.toException()))
             }
@@ -568,6 +570,7 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
 
         // Return the buffer if there are no errors, or the failed status if there were
         if (status.isOk) {
+            totalLoaded += batch.ioBuffer.size
             batch.callback!!(Result.success(batch.ioBuffer))
         } else {
             batch.callback!!(Result.failure(status.toException()))
@@ -703,6 +706,7 @@ class FIoStoreTocChunkInfo(
     val hash: FIoChunkHash,
     val offset: ULong,
     val size: ULong,
+    val compressedSize: ULong,
     val bForceUncompressed: Boolean,
     val bIsMemoryMapped: Boolean,
     val bIsCompressed: Boolean

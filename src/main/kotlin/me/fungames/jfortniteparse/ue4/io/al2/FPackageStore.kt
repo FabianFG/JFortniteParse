@@ -13,10 +13,9 @@ import kotlin.concurrent.thread
 
 val LOG_STREAMING: Logger = LoggerFactory.getLogger("Streaming")
 
-@ExperimentalUnsignedTypes
 class FPackageStore(
     val ioDispatcher: FIoDispatcher,
-    val globalNameMap: FNameMap) : FOnContainerMountedCallback {
+    val globalNameMap: FNameMap) : FOnContainerMountedListener {
     val loadedContainers = mutableMapOf<FIoContainerId, FLoadedContainer>()
 
     val currentCultureNames = mutableListOf<String>()
@@ -42,7 +41,7 @@ class FPackageStore(
         val initialLoadEvent = CompletableFuture<ByteArray>()
 
         ioDispatcher.readWithCallback(
-            createIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta),
+            FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta),
             FIoReadOptions(),
             IoDispatcherPriority_High
         ) { initialLoadEvent.complete(it) }
@@ -88,7 +87,7 @@ class FPackageStore(
             loadedContainer.bValid = true
             loadedContainer.order = container.environment.order
 
-            val headerChunkId = createIoChunkId(containerId.value(), 0u, EIoChunkType.ContainerHeader)
+            val headerChunkId = FIoChunkId(containerId.value(), 0u, EIoChunkType.ContainerHeader)
             ioDispatcher.readWithCallback(headerChunkId, FIoReadOptions(), IoDispatcherPriority_High) {
                 val ioBuffer = it.getOrThrow()
 

@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
-
 package me.fungames.jfortniteparse.ue4.io
 
 import me.fungames.jfortniteparse.encryption.aes.Aes
@@ -11,7 +9,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.FileNotFoundException
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
 
@@ -21,29 +18,6 @@ class FFileIoStoreCompressionContext {
     var next: FFileIoStoreCompressionContext? = null
     var uncompressedBufferSize = 0uL
     var uncompressedBuffer: ByteArray? = null
-}
-
-class FFileIoStoreEncryptionKeys {
-    fun interface FKeyRegisteredCallback {
-        fun onKeyRegistered(guid: FGuid, key: ByteArray)
-    }
-
-    private val encryptionKeysByGuid = ConcurrentHashMap<FGuid, ByteArray>()
-    private var keyRegisteredCallback: FKeyRegisteredCallback? = null
-
-    fun getEncryptionKey(guid: FGuid): ByteArray? {
-        return encryptionKeysByGuid[guid]
-        // retrieve key from core delegate, not implemented here
-    }
-
-    fun setKeyRegisteredCallback(callback: FKeyRegisteredCallback) {
-        keyRegisteredCallback = callback
-    }
-
-    private fun registerEncryptionKey(guid: FGuid, key: ByteArray) {
-        encryptionKeysByGuid[guid] = key
-        keyRegisteredCallback?.onKeyRegistered(guid, key)
-    }
 }
 
 class FFileIoStoreReader(val platformImpl: FFileIoStoreImpl) {
@@ -144,7 +118,6 @@ class FFileIoStore : Runnable {
     private var readyForDecompressionTail: FFileIoStoreCompressedBlock? = null
     private val decompressedBlocksCritical = Object()
     private var firstDecompressedBlock: FFileIoStoreCompressedBlock? = null
-    private val encryptionKeys = FFileIoStoreEncryptionKeys()
     private var completedRequestsHead: FIoRequestImpl? = null
     private var completedRequestsTail: FIoRequestImpl? = null
     private var submittedRequestsCount = 0u
@@ -155,16 +128,6 @@ class FFileIoStore : Runnable {
         //this.signatureErrorEvent = signatureErrorEvent
         this.platformImpl = FFileIoStoreImpl(eventQueue, bufferAllocator/*, blockCache*/)
         this.bIsMultithreaded = bIsMultithreaded
-        encryptionKeys.setKeyRegisteredCallback { guid, key ->
-            synchronized(ioStoreReadersLock) {
-                for (reader in unorderedIoStoreReaders) {
-                    if (reader.isEncrypted && reader.encryptionKey == null && reader.encryptionKeyGuid == guid) {
-                        LOG_IO_DISPATCHER.info("Updating container '%d' with encryption key guid '%s'", reader.containerId.value().toLong(), guid.toString())
-                        reader.encryptionKey = key
-                    }
-                }
-            }
-        }
     }
 
     fun initialize() {
@@ -188,16 +151,16 @@ class FFileIoStore : Runnable {
         Thread(this, "IoService").start()
     }
 
-    fun mount(environment: FIoStoreEnvironment): FIoContainerId {
+    fun mount(environment: FIoStoreEnvironment, encryptionKeyGuid: FGuid, encryptionKey: ByteArray?): FIoContainerId {
         val reader = FFileIoStoreReader(platformImpl)
         reader.initialize(environment)
 
         if (reader.isEncrypted) {
-            val encryptionKey = encryptionKeys.getEncryptionKey(reader.encryptionKeyGuid)
-            if (encryptionKey != null) {
+            if (reader.encryptionKeyGuid == encryptionKeyGuid && encryptionKey != null) {
                 reader.encryptionKey = encryptionKey
             } else { // TODO GetBaseFilename
-                LOG_IO_DISPATCHER.warn("Mounting container '%s' with invalid encryption key".format(environment.path.substringAfterLast(File.separatorChar)))
+                throw FIoStatusException(EIoErrorCode.InvalidEncryptionKey, "Invalid encryption key '%s' (container '%s', encryption key '%s')"
+                    .format(encryptionKeyGuid, environment.path.substringAfterLast(File.separatorChar), reader.encryptionKeyGuid.toString()))
             }
         }
 
@@ -214,6 +177,7 @@ class FFileIoStore : Runnable {
             }
             unorderedIoStoreReaders.add(reader)
             orderedIoStoreReaders.add(insertionIndex, reader)
+            LOG_IO_DISPATCHER.info("Mounting container '%s' in location slot %d".format(environment.path.substringAfterLast(File.separatorChar), insertionIndex))
         }
         return containerId
     }
@@ -439,10 +403,6 @@ class FFileIoStore : Runnable {
     }
 
     private fun readBlocks(reader: FFileIoStoreReader, resolvedRequest: FFileIoStoreResolvedRequest) {
-        if (reader.isEncrypted && reader.encryptionKey == null) {
-            LOG_IO_DISPATCHER.error("Reading from encrypted container (ID = '%d') with invalid encryption key (Guid = '%s')".format(reader.containerId.value().toInt(), reader.encryptionKeyGuid.toString()))
-            return
-        }
         val containerFile = reader.containerFile
         val compressionBlockSize = containerFile.compressionBlockSize
         val requestEndOffset = resolvedRequest.resolvedOffset + resolvedRequest.resolvedSize
@@ -519,7 +479,8 @@ class FFileIoStore : Runnable {
             compressedBlock.scatterList.add(FFileIoStoreBlockScatter().apply {
                 request = resolvedRequest.request
                 dstOffset = offsetInRequest
-                srcOffset = requestStartOffsetInBlock
+                srcOffset = requestStartOffsetInBlock //FIXME requestStartOffsetInBlock is always 0 so srcOffset in all scatters are always 0
+//                srcOffset = offsetInRequest
                 size = requestSizeInBlock
             })
 
@@ -621,7 +582,13 @@ class FFileIoStore : Runnable {
                 }
             }
 
-            for (scatter in compressedBlock.scatterList) {
+            for ((index, scatter) in compressedBlock.scatterList.withIndex()) {
+                println("---- Copy scatter $index ----")
+                println("Source buffer size: " + uncompressedBuffer.size)
+                println("Source buffer offset: $uncompressedBufferOff + ${scatter.srcOffset} = ${uncompressedBufferOff + scatter.srcOffset.toInt()}")
+                println("Dest buffer size: " + scatter.request!!.ioBuffer.size)
+                println("Dest buffer offset: ${scatter.request!!.ioBufferOff} + ${scatter.dstOffset} = ${scatter.request!!.ioBufferOff + scatter.dstOffset.toInt()}")
+                println("Bytes to copy: ${scatter.size}")
                 System.arraycopy(uncompressedBuffer, uncompressedBufferOff + scatter.srcOffset.toInt(), scatter.request!!.ioBuffer, scatter.request!!.ioBufferOff + scatter.dstOffset.toInt(), scatter.size.toInt())
             }
         }

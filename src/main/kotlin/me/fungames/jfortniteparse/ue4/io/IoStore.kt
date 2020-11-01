@@ -1,23 +1,16 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.io
 
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.exceptions.UnknownCompressionMethodException
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.oodle.Oodle
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.zip.GZIPInputStream
-import java.util.zip.Inflater
 import kotlin.math.min
 
 /**
@@ -234,21 +227,21 @@ class FIoStoreReaderImpl {
     //private val readLock = Object()
     var directoryIndexReader: FIoDirectoryIndexReaderImpl? = null
 
-    fun initialize(basePath: String, decryptionKeys: Map<FGuid, ByteArray>) {
-        val containerFile = File(basePath + ".ucas")
+    fun initialize(environment: FIoStoreEnvironment, decryptionKeys: Map<FGuid, ByteArray>) {
+        val containerFile = File(environment.path + ".ucas")
         try {
             containerFileHandle = RandomAccessFile(containerFile, "r")
         } catch (e: FileNotFoundException) {
             throw FIoStatusException(EIoErrorCode.FileOpenFailed, "Failed to open IoStore container file '$containerFile'")
         }
         val tocResource = toc.tocResource
-        tocResource.read(File(basePath + ".utoc"), TOC_READ_OPTION_READ_ALL)
+        tocResource.read(File(environment.path + ".utoc"), TOC_READ_OPTION_READ_ALL)
 
         toc.initialize()
 
         if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_ENCRYPTED) != 0) {
             decryptionKey = decryptionKeys[tocResource.header.encryptionKeyGuid]
-                ?: throw FIoStatusException(EIoErrorCode.FileOpenFailed, "Missing decryption key for IoStore container file '$basePath'")
+                ?: throw FIoStatusException(EIoErrorCode.FileOpenFailed, "Missing decryption key for IoStore container file '$containerFile'")
         }
 
         if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_INDEXED) != 0 && tocResource.directoryIndexBuffer != null) {
@@ -280,17 +273,17 @@ class FIoStoreReaderImpl {
         }
     }
 
-    fun getChunkInfo(tocEntryIndex: UInt): FIoStoreTocChunkInfo {
+    fun getChunkInfo(tocEntryIndex: Int): FIoStoreTocChunkInfo {
         val tocResource = toc.tocResource
 
-        if (tocEntryIndex < tocResource.chunkIds.size.toUInt()) {
-            return getTocChunkInfo(tocEntryIndex.toInt())
+        if (tocEntryIndex < tocResource.chunkIds.size) {
+            return getTocChunkInfo(tocEntryIndex)
         } else {
             throw FIoStatusException(EIoErrorCode.InvalidParameter, "Invalid TocEntryIndex")
         }
     }
 
-    fun read(chunkId: FIoChunkId, options: FIoReadOptions): ByteArray {
+    fun read(chunkId: FIoChunkId, options: FIoReadOptions = FIoReadOptions()): ByteArray {
         val offsetAndLength = toc.getOffsetAndLength(chunkId)
             ?: throw FIoStatusException(EIoErrorCode.NotFound, "Unknown chunk ID")
 
@@ -300,11 +293,9 @@ class FIoStoreReaderImpl {
         val lastBlockIndex = ((align(offsetAndLength.offset + offsetAndLength.length, compressionBlockSize.toULong()) - 1u) / compressionBlockSize).toInt()
         var offsetInBlock = offsetAndLength.offset % compressionBlockSize
         val dst = ByteArray(offsetAndLength.length.toInt())
-        var dstPos = 0uL
-        var src: ByteArray
+        var dstOff = 0uL
         var remainingSize = offsetAndLength.length
-        var blockIndex = firstBlockIndex
-        while (blockIndex <= lastBlockIndex) {
+        for (blockIndex in firstBlockIndex..lastBlockIndex) {
             val compressionBlock = tocResource.compressionBlocks[blockIndex]
             val rawSize = align(compressionBlock.compressedSize, Aes.BLOCK_SIZE.toUInt())
             if (compressedBuffer == null || compressedBuffer!!.size.toUInt() < rawSize) {
@@ -319,7 +310,7 @@ class FIoStoreReaderImpl {
             if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_ENCRYPTED) != 0) {
                 Aes.decryptData(compressedBuffer!!, 0, rawSize.toInt(), decryptionKey)
             }
-            src = if (compressionBlock.compressionMethodIndex == 0u.toUByte()) {
+            val src = if (compressionBlock.compressionMethodIndex == 0u.toUByte()) {
                 compressedBuffer!!
             } else {
                 val compressionMethod = tocResource.compressionMethods[compressionBlock.compressionMethodIndex.toInt()]
@@ -331,11 +322,10 @@ class FIoStoreReaderImpl {
                 }
             }
             val sizeInBlock = min(compressionBlockSize - offsetInBlock, remainingSize)
-            System.arraycopy(src, offsetInBlock.toInt(), dst, dstPos.toInt(), sizeInBlock.toInt())
+            System.arraycopy(src, offsetInBlock.toInt(), dst, dstOff.toInt(), sizeInBlock.toInt())
             offsetInBlock = 0u
             remainingSize -= sizeInBlock
-            dstPos += sizeInBlock
-            ++blockIndex
+            dstOff += sizeInBlock
         }
         return dst
     }
@@ -354,8 +344,23 @@ class FIoStoreReaderImpl {
             bIsMemoryMapped = (meta.flags.toInt() and IO_STORE_TOC_ENTRY_META_FLAG_MEMORY_MAPPED) != 0,
             bForceUncompressed = bIsContainerCompressed && (meta.flags.toInt() and IO_STORE_TOC_ENTRY_META_FLAG_COMPRESSED) == 0,
             offset = offsetLength.offset,
-            size = offsetLength.length
+            size = offsetLength.length,
+            compressedSize = getCompressedSize(tocResource.chunkIds[tocEntryIndex], tocResource, offsetLength)
         )
+    }
+
+    fun getCompressedSize(chunkId: FIoChunkId, tocResource: FIoStoreTocResource, offsetLength: FIoOffsetAndLength): ULong {
+        val compressionBlockSize = tocResource.header.compressionBlockSize
+        val firstBlockIndex = (offsetLength.offset / compressionBlockSize).toInt()
+        val lastBlockIndex = ((align(offsetLength.offset + offsetLength.length, compressionBlockSize.toULong()) - 1u) / compressionBlockSize).toInt()
+
+        var compressedSize = 0uL
+        for (blockIndex in firstBlockIndex..lastBlockIndex) {
+            val compressionBlock = tocResource.compressionBlocks[blockIndex]
+            compressedSize += compressionBlock.compressedSize
+        }
+
+        return compressedSize
     }
 }
 
@@ -424,110 +429,5 @@ class FIoStoreTocResource {
                 chunkMetas.add(FIoStoreTocEntryMeta(tocBuffer))
             }
         }
-    }
-}
-
-fun main() {
-    /*System.out.printf("OffsetBits = %08x\n", FIoStoreTocCompressedBlockEntry.OffsetBits.toInt())
-    System.out.printf("OffsetMask = %016x\n", FIoStoreTocCompressedBlockEntry.OffsetMask.toLong())
-    System.out.printf("SizeBits   = %08x\n", FIoStoreTocCompressedBlockEntry.SizeBits.toInt())
-    System.out.printf("SizeMask   = %08x\n", FIoStoreTocCompressedBlockEntry.SizeMask.toInt())
-    System.out.printf("SizeShift  = %08x\n", FIoStoreTocCompressedBlockEntry.SizeShift.toInt())
-    FIoStoreTocCompressedBlockEntry(FByteArchive(byteArrayOf(0, 0, 0, 0, 0, 43, 108, 0, 0, 0, 1, 1))).apply {
-        System.out.printf("Offset: %d\nCompressed Size = %d\nUncompressed Size = %d\nCompression Method Index = %d\n",
-            offset.toLong(),
-            compressedSize.toInt(),
-            uncompressedSize.toInt(),
-            compressionMethodIndex.toByte()
-        )
-    }
-    if (true) return*/
-    val resource = FIoStoreReaderImpl()
-    val pakFilename = "C:\\Program Files\\Epic Games\\Fortnite\\FortniteGame\\Content\\Paks\\pakchunk0-WindowsClient"
-    resource.initialize(pakFilename, mapOf(FGuid.mainGuid to Aes.parseKey("0xab32bab083f7d923a33aa768bc64b64bf62488948bd49fe61d95343492252558")))
-    val out = resource.read(resource.getChunkInfo(0u).id, FIoReadOptions())
-    /*val hhh = mutableMapOf<String, Int>()
-    if (resource.directoryIndexReader != null) {
-        iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "", resource.directoryIndexReader!!) { filePath, tocEntryIndex ->
-            hhh[filePath] = tocEntryIndex.toInt()
-            true
-        }
-    }
-    FileWriter("bruh.json").use {
-        Gson().toJson(hhh, it)
-    }*/
-
-    println("h")
-}
-
-fun iterateDirectoryIndex(directory: FIoDirectoryIndexHandle, path: String, reader: FIoDirectoryIndexReader, visit: (filePath: String, tocEntryIndex: UInt) -> Boolean): Boolean {
-    var childDirectory = reader.getChildDirectory(directory)
-    while (childDirectory.isValid()) {
-        val directoryName = reader.getDirectoryName(childDirectory)
-        val childDirectoryPath = path / directoryName
-
-        var file = reader.getFile(childDirectory)
-        while (file.isValid()) {
-            val tocEntryIndex = reader.getFileData(file)
-            val fileName = reader.getFileName(file)
-            val filePath = reader.getMountPoint() / childDirectoryPath / fileName
-
-            if (!visit(filePath, tocEntryIndex)) {
-                return false
-            }
-
-            file = reader.getNextFile(file)
-        }
-
-        if (!iterateDirectoryIndex(childDirectory, childDirectoryPath, reader, visit)) {
-            return false
-        }
-
-        childDirectory = reader.getNextDirectory(childDirectory)
-    }
-
-    return true
-}
-
-fun String.pathAppend(str: String, strLength: Int = str.length): String {
-    val data = StringBuilder(this)
-    val dataNum = data.length
-    if (dataNum > 0 && data[dataNum - 1] != '/' && data[dataNum - 1] != '\\') {
-        data.append('/')
-    }
-    if (strLength > 0) {
-        data.append(str, 0, min(str.length, strLength))
-    }
-    return data.toString()
-}
-
-inline operator fun String.div(other: String) = pathAppend(other)
-inline fun align(value: ULong, alignment: ULong) = value + alignment - 1u and (alignment - 1u).inv()
-inline fun align(value: UInt, alignment: ULong) = value + alignment - 1u and (alignment - 1u).inv()
-inline fun align(value: UInt, alignment: UInt) = value + alignment - 1u and (alignment - 1u).inv()
-inline fun isAligned(value: Int, alignment: Int) = value and (alignment - 1) <= 0
-
-fun uncompressMemory(formatName: FName, uncompressedBuffer: ByteArray, uncompressedBufferOff: Int, uncompressedSize: Int, compressedBuffer: ByteArray, compressedBufferOff: Int, compressedSize: Int) {
-    when (formatName.text) {
-        "None" -> {
-            assert(compressedSize == uncompressedSize)
-            System.arraycopy(compressedBuffer, compressedBufferOff, uncompressedBuffer, uncompressedBufferOff, compressedSize)
-        }
-        "Zlib" -> {
-            Inflater().apply {
-                setInput(compressedBuffer, compressedBufferOff, compressedSize)
-                inflate(uncompressedBuffer, uncompressedBufferOff, uncompressedSize)
-                end()
-            }
-        }
-        "Gzip" -> {
-            GZIPInputStream(ByteArrayInputStream(compressedBuffer, compressedBufferOff, compressedSize)).use {
-                it.read(uncompressedBuffer, uncompressedBufferOff, uncompressedSize)
-            }
-        }
-        "Oodle" -> {
-            Oodle.decompress(compressedBuffer, uncompressedBuffer) // TODO pos
-        }
-        else -> throw UnknownCompressionMethodException("Compression method is unknown")
     }
 }

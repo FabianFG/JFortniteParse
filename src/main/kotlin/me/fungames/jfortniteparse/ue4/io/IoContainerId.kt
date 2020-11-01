@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.ue4.io
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
-@ExperimentalUnsignedTypes
 class FIoContainerId {
     companion object {
         @JvmStatic

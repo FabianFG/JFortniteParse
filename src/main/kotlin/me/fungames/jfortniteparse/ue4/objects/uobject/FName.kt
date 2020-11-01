@@ -1,5 +1,8 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
+import me.fungames.jfortniteparse.ue4.io.al2.FNameEntryId
+import me.fungames.jfortniteparse.ue4.io.al2.FNamePool
+
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class FName(
     private val nameMap: List<FNameEntry>,
@@ -19,6 +22,11 @@ open class FName(
         fun getByNameMap(text: String, nameMap: List<FNameEntry>): FName? {
             val nameEntry = nameMap.find { text == it.name } ?: return null
             return FName(nameMap, nameMap.indexOf(nameEntry), 0)
+        }
+
+        fun createFromDisplayId(displayId: FNameEntryId, number: Int): FName {
+            val value = FNamePool.map[displayId.value.toInt()].second
+            return FNameDummy(if (number == 0) value else "${value}_${number - 1}")
         }
     }
 
