@@ -1,12 +1,12 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.4.0'
     id 'maven-publish'
-    id "com.jfrog.bintray" version "1.8.5"
+    id 'com.jfrog.bintray' version '1.8.5'
     id 'org.jetbrains.dokka' version '0.10.0'
 }
 
-group "me.fungames"
-version "3.2.7"
+group 'me.fungames'
+version '3.2.7'
 
 sourceCompatibility = 1.8
 
@@ -14,7 +14,7 @@ repositories {
     mavenCentral()
     jcenter()
     maven {
-        url  "https://dl.bintray.com/fungamesleaks/mavenRepo"
+        url 'https://dl.bintray.com/fungamesleaks/mavenRepo'
     }
 }
 
@@ -42,12 +42,11 @@ bintray {
         version {
             name = version
             desc = version
-            released  = new Date()
+            released = new Date()
         }
     }
 
 }
-
 
 publishing {
     publications {
@@ -62,7 +61,6 @@ publishing {
     }
 }
 
-
 dependencies {
     implementation 'me.fungames:JOodle:1.1'
     implementation 'me.fungames:KotlinASTC:1.1'
@@ -72,7 +70,7 @@ dependencies {
     implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.tomgibara.bits:bits:2.1.0'
-    implementation 'io.github.microutils:kotlin-logging:1.8.3'
+    implementation 'io.github.microutils:kotlin-logging:2.0.3'
     implementation 'org.apache.logging.log4j:log4j-core:2.13.3'
     implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
@@ -82,6 +80,7 @@ dependencies {
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.freeCompilerArgs += '-Xopt-in=kotlin.ExperimentalUnsignedTypes'
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
