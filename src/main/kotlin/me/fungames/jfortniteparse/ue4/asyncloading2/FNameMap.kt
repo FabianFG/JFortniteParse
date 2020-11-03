@@ -1,10 +1,15 @@
-package me.fungames.jfortniteparse.ue4.io.al2
+package me.fungames.jfortniteparse.ue4.asyncloading2
 
 import me.fungames.jfortniteparse.ue4.io.*
+import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntryId
+import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
+import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.util.get
 
 class FNameMap {
-    private val nameEntries = mutableListOf<FNameEntryId>()
+    internal val nameEntries = mutableListOf<String>()
     private var nameMapType = FMappedName.EType.Global
 
     fun loadGlobal(ioDispatcher: FIoDispatcher) {
@@ -39,10 +44,15 @@ class FNameMap {
         this.nameMapType = nameMapType
     }
 
+    fun load(nameBuffer: FArchive, hashBuffer: FArchive, nameMapType: FMappedName.EType) {
+        loadNameBatch(nameEntries, nameBuffer, hashBuffer)
+        this.nameMapType = nameMapType
+    }
+
     fun getName(mappedName: FMappedName): FName {
         check(mappedName.getType() == nameMapType)
         check(mappedName.getIndex() < nameEntries.size.toUInt())
-        val nameEntry = nameEntries[mappedName.getIndex().toInt()]
+        val nameEntry = nameEntries[mappedName.getIndex()]
         return FName.createFromDisplayId(nameEntry, mappedName.number.toInt())
     }
 
@@ -50,7 +60,7 @@ class FNameMap {
         check(mappedName.getType() == nameMapType)
         val index = mappedName.getIndex()
         if (index < nameEntries.size.toUInt()) {
-            val nameEntry = nameEntries[mappedName.getIndex().toInt()]
+            val nameEntry = nameEntries[mappedName.getIndex()]
             return FName.createFromDisplayId(nameEntry, mappedName.number.toInt())
         }
         return null
@@ -59,7 +69,6 @@ class FNameMap {
     fun getMinimalName(mappedName: FMappedName): FMinimalName {
         check(mappedName.getType() == nameMapType)
         check(mappedName.getIndex() < nameEntries.size.toUInt())
-        val nameEntry = nameEntries[mappedName.getIndex().toInt()]
-        return FMinimalName(nameEntry, mappedName.number.toInt())
+        return FMinimalName(FNameEntryId(mappedName.getIndex()), mappedName.number.toInt(), nameEntries)
     }
 }

@@ -1,9 +1,12 @@
 package me.fungames.jfortniteparse.ue4.io
 
-import me.fungames.jfortniteparse.ue4.io.al2.*
+import me.fungames.jfortniteparse.ue4.asyncloading2.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.util.await
+import me.fungames.jfortniteparse.util.div
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.ByteBuffer
@@ -86,7 +89,7 @@ fun describe(
             return -1
         }
 
-    val globalNameMap = mutableListOf<FNameEntryId>()
+    val globalNameMap = mutableListOf<String>()
     loadNameBatch(globalNameMap, globalNamesIoBuffer, globalNamesIoBuffer)
 
     LOG_IO_STORE.info("Loading script imports...")
@@ -101,7 +104,7 @@ fun describe(
     val initialLoadArchive = FByteArchive(initialLoadIoBuffer)
     val numScriptObjects = initialLoadArchive.readInt32()
     for (scriptObjectIndex in 0 until numScriptObjects) {
-        val scriptObjectEntry = FScriptObjectEntry(initialLoadArchive)
+        val scriptObjectEntry = FScriptObjectEntry(initialLoadArchive, globalNameMap)
         val mappedName = FMappedName.fromMinimalName(scriptObjectEntry.objectName)
         check(mappedName.isGlobal())
         scriptObjectByGlobalIdMap[scriptObjectEntry.globalIndex] = FScriptObjectDesc(
@@ -265,7 +268,7 @@ fun describe(
                 packageSummary = FPackageSummary(packageSummaryAr)
             }
 
-            val packageNameMap = mutableListOf<FNameEntryId>()
+            val packageNameMap = mutableListOf<String>()
             if (packageSummary.nameMapNamesSize > 0) {
                 val nameMapNamesData = FByteArchive(ByteBuffer.wrap(packageSummaryData, packageSummary.nameMapNamesOffset, packageSummary.nameMapNamesSize))
                 val nameMapHashesData = FByteArchive(ByteBuffer.wrap(packageSummaryData, packageSummary.nameMapHashesOffset, packageSummary.nameMapHashesSize))

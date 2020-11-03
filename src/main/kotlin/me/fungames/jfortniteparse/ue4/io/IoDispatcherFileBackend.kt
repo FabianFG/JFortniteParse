@@ -1,10 +1,12 @@
 package me.fungames.jfortniteparse.ue4.io
 
+import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_Count
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_NotFound
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_OK
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.util.align
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -575,7 +577,7 @@ class FFileIoStore : Runnable {
                 uncompressedBufferOff = 0
 
                 try {
-                    uncompressMemory(compressedBlock.compressionMethod, uncompressedBuffer, uncompressedBufferOff, compressedBlock.uncompressedSize.toInt(), compressedBuffer, compressedBufferOff, compressedBlock.compressedSize.toInt())
+                    Compression.uncompressMemory(compressedBlock.compressionMethod, uncompressedBuffer, uncompressedBufferOff, compressedBlock.uncompressedSize.toInt(), compressedBuffer, compressedBufferOff, compressedBlock.compressedSize.toInt())
                 } catch (e: Exception) {
                     LOG_IO_DISPATCHER.warn("Failed decompressing block", e)
                     compressedBlock.bFailed = true

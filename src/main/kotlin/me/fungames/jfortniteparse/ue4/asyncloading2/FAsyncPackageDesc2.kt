@@ -1,4 +1,4 @@
-package me.fungames.jfortniteparse.ue4.io.al2
+package me.fungames.jfortniteparse.ue4.asyncloading2
 
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
@@ -7,7 +7,7 @@ class FAsyncPackageDesc2 {
     var requestID: Int
 
     /** The package store entry with meta data about the actual disk package */
-    var storeEntry: FPackageStoreEntry
+    var storeEntry: FPackageStoreEntry?
 
     /**
      * The disk package id corresponding to the StoreEntry.
@@ -42,7 +42,7 @@ class FAsyncPackageDesc2 {
     constructor(
         requestID: Int,
         packageIdToLoad: FPackageId,
-        storeEntry: FPackageStoreEntry,
+        storeEntry: FPackageStoreEntry?,
         diskPackageName: FName = FName(),
         packageId: FPackageId = FPackageId(),
         customName: FName = FName(),
@@ -73,7 +73,7 @@ class FAsyncPackageDesc2 {
         this.packageLoadedDelegate = packageLoadedDelegate
     }*/
 
-    fun setDiskPackageName(serializedDiskPackageName: FName, serializedSourcePackageName: FName) {
+    fun setDiskPackageName(serializedDiskPackageName: FName, serializedSourcePackageName: FName = FName()) {
         check(diskPackageName.isNone() || diskPackageName == serializedDiskPackageName)
         check(sourcePackageName.isNone() || sourcePackageName == serializedSourcePackageName)
         diskPackageName = serializedDiskPackageName

@@ -1,11 +1,13 @@
 package me.fungames.jfortniteparse.ue4.io
 
+import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.util.align
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
@@ -315,7 +317,7 @@ class FIoStoreReaderImpl {
             } else {
                 val compressionMethod = tocResource.compressionMethods[compressionBlock.compressionMethodIndex.toInt()]
                 try {
-                    uncompressMemory(compressionMethod, uncompressedBuffer!!, 0, uncompressedSize.toInt(), compressedBuffer!!, 0, compressionBlock.compressedSize.toInt())
+                    Compression.uncompressMemory(compressionMethod, uncompressedBuffer!!, 0, uncompressedSize.toInt(), compressedBuffer!!, 0, compressionBlock.compressedSize.toInt())
                     uncompressedBuffer!!
                 } catch (e: Exception) {
                     throw FIoStatusException(EIoErrorCode.CorruptToc, "Failed uncompressing block", e)
@@ -399,7 +401,7 @@ class FIoStoreTocResource {
         // Compression methods
         compressionMethods = mutableListOf()
         compressionMethods.add(FName.NAME_None)
-        for (i in 0 until header.compressionMethodNameCount.toInt()) {
+        for (i in 0u until header.compressionMethodNameCount) {
             compressionMethods.add(FName.dummy(String(tocBuffer.read(header.compressionMethodNameLength.toInt()), Charsets.US_ASCII).trimEnd('\u0000')))
         }
 
@@ -408,7 +410,7 @@ class FIoStoreTocResource {
             val hashSize = tocBuffer.readInt32()
             tocBuffer.skip(hashSize.toLong()) // actually: var tocSignature = reader.ReadBytes(hashSize);
             tocBuffer.skip(hashSize.toLong()) // actually: var blockSignature = reader.ReadBytes(hashSize);
-            for (i in 0 until header.tocCompressedBlockEntryCount.toInt()) {
+            for (i in 0u until header.tocCompressedBlockEntryCount) {
                 chunkBlockSignatures.add(tocBuffer.read(20))
             }
 
@@ -425,7 +427,7 @@ class FIoStoreTocResource {
 
         // Meta
         if ((readOptions and TOC_READ_OPTION_READ_TOC_META) != 0) {
-            for (i in 0 until header.tocEntryCount.toInt()) {
+            for (i in 0u until header.tocEntryCount) {
                 chunkMetas.add(FIoStoreTocEntryMeta(tocBuffer))
             }
         }

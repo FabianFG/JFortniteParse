@@ -1,9 +1,9 @@
-package me.fungames.jfortniteparse.ue4.io.al2
+package me.fungames.jfortniteparse.ue4.objects.uobject
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.io.isAligned
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.util.isAligned
 
 class FSerializedNameHeader {
     val data: ByteArray
@@ -33,54 +33,41 @@ fun loadNameHeader(inOutAr: FArchive): FNameEntrySerialized {
     val header = FSerializedNameHeader(inOutAr)
     val len = header.len().toInt()
 
-    return if (header.isUtf16()) {
-        FNameEntrySerialized(String(inOutAr.read(len * 2), Charsets.UTF_16))
+    return FNameEntrySerialized(if (header.isUtf16()) {
+        String(inOutAr.read(len * 2), Charsets.UTF_16)
     } else {
-        FNameEntrySerialized(String(inOutAr.read(len), Charsets.UTF_8))
-    }
+        String(inOutAr.read(len), Charsets.UTF_8)
+    })
 }
 
-fun batchLoadNameWithHash(str: String, len: Int, inHash: Long): FNameEntryId {
+fun batchLoadNameWithHash(str: String, len: Int, inHash: Long): String {
     /*val name = FNameStringView(str, len)
     val hash = FNameHash(str, len, inHash)
     check(hash == hashName(name, true)) { "Precalculated hash was wrong" }
     return getNamePoolPostInit().batchStore(FNameComparisonValue(name, hash))*/
-    val map = FNamePool.map
-    val i = map.indexOfFirst { it.first == inHash }
-    if (i != -1) {
-        return FNameEntryId(i.toUInt())
-    }
-    check(map.add(inHash to str))
-    return FNameEntryId(map.size.toUInt())
+    return str.intern()
 }
 
 fun batchLoadNameWithHash(name: FNameEntrySerialized, hash: Long) =
     batchLoadNameWithHash(name.name, name.name.length, hash)
 
-inline fun loadNameBatch(outNames: MutableList<FNameEntryId>, nameData: ByteArray, hashData: ByteArray) {
+inline fun loadNameBatch(outNames: MutableList<String>, nameData: ByteArray, hashData: ByteArray) {
     loadNameBatch(outNames, FByteArchive(nameData), FByteArchive(hashData))
 }
 
-fun loadNameBatch(outNames: MutableList<FNameEntryId>, nameDataAr: FArchive, hashDataAr: FArchive) {
-//    check(isAligned(nameDataAr.size() - nameDataAr.pos(), 8 /*sizeof(uint64)*/)) TODO failing here
-    check(isAligned(hashDataAr.size() - hashDataAr.pos(), 8 /*sizeof(uint64)*/))
+fun loadNameBatch(outNames: MutableList<String>, nameDataAr: FArchive, hashDataAr: FArchive) {
+    val hashDataSize = hashDataAr.size() - hashDataAr.pos()
+    check(isAligned(hashDataSize, 8 /*sizeof(uint64)*/))
 
     val hashVersion = hashDataAr.readUInt64()
-    val hashes = hashDataAr.readTArray(hashDataAr.size() / 8 - 1) { hashDataAr.readInt64() }
+    val hashes = hashDataAr.readTArray(hashDataSize / 8 - 1) { hashDataAr.readInt64() }
 
     if (hashVersion == 0xC1640000uL /*FNameHash.ALGORITHM_ID*/) {
-        for ((index, hash) in hashes.withIndex()) {
-            println("${index + 1} / ${hashes.size}")
+        for (hash in hashes) {
             val name = loadNameHeader(nameDataAr)
             outNames.add(batchLoadNameWithHash(name, hash))
         }
     } else {
         throw ParserException("hashVersion (0x%08X) != FNameHash.ALGORITHM_ID (0xC1640000), this is unsupported".format(hashVersion.toLong()))
     }
-}
-
-// ---- Custom classes ----
-
-object FNamePool {
-    val map = mutableListOf<Pair<Long, String>>()
 }

@@ -1,42 +1,67 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
-import me.fungames.jfortniteparse.ue4.io.al2.FNameEntryId
-import me.fungames.jfortniteparse.ue4.io.al2.FNamePool
-
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class FName(
     private val nameMap: List<FNameEntry>,
-    /** Index into the Names array (used to find String portion of the string/number pair used for display) */
+    /** Index into the Names array (used to find String portion of the string/number pair used for comparison) */
     val index: Int,
     /** Number portion of the string/number pair (stored internally as 1 more than actual, so zero'd memory will be the default, no-instance case) */
-    val number: Int
+    var number: Int
 ) {
-    constructor() : this(emptyList(), -1, 0)
+    constructor() : this(NONE_SINGLETON_LIST, 0, 0)
 
-    class FNameDummy(override var text: String) : FName(emptyList(), -1, 0)
+    /**
+     * Converts an FName to a readable format
+     *
+     * @return String representation of the name
+     */
+    override fun toString() = text
+
+    open var text: String
+        get() {
+            val name = if (index == -1) "None" else nameMap[index].name
+            return if (number == 0) name else "${name}_${number - 1}"
+        }
+        set(value) {
+            nameMap[index].name = value
+        }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FName
+
+        if (number != other.number) return false
+        if (text != other.text) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = number
+        result = 31 * result + text.hashCode()
+        return result
+    }
+
+    /** True for FName(), FName(NAME_None) and FName("None") */
+    inline fun isNone() = text == "None"
+
+    class FNameDummy(override var text: String, number: Int = 0): FName(emptyList(), -1, number)
+
     companion object {
-        @JvmField
-        val NAME_None: FName = dummy("None")
+        private val NONE_SINGLETON_LIST = listOf(FNameEntry("None", 0u, 0u))
 
-        fun dummy(text: String) = FNameDummy(text)
+        @JvmField
+        val NAME_None = FName()
+
+        fun dummy(text: String, number: Int = 0) = FNameDummy(text.intern(), number)
+
         fun getByNameMap(text: String, nameMap: List<FNameEntry>): FName? {
             val nameEntry = nameMap.find { text == it.name } ?: return null
             return FName(nameMap, nameMap.indexOf(nameEntry), 0)
         }
 
-        fun createFromDisplayId(displayId: FNameEntryId, number: Int): FName {
-            val value = FNamePool.map[displayId.value.toInt()].second
-            return FNameDummy(if (number == 0) value else "${value}_${number - 1}")
-        }
+        inline fun createFromDisplayId(text: String, number: Int) = dummy(text, number)
     }
-
-    override fun toString() = text
-
-    open var text: String
-        get() = if (number == 0) nameMap[index].name else "${nameMap[index].name}_${number - 1}"
-        set(value) {
-            nameMap[index].name = value
-        }
-
-    inline fun isNone() = this == NAME_None
 }

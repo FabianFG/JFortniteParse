@@ -1,10 +1,12 @@
-package me.fungames.jfortniteparse.ue4.io.al2
+package me.fungames.jfortniteparse.ue4.asyncloading2
 
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
+import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.util.get
 
 typealias FSourceToLocalizedPackageIdMap = Array<Pair<FPackageId, FPackageId>>
 typealias FCulturePackageMap = Map<String, FSourceToLocalizedPackageIdMap>
@@ -56,11 +58,11 @@ class FMappedName {
 
     constructor(Ar: FArchive) : this(Ar.readUInt32(), Ar.readUInt32())
 
-    fun toUnresolvedMinimalName() = FMinimalName(FNameEntryId(index), number.toInt())
+    //fun toUnresolvedMinimalName() = FMinimalName(FNameEntryId(index), number.toInt())
 
     fun isValid() = index != INVALID_INDEX && number != INVALID_INDEX
 
-    fun getType() = EType.values()[((index and TYPE_MASK) shr TYPE_SHIFT.toInt()).toInt()]
+    fun getType() = EType.values()[(index and TYPE_MASK) shr TYPE_SHIFT.toInt()]
 
     fun isGlobal() = ((index and TYPE_MASK) shr TYPE_SHIFT.toInt()) != 0u
 
@@ -148,7 +150,6 @@ class FPackageObjectIndex {
         typeAndId = Ar.readUInt64()
     }
 
-
     fun isNull() = typeAndId == INVALID
 
     fun isExport() = (typeAndId shr TYPE_SHIFT.toInt()) == EType.Export.ordinal.toULong()
@@ -217,6 +218,25 @@ class FPackageSummary {
     }
 }
 
+/**
+ * Export bundle entry.
+ */
+class FExportBundleEntry {
+    enum class EExportCommandType {
+        ExportCommandType_Create,
+        ExportCommandType_Serialize,
+        ExportCommandType_Count
+    }
+
+    var localExportIndex: UInt
+    var commandType: UInt
+
+    constructor(Ar: FArchive) {
+        localExportIndex = Ar.readUInt32()
+        commandType = Ar.readUInt32()
+    }
+}
+
 class FPackageStoreEntry {
     var exportBundlesSize = 0uL
     var exportCount = 0
@@ -240,14 +260,27 @@ class FPackageStoreEntry {
     }
 }
 
+/**
+ * Export bundle header
+ */
+class FExportBundleHeader {
+    var firstEntryIndex: UInt
+    var entryCount: UInt
+
+    constructor(Ar: FArchive) {
+        this.firstEntryIndex = Ar.readUInt32()
+        this.entryCount = Ar.readUInt32()
+    }
+}
+
 class FScriptObjectEntry {
     var objectName: FMinimalName
     var globalIndex: FPackageObjectIndex
     var outerIndex: FPackageObjectIndex
     var cdoClassIndex: FPackageObjectIndex
 
-    constructor(Ar: FArchive) {
-        objectName = FMinimalName(Ar)
+    constructor(Ar: FArchive, nameMap: List<String>) {
+        objectName = FMinimalName(Ar, nameMap)
         globalIndex = FPackageObjectIndex(Ar)
         outerIndex = FPackageObjectIndex(Ar)
         cdoClassIndex = FPackageObjectIndex(Ar)

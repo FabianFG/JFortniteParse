@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.compression
 
 import me.fungames.jfortniteparse.exceptions.UnknownCompressionMethodException
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.pak.CompressionMethod
 import me.fungames.oodle.Oodle
 import java.io.ByteArrayInputStream
@@ -35,6 +36,30 @@ object Compression {
             }
             CompressionMethod.Unknown -> throw UnknownCompressionMethodException("Compression method is unknown")
 
+        }
+    }
+    fun uncompressMemory(formatName: FName, uncompressedBuffer: ByteArray, uncompressedBufferOff: Int, uncompressedSize: Int, compressedBuffer: ByteArray, compressedBufferOff: Int, compressedSize: Int) {
+        when (formatName.text) {
+            "None" -> {
+                assert(compressedSize == uncompressedSize)
+                System.arraycopy(compressedBuffer, compressedBufferOff, uncompressedBuffer, uncompressedBufferOff, compressedSize)
+            }
+            "Zlib" -> {
+                Inflater().apply {
+                    setInput(compressedBuffer, compressedBufferOff, compressedSize)
+                    inflate(uncompressedBuffer, uncompressedBufferOff, uncompressedSize)
+                    end()
+                }
+            }
+            "Gzip" -> {
+                GZIPInputStream(ByteArrayInputStream(compressedBuffer, compressedBufferOff, compressedSize)).use {
+                    it.read(uncompressedBuffer, uncompressedBufferOff, uncompressedSize)
+                }
+            }
+            "Oodle" -> {
+                Oodle.decompress(compressedBuffer, uncompressedBuffer) // TODO pos
+            }
+            else -> throw UnknownCompressionMethodException("Compression method is unknown")
         }
     }
 }

@@ -1,8 +1,11 @@
-package me.fungames.jfortniteparse.ue4.io.al2
+package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_High
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.util.await
+import me.fungames.jfortniteparse.util.complete
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
@@ -50,15 +53,13 @@ class FPackageStore(
 
         val initialLoadArchive = FByteArchive(ByteBuffer.wrap(initialLoadIoBuffer))
         for (i in 0 until initialLoadArchive.readInt32()) {
-            importStore.scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive))
-        }
+            importStore.scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries).also {
+                val mappedName = FMappedName.fromMinimalName(it.objectName)
+                check(mappedName.isGlobal())
+                it.objectName = globalNameMap.getMinimalName(mappedName)
 
-        for (scriptObjectEntry in importStore.scriptObjectEntries) {
-            val mappedName = FMappedName.fromMinimalName(scriptObjectEntry.objectName)
-            check(mappedName.isGlobal())
-            scriptObjectEntry.objectName = globalNameMap.getMinimalName(mappedName)
-
-            importStore.scriptObjectEntriesMap[scriptObjectEntry.globalIndex] = scriptObjectEntry
+                importStore.scriptObjectEntriesMap[it.globalIndex] = it
+            })
         }
     }
 
@@ -171,6 +172,31 @@ class FPackageStore(
                     }
                 }
             }
+        }
+    }
+
+    fun finalizeInitialLoad() {
+        //importStore.findAllScriptObjects()
+
+        LOG_STREAMING.info("AsyncLoading2 - InitialLoad Finalized: %d script object entries in %.2f KB"
+            .format(importStore.scriptObjects.size, ObjectSizeCalculator.getObjectSize(importStore.scriptObjects) / 1024f))
+    }
+
+    //inline val globalImportStore get() = importStore
+
+    //fun removePackage(package: UPackage) {}
+
+    //fun removePublicExport(object: UObject) {}
+
+    fun findStoreEntry(packageId: FPackageId): FPackageStoreEntry? {
+        synchronized(packageNameMapsCritical) {
+            return storeEntriesMap[packageId]
+        }
+    }
+
+    fun getRedirectedPackageId(packageId: FPackageId): FPackageId {
+        synchronized(packageNameMapsCritical) {
+            return redirectsPackageMap[packageId] ?: FPackageId()
         }
     }
 
