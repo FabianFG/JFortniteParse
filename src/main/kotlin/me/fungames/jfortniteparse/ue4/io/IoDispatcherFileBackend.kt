@@ -18,7 +18,6 @@ val LOG_IO_DISPATCHER: Logger = LoggerFactory.getLogger("IoDispatcher")
 
 class FFileIoStoreCompressionContext {
     var next: FFileIoStoreCompressionContext? = null
-    var uncompressedBufferSize = 0uL
     var uncompressedBuffer: ByteArray? = null
 }
 
@@ -277,8 +276,8 @@ class FFileIoStore : Runnable {
                             compressedBlock.compressedDataBuffer = ByteArray(compressedBlock.rawSize.toInt())
                         }
 
-                        val src = completedRequest.buffer!!.memory
-                        var srcOff = completedRequest.buffer!!.memory!!.pos
+                        val src = completedRequest.buffer!!.memory!!
+                        var srcOff = src.pos
                         val dst = compressedBlock.compressedDataBuffer!!
                         var dstOff = 0
                         var copySize = completedRequest.size
@@ -294,7 +293,7 @@ class FFileIoStore : Runnable {
                         if (completedBlockEndOffset > compressedBlockRawEndOffset) {
                             copySize -= completedBlockEndOffset - compressedBlockRawEndOffset
                         }
-                        System.arraycopy(src, srcOff, dst, dstOff, copySize.toInt())
+                        System.arraycopy(src.asArray(), srcOff, dst, dstOff, copySize.toInt())
                         check(completedRequest.compressedBlocksRefCount > 0u)
                         --completedRequest.compressedBlocksRefCount
                     }
@@ -481,8 +480,7 @@ class FFileIoStore : Runnable {
             compressedBlock.scatterList.add(FFileIoStoreBlockScatter().apply {
                 request = resolvedRequest.request
                 dstOffset = offsetInRequest
-                srcOffset = requestStartOffsetInBlock //FIXME requestStartOffsetInBlock is always 0 so srcOffset in all scatters are always 0
-//                srcOffset = offsetInRequest
+                srcOffset = requestStartOffsetInBlock
                 size = requestSizeInBlock
             })
 
@@ -568,10 +566,9 @@ class FFileIoStore : Runnable {
                 uncompressedBuffer = compressedBuffer
                 uncompressedBufferOff = compressedBufferOff
             } else {
-                if (compressionContext.uncompressedBufferSize < compressedBlock.uncompressedSize) {
+                if (compressionContext.uncompressedBuffer == null || compressionContext.uncompressedBuffer!!.size < compressedBlock.uncompressedSize.toInt()) {
                     //free(compressionContext.uncompressedBuffer)
                     compressionContext.uncompressedBuffer = ByteArray(compressedBlock.uncompressedSize.toInt())
-                    compressionContext.uncompressedBufferSize = compressedBlock.uncompressedSize.toULong()
                 }
                 uncompressedBuffer = compressionContext.uncompressedBuffer!!
                 uncompressedBufferOff = 0
@@ -584,13 +581,7 @@ class FFileIoStore : Runnable {
                 }
             }
 
-            for ((index, scatter) in compressedBlock.scatterList.withIndex()) {
-                println("---- Copy scatter $index ----")
-                println("Source buffer size: " + uncompressedBuffer.size)
-                println("Source buffer offset: $uncompressedBufferOff + ${scatter.srcOffset} = ${uncompressedBufferOff + scatter.srcOffset.toInt()}")
-                println("Dest buffer size: " + scatter.request!!.ioBuffer.size)
-                println("Dest buffer offset: ${scatter.request!!.ioBufferOff} + ${scatter.dstOffset} = ${scatter.request!!.ioBufferOff + scatter.dstOffset.toInt()}")
-                println("Bytes to copy: ${scatter.size}")
+            for (scatter in compressedBlock.scatterList) {
                 System.arraycopy(uncompressedBuffer, uncompressedBufferOff + scatter.srcOffset.toInt(), scatter.request!!.ioBuffer, scatter.request!!.ioBufferOff + scatter.dstOffset.toInt(), scatter.size.toInt())
             }
         }

@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.ue4.io.FIoRequest
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.get
@@ -20,6 +21,7 @@ class FAsyncPackage2 {
     /** True if our load has failed  */
     var bLoadHasFailed = false
 
+    lateinit var ioRequest: FIoRequest
     lateinit var ioBuffer: ByteArray
     private var exportBundlesSize = 0uL
     private var cookedHeaderSize = 0u
@@ -90,7 +92,7 @@ class FAsyncPackage2 {
 
         packageSummaryAr.seek(packageSummary.exportBundlesOffset)
         data.exportBundleHeaders = MutableList(data.exportBundleCount) { FExportBundleHeader(packageSummaryAr) }
-        data.exportBundleEntries = MutableList(0) { FExportBundleEntry(packageSummaryAr) }
+        data.exportBundleEntries = MutableList(data.exportBundleCount) { FExportBundleEntry(packageSummaryAr) }
 
         //createUPackage(packageSummary)
         packageSummaryAr.seek(packageSummary.graphDataOffset)

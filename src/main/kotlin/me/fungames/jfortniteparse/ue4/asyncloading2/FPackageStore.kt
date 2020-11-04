@@ -5,7 +5,6 @@ import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_High
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.await
-import me.fungames.jfortniteparse.util.complete
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
@@ -40,18 +39,15 @@ class FPackageStore(
     }
 
     fun setupInitialLoadData() {
-        val initialLoadIoBuffer: ByteArray
-        val initialLoadEvent = CompletableFuture<ByteArray>()
+        val initialLoadEvent = CompletableFuture<Void>()
 
-        ioDispatcher.readWithCallback(
-            FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta),
-            FIoReadOptions(),
-            IoDispatcherPriority_High
-        ) { initialLoadEvent.complete(it) }
+        val ioBatch = ioDispatcher.newBatch()
+        val ioRequest = ioBatch.read(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta), FIoReadOptions(), IoDispatcherPriority_High)
+        ioBatch.issueAndTriggerEvent(initialLoadEvent)
 
-        initialLoadIoBuffer = initialLoadEvent.await()
+        initialLoadEvent.await()
+        val initialLoadArchive = FByteArchive(ByteBuffer.wrap(ioRequest.result.getOrThrow()))
 
-        val initialLoadArchive = FByteArchive(ByteBuffer.wrap(initialLoadIoBuffer))
         for (i in 0 until initialLoadArchive.readInt32()) {
             importStore.scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries).also {
                 val mappedName = FMappedName.fromMinimalName(it.objectName)
@@ -72,6 +68,7 @@ class FPackageStore(
 
         val remaining = AtomicInteger(containersToLoad.size)
         val event = CompletableFuture<Void>()
+        val ioBatch = ioDispatcher.newBatch()
 
         for (container in containersToLoad) {
             val containerId = container.containerId
@@ -89,7 +86,7 @@ class FPackageStore(
             loadedContainer.order = container.environment.order
 
             val headerChunkId = FIoChunkId(containerId.value(), 0u, EIoChunkType.ContainerHeader)
-            ioDispatcher.readWithCallback(headerChunkId, FIoReadOptions(), IoDispatcherPriority_High) {
+            ioBatch.readWithCallback(headerChunkId, FIoReadOptions(), IoDispatcherPriority_High) {
                 val ioBuffer = it.getOrThrow()
 
                 thread {
@@ -141,6 +138,7 @@ class FPackageStore(
             }
         }
 
+        ioBatch.issue()
         event.await()
 
         applyRedirects(redirectsPackageMap)

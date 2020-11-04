@@ -7,7 +7,6 @@ import me.fungames.jfortniteparse.ue4.io.FIoDispatcher
 import me.fungames.jfortniteparse.ue4.io.FIoReadOptions
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.util.await
-import me.fungames.jfortniteparse.util.complete
 import java.util.concurrent.CompletableFuture
 
 class FAsyncLoadingThread2 {
@@ -25,13 +24,16 @@ class FAsyncLoadingThread2 {
         var requestId = -1
 
         val diskPackageId = FPackageId.fromName(FName.dummy(name))
-        val evt = CompletableFuture<ByteArray>()
-        ioDispatcher.readWithCallback(
+        val event = CompletableFuture<Void>()
+        val ioBatch = ioDispatcher.newBatch()
+        val req = ioBatch.read(
             FIoChunkId(diskPackageId.value(), 0u, EIoChunkType.ExportBundleData),
             FIoReadOptions(),
             IoDispatcherPriority_Medium
-        ) { evt.complete(it) }
-        return evt.await()
+        )
+        ioBatch.issueAndTriggerEvent(event)
+        event.await()
+        return req.result.getOrThrow()
     }
 
     /*private*/ fun lazyInitializeFromLoadPackage() {

@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.io
 
-import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_NotFound
 import me.fungames.jfortniteparse.ue4.io.EIoStoreResolveResult.IoStoreResolveResult_OK
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
@@ -8,8 +7,8 @@ import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.min
 
 val GIoDispatcherBufferSizeKB = 256
 val GIoDispatcherBufferAlignment = 4096
@@ -167,17 +166,9 @@ class FIoReadOptions {
 
 //////////////////////////////////////////////////////////////////////////
 
-class FIoBatchReadOptions {
-    var targetVa: ByteArray? = null
-}
-
-//////////////////////////////////////////////////////////////////////////
-
 interface FIoRequest {
-    val isOk: Boolean
     val status: FIoStatus
-    val chunkId: FIoChunkId
-    fun getResultOrThrow(): ByteArray
+    val result: Result<ByteArray>
 }
 
 typealias FIoReadCallback = (Result<ByteArray>) -> Unit
@@ -197,58 +188,64 @@ enum class EIoDispatcherPriority {
  * purposes
  */
 class FIoBatch {
-    var dispatcher: FIoDispatcherImpl? = null
-    var impl: FIoBatchImpl? = null
+    private var dispatcher: FIoDispatcherImpl
+    internal var headRequest: FIoRequestImpl? = null
+    internal var tailRequest: FIoRequestImpl? = null
 
-    constructor()
-
-    constructor(dispatcher: FIoDispatcherImpl, impl: FIoBatchImpl) {
+    internal constructor(dispatcher: FIoDispatcherImpl) {
         this.dispatcher = dispatcher
-        this.impl = impl
     }
 
-    fun isValid() = impl != null
-
-    fun read(chunk: FIoChunkId, options: FIoReadOptions): FIoRequest =
-        dispatcher!!.allocRequest(impl!!, chunk, options)
-
-    fun forEachRequest(callback: (FIoRequest) -> Boolean) {
-        dispatcher!!.iterateBatch(impl!!, callback)
+    constructor(other: FIoBatch) : this(other.dispatcher) {
+        headRequest = other.headRequest
+        other.headRequest = null
     }
 
-    /**
-     * Initiates the loading of the batch as individual requests.
-     */
+    fun read(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority): FIoRequest =
+        readInternal(chunkId, options, priority)
+
+    fun readWithCallback(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback): FIoRequest =
+        readInternal(chunkId, options, priority).also { it.callback = callback }
+
+    fun issue() {
+        dispatcher.issueBatch(this)
+    }
+
     fun issue(priority: EIoDispatcherPriority) {
-        dispatcher!!.issueBatch(impl!!, priority)
-    }
-
-    /**
-     * Initiates the loading of the batch to a single contiguous output buffer. The requests will be in the
-     * same order that they were added to the FIoBatch.
-     * NOTE: It is not valid to call this on a batch containing requests that have been given a TargetVa to
-     * read into as the requests are supposed to read into the batch's output buffer, doing so will cause the
-     * method to return an error 'InvalidParameter'.
-     *
-     * @param options A set of options allowing customization on how the load will work.
-     * @param callback An optional callback that will be triggered once the batch has finished loading.
-     * The batch's output buffer will be provided as the parameter of the callback.
-     *
-     * @return This methods had the capacity to fail so the return value should be checked.
-     */
-    fun issueWithCallback(options: FIoBatchReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback? = null) {
-        dispatcher!!.setupBatchForContiguousRead(impl!!, options.targetVa, callback)
-        dispatcher!!.issueBatch(impl!!, priority)
-    }
-
-    fun waitRequests() { // original name: Wait
-        while (impl!!.unfinishedRequestsCount.get() > 0) {
-            Thread.sleep(0)
+        var request = headRequest
+        while (request != null) {
+            request.priority = priority
+            request = request.nextRequest
         }
+        issue()
     }
 
-    fun cancel() {
-        throw NotImplementedError() // unimplemented()
+    fun issueWithCallback(callback: () -> Unit) {
+        dispatcher.issueBatchWithCallback(this, callback)
+    }
+
+    fun issueAndTriggerEvent(event: CompletableFuture<*>) {
+        dispatcher.issueBatchAndTriggerEvent(this, event)
+    }
+
+    /*fun issueAndDispatchSubsequents(event: FGraphEventRef) {
+        dispatcher.issueBatchAndDispatchSubsequents(this, event)
+    }*/
+
+    private fun readInternal(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority): FIoRequestImpl {
+        val request = dispatcher.allocRequest(chunkId, options)
+        request.priority = priority
+        //request.addRef()
+        if (headRequest == null) {
+            check(tailRequest == null)
+            headRequest = request
+            tailRequest = request
+        } else {
+            check(tailRequest != null)
+            tailRequest!!.nextRequest = request
+            tailRequest = request
+        }
+        return request
     }
 }
 
@@ -267,21 +264,12 @@ private var GIoDispatcher: FIoDispatcher? = null
  * I/O dispatcher
  */
 class FIoDispatcher private constructor() {
-    private val impl = FIoDispatcherImpl(false /*FGenericPlatformProcess.supportsMultithreading()*/)
+    internal val impl = FIoDispatcherImpl(false /*FGenericPlatformProcess.supportsMultithreading()*/)
 
     fun mount(environment: FIoStoreEnvironment, encryptionKeyGuid: FGuid, encryptionKey: ByteArray?) =
         impl.mount(environment, encryptionKeyGuid, encryptionKey)
 
-    fun newBatch() = FIoBatch(impl, impl.allocBatch())
-
-    fun freeBatch(batch: FIoBatch) {
-        impl.freeBatch(batch.impl)
-        batch.impl = null
-    }
-
-    fun readWithCallback(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback) {
-        impl.readWithCallback(chunkId, options, priority, callback)
-    }
+    fun newBatch() = FIoBatch(impl)
 
     fun doesChunkExist(chunkId: FIoChunkId) = impl.doesChunkExist(chunkId)
 
@@ -355,50 +343,9 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
         return true
     }
 
-    fun allocRequest(chunkId: FIoChunkId, options: FIoReadOptions): FIoRequestImpl {
-        val request = FIoRequestImpl()
-
-        request.chunkId = chunkId
-        request.options = options
-        request.status = FIoStatus.UNKNOWN
-
-        return request
-    }
-
-    fun allocRequest(batch: FIoBatchImpl, chunkId: FIoChunkId, options: FIoReadOptions): FIoRequestImpl {
-        val request = allocRequest(chunkId, options)
-
-        request.batch = batch
-
-        if (batch.headRequest == null) {
-            batch.headRequest = request
-            batch.tailRequest = request
-        } else {
-            batch.tailRequest!!.batchNextRequest = request
-            batch.tailRequest = request
-        }
-
-        check(batch.tailRequest!!.batchNextRequest == null)
-        batch.unfinishedRequestsCount.incrementAndGet()
-
-        return request
-    }
+    fun allocRequest(chunkId: FIoChunkId, options: FIoReadOptions) = FIoRequestImpl(this, chunkId, options)
 
     fun allocBatch() = FIoBatchImpl()
-
-    fun freeBatch(batch: FIoBatchImpl?) {
-        if (batch != null) {
-            var request = batch.headRequest
-
-            while (request != null) {
-                val tmp = request
-                request = request.batchNextRequest
-//                freeRequest(tmp)
-            }
-
-//            batchAllocator.destroy(batch)
-        }
-    }
 
     fun onNewWaitingRequestsAdded() {
         if (bIsMultithreaded) {
@@ -409,23 +356,6 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
                 processCompletedRequests()
             }
         }
-    }
-
-    fun readWithCallback(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback) {
-        val request = allocRequest(chunkId, options)
-        request.callback = callback
-        request.priority = priority
-        request.nextRequest = null
-        synchronized(waitingLock) {
-            if (waitingRequestsTail == null) {
-                waitingRequestsHead = request
-                waitingRequestsTail = request
-            } else {
-                waitingRequestsTail!!.nextRequest = request
-                waitingRequestsTail = request
-            }
-        }
-        onNewWaitingRequestsAdded()
     }
 
     fun mount(environment: FIoStoreEnvironment, encryptionKeyGuid: FGuid, encryptionKey: ByteArray?) {
@@ -445,17 +375,22 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
             throw FIoStatusException(EIoErrorCode.InvalidParameter, "FIoChunkId is not valid")
         }
 
-    fun iterateBatch(batch: FIoBatchImpl, callbackFunction: (FIoRequestImpl) -> Boolean) {
-        var request = batch.headRequest
-
-        while (request != null) {
-            val bDoContinue = callbackFunction(request)
-
-            request = if (bDoContinue) request.batchNextRequest else null
+    fun issueBatchInternal(batch: FIoBatch, batchImpl: FIoBatchImpl?) {
+        if (batch.headRequest == null) {
+            if (batchImpl != null) {
+                completeBatch(batchImpl)
+            }
+            return
         }
-    }
-
-    fun issueBatch(batch: FIoBatchImpl, priority: EIoDispatcherPriority) {
+        check(batch.tailRequest != null)
+        var requestCount = 0
+        var request = batch.headRequest
+        while (request != null) {
+            request.batch = batchImpl
+            request = request.nextRequest
+            ++requestCount
+        }
+        batchImpl?.unfinishedRequestsCount?.addAndGet(requestCount)
         synchronized(waitingLock) {
             if (waitingRequestsHead == null) {
                 waitingRequestsHead = batch.headRequest
@@ -463,118 +398,77 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
                 waitingRequestsTail!!.nextRequest = batch.headRequest
             }
             waitingRequestsTail = batch.tailRequest
-            var request = batch.headRequest
-            while (request != null) {
-                request.nextRequest = request.batchNextRequest
-                request.priority = priority
-                request = request.batchNextRequest
-            }
         }
+        batch.headRequest = null
+        batch.tailRequest = null
         onNewWaitingRequestsAdded()
     }
 
-    fun setupBatchForContiguousRead(batch: FIoBatchImpl, targetVa: ByteArray?, callback: FIoReadCallback?) {
-        // Create the buffer
-        var totalSize = 0uL
-        var request = batch.headRequest
-        while (request != null) {
-            try {
-                totalSize += min(getSizeForChunk(request.chunkId), request.options.size)
-            } catch (ignored: FIoStatusException) {
-            }
-            request = request.batchNextRequest
-        }
-
-        // Set up memory buffers
-        batch.ioBuffer = targetVa ?: ByteArray(totalSize.toInt())
-
-        val dstBuffer = batch.ioBuffer
-
-        // Now assign to each request
-        val ptr = dstBuffer
-        var ptrOff = 0
-        var request1 = batch.headRequest
-        while (request1 != null) {
-            if (request1.options.targetVa != null) {
-                throw FIoStatusException(EIoErrorCode.InvalidParameter, "A FIoBatch reading to a contiguous buffer cannot contain FIoRequests that have a TargetVa")
-            }
-
-            request1.options.targetVa = ptr
-            request1.options.targetVaOff = ptrOff
-
-            try {
-                ptrOff += min(getSizeForChunk(request1.chunkId), request1.options.size).toInt()
-            } catch (ignored: FIoStatusException) {
-            }
-            request1 = request1.batchNextRequest
-        }
-
-        // Set up callback
-        batch.callback = callback
+    fun issueBatch(batch: FIoBatch) {
+        issueBatchInternal(batch, null)
     }
+
+    fun issueBatchWithCallback(batch: FIoBatch, callback: () -> Unit) {
+        val impl = allocBatch()
+        impl.callback = callback
+        issueBatchInternal(batch, impl)
+    }
+
+    fun issueBatchAndTriggerEvent(batch: FIoBatch, event: CompletableFuture<*>) {
+        val impl = allocBatch()
+        impl.event = event
+        issueBatchInternal(batch, impl)
+    }
+
+    /*fun issueBatchAndDispatchSubsequents(batch: FIoBatch, event: FGraphEventRef) {
+        val impl = allocBatch()
+        impl.graphEvent = graphEvent
+        issueBatchInternal(batch, impl)
+    }*/
 
     private fun processCompletedRequests() {
         var completedRequestsHead = fileIoStore.getCompletedRequests()
         while (completedRequestsHead != null) {
             val nextRequest = completedRequestsHead.nextRequest
-            completeRequest(completedRequestsHead)
+            if (completedRequestsHead.bFailed) {
+                completeRequest(completedRequestsHead, EIoErrorCode.ReadError)
+            } else {
+                //totalLoaded += completedRequestsHead.ioBuffer.size
+                completeRequest(completedRequestsHead, EIoErrorCode.Ok)
+            }
+            //completedRequestsHead.releaseRef()
             completedRequestsHead = nextRequest
             --pendingIoRequestsCount
         }
     }
 
-    private fun completeRequest(request: FIoRequestImpl) {
-        if (!request.status.isCompleted) {
-            if (request.bFailed) {
-                request.status = FIoStatus(EIoErrorCode.ReadError)
-            } else {
-                request.status = FIoStatus(EIoErrorCode.Ok)
-            }
+    private fun completeBatch(batch: FIoBatchImpl) {
+        batch.callback?.invoke()
+        batch.event?.complete(null)
+        /*if (batch.graphEvent != null) {
+            val newTasks = mutableListOf<FBaseGraphTask>()
+            batch.graphEvent.dispatchSubsequents(newTasks)
         }
-        if (request.callback != null) {
-            if (request.status.isOk) {
-                request.callback!!(Result.success(request.ioBuffer))
-                totalLoaded += request.options.size.toInt()
-            } else {
-                request.callback!!(Result.failure(request.status.toException()))
-            }
-        }
-
-        request.batch?.apply {
-            check(unfinishedRequestsCount.get() > 0)
-            if (unfinishedRequestsCount.decrementAndGet() == 0) {
-                invokeCallback(this)
-            }
-        } // else freeRequest(request)
+        batchAllocator.destroy(batch)*/
     }
 
-    private fun invokeCallback(batch: FIoBatchImpl) {
-        if (batch.callback == null) {
-            // No point checking if the batch does not have a callback
-            return
+    private fun completeRequest(request: FIoRequestImpl, status: EIoErrorCode): Boolean {
+        val expectedStatus = EIoErrorCode.Unknown
+        if (!request.errorCode.compareAndSet(expectedStatus, status)) {
+            return false
         }
 
-        // If there is no valid tail request then it should not have been possible to call this method
-        check(batch.tailRequest != null)
-
-        // Since the requests will be processed in order we can just check the tail request
-        check(batch.tailRequest!!.status.isCompleted)
-
-        var status = FIoStatus(EIoErrorCode.Ok)
-        // Check the requests in the batch to see if we need to report an error status
-        var request = batch.headRequest
-        while (request != null && status.isOk) {
-            status = request.status
-            request = request.batchNextRequest
+        request.callback?.invoke(if (status == EIoErrorCode.Ok)
+            Result.success(request.ioBuffer)
+        else
+            Result.failure(FIoStatusException(status)))
+        request.batch?.also {
+            check(it.unfinishedRequestsCount.get() > 0)
+            if (it.unfinishedRequestsCount.decrementAndGet() == 0) {
+                completeBatch(it)
+            }
         }
-
-        // Return the buffer if there are no errors, or the failed status if there were
-        if (status.isOk) {
-            totalLoaded += batch.ioBuffer.size
-            batch.callback!!(Result.success(batch.ioBuffer))
-        } else {
-            batch.callback!!(Result.failure(status.toException()))
-        }
+        return true
     }
 
     private fun processIncomingRequests() {
@@ -608,13 +502,13 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
             if (request.chunkId.isValid()) {
                 val result = fileIoStore.resolve(request)
                 if (result != IoStoreResolveResult_OK) {
-                    request.status = result.toStatus()
-                    completeRequest(request) // MOD: if the given chunk ID does not exist, don't forget to complete the request
+                    completeRequest(request, EIoErrorCode.NotFound)
+                    //request.releaseRef()
                     continue
                 }
             } else {
-                request.status = FIoStatus(EIoErrorCode.InvalidParameter, "FIoChunkId is not valid")
-                completeRequest(request) // MOD: same with above
+                completeRequest(request, EIoErrorCode.InvalidParameter)
+                //request.releaseRef()
                 continue
             }
 
@@ -643,15 +537,6 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
     fun stop() {
         bStopRequested.set(true)
         eventQueue.dispatcherNotify()
-    }
-}
-
-/** A utility function to convert a EIoStoreResolveResult to the corresponding FIoStatus. */
-fun EIoStoreResolveResult.toStatus(): FIoStatus {
-    return when (this) {
-        IoStoreResolveResult_OK -> FIoStatus(EIoErrorCode.Ok)
-        IoStoreResolveResult_NotFound -> FIoStatus(EIoErrorCode.NotFound)
-        else -> FIoStatus(EIoErrorCode.Unknown)
     }
 }
 

@@ -14,7 +14,8 @@ class FPackageId {
         @JvmStatic
         fun fromName(name: FName): FPackageId {
             val nameStr = name.toString().toLowerCase(Locale.ENGLISH)
-            val hash = cityHash64(nameStr.toByteArray(Charsets.UTF_16LE), 0, nameStr.length).toULong()
+            val nameBuf = nameStr.toByteArray(Charsets.UTF_16LE)
+            val hash = cityHash64(nameBuf, 0, nameBuf.size).toULong()
             check(hash != INVALID_ID) { "Package name hash collision \"$nameStr\" and InvalidId" }
             return FPackageId(hash)
         }

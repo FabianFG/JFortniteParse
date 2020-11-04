@@ -44,14 +44,15 @@ class FIoDirectoryIndexResource {
     }
 }
 
-class FIoDirectoryIndexReaderImpl(buffer: ByteArray, decryptionKey: ByteArray) : FIoDirectoryIndexReader {
-    var directoryIndex = buffer.run {
-        if (buffer.isEmpty()) {
+class FIoDirectoryIndexReaderImpl(buffer: ByteArray, decryptionKey: ByteArray?) : FIoDirectoryIndexReader {
+    var directoryIndex = buffer.let {
+        if (it.isEmpty()) {
             throw FIoStatus.INVALID.toException()
         }
-        FIoDirectoryIndexResource(FByteArchive(if (decryptionKey.size == 32) {
-            Aes.decrypt(buffer, decryptionKey)
-        } else this))
+        if (decryptionKey != null) {
+            Aes.decryptData(it, decryptionKey)
+        }
+        FIoDirectoryIndexResource(FByteArchive(it))
     }
 
     override fun getMountPoint() = directoryIndex.mountPoint

@@ -30,7 +30,6 @@ class FFileIoStoreBuffer {
 class FFileIoStoreBlockKey {
     var fileIndex = 0u
     var blockIndex = 0u
-    var hash = 0uL
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -38,12 +37,17 @@ class FFileIoStoreBlockKey {
 
         other as FFileIoStoreBlockKey
 
-        if (hash != other.hash) return false
+        if (fileIndex != other.fileIndex) return false
+        if (blockIndex != other.blockIndex) return false
 
         return true
     }
 
-    override fun hashCode() = hash.hashCode()
+    override fun hashCode(): Int {
+        var result = fileIndex.hashCode()
+        result = 31 * result + blockIndex.hashCode()
+        return result
+    }
 }
 
 class FFileIoStoreBlockScatter {
@@ -151,12 +155,14 @@ class FFileIoStoreBufferAllocator {
     }
 
     fun allocBuffer(): FFileIoStoreBuffer? {
-        val buffer = firstFreeBuffer
-        if (buffer != null) {
-            firstFreeBuffer = buffer.next
-            return buffer
+        synchronized(buffersCritical) {
+            val buffer = firstFreeBuffer
+            if (buffer != null) {
+                firstFreeBuffer = buffer.next
+                return buffer
+            }
+            return null
         }
-        return null
     }
 
     fun freeBuffer(buffer: FFileIoStoreBuffer) {

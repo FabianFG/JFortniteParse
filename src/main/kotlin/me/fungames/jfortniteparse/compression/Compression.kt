@@ -9,13 +9,14 @@ import java.util.zip.GZIPInputStream
 import java.util.zip.Inflater
 
 object Compression {
-    fun decompress(compressed : ByteArray, decompressedSize : Int, method : CompressionMethod) : ByteArray {
+    fun decompress(compressed: ByteArray, decompressedSize: Int, method: CompressionMethod): ByteArray {
         val decompressed = ByteArray(decompressedSize)
         decompress(compressed, decompressed, method)
         return decompressed
     }
-    fun decompress(compressed: ByteArray, decompressed : ByteArray, method: CompressionMethod) {
-        when(method) {
+
+    fun decompress(compressed: ByteArray, decompressed: ByteArray, method: CompressionMethod) {
+        when (method) {
             CompressionMethod.None -> {
                 assert(compressed.size == decompressed.size)
                 compressed.copyInto(decompressed, 0, 0, compressed.size)
@@ -38,7 +39,10 @@ object Compression {
 
         }
     }
-    fun uncompressMemory(formatName: FName, uncompressedBuffer: ByteArray, uncompressedBufferOff: Int, uncompressedSize: Int, compressedBuffer: ByteArray, compressedBufferOff: Int, compressedSize: Int) {
+
+    fun uncompressMemory(formatName: FName,
+                         uncompressedBuffer: ByteArray, uncompressedBufferOff: Int, uncompressedSize: Int,
+                         compressedBuffer: ByteArray, compressedBufferOff: Int, compressedSize: Int) {
         when (formatName.text) {
             "None" -> {
                 assert(compressedSize == uncompressedSize)
@@ -57,9 +61,9 @@ object Compression {
                 }
             }
             "Oodle" -> {
-                Oodle.decompress(compressedBuffer, uncompressedBuffer) // TODO pos
+                Oodle.decompress(compressedBuffer, compressedBufferOff, compressedSize, uncompressedBuffer, uncompressedBufferOff, uncompressedSize)
             }
-            else -> throw UnknownCompressionMethodException("Compression method is unknown")
+            else -> throw UnknownCompressionMethodException("Unknown compression method $formatName")
         }
     }
 }

@@ -78,10 +78,17 @@ dependencies {
     implementation 'org.objenesis:objenesis:3.1'
 }
 
-compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.freeCompilerArgs += '-Xopt-in=kotlin.ExperimentalUnsignedTypes'
-}
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    compileKotlin {
+        kotlinOptions {
+            jvmTarget = "1.8"
+            freeCompilerArgs += [
+                    '-Xallow-result-return-type',
+                    '-Xno-call-assertions',
+                    '-Xno-param-assertions',
+                    '-Xno-receiver-assertions',
+                    '-Xopt-in=kotlin.ExperimentalUnsignedTypes'
+            ]
+        }
+    }
 }

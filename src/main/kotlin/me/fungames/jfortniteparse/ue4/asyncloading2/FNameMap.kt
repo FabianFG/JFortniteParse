@@ -1,12 +1,18 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
-import me.fungames.jfortniteparse.ue4.io.*
+import me.fungames.jfortniteparse.ue4.io.EIoChunkType
+import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_High
+import me.fungames.jfortniteparse.ue4.io.FIoChunkId
+import me.fungames.jfortniteparse.ue4.io.FIoDispatcher
+import me.fungames.jfortniteparse.ue4.io.FIoReadOptions
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntryId
 import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.util.await
 import me.fungames.jfortniteparse.util.get
+import java.util.concurrent.CompletableFuture
 
 class FNameMap {
     internal val nameEntries = mutableListOf<String>()
@@ -19,22 +25,21 @@ class FNameMap {
         val hashesId = FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNameHashes)
 
         val batch = ioDispatcher.newBatch()
-        val nameRequest = batch.read(namesId, FIoReadOptions())
-        val hashRequest = batch.read(hashesId, FIoReadOptions())
-        batch.issue(EIoDispatcherPriority.IoDispatcherPriority_High)
+        val nameRequest = batch.read(namesId, FIoReadOptions(), IoDispatcherPriority_High)
+        val hashRequest = batch.read(hashesId, FIoReadOptions(), IoDispatcherPriority_High)
+        val batchCompletedEvent = CompletableFuture<Void>()
+        batch.issueAndTriggerEvent(batchCompletedEvent)
 
         /*reserveNameBatch(
             ioDispatcher.getSizeForChunk(namesId),
             ioDispatcher.getSizeForChunk(hashesId))*/
 
-        batch.waitRequests()
+        batchCompletedEvent.await()
 
-        val nameBuffer = nameRequest.getResultOrThrow()
-        val hashBuffer = hashRequest.getResultOrThrow()
+        val nameBuffer = nameRequest.result.getOrThrow()
+        val hashBuffer = hashRequest.result.getOrThrow()
 
         load(nameBuffer, hashBuffer, FMappedName.EType.Global)
-
-        ioDispatcher.freeBatch(batch)
     }
 
     fun size() = nameEntries.size
