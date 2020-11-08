@@ -5,7 +5,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 class FGlobalImportStore {
     val scriptObjects = mutableMapOf<FPackageObjectIndex, UObject?>()
     val publicExportObjects = mutableMapOf<FPackageObjectIndex, FPublicExport>()
-    val objectIndexToPublicExport = mutableMapOf<Int, FPackageObjectIndex>()
+    //val objectIndexToPublicExport = mutableMapOf<Int, FPackageObjectIndex>()
 
     // Temporary initial load data
     val scriptObjectEntries = mutableListOf<FScriptObjectEntry>()
@@ -38,8 +38,8 @@ class FGlobalImportStore {
 
     fun storeGlobalObject(packageId: FPackageId, globalIndex: FPackageObjectIndex, obj: UObject) {
         check(globalIndex.isPackageImport())
-        val objectIndex = GUObjectArray.objectToIndex(obj)
+        //val objectIndex = GUObjectArray.objectToIndex(obj)
         publicExportObjects[globalIndex] = FPublicExport(obj, packageId)
-        objectIndexToPublicExport[objectIndex] = globalIndex
+        //objectIndexToPublicExport[objectIndex] = globalIndex
     }
 }

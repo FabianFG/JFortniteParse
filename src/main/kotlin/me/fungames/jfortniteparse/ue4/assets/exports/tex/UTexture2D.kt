@@ -7,11 +7,10 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 
 @ExperimentalUnsignedTypes
-class UTexture2D(exportObject: FObjectExport) : UTexture(exportObject) {
+class UTexture2D : UTexture() {
     lateinit var flag1: FStripDataFlags
     lateinit var flag2: FStripDataFlags
     var cooked: Boolean = true

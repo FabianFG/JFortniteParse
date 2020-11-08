@@ -3,7 +3,10 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.*
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.*
@@ -82,7 +85,7 @@ object JsonSerializer {
             is FLinearColor -> jsonObject("R" to ob.r, "B" to ob.b, "G" to ob.g, "A" to ob.a)
             is FStructFallback -> {
                 val jsOb = JsonObject()
-                ob.properties.forEach { jsOb[it.name.text] = it.tag!!.toJson(context) }
+                ob.properties.forEach { jsOb[it.name.text] = it.prop!!.toJson(context) }
                 jsOb
             }
             is FVector2D -> jsonObject("X" to ob.x, "Y" to ob.y)

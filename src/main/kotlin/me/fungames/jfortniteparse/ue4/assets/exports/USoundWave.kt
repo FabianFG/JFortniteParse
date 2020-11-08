@@ -7,11 +7,10 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 
 @ExperimentalUnsignedTypes
-class USoundWave(exportObject: FObjectExport) : UObject(exportObject) {
+class USoundWave : UObject() {
     var bCooked: Boolean = false
     var bStreaming: Boolean? = null
 

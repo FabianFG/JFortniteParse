@@ -12,7 +12,7 @@ import java.nio.ByteBuffer
  * Binary reader for UE4 Assets
  */
 @ExperimentalUnsignedTypes
-class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgName: String) : FByteArchive(data) {
+open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgName: String) : FByteArchive(data) {
     constructor(data: ByteArray, provider: FileProvider?, pkgName: String) : this(ByteBuffer.wrap(data), provider, pkgName)
 
     // Asset Specific Fields
@@ -46,7 +46,7 @@ class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgName: 
     fun toNormalPos(relativePos: Int) = relativePos - uassetSize - uexpSize
     fun toRelativePos(normalPos: Int) = normalPos + uassetSize + uexpSize
 
-    fun readFName(): FName {
+    override fun readFName(): FName {
         val nameIndex = this.readInt32()
         val extraIndex = this.readInt32()
         if (nameIndex in owner.nameMap.indices)

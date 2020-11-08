@@ -1,10 +1,9 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
-@Suppress("EXPERIMENTAL_API_USAGE")
 open class FName(
-    private val nameMap: List<FNameEntry>,
+    var nameMap: List<FNameEntry>,
     /** Index into the Names array (used to find String portion of the string/number pair used for comparison) */
-    val index: Int,
+    var index: Int,
     /** Number portion of the string/number pair (stored internally as 1 more than actual, so zero'd memory will be the default, no-instance case) */
     var number: Int
 ) {
@@ -33,14 +32,14 @@ open class FName(
         other as FName
 
         if (number != other.number) return false
-        if (text != other.text) return false
+        if (text.toLowerCase() != other.text.toLowerCase()) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = number
-        result = 31 * result + text.hashCode()
+        result = 31 * result + text.toLowerCase().hashCode()
         return result
     }
 
@@ -50,7 +49,7 @@ open class FName(
     class FNameDummy(override var text: String, number: Int = 0): FName(emptyList(), -1, number)
 
     companion object {
-        private val NONE_SINGLETON_LIST = listOf(FNameEntry("None", 0u, 0u))
+        val NONE_SINGLETON_LIST = listOf(FNameEntry("None", 0u, 0u))
 
         @JvmField
         val NAME_None = FName()

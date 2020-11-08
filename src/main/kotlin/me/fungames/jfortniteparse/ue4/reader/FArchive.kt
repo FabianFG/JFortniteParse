@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
@@ -16,6 +17,8 @@ import java.nio.ByteOrder
 abstract class FArchive : Cloneable, InputStream() {
     var game = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)
     var ver = GAME_UE4_GET_AR_VER(game)
+    /** Whether tagged property serialization is replaced by faster unversioned serialization. This assumes writer and reader share the same property definitions. */
+    var useUnversionedPropertySerialization = false
     abstract var littleEndian: Boolean
 
     abstract override fun clone(): FArchive
@@ -120,9 +123,9 @@ abstract class FArchive : Cloneable, InputStream() {
         if (!(-65536..65536).contains(length))
             throw ParserException("Invalid String length '$length'", this)
         return if (length < 0) {
-            val utf16length = length * -1
+            val utf16length = -length
             val data = IntArray(utf16length)
-            for (i in 0 until (utf16length - 1))
+            for (i in 0..utf16length)
                 data[i] = readUInt16().toInt()
             if (readUInt16() != 0.toUShort())
                 throw ParserException("Serialized FString is not null-terminated", this)
@@ -164,4 +167,6 @@ abstract class FArchive : Cloneable, InputStream() {
             throw ParserException("RawArray item size mismatch: expected %d, serialized %d".format(elementSize, (pos() - savePos) / array.size))
         return array
     }
+
+    open fun readFName() = FName.NAME_None
 }

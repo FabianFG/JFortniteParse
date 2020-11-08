@@ -5,5 +5,6 @@
 /gradle
 /gradle.properties
 /out
+/run
 /src/test
 /src/main/kotlin/me/fungames/jfortniteparse/ue4/io/tests

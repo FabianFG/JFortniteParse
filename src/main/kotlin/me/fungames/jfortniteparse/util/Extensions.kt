@@ -6,10 +6,16 @@ import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceArray
 import javax.imageio.ImageIO
+import kotlin.jvm.internal.Ref.IntRef
+import kotlin.jvm.internal.Ref.ObjectRef
 
 fun BufferedImage.scale(newWidth: Int, newHeight: Int, flags: Int = Image.SCALE_SMOOTH): BufferedImage {
     val scaled = this.getScaledInstance(newWidth, newHeight, flags)
@@ -79,3 +85,36 @@ inline operator fun String.div(other: String) = pathAppend(other)
 inline fun align(value: ULong, alignment: ULong) = value + alignment - 1u and (alignment - 1u).inv()
 inline fun align(value: UInt, alignment: UInt) = value + alignment - 1u and (alignment - 1u).inv()
 inline fun isAligned(value: Int, alignment: Int) = value and (alignment - 1) <= 0
+
+fun AtomicInteger.compareExchange(expected: IntRef, value: Int): Boolean {
+    val prevValue = get()
+    val bResult = compareAndSet(expected.element, value)
+    expected.element = prevValue
+    return bResult
+}
+
+fun <T> AtomicReference<T>.compareExchange(expected: ObjectRef<T>, value: T): Boolean {
+    val prevValue = get()
+    val bResult = compareAndSet(expected.element, value)
+    expected.element = prevValue
+    return bResult
+}
+
+fun <E> AtomicReferenceArray<E>.compareExchange(i: Int, expected: ObjectRef<E>, value: E): Boolean {
+    val prevValue = get(i)
+    val bResult = compareAndSet(i, expected.element, value)
+    expected.element = prevValue
+    return bResult
+}
+
+fun BitSet.indexOfFirst(value: Boolean): Int {
+    for (i in 0 until size()) {
+        if (get(i) == value) {
+            return i
+        }
+    }
+    return INDEX_NONE
+}
+
+/** Divides two integers and rounds up */
+fun UInt.divideAndRoundUp(divisor: UInt) = (this + divisor - 1u) / divisor

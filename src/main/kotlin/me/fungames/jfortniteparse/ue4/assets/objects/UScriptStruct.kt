@@ -23,10 +23,10 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 
 @ExperimentalUnsignedTypes
 class UScriptStruct : UClass {
-    val structName: String?
+    val structName: String
     var structType: UClass
 
-    constructor(Ar: FAssetArchive, structName: String?) {
+    constructor(Ar: FAssetArchive, structName: String) {
         super.init(Ar)
         this.structName = structName
         structType = when (structName) {

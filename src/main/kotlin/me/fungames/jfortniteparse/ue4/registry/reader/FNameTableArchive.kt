@@ -62,7 +62,7 @@ class FNameTableArchive : FArchive {
     }
 
     // This is kinda duplicate of FAssetArchive
-    fun readFName() : FName {
+    override fun readFName() : FName {
         val nameIndex = this.readInt32()
         val extraIndex = this.readInt32()
         if (nameIndex in nameMap.indices)

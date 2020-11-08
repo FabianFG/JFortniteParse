@@ -1,15 +1,65 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.UObjectRegistry
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.get
+import org.slf4j.event.Level
+import org.slf4j.event.Level.*
 
 typealias FSourceToLocalizedPackageIdMap = Array<Pair<FPackageId, FPackageId>>
 typealias FCulturePackageMap = Map<String, FSourceToLocalizedPackageIdMap>
+
+// from Serialization/Archive.h
+typealias FExternalReadCallback = (remainingTime: Double) -> Boolean
+// from UObject/UObjectGlobals.h
+/** Async package loading result */
+enum class EAsyncLoadingResult {
+    /** Package failed to load */
+    Failed,
+    /** Package loaded successfully */
+    Succeeded,
+    /** Async loading was canceled */
+    Canceled
+}
+typealias FCompletionCallback = (packageName: FName, loadedPackage: Package?, result: EAsyncLoadingResult) -> Unit
+
+const val ALT2_LOG_VERBOSE = true
+
+internal fun asyncPackageLog(level: Level, packageDesc: FAsyncPackageDesc2, logDesc: String, format: String) {
+    val s = if (!packageDesc.customPackageName.isNone()) {
+        "%s: %s (0x%016X) %s (0x%016X) - %s".format(
+            logDesc,
+            packageDesc.customPackageName.toString(),
+            packageDesc.customPackageId.valueForDebugging().toLong(),
+            packageDesc.diskPackageName.toString(),
+            packageDesc.diskPackageId.valueForDebugging().toLong(),
+            format
+        )
+    } else {
+        "%s: %s (0x%016X) - %s".format(
+            logDesc,
+            packageDesc.diskPackageName.toString(),
+            packageDesc.diskPackageId.valueForDebugging().toLong(),
+            format
+        )
+    }
+    when (level) {
+        ERROR -> LOG_STREAMING.error(s)
+        WARN -> LOG_STREAMING.warn(s)
+        INFO -> LOG_STREAMING.info(s)
+        DEBUG -> LOG_STREAMING.debug(s)
+        TRACE -> LOG_STREAMING.trace(s)
+    }
+}
+
+internal inline fun asyncPackageLogVerbose(level: Level, packageDesc: FAsyncPackageDesc2, logDesc: String, format: String) {
+    if (ALT2_LOG_VERBOSE) asyncPackageLog(level, packageDesc, logDesc, format)
+}
 
 class FMappedName {
     companion object {
@@ -100,10 +150,10 @@ class FContainerHeader {
     constructor(Ar: FArchive) {
         containerId = FIoContainerId(Ar)
         packageCount = Ar.readUInt32()
-        names = Ar.read(Ar.read())
-        nameHashes = Ar.read(Ar.read())
+        names = Ar.read(Ar.readInt32())
+        nameHashes = Ar.read(Ar.readInt32())
         packageIds = Ar.readTArray { FPackageId(Ar) }
-        storeEntries = Ar.read(Ar.read())
+        storeEntries = Ar.read(Ar.readInt32())
         culturePackageMap = Ar.readTMap { Ar.readString() to Ar.readTArray { FPackageId(Ar) to FPackageId(Ar) } }
         packageRedirects = Ar.readTArray { FPackageId(Ar) to FPackageId(Ar) }
     }
@@ -111,8 +161,8 @@ class FContainerHeader {
 
 class FPackageObjectIndex {
     companion object {
-        val INDEX_BITS = 62uL
-        val INDEX_MASK = (1uL shl INDEX_BITS.toInt()) - 1uL
+        val INDEX_BITS = 62
+        val INDEX_MASK = (1uL shl INDEX_BITS) - 1uL
         val TYPE_MASK = INDEX_MASK.inv()
         val TYPE_SHIFT = INDEX_BITS
         val INVALID = 0uL.inv()
@@ -143,7 +193,7 @@ class FPackageObjectIndex {
     constructor()
 
     constructor(type: EType, id: ULong) {
-        typeAndId = (type.ordinal.toULong() shl TYPE_SHIFT.toInt()) or id
+        typeAndId = (type.ordinal.toULong() shl TYPE_SHIFT) or id
     }
 
     constructor(Ar: FArchive) {
@@ -152,13 +202,13 @@ class FPackageObjectIndex {
 
     fun isNull() = typeAndId == INVALID
 
-    fun isExport() = (typeAndId shr TYPE_SHIFT.toInt()) == EType.Export.ordinal.toULong()
+    fun isExport() = (typeAndId shr TYPE_SHIFT).toInt() == EType.Export.ordinal
 
     fun isImport() = isScriptImport() || isPackageImport()
 
-    fun isScriptImport() = (typeAndId shr TYPE_SHIFT.toInt()) == EType.ScriptImport.ordinal.toULong()
+    fun isScriptImport() = (typeAndId shr TYPE_SHIFT).toInt() == EType.ScriptImport.ordinal
 
-    fun isPackageImport() = (typeAndId shr TYPE_SHIFT.toInt()) == EType.PackageImport.ordinal.toULong()
+    fun isPackageImport() = (typeAndId shr TYPE_SHIFT).toInt() == EType.PackageImport.ordinal
 
     fun toExport(): UInt {
         check(isExport())
@@ -228,12 +278,12 @@ class FExportBundleEntry {
         ExportCommandType_Count
     }
 
-    var localExportIndex: UInt
-    var commandType: UInt
+    var localExportIndex: Int
+    var commandType: EExportCommandType
 
     constructor(Ar: FArchive) {
-        localExportIndex = Ar.readUInt32()
-        commandType = Ar.readUInt32()
+        localExportIndex = Ar.readInt32()
+        commandType = EExportCommandType.values()[Ar.readInt32()]
     }
 }
 
@@ -251,12 +301,21 @@ class FPackageStoreEntry {
         exportBundleCount = Ar.readInt32()
         loadOrder = Ar.readUInt32()
         pad = Ar.readUInt32()
-        val importedPackagesInitialPos = Ar.pos()
-        val importedPackagesArrayNum = Ar.readUInt32()
-        val importedPackagesOffsetToDataFromThis = Ar.readUInt32()
-        Ar.seek(importedPackagesInitialPos + importedPackagesOffsetToDataFromThis.toInt())
-        importedPackages = Ar.readTArray(importedPackagesArrayNum.toInt()) { FPackageId(Ar) }
-        Ar.seek(importedPackagesInitialPos + 4 /*arrayNum*/ + 4 /* offsetToDataFromThis*/)
+        importedPackages = Ar.readCArrayView { FPackageId(Ar) }
+    }
+
+    private inline fun <reified T> FArchive.readCArrayView(init: (FArchive) -> T): Array<T> {
+        val initialPos = pos()
+        val arrayNum = readInt32()
+        val offsetToDataFromThis = readInt32()
+        if (arrayNum <= 0) {
+            return emptyArray()
+        }
+        val continuePos = pos()
+        seek(initialPos + offsetToDataFromThis)
+        val result = Array(arrayNum) { init(this) }
+        seek(continuePos)
+        return result
     }
 }
 
@@ -330,7 +389,7 @@ fun GFindExistingScriptImport(
             obj = staticFindObjectFast(Package::class.java, null, entry.objectName.toName(), true)
         } else {
             val outer = GFindExistingScriptImport(entry.outerIndex, scriptObjects, scriptObjectEntriesMap)
-            obj = scriptObjects[globalImportIndex] ?: throw AssertionError()
+            obj = scriptObjects[globalImportIndex]
             if (outer != null) {
                 obj = staticFindObjectFast(UObject::class.java, outer, entry.objectName.toName(), false, true)
             }
@@ -339,5 +398,5 @@ fun GFindExistingScriptImport(
     }
 
 fun staticFindObjectFast(clazz: Class<*>, outer: UObject?, name: FName, exactClass: Boolean, anyPackage: Boolean = false): UObject? {
-    TODO("Not yet implemented")
+    return UObjectRegistry.constructObject(name.toString())
 }

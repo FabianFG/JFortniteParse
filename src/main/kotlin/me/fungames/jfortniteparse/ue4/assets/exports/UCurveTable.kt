@@ -6,10 +6,9 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 @ExperimentalUnsignedTypes
-class UCurveTable(exportObject: FObjectExport) : UObject(exportObject) {
+class UCurveTable : UObject() {
     lateinit var curveTableMode: ECurveTableMode
     lateinit var rows: MutableMap<FName, UObject>
 

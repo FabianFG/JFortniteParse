@@ -11,7 +11,6 @@ import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.concurrent.thread
 
 val LOG_STREAMING: Logger = LoggerFactory.getLogger("Streaming")
 
@@ -30,7 +29,11 @@ class FPackageStore(
 
     val importStore = FGlobalImportStore()
 
-    // val loadedPackageStore = FLoadedPackageStore()
+    /**
+     * Packages in active loading or completely loaded packages, with desc.diskPackageName as key.
+     * Does not track temp packages with custom UPackage names, since they are never imported by other packages.
+     */
+    val loadedPackageStore = mutableMapOf<FPackageId, FLoadedPackageRef>() /*FLoadedPackageStore*/
     var scriptArcsCount = 0
 
     fun setupCulture() {
@@ -74,36 +77,33 @@ class FPackageStore(
             val containerId = container.containerId
             val loadedContainer = loadedContainers.getOrPut(containerId) { FLoadedContainer() }
             if (loadedContainer.bValid && loadedContainer.order >= container.environment.order) {
-                LOG_STREAMING.debug("Skipping loading mounted container ID '0x%dX', already loaded with higher order".format(containerId.value().toLong()))
+                LOG_STREAMING.debug("Skipping loading mounted container ID '0x%016X', already loaded with higher order".format(containerId.value().toLong()))
                 if (remaining.decrementAndGet() == 0) {
                     event.complete(null)
                 }
                 continue
             }
 
-            LOG_STREAMING.debug("Loading mounted container ID '0x%dX'".format(containerId.value().toLong()))
+            LOG_STREAMING.debug("Loading mounted container ID '0x%016X'".format(containerId.value().toLong()))
             loadedContainer.bValid = true
             loadedContainer.order = container.environment.order
 
             val headerChunkId = FIoChunkId(containerId.value(), 0u, EIoChunkType.ContainerHeader)
-            ioBatch.readWithCallback(headerChunkId, FIoReadOptions(), IoDispatcherPriority_High) {
-                val ioBuffer = it.getOrThrow()
+            ioBatch.readWithCallback(headerChunkId, FIoReadOptions(), IoDispatcherPriority_High) { result ->
+                val ioBuffer = result.getOrThrow()
 
-                thread {
-                    val Ar = FByteArchive(ByteBuffer.wrap(ioBuffer))
-
-                    val containerHeader = FContainerHeader(Ar)
+                Thread {
+                    val containerHeader = FContainerHeader(FByteArchive(ioBuffer))
 
                     val bHasContainerLocalNameMap = containerHeader.names.isNotEmpty()
                     if (bHasContainerLocalNameMap) {
-                        loadedContainer.containerNameMap = FNameMap()
                         loadedContainer.containerNameMap.load(containerHeader.names, containerHeader.nameHashes, FMappedName.EType.Container)
                     }
 
                     loadedContainer.packageCount = containerHeader.packageCount
                     loadedContainer.storeEntries = containerHeader.storeEntries
                     synchronized(packageNameMapsCritical) {
-                        val storeEntries = FByteArchive(loadedContainer.storeEntries).readTArray(loadedContainer.packageCount.toInt()) { FPackageStoreEntry(Ar) }
+                        val storeEntries = FByteArchive(loadedContainer.storeEntries).readTArray(loadedContainer.packageCount.toInt()) { FPackageStoreEntry(it) }
 
                         for ((index, containerEntry) in storeEntries.withIndex()) {
                             val packageId = containerHeader.packageIds[index]
@@ -134,7 +134,7 @@ class FPackageStore(
                     if (remaining.decrementAndGet() == 0) {
                         event.complete(null)
                     }
-                }
+                }.start()
             }
         }
 
@@ -156,18 +156,14 @@ class FPackageStore(
 
             for ((sourceId, redirectId) in redirects) {
                 check(redirectId.isValid())
-                val redirectEntry = storeEntriesMap[redirectId]
-                check(redirectEntry != null)
+                val redirectEntry = storeEntriesMap[redirectId]!!
                 storeEntriesMap[sourceId] = redirectEntry
-//                TODO storeEntriesMap.getOrPut(sourceId) { redirectEntry }
+                //TODO storeEntriesMap.getOrPut(sourceId) { redirectEntry }
             }
 
-            for ((_, storeEntry) in storeEntriesMap) {
+            for (storeEntry in storeEntriesMap.values) {
                 for ((index, importedPackageId) in storeEntry.importedPackages.withIndex()) {
-                    val redirectId = redirects[importedPackageId]
-                    if (redirectId != null) {
-                        storeEntry.importedPackages[index] = redirectId
-                    }
+                    redirects[importedPackageId]?.also { storeEntry.importedPackages[index] = it }
                 }
             }
         }
@@ -199,7 +195,7 @@ class FPackageStore(
     }
 
     class FLoadedContainer {
-        lateinit var containerNameMap: FNameMap
+        val containerNameMap = FNameMap()
         lateinit var storeEntries: ByteArray
         var packageCount = 0u
         var order = 0

@@ -12,7 +12,6 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.*
 
@@ -20,7 +19,7 @@ internal const val MAX_STATIC_UV_SETS_UE4 = 8
 internal const val MAX_STATIC_LODS_UE4 = 8
 
 @ExperimentalUnsignedTypes
-class UStaticMesh(exportObject: FObjectExport) : UObject(exportObject) {
+class UStaticMesh : UObject() {
     lateinit var stripFlags: FStripDataFlags
     var bodySetup: UExport? = null // UBodySetup
     var navCollision: UExport? = null// UNavCollision

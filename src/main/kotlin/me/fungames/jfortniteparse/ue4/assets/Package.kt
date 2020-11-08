@@ -113,7 +113,10 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
             } } ?: throw ParserException("Can't get class name")
             uexpAr.seekRelative(it.serialOffset.toInt())
             val validPos = (uexpAr.pos() + it.serialSize).toInt()
-            val export = constructExport(exportType.text, it)
+            val export = constructExport(exportType.text)
+            export.export = it
+            export.exportType = it.classIndex.name
+            export.name = it.objectName.text
             export.owner = this
             export.deserialize(uexpAr, validPos)
             if (validPos != uexpAr.pos())
@@ -131,33 +134,33 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
         logger.info("Successfully parsed package : $name")
     }
 
-    fun constructExport(exportType: String, it: FObjectExport) = when (exportType) {
+    fun constructExport(exportType: String) = when (exportType) {
         // UE generic export classes
         // "BlueprintGeneratedClass" -> UBlueprintGeneratedClass(it)
-        "CurveTable" -> UCurveTable(it)
-        "DataTable" -> UDataTable(it)
-        "Level" -> ULevel(it)
-        "Material" -> UMaterial(it)
-        "MaterialInstanceConstant" -> UMaterialInstanceConstant(it)
-        "SoundWave" -> USoundWave(it)
-        "Texture2D" -> UTexture2D(it)
-        "StaticMesh" -> UStaticMesh(it)
-        "StringTable" -> UStringTable(it)
+        "CurveTable" -> UCurveTable()
+        "DataTable" -> UDataTable()
+        "Level" -> ULevel()
+        "Material" -> UMaterial()
+        "MaterialInstanceConstant" -> UMaterialInstanceConstant()
+        "SoundWave" -> USoundWave()
+        "Texture2D" -> UTexture2D()
+        "StaticMesh" -> UStaticMesh()
+        "StringTable" -> UStringTable()
         // Valorant specific classes
-        "CharacterAbilityUIData" -> CharacterAbilityUIData(it)
+        "CharacterAbilityUIData" -> CharacterAbilityUIData()
         "BaseCharacterPrimaryDataAsset_C",
-        "CharacterDataAsset" -> CharacterDataAsset(it)
-        "CharacterRoleDataAsset" -> CharacterRoleDataAsset(it)
-        "CharacterRoleUIData" -> CharacterRoleUIData(it)
-        "CharacterUIData" -> CharacterUIData(it)
+        "CharacterDataAsset" -> CharacterDataAsset()
+        "CharacterRoleDataAsset" -> CharacterRoleDataAsset()
+        "CharacterRoleUIData" -> CharacterRoleUIData()
+        "CharacterUIData" -> CharacterUIData()
         // Fortnite specific classes
-        "AthenaCharacterItemDefinition" -> AthenaCharacterItemDefinition(it)
-        "AthenaEmojiItemDefinition" -> AthenaEmojiItemDefinition(it)
-        "AthenaPickaxeItemDefinition" -> AthenaPickaxeItemDefinition(it)
-        "CatalogMessaging" -> FortCatalogMessaging(it)
-        "FortItemCategory" -> FortItemCategory(it)
-        "FortItemSeriesDefinition" -> FortItemSeriesDefinition(it)
-        "FortMtxOfferData" -> FortMtxOfferData(it)
+        "AthenaCharacterItemDefinition" -> AthenaCharacterItemDefinition()
+        "AthenaEmojiItemDefinition" -> AthenaEmojiItemDefinition()
+        "AthenaPickaxeItemDefinition" -> AthenaPickaxeItemDefinition()
+        "CatalogMessaging" -> FortCatalogMessaging()
+        "FortItemCategory" -> FortItemCategory()
+        "FortItemSeriesDefinition" -> FortItemSeriesDefinition()
+        "FortMtxOfferData" -> FortMtxOfferData()
         "AthenaItemWrapDefinition",
         "FortAbilityKit",
         "FortBannerTokenType",
@@ -165,14 +168,14 @@ class Package(uasset: ByteBuffer, uexp: ByteBuffer, ubulk: ByteBuffer? = null, v
         "FortHeroType",
         "FortTokenType",
         "FortVariantTokenType",
-        "FortWorkerType" -> FortItemDefinition(it)
+        "FortWorkerType" -> FortItemDefinition()
         else -> {
             if (exportType.contains("ItemDefinition")) {
-                FortItemDefinition(it)
+                FortItemDefinition()
             } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
-                FortCosmeticVariant(it)
+                FortCosmeticVariant()
             } else
-                UObject(it)
+                UObject()
         }
     }
 

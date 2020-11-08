@@ -324,7 +324,6 @@ class FIoStoreReaderImpl {
                 }
             }
             val sizeInBlock = min(compressionBlockSize - offsetInBlock, remainingSize)
-            System.out.printf("blockIndex=$blockIndex: ")
             System.arraycopy(src, offsetInBlock.toInt(), dst, dstOff.toInt(), sizeInBlock.toInt())
             offsetInBlock = 0u
             remainingSize -= sizeInBlock

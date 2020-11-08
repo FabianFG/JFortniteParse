@@ -83,62 +83,34 @@ object FortResources {
 }
 
 fun EFortRarity.getBackgroundImage() = when(this) {
-    EFortRarity.Masterwork -> FortResources.mythicBackground
-    EFortRarity.Transcendent -> FortResources.mythicBackground
-    EFortRarity.Elegant -> FortResources.mythicBackground
-    EFortRarity.Mythic -> FortResources.mythicBackground
-    EFortRarity.Fine -> FortResources.legendaryBackground
-    EFortRarity.Legendary -> FortResources.legendaryBackground
-    EFortRarity.Quality -> FortResources.epicBackground
-    EFortRarity.Epic -> FortResources.epicBackground
-    EFortRarity.Sturdy -> FortResources.rareBackground
-    EFortRarity.Rare -> FortResources.rareBackground
-    EFortRarity.Uncommon -> FortResources.uncommonBackground
-    EFortRarity.Handmade -> FortResources.commonBackground
     EFortRarity.Common -> FortResources.commonBackground
+    EFortRarity.Uncommon -> FortResources.uncommonBackground
+    EFortRarity.Rare -> FortResources.rareBackground
+    EFortRarity.Epic -> FortResources.epicBackground
+    EFortRarity.Legendary -> FortResources.legendaryBackground
+    else -> FortResources.mythicBackground
 }
 fun EFortRarity.getVariantsBackgroundImage() = when(this) {
-    EFortRarity.Masterwork -> FortResources.legendaryVariantsBackground
-    EFortRarity.Transcendent -> FortResources.legendaryVariantsBackground
-    EFortRarity.Elegant -> FortResources.legendaryVariantsBackground
-    EFortRarity.Mythic -> FortResources.legendaryVariantsBackground
-    EFortRarity.Fine -> FortResources.legendaryVariantsBackground
-    EFortRarity.Legendary -> FortResources.legendaryVariantsBackground
-    EFortRarity.Quality -> FortResources.epicVariantsBackground
-    EFortRarity.Epic -> FortResources.epicVariantsBackground
-    EFortRarity.Sturdy -> FortResources.rareVariantsBackground
-    EFortRarity.Rare -> FortResources.rareVariantsBackground
-    EFortRarity.Uncommon -> FortResources.uncommonVariantsBackground
-    EFortRarity.Handmade -> FortResources.commonVariantsBackground
     EFortRarity.Common -> FortResources.commonVariantsBackground
+    EFortRarity.Uncommon -> FortResources.uncommonVariantsBackground
+    EFortRarity.Rare -> FortResources.rareVariantsBackground
+    EFortRarity.Epic -> FortResources.epicVariantsBackground
+    EFortRarity.Legendary -> FortResources.legendaryVariantsBackground
+    else -> FortResources.legendaryVariantsBackground
 }
 fun EFortRarity.getDailyShopBackgroundImage() = when(this) {
-    EFortRarity.Masterwork -> FortResources.mythicDailyShopBackground
-    EFortRarity.Transcendent -> FortResources.mythicDailyShopBackground
-    EFortRarity.Elegant -> FortResources.mythicDailyShopBackground
-    EFortRarity.Mythic -> FortResources.mythicDailyShopBackground
-    EFortRarity.Fine -> FortResources.legendaryDailyShopBackground
-    EFortRarity.Legendary -> FortResources.legendaryDailyShopBackground
-    EFortRarity.Quality -> FortResources.epicDailyShopBackground
-    EFortRarity.Epic -> FortResources.epicDailyShopBackground
-    EFortRarity.Sturdy -> FortResources.rareDailyShopBackground
-    EFortRarity.Rare -> FortResources.rareDailyShopBackground
-    EFortRarity.Uncommon -> FortResources.uncommonDailyShopBackground
-    EFortRarity.Handmade -> FortResources.commonDailyShopBackground
     EFortRarity.Common -> FortResources.commonDailyShopBackground
+    EFortRarity.Uncommon -> FortResources.uncommonDailyShopBackground
+    EFortRarity.Rare -> FortResources.rareDailyShopBackground
+    EFortRarity.Epic -> FortResources.epicDailyShopBackground
+    EFortRarity.Legendary -> FortResources.legendaryDailyShopBackground
+    else -> FortResources.mythicDailyShopBackground
 }
 fun EFortRarity.getFeaturedShopBackgroundImage() = when(this) {
-    EFortRarity.Masterwork -> FortResources.mythicFeaturedShopBackground
-    EFortRarity.Transcendent -> FortResources.mythicFeaturedShopBackground
-    EFortRarity.Elegant -> FortResources.mythicFeaturedShopBackground
-    EFortRarity.Mythic -> FortResources.mythicFeaturedShopBackground
-    EFortRarity.Fine -> FortResources.legendaryFeaturedShopBackground
-    EFortRarity.Legendary -> FortResources.legendaryFeaturedShopBackground
-    EFortRarity.Quality -> FortResources.epicFeaturedShopBackground
-    EFortRarity.Epic -> FortResources.epicFeaturedShopBackground
-    EFortRarity.Sturdy -> FortResources.rareFeaturedShopBackground
-    EFortRarity.Rare -> FortResources.rareFeaturedShopBackground
-    EFortRarity.Uncommon -> FortResources.uncommonFeaturedShopBackground
-    EFortRarity.Handmade -> FortResources.commonFeaturedShopBackground
     EFortRarity.Common -> FortResources.commonFeaturedShopBackground
+    EFortRarity.Uncommon -> FortResources.uncommonFeaturedShopBackground
+    EFortRarity.Rare -> FortResources.rareFeaturedShopBackground
+    EFortRarity.Epic -> FortResources.epicFeaturedShopBackground
+    EFortRarity.Legendary -> FortResources.legendaryFeaturedShopBackground
+    else -> FortResources.mythicFeaturedShopBackground
 }

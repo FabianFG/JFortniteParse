@@ -48,7 +48,7 @@ class FPackageIndex : UClass {
         super.init(Ar)
         index = Ar.readInt32()
         super.complete(Ar)
-        owner = Ar.owner
+        owner = if (Ar.useUnversionedPropertySerialization) null else Ar.owner // TODO
     }
 
     fun serialize(Ar: FArchiveWriter) {

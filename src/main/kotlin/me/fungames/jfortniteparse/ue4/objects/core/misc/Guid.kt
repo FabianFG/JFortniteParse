@@ -11,6 +11,7 @@ import me.fungames.jfortniteparse.util.printHexBinary
 @Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS", "EXPERIMENTAL_OVERRIDE")
 class FGuid : UClass {
     companion object {
+        @JvmStatic
         val mainGuid: FGuid by lazy { FGuid(0u, 0u, 0u, 0u) }
     }
 
@@ -89,5 +90,5 @@ class FGuid : UClass {
     /**
      * @return a string representation of this Guid
      */
-    override fun toString() = "${part1}-${part2}-${part3}-${part4}"
+    override fun toString() = "%08X%08X%08X%08X".format(part1.toInt(), part2.toInt(), part3.toInt(), part4.toInt())
 }

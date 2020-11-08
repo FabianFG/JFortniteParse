@@ -2,7 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets.exports.blueprints
 
 /*
 @ExperimentalUnsignedTypes
-class UFunction(exportObject: FObjectExport) : UObject(exportObject) {
+class UFunction : UObject() {
     var functionFlags: EFunctionFlags
 
     var eventGraphFunction: UFunction

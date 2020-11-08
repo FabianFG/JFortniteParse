@@ -15,12 +15,15 @@ import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
 @ExperimentalUnsignedTypes
 open class UObject : UExport {
     lateinit var properties: MutableList<FPropertyTag>
     var objectGuid: FGuid? = null
     var readGuid = false
+    var flags = 0
+    val pathName = ""
 
     @JvmOverloads
     constructor(exportObject: FObjectExport, readGuid: Boolean = true) : super(exportObject) {
@@ -55,6 +58,16 @@ open class UObject : UExport {
 
     inline fun <reified T> get(name: String): T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
 
+    fun deserialize(Ar: FAssetArchive) {
+        super.init(Ar)
+        if (Ar.useUnversionedPropertySerialization) {
+            deserializeUnversionedProperties(javaClass, Ar, properties)
+        } else {
+            properties = deserializeProperties(Ar)
+        }
+        super.complete(Ar)
+    }
+
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.init(Ar)
         properties = deserializeProperties(Ar)
@@ -74,13 +87,27 @@ open class UObject : UExport {
         super.completeWrite(Ar)
     }
 
-    fun toJson(context: Gson = Package.gson, locres: Locres? = null) : JsonObject {
+    fun toJson(context: Gson = Package.gson, locres: Locres? = null): JsonObject {
         val ob = jsonObject("exportType" to exportType)
         properties.forEach { pTag ->
-            val tagValue = pTag.tag ?: return@forEach
+            val tagValue = pTag.prop ?: return@forEach
             ob[pTag.name.text] = tagValue.toJson(context, locres)
         }
         return ob
+    }
+
+    fun clearFlags(newFlags: Int) {
+        flags = flags and newFlags.inv()
+    }
+
+    /**
+     * Used to safely check whether any of the passed in flags are set.
+     *
+     * @param flagsToCheck    Object flags to check for.
+     * @return                true if any of the passed in flags are set, false otherwise  (including no flags passed in).
+     */
+    fun hasAnyFlags(flagsToCheck: Int): Boolean {
+        return (flags and flagsToCheck) != 0
     }
 
     companion object {

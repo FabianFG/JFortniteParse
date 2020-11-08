@@ -16,8 +16,8 @@ class FAsyncPackageDesc2 {
     var diskPackageId: FPackageId
 
     /**
-     * The custom package id is only set for temp packages with a valid but "fake" CustomPackageName,
-     * if set, it will be used as key when tracking active async packages in AsyncPackageLookup
+     * The custom package id is only set for temp packages with a valid but "fake" customPackageName,
+     * if set, it will be used as key when tracking active async packages in asyncPackageLookup
      */
     var customPackageId: FPackageId
 
@@ -36,8 +36,8 @@ class FAsyncPackageDesc2 {
     /** Set from the package summary */
     var sourcePackageName = FName.NAME_None
 
-    ///** Delegate called on completion of loading. This delegate can only be created and consumed on the game thread */
-    //var packageLoadedDelegate: FLoadPackageAsyncDelegate? = null
+    /** Callback called on completion of loading. This callback can only be created and consumed on the game thread */
+    var packageLoadedCallback: FCompletionCallback? = null
 
     constructor(
         requestID: Int,
@@ -46,7 +46,7 @@ class FAsyncPackageDesc2 {
         diskPackageName: FName = FName(),
         packageId: FPackageId = FPackageId(),
         customName: FName = FName(),
-        //completionDelegate: FLoadPackageAsyncDelegate
+        completionCallback: FCompletionCallback? = null
     ) {
         this.requestID = requestID
         this.storeEntry = storeEntry
@@ -54,10 +54,10 @@ class FAsyncPackageDesc2 {
         this.customPackageId = packageId
         this.diskPackageName = diskPackageName
         this.customPackageName = customName
-        //this.packageLoadedDelegate = completionDelegate
+        this.packageLoadedCallback = completionCallback
     }
 
-    /** This constructor does not modify the package loaded delegate as this is not safe outside the game thread */
+    /** This constructor does not modify the package loaded callback as this is not safe outside the game thread */
     constructor(oldPackage: FAsyncPackageDesc2) {
         requestID = oldPackage.requestID
         storeEntry = oldPackage.storeEntry
@@ -68,10 +68,10 @@ class FAsyncPackageDesc2 {
         sourcePackageName = oldPackage.sourcePackageName
     }
 
-    ///** This constructor will explicitly copy the package loaded delegate and invalidate the old one */
-    /*constructor(oldPackage: FAsyncPackageDesc2, packageLoadedDelegate: FLoadPackageAsyncDelegate) : this(oldPackage) {
-        this.packageLoadedDelegate = packageLoadedDelegate
-    }*/
+    /** This constructor will explicitly copy the package loaded callback and invalidate the old one */
+    constructor(oldPackage: FAsyncPackageDesc2, packageLoadedCallback: FCompletionCallback?) : this(oldPackage) {
+        this.packageLoadedCallback = packageLoadedCallback
+    }
 
     fun setDiskPackageName(serializedDiskPackageName: FName, serializedSourcePackageName: FName = FName()) {
         check(diskPackageName.isNone() || diskPackageName == serializedDiskPackageName)

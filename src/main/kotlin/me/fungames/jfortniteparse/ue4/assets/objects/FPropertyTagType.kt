@@ -71,9 +71,9 @@ sealed class FPropertyTagType(val propertyType: String) {
         } as T
     }
 
-    @Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
-    fun getTagTypeValueLegacy() : Any {
-        return when(this) {
+    //@Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
+    fun getTagTypeValueLegacy(): Any {
+        return when (this) {
             is BoolProperty -> this.bool
             is StructProperty -> this.struct.structType
             is ObjectProperty -> this.`object`
@@ -103,7 +103,7 @@ sealed class FPropertyTagType(val propertyType: String) {
     fun setTagTypeValue(value: Any?) {
         if (value == null)
             return
-        when(this) {
+        when (this) {
             is BoolProperty -> this.bool = value as Boolean
             is StructProperty -> this.struct.structType = value as UClass
             is ObjectProperty -> this.`object` = value as FPackageIndex
@@ -130,35 +130,25 @@ sealed class FPropertyTagType(val propertyType: String) {
         }
     }
 
-
     companion object {
         fun readFPropertyTagType(
             Ar: FAssetArchive,
             propertyType: String,
-            tagData: FPropertyTagData?,
-            type : Type
+            tagData: FPropertyTag?,
+            type: Type
         ): FPropertyTagType? {
             when (propertyType) {
-                "BoolProperty" -> {
-                    return when(type) {
-                        Type.NORMAL -> BoolProperty(
-                            tagData?.let { (it as? FPropertyTagData.BoolProperty)?.bool } == true,
-                            propertyType
-                        )
-                        Type.MAP, Type.ARRAY -> BoolProperty(Ar.readFlag(), propertyType)
-                    }
+                "BoolProperty" -> return when (type) {
+                    Type.NORMAL -> BoolProperty(tagData!!.boolVal, propertyType)
+                    Type.MAP, Type.ARRAY -> BoolProperty(Ar.readFlag(), propertyType)
                 }
                 "StructProperty" -> return StructProperty(
-                                    UScriptStruct(
-                                        Ar,
-                                        tagData?.let { (it as? FPropertyTagData.StructProperty)?.nameData?.text }
-                                    ),
-                                    propertyType
-                                )
+                    UScriptStruct(Ar, tagData!!.structName.text),
+                    propertyType
+                )
                 "ObjectProperty" -> return ObjectProperty(
-                    FPackageIndex(
-                        Ar
-                    ), propertyType
+                    FPackageIndex(Ar),
+                    propertyType
                 )
                 "InterfaceProperty" -> return InterfaceProperty(
                     UInterfaceProperty(Ar),
@@ -196,68 +186,20 @@ sealed class FPropertyTagType(val propertyType: String) {
                     Ar.readUInt64(),
                     propertyType
                 )
-                "ArrayProperty" -> {
-                    if (tagData != null)
-                        return when (tagData) {
-                            is FPropertyTagData.ArrayProperty -> ArrayProperty(
-                                UScriptArray(
-                                    Ar,
-                                    tagData.property.text
-                                ), propertyType
-                            )
-                            else -> {
-                                UClass.logger.warn { "Cannot read array from given non-array" }
-                                null
-                            }
-                        }
-                    else {
-                        UClass.logger.warn { "Array Property needs tag data" }
-                        return null
-                    }
-                }
-                "SetProperty" -> {
-                    if (tagData != null)
-                        return when (tagData) {
-                            is FPropertyTagData.SetProperty -> SetProperty(
-                                UScriptArray(
-                                    Ar,
-                                    tagData.property.text
-                                ), propertyType
-                            )
-                            else -> {
-                                UClass.logger.warn { "Cannot read set from given non-set" }
-                                null
-                            }
-                        }
-                    else {
-                        UClass.logger.warn { "Set Property needs tag data" }
-                        return null
-                    }
-                }
-                "MapProperty" -> {
-                    if (tagData != null)
-                        return when (tagData) {
-                            is FPropertyTagData.MapProperty -> {
-                                MapProperty(
-                                    UScriptMap(
-                                        Ar,
-                                        tagData
-                                    ),
-                                    propertyType
-                                )
-                            }
-                            else -> {
-                                UClass.logger.warn { "Cannot read map from given non-map" }
-                                null
-                            }
-                        }
-                    else {
-                        UClass.logger.warn { "Map Property needs tag data" }
-                        return null
-                    }
-                }
+                "ArrayProperty" -> return ArrayProperty(
+                    UScriptArray(Ar, tagData!!),
+                    propertyType
+                )
+                "SetProperty" -> return SetProperty(
+                    UScriptArray(Ar, tagData!!),
+                    propertyType
+                )
+                "MapProperty" -> return MapProperty(
+                    UScriptMap(Ar, tagData!!),
+                    propertyType
+                )
                 "ByteProperty" -> {
-                    return when(type) {
+                    return when (type) {
                         // Type.NORMAL -> ByteProperty(Ar.readFName().index.toUByte(), propertyType)
                         Type.NORMAL -> { // FIXME: this is a hack to match John Wick Parse's output
                             val nameIndex = Ar.readInt32()
@@ -271,10 +213,14 @@ sealed class FPropertyTagType(val propertyType: String) {
                     }
                 }
                 "EnumProperty" -> {
-                    return if (type == Type.NORMAL && tagData?.let { (it as? FPropertyTagData.EnumProperty)?.enum?.text } == "None")
-                        EnumProperty(FName.dummy("None"), propertyType)
-                    else
+                    return if (type == Type.NORMAL && (tagData == null || tagData.enumName == FName.NAME_None))
+                        EnumProperty(FName.NAME_None, propertyType)
+                    else if (Ar.useUnversionedPropertySerialization) {
+                        val enumValue = tagData!!.enumClass!!.enumConstants[if (tagData.enumType == "IntProperty") Ar.readInt32() else Ar.read()]
+                        EnumProperty(FName.dummy(tagData.enumName.text + "::" + enumValue), propertyType)
+                    } else {
                         EnumProperty(Ar.readFName(), propertyType)
+                    }
                 }
                 "SoftObjectProperty" -> {
                     val path = SoftObjectProperty(
@@ -299,8 +245,9 @@ sealed class FPropertyTagType(val propertyType: String) {
                 }
             }
         }
+
         fun writeFPropertyTagType(Ar: FAssetArchiveWriter, tag: FPropertyTagType, type: Type) {
-            when(tag) {
+            when (tag) {
                 is StructProperty -> tag.struct.serialize(Ar)
                 is ObjectProperty -> tag.`object`.serialize(Ar)
                 is InterfaceProperty -> tag.interfaceProperty.serialize(Ar)
@@ -315,7 +262,7 @@ sealed class FPropertyTagType(val propertyType: String) {
                 is ArrayProperty -> tag.array.serialize(Ar)
                 is SetProperty -> tag.array.serialize(Ar)
                 is MapProperty -> tag.map.serialize(Ar)
-                is ByteProperty -> when(type) {
+                is ByteProperty -> when (type) {
                     Type.NORMAL -> {
                         Ar.writeInt32(tag.byte.toInt())
                         Ar.writeInt32(0)
