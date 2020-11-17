@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.objects.uobject
 
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -17,7 +18,6 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
  * Values less than zero indicate that this is an index into the ImportMap. The actual
  * array index will be (-FPackageIndex - 1)
  */
-@ExperimentalUnsignedTypes
 class FPackageIndex : UClass {
     /**
      * Values greater than zero indicate that this is an index into the ExportMap.  The
@@ -28,35 +28,32 @@ class FPackageIndex : UClass {
      */
     var index: Int
     var owner: Package? = null
-    val importObject: FObjectImport?
-        get() = if (index < 0) owner?.importMap?.getOrNull(-index - 1) else null
+    /*val importObject: FObjectImport?
+        get() = if (isImport()) owner?.importMap?.getOrNull(toImport()) else null
     val outerImportObject: FObjectImport?
         get() = this.importObject?.outerIndex?.importObject ?: this.importObject
 
     val exportObject: FObjectExport?
-        get() = if (index > 0) owner?.exportMap?.getOrNull(index - 1) else null
+        get() = if (isExport()) owner?.exportMap?.getOrNull(toExport()) else null
 
     val name: String
         get() = importObject?.objectName?.text
             ?: exportObject?.objectName?.text
-            ?: index.toString()
+            ?: "null"
 
     val resource: FObjectResource?
-        get() = importObject ?: exportObject
+        get() = importObject ?: exportObject*/
+    val name: String
+        get() = (owner as PakPackage).run { getResource() }?.objectName?.text ?: "null"
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
         index = Ar.readInt32()
         super.complete(Ar)
-        owner = if (Ar.useUnversionedPropertySerialization) null else Ar.owner // TODO
+        owner = Ar.owner
     }
 
-    fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
-        Ar.writeInt32(index)
-        super.completeWrite(Ar)
-    }
-
+    /** Constructor, sets the value to null **/
     constructor() : this(0)
 
     constructor(index: Int, owner: Package? = null) {
@@ -64,9 +61,26 @@ class FPackageIndex : UClass {
         this.owner = owner
     }
 
-    override fun toString() = importObject?.objectName?.text?.let { "Import: $it" }
-        ?: exportObject?.objectName?.text?.let { "Export: $it" }
-        ?: index.toString()
+    /** return true if this is an index into the import map **/
+    inline fun isImport() = index < 0
+
+    /** return true if this is an index into the export map **/
+    inline fun isExport() = index > 0
+
+    /** return true if this null (i.e. neither an import nor an export) **/
+    inline fun isNull() = index == 0
+
+    /** Check that this is an import and return the index into the import map **/
+    inline fun toImport(): Int {
+        check(isImport())
+        return -index - 1
+    }
+
+    /** Check that this is an export and return the index into the export map **/
+    inline fun toExport(): Int {
+        check(isExport())
+        return index - 1
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -80,13 +94,34 @@ class FPackageIndex : UClass {
         return true
     }
 
+    operator fun compareTo(other: FPackageIndex) = index.compareTo(other.index)
+
+    /**
+     * Serializes a package index value into an archive.
+     */
+    fun serialize(Ar: FArchiveWriter) {
+        super.initWrite(Ar)
+        Ar.writeInt32(index)
+        super.completeWrite(Ar)
+    }
+
     override fun hashCode(): Int {
         var result = index
-        result = 31 * result + (owner?.hashCode() ?: 0)
+        result = 31 * result + (owner?.hashCode() ?: 0) // actually index only
         return result
     }
 
-    inline fun <reified T> load() = owner?.provider?.loadObject<T>(this)
+    /*override fun toString() = importObject?.objectName?.text?.let { "Import: $it" }
+        ?: exportObject?.objectName?.text?.let { "Export: $it" }
+        ?: index.toString()*/
+
+    override fun toString() = when {
+        isImport() -> "Import: ${toImport()}"
+        isExport() -> "Export: ${toExport()}"
+        else -> "null"
+    }
+
+    inline fun <reified T> load() = owner?.loadObject<T>(this)
 }
 
 /**
@@ -94,7 +129,6 @@ class FPackageIndex : UClass {
  * via FLinker's ImportMap (for resources contained in other packages) and ExportMap (for resources
  * contained within the same package)
  */
-@ExperimentalUnsignedTypes
 abstract class FObjectResource : UClass() {
     lateinit var objectName: FName
     lateinit var outerIndex: FPackageIndex
@@ -104,7 +138,6 @@ abstract class FObjectResource : UClass() {
  * UObject resource type for objects that are contained within this package and can
  * be referenced by other packages.
  */
-@ExperimentalUnsignedTypes
 class FObjectExport : FObjectResource {
     var classIndex: FPackageIndex
     var superIndex: FPackageIndex
@@ -255,7 +288,6 @@ class FObjectExport : FObjectResource {
  * UObject resource type for objects that are referenced by this package, but contained
  * within another package.
  */
-@ExperimentalUnsignedTypes
 class FObjectImport : FObjectResource {
     var classPackage: FName
     var className: FName

@@ -58,19 +58,13 @@ open class UObject : UExport {
 
     inline fun <reified T> get(name: String): T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
 
-    fun deserialize(Ar: FAssetArchive) {
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.init(Ar)
         if (Ar.useUnversionedPropertySerialization) {
             deserializeUnversionedProperties(javaClass, Ar, properties)
         } else {
             properties = deserializeProperties(Ar)
         }
-        super.complete(Ar)
-    }
-
-    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
-        super.init(Ar)
-        properties = deserializeProperties(Ar)
         if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
             objectGuid = FGuid(Ar)
         super.complete(Ar)

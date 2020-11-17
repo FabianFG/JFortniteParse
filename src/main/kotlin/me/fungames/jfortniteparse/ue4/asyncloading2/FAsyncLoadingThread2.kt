@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_Medium
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -38,12 +39,12 @@ class FAsyncLoadingThread2 : Runnable {
     /** Package queue critical section */
     private var queueCritical = Object()
 
-    class FQueuedFailedPackageCallback(
+    /*class FQueuedFailedPackageCallback(
         val packageName: FName,
         val callback: FCompletionCallback
     )
 
-    private val queuedFailedPackageCallbacks = mutableListOf<FQueuedFailedPackageCallback>()
+    private val queuedFailedPackageCallbacks = mutableListOf<FQueuedFailedPackageCallback>()*/
 
     private val asyncPackagesCritical = Object()
     /** Packages in active loading with GetAsyncPackageId() as key */
@@ -78,6 +79,7 @@ class FAsyncLoadingThread2 : Runnable {
     val mainThreadEventQueue = FAsyncLoadEventQueue2()
     val altEventQueues = mutableListOf<FAsyncLoadEventQueue2>()
     val eventSpecs: List<FAsyncLoadEventSpec>
+    var provider: FileProvider? = null
 
     constructor(ioDispatcher: FIoDispatcher) {
         this.thread = null
@@ -416,7 +418,8 @@ class FAsyncLoadingThread2 : Runnable {
 
             if (completionCallback != null) {
                 // Queue completion callback and execute at next process loaded packages call to maintain behavior compatibility with old loader
-                queuedFailedPackageCallbacks.add(FQueuedFailedPackageCallback(name, completionCallback))
+                //queuedFailedPackageCallbacks.add(FQueuedFailedPackageCallback(name, completionCallback))
+                completionCallback(name, null, EAsyncLoadingResult.Failed)
             }
         }
 
@@ -578,6 +581,6 @@ class FAsyncLoadingThread2 : Runnable {
         data.exportBundleNodes = arrayOfNulls(exportBundleNodeCount)
 
         //existingAsyncPackagesCounter.increment()
-        return FAsyncPackage2(desc, data, this, eventSpecs)
+        return FAsyncPackage2(desc, data, this, eventSpecs).also { it.provider = provider }
     }
 }

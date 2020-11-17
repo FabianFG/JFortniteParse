@@ -1,8 +1,8 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.structs
 
-import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
+import me.fungames.jfortniteparse.ue4.assets.UStruct
 
-@StructFallbackClass
+@UStruct
 class FMaterialInstanceBasePropertyOverrides(
     val OpacityMaskClipValue: Float,
     val DitheredLODTransition: Boolean

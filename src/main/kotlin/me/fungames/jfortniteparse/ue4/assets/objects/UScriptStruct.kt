@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -12,6 +13,7 @@ import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurveKey
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
 import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceObjectReferenceMap
 import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
@@ -21,10 +23,9 @@ import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneS
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEvaluationDataTree
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 
-@ExperimentalUnsignedTypes
 class UScriptStruct : UClass {
     val structName: String
-    var structType: UClass
+    var structType: Any
 
     constructor(Ar: FAssetArchive, structName: String) {
         super.init(Ar)
@@ -70,8 +71,12 @@ class UScriptStruct : UClass {
             "MovieSceneEvaluationKey" -> FMovieSceneEvaluationKey(Ar)
             "MovieSceneFloatValue" -> FRichCurveKey(Ar)
             "MovieSceneEvaluationTemplate" -> FMovieSceneEvaluationTemplate(Ar)
+            "GameplayTag" -> FGameplayTag(Ar.readFName())
 
             else -> {
+                if (Ar.useUnversionedPropertySerialization) {
+                    throw ParserException("Unknown struct type $structName, can't proceed with serialization", Ar)
+                }
                 logger.debug("Unknown struct type $structName, using FStructFallback")
                 //TODO this should in theory map the struct fallbacks directly to their target, not implemented yet
                 //For now it will be done with the getTagTypeValue method, not optimal though
@@ -125,7 +130,7 @@ class UScriptStruct : UClass {
         super.completeWrite(Ar)
     }
 
-    constructor(structName: String, structType: UClass) {
+    constructor(structName: String, structType: Any) {
         this.structName = structName
         this.structType = structType
     }

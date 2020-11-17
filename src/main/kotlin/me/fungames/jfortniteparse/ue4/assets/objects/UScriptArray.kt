@@ -43,6 +43,8 @@ class UScriptArray : UClass {
         super.completeWrite(Ar)
     }
 
+    override fun toString() = "UScriptArray{size=${contents.size}}"
+
     constructor(innerTag: FPropertyTag?, contents: MutableList<FPropertyTagType>, innerType: String) {
         this.innerTag = innerTag
         this.contents = contents

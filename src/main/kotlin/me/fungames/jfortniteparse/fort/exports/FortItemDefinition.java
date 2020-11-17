@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.enums.*;
+import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
@@ -8,7 +9,6 @@ import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
-import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.UProperty;
 
 import java.util.List;
 

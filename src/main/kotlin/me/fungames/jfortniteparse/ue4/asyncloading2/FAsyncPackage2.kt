@@ -1,9 +1,10 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.fileprovider.FileProvider
+import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.asyncloading2.EEventLoadNode2.ExportBundle_Process
-import me.fungames.jfortniteparse.ue4.asyncloading2.EEventLoadNode2.Package_ExportsSerialized
+import me.fungames.jfortniteparse.ue4.asyncloading2.EEventLoadNode2.*
 import me.fungames.jfortniteparse.ue4.asyncloading2.FAsyncPackage2.EExternalReadAction.ExternalReadAction_Poll
 import me.fungames.jfortniteparse.ue4.io.FIoRequest
 import me.fungames.jfortniteparse.ue4.objects.uobject.EObjectFlags.*
@@ -26,8 +27,6 @@ class FAsyncPackage2 {
     internal val asyncLoadingThread: FAsyncLoadingThread2
     /** Package which is going to have its exports and imports loaded */
     private var linkerRoot: Package? = null
-    /** Current bundle entry index in the current export bundle */
-    private var exportBundleEntryIndex = 0
     /** Current index into externalReadDependencies array used to spread waiting for external reads over several frames */
     private var externalReadIndex = 0
     /** Current index into deferredClusterObjects array used to spread routing createClusters over several frames */
@@ -54,6 +53,7 @@ class FAsyncPackage2 {
     private lateinit var exportMap: Array<FExportMapEntry>
     private val importStore: FPackageImportStore
     private val nameMap = FNameMap()
+    var provider: FileProvider? = null
 
     constructor(
         desc: FAsyncPackageDesc2,
@@ -177,6 +177,8 @@ class FAsyncPackage2 {
             val allExportDataSize = ioBuffer.size.toULong() - (allExportDataPtr - ioBufferOff.toULong())
             val Ar = FExportArchive(ByteBuffer.wrap(ioBuffer, currentExportDataPtr.toInt(), allExportDataSize.toInt())).also {
                 it.useUnversionedPropertySerialization = true
+                it.owner = linkerRoot!!
+                it.uassetSize = (cookedHeaderSize - allExportDataPtr).toInt()
 
                 // FExportArchive special fields
                 it.cookedHeaderSize = cookedHeaderSize
@@ -203,7 +205,7 @@ class FAsyncPackage2 {
                     check(bundleEntry.commandType == FExportBundleEntry.EExportCommandType.ExportCommandType_Serialize)
 
                     val cookedSerialSize = exportMapEntry.cookedSerialSize
-                    val obj = export.obj
+                    val obj = export.exportObject
 
                     check(currentExportDataPtr + cookedSerialSize <= (ioBufferOff + ioBuffer.size).toULong())
 
@@ -230,8 +232,6 @@ class FAsyncPackage2 {
                 }
             }
         }
-
-        exportBundleEntryIndex = 0
 
         if (exportBundleIndex + 1 < data.exportBundleCount) {
             getExportBundleNode(ExportBundle_Process, exportBundleIndex + 1).releaseBarrier()
@@ -293,13 +293,15 @@ class FAsyncPackage2 {
                 importStore.importMap.add(FPackageObjectIndex(packageSummaryAr))
             }
             packageSummaryAr.seek(packageSummaryData + packageSummary.exportMapOffset)
-            exportMap = Array(data.exportCount) { FExportMapEntry(packageSummaryAr) }
+            exportMap = Array(data.exportCount) {
+                FExportMapEntry(packageSummaryAr).apply { data.exports[it].exportMapEntry = this }
+            }
 
             packageSummaryAr.seek(packageSummaryData + packageSummary.exportBundlesOffset)
             data.exportBundleHeaders = Array(data.exportBundleCount) { FExportBundleHeader(packageSummaryAr) }
             data.exportBundleEntries = Array(data.exportCount * FExportBundleEntry.EExportCommandType.ExportCommandType_Count.ordinal) { FExportBundleEntry(packageSummaryAr) }
 
-            //createUPackage(packageSummary)
+            linkerRoot = IoPackage(importStore, nameMap, data.exports, desc.diskPackageName.text, provider) //createUPackage(packageSummary)
             packageSummaryAr.seek(graphData)
             setupSerializedArcs(packageSummaryAr)
 
@@ -318,21 +320,53 @@ class FAsyncPackage2 {
     }
 
     fun eventExportsDone(unused: Int): EAsyncPackageState {
+        check(asyncPackageLoadingState == EAsyncPackageLoadingState2.ExportsDone)
+
+        if (!bLoadHasFailed && desc.canBeImported()) {
+            val packageRef = asyncLoadingThread.globalPackageStore.loadedPackageStore.getOrPut(desc.diskPackageId) { FLoadedPackageRef() }
+            packageRef.setAllPublicExportsLoaded()
+        }
+
+        asyncPackageLoadingState = EAsyncPackageLoadingState2.PostLoad
+        getExportBundleNode(ExportBundle_PostLoad, 0).releaseBarrier()
         return EAsyncPackageState.Complete
     }
 
-    fun eventPostLoadExportBundle(unused: Int): EAsyncPackageState {
+    fun eventPostLoadExportBundle(exportBundleIndex: Int): EAsyncPackageState {
+        check(asyncPackageLoadingState == EAsyncPackageLoadingState2.PostLoad)
+        check(externalReadDependencies.isEmpty())
+        check(exportBundleIndex < data.exportBundleCount)
         return EAsyncPackageState.Complete
     }
 
-    fun eventDeferredPostLoadExportBundle(unused: Int): EAsyncPackageState {
+    fun eventDeferredPostLoadExportBundle(exportBundleIndex: Int): EAsyncPackageState {
+        if (exportBundleIndex + 1 < data.exportBundleCount) {
+            getExportBundleNode(ExportBundle_DeferredPostLoad, exportBundleIndex + 1).releaseBarrier()
+        } else {
+            check(asyncPackageLoadingState == EAsyncPackageLoadingState2.DeferredPostLoad)
+            asyncPackageLoadingState = EAsyncPackageLoadingState2.DeferredPostLoadDone
+            //asyncLoadingThread.loadedPackagesToProcess.add(this)
+            // region Callback code from FAsyncLoadingThread2::ProcessLoadedPackagesFromGameThread
+            // Call external callbacks
+            val loadingResult = if (bLoadHasFailed) EAsyncLoadingResult.Failed else EAsyncLoadingResult.Succeeded
+            callCompletionCallbacks(loadingResult)
+            // We don't need the package anymore
+            //check(asyncPackageLoadingState == EAsyncPackageLoadingState2.Finalize)
+            //if (bHasClusterObjects) {
+            //    asyncPackageLoadingState = EAsyncPackageLoadingState2.CreateClusters
+            //} else {
+            asyncPackageLoadingState = EAsyncPackageLoadingState2.Complete
+            //}
+            // endregion
+        }
+
         return EAsyncPackageState.Complete
     }
 
     fun eventDrivenCreateExport(localExportIndex: Int) {
         val export = exportMap[localExportIndex]
         val exportObject = data.exports[localExportIndex]
-        var obj = exportObject.obj
+        var obj = exportObject.exportObject
         check(obj == null)
 
         val objectName = nameMap.getName(export.objectName)
@@ -392,7 +426,7 @@ class FAsyncPackage2 {
             name = objectName.toString()
             flags = flags or export.objectFlags.toInt()
         }
-        exportObject.obj = obj
+        exportObject.exportObject = obj
         // endregion
 
         // If this object was allocated but never loaded (components created by a constructor, CDOs, etc) make sure it gets loaded
@@ -428,7 +462,7 @@ class FAsyncPackage2 {
     fun eventDrivenSerializeExport(localExportIndex: Int, Ar: FExportArchive): Boolean {
         val export = exportMap[localExportIndex]
         val exportObject = data.exports[localExportIndex]
-        val obj = exportObject.obj
+        val obj = exportObject.exportObject
         check(obj != null || (exportObject.bFiltered || exportObject.bExportLoadFailed))
 
         if ((exportObject.bFiltered || exportObject.bExportLoadFailed) || !(obj != null && obj.hasAnyFlags(RF_NeedLoad.value))) {
@@ -461,7 +495,7 @@ class FAsyncPackage2 {
         if (obj.hasAnyFlags(RF_ClassDefaultObject.value)) {
             //obj.clazz.serializeDefaultObject(obj, Ar)
         } else {
-            obj.deserialize(Ar)
+            obj.deserialize(Ar, 0)
         }
         //Ar.templateForGetArchetypeFromLoader = null
 
@@ -477,7 +511,7 @@ class FAsyncPackage2 {
             return result
         }
         if (index.isExport()) {
-            result = data.exports[index.toExport()].obj
+            result = data.exports[index.toExport()].exportObject
         } else if (index.isImport()) {
             result = importStore.findOrGetImportObject(index)
             if (result == null) {

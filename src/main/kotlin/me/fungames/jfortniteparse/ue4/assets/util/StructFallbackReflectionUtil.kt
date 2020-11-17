@@ -21,10 +21,6 @@ inline fun <reified T> UObject.mapToClass() = mapToClass(properties, T::class.ja
 fun <T> FStructFallback.mapToClass(clazz: Class<T>): T = mapToClass(properties, clazz)
 fun <T> UObject.mapToClass(clazz: Class<T>): T = mapToClass(properties, clazz)
 
-@Target(AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class StructFallbackClass
-
 fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>): T = mapToClass(properties, clazz, ObjenesisStd().newInstance(clazz))
 fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
     try {

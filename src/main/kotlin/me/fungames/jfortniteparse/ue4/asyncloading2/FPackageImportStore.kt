@@ -31,7 +31,7 @@ class FPackageImportStore {
         check(importMap.isNotEmpty())
         val localImportIndex = localIndex.toImport()
         check(localImportIndex < importMap.size)
-        val globalIndex = importMap[localIndex.toImport()]
+        val globalIndex = importMap[localImportIndex]
         var obj: UObject? = null
         if (globalIndex.isImport()) {
             obj = globalImportStore.findOrGetImportObject(globalIndex)
@@ -161,7 +161,3 @@ class FPackageImportStore {
         }
     }*/
 }
-
-inline fun FPackageIndex.isImport() = index < 0
-inline fun FPackageIndex.toImport() = -index - 1
-inline fun FPackageIndex.isNull() = index == 0

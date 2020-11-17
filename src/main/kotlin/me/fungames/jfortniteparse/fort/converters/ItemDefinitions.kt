@@ -80,7 +80,7 @@ object ItemDefinitionInfo {
             val requiredImgs = mutableMapOf<FPackageIndex, BufferedImage>()
             userFacingFlags.forEach { _, (_, index) ->
                 if (!requiredImgs.containsKey(index)) {
-                    fileProvider.loadObject<UTexture2D>(index)?.apply { requiredImgs[index] = toBufferedImage() }
+                    index.load<UTexture2D>()?.apply { requiredImgs[index] = toBufferedImage() }
                 }
             }
             userFacingFlags.forEach { flag, (_, index) ->
@@ -182,8 +182,8 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
 
     //Remove numeric and pattern channels (used for soccer skins, cannot be displayed properly)
     vars.removeIf {
-        it?.variantChannelTag?.text == "Cosmetics.Variant.Channel.Pattern" || it?.variantChannelTag?.text == "Cosmetics.Variant.Channel.Numeric"
-                || it?.variantChannelTag?.text?.contains("PATTERN") == true || it?.variantChannelTag?.text?.contains("NUMBER") == true
+        it?.VariantChannelTag?.toString() == "Cosmetics.Variant.Channel.Pattern" || it?.VariantChannelTag?.toString() == "Cosmetics.Variant.Channel.Numeric"
+                || it?.VariantChannelTag?.toString()?.contains("PATTERN") == true || it?.VariantChannelTag?.toString()?.contains("NUMBER") == true
                 || it?.exportType == "FortCosmeticRichColorVariant"
     }
 
@@ -208,7 +208,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
     var cY = 35
     vars.forEach {
         val varCount = it?.variants?.size ?: 0
-        val channelName = it?.variantChannelName?.textForLocres(locres)
+        val channelName = it?.VariantChannelName?.textForLocres(locres)
         if (channelName != null) {
             g.font = burbank.deriveFont(25f)
             g.paint = Color.WHITE
@@ -499,12 +499,12 @@ private fun printPrice(price: Int, locres: Locres?) = NumberFormat.getNumberInst
 fun loadFeaturedIcon(itemDefinition: FortItemDefinition): BufferedImage? =
     itemDefinition.DisplayAssetPath?.load<FortMtxOfferData>()?.run {
         val resource = DetailsImage?.ResourceObject
-        if (resource == null || resource.index == 0)
+        if (resource == null || resource.isNull())
             return null
-        resource.outerImportObject?.objectName?.text?.apply {
+        /*resource.outerImportObject?.objectName?.text?.apply {
             if (contains("Athena/Prototype/Textures") || contains("Placeholder"))
                 return null
-        }
+        }*/
         // Some display assets use MaterialInstanceConstant for DetailsImage, so we only load it if it's Texture2D
         return resource.load<UTexture2D>()?.toBufferedImage()
     }

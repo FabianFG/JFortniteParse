@@ -375,7 +375,6 @@ class FExportMapEntry {
 }
 
 var GIsInitialLoad = true
-val GUObjectArray = FUObjectArray()
 
 fun GFindExistingScriptImport(
     globalImportIndex: FPackageObjectIndex,
@@ -398,5 +397,5 @@ fun GFindExistingScriptImport(
     }
 
 fun staticFindObjectFast(clazz: Class<*>, outer: UObject?, name: FName, exactClass: Boolean, anyPackage: Boolean = false): UObject? {
-    return UObjectRegistry.constructObject(name.toString())
+    return UObjectRegistry.constructClass(name.toString())
 }

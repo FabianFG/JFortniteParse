@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.mats
 
+import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.enums.EBlendMode
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -35,9 +36,10 @@ class UMaterial : UMaterialInterface {
     fun scanForTextures(Ar: FAssetArchive) {
         //!! NOTE: this code will not work when textures are located in the same package - they don't present in import table
         //!! but could be found in export table. That's true for Simplygon-generated materials.
-        for (imp in Ar.owner.importMap) {
+        val owner = Ar.owner as PakPackage
+        for (imp in owner.importMap) {
             if (imp.className.text.startsWith("Texture", true))
-                Ar.provider?.loadImport<UTexture>(imp)?.let { referencedTextures.add(it) }
+                owner.loadImport<UTexture>(imp)?.let { referencedTextures.add(it) }
         }
     }
 

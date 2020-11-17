@@ -13,7 +13,7 @@ class ULevel : UObject() {
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
-        actors = Ar.readTArray { FPackageIndex(Ar).run { Ar.provider?.loadObject(this) } }
+        actors = Ar.readTArray { FPackageIndex(Ar).run { Ar.owner.loadObject(this) } }
         url = FURL(Ar)
 //        model = Ar.loadObject<UModel>(FPackageIndex(Ar))
 //        modelComponents = Ar.readTArray { FPackageIndex(Ar) }

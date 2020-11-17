@@ -13,11 +13,9 @@ import me.fungames.jfortniteparse.ue4.versions.VER_UE4_PROPERTY_TAG_SET_MAP_SUPP
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_STRUCT_GUID_IN_PROPERTY_TAG
 import me.fungames.jfortniteparse.util.INDEX_NONE
 
-
 /**
  * A tag describing a class property, to aid in serialization.
  */
-@ExperimentalUnsignedTypes
 class FPropertyTag : UClass {
     // Transient.
     var prop: FPropertyTagType? = null // prop: FProperty
@@ -48,6 +46,7 @@ class FPropertyTag : UClass {
     var hasPropertyGuid: Boolean = false
     var propertyGuid: FGuid? = null
 
+    var structClass: Class<*>? = null
     var enumClass: Class<out Enum<*>>? = null
 
     constructor(name: FName) {
@@ -63,6 +62,7 @@ class FPropertyTag : UClass {
         enumType = info.enumType
         info.innerType?.let { innerType = FName.dummy(it) }
         info.valueType?.let { valueType = FName.dummy(it) }
+        structClass = info.structClass
         enumClass = info.enumClass
     }
 

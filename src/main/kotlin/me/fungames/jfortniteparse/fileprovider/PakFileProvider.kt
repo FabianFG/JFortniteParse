@@ -3,15 +3,17 @@ package me.fungames.jfortniteparse.fileprovider
 import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
+import me.fungames.jfortniteparse.ue4.io.FIoDispatcher
+import me.fungames.jfortniteparse.ue4.io.FIoStatusException
+import me.fungames.jfortniteparse.ue4.io.FIoStoreEnvironment
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
+import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.util.printAesKey
 import java.util.concurrent.atomic.AtomicInteger
 
-@Suppress("EXPERIMENTAL_API_USAGE")
 abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
-
     private val job = Job()
     override val coroutineContext = job + Dispatchers.IO
 
@@ -33,34 +35,50 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
 
     open fun submitKeysAsync(newKeys: Map<FGuid, ByteArray>): Deferred<Int> {
         val countNewMounts = AtomicInteger()
-        val tasks = mutableListOf<Deferred<PakFileReader?>>()
-        newKeys.forEach { (guid, key) ->
-            if (requiredKeys.contains(guid)) {
-                unloadedPaksByGuid(guid).forEach { reader ->
-                    tasks.add(async { runCatching {
-                        reader.aesKey = key
-                        reader.readIndex()
-                        reader.files.associateByTo(files, {file -> file.path.toLowerCase()})
-                        unloadedPaks.remove(reader)
-                        mountedPaks.add(reader)
-                        countNewMounts.getAndIncrement()
-                        reader
-                    }.onFailure {
-                        if (it !is InvalidAesKeyException)
-                            logger.warn(it) { "Uncaught exception while loading pak file ${reader.fileName.substringAfterLast('/')}" }
-                    }.getOrNull() })
+        val tasks = mutableListOf<Deferred<Result<PakFileReader>>>()
+        for ((guid, key) in newKeys) {
+            if (guid !in requiredKeys)
+                continue
+            for (reader in unloadedPaksByGuid(guid)) tasks += async {
+                runCatching {
+                    reader.aesKey = key
+                    mount(reader)
+                    unloadedPaks.remove(reader)
+                    countNewMounts.getAndIncrement()
+                    reader
+                }.onFailure {
+                    if (it !is InvalidAesKeyException)
+                        logger.warn(it) { "Uncaught exception while loading pak file ${reader.fileName.substringAfterLast('/')}" }
                 }
             }
         }
         return async {
             tasks.awaitAll().forEach {
-                val key = it?.aesKey
-                if (it != null && key != null) {
-                    requiredKeys.remove(it.pakInfo.encryptionKeyGuid)
-                    keys[it.pakInfo.encryptionKeyGuid] = key
+                val reader = it.getOrNull()
+                val key = reader?.aesKey
+                if (reader != null && key != null) {
+                    requiredKeys.remove(reader.pakInfo.encryptionKeyGuid)
+                    keys[reader.pakInfo.encryptionKeyGuid] = key
                 }
             }
             countNewMounts.get()
+        }
+    }
+
+    protected fun mount(reader: PakFileReader) {
+        reader.readIndex()
+        reader.files.associateByTo(files) { it.path.toLowerCase() }
+        mountedPaks.add(reader)
+
+        if (reader.Ar is FPakFileArchive) {
+            val ioStoreEnvironment = FIoStoreEnvironment(reader.Ar.file.path.substringBeforeLast('.'))
+            val encryptionKeyGuid = reader.pakInfo.encryptionKeyGuid
+            try {
+                FIoDispatcher.get().mount(ioStoreEnvironment, encryptionKeyGuid, reader.aesKey)
+                PakFileReader.logger.info("Mounted IoStore environment \"%s\"".format(ioStoreEnvironment.path))
+            } catch (e: FIoStatusException) {
+                PakFileReader.logger.warn("Failed to mount IoStore environment \"%s\" [%s]".format(ioStoreEnvironment.path, e.message))
+            }
         }
     }
 

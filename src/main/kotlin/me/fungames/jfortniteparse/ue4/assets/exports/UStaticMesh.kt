@@ -36,11 +36,11 @@ class UStaticMesh : UObject() {
         super.deserialize(Ar, validPos)
         stripFlags = FStripDataFlags(Ar)
         val cooked = Ar.readBoolean()
-        bodySetup = FPackageIndex(Ar).run { Ar.provider?.loadObject(this) }
+        bodySetup = FPackageIndex(Ar).run { Ar.owner.loadObject(this) }
         navCollision = (if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
             FPackageIndex(Ar)
         else
-            FPackageIndex(0, Ar.owner)).run { Ar.provider?.loadObject(this) }
+            FPackageIndex(0, Ar.owner)).run { Ar.owner.loadObject(this) }
 
         if (!stripFlags.isEditorDataStripped()) {
             if (Ar.ver < VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED) {
@@ -51,7 +51,7 @@ class UStaticMesh : UObject() {
             Ar.readUInt32() // highResSourceMeshCRC
         }
         lightingGuid = FGuid(Ar)
-        sockets = Ar.readTArray { FPackageIndex(Ar).run { Ar.provider?.loadObject<UExport>(this) } }
+        sockets = Ar.readTArray { FPackageIndex(Ar).run { Ar.owner.loadObject(this) } }
         if (!stripFlags.isEditorDataStripped()) {
             //TODO https://github.com/gildor2/UEViewer/blob/master/Unreal/UnMesh4.cpp#L2382
             throw ParserException("Static Mesh with Editor Data not implemented yet")

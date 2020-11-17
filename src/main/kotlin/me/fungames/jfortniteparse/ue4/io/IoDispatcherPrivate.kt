@@ -15,7 +15,6 @@ enum class EIoStoreResolveResult {
 class FIoBatchImpl {
     var callback: (() -> Unit)? = null
     var event: CompletableFuture<*>? = null
-
     //var graphEvent: FGraphEventRef? = null
     val unfinishedRequestsCount = AtomicInteger()
 }

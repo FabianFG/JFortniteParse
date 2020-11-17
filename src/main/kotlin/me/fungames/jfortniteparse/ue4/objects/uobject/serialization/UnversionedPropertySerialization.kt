@@ -1,10 +1,14 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
+import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType
+import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType.ArrayProperty
+import me.fungames.jfortniteparse.ue4.assets.objects.UScriptArray
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
@@ -17,9 +21,7 @@ import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.indexOfFirst
 import java.lang.reflect.Field
 import java.lang.reflect.ParameterizedType
-import java.nio.ByteBuffer
 import java.util.*
-import kotlin.reflect.KClass
 
 // custom class
 class PropertyInfo {
@@ -33,6 +35,7 @@ class PropertyInfo {
     @JvmField var valueType: String? = null
     @JvmField var arrayDim = 1
 
+    var structClass: Class<*>? = null
     var enumClass: Class<out Enum<*>>? = null
 
     val field: Field
@@ -43,7 +46,7 @@ class PropertyInfo {
 
         if (ann != null) {
             this.arrayDim = ann.arrayDim
-            //this.enumTypeClass = ann.enumType.java
+            this.enumType = ann.enumType
         }
 
         type = propertyType(field.type)
@@ -53,26 +56,36 @@ class PropertyInfo {
                 enumName = field.type.simpleName
                 enumClass = field.type as Class<out Enum<*>>?
             }
-            "StructProperty" -> structType = field.type.simpleName.unprefix()
-            "ArrayProperty", "SetProperty" -> applyInner(false)
+            "StructProperty" -> {
+                structType = field.type.simpleName.unprefix()
+                structClass = field.type
+            }
+            "ArrayProperty", "SetProperty" -> applyInner(false, true)
             "MapProperty" -> {
-                applyInner(false)
-                applyInner(true)
+                applyInner(false, false)
+                applyInner(true, true)
             }
         }
     }
 
-    private fun applyInner(applyToValue: Boolean) {
+    private fun applyInner(applyToValue: Boolean, applyStructOrEnumClass: Boolean) {
         val typeArgs = (field.genericType as ParameterizedType).actualTypeArguments
         val idx = if (applyToValue) 1 else 0
         val type = typeArgs[idx] as Class<*>
+        val propertyType = propertyType(type)
         if (applyToValue) {
-            valueType = propertyType(type)
-            if (valueType == "StructProperty") {
-                structType = type.name.unprefix()
-            }
+            valueType = propertyType
         } else {
-            innerType = propertyType(type)
+            innerType = propertyType
+        }
+        if (applyStructOrEnumClass) {
+            if (propertyType == "EnumProperty") {
+                enumName = type.simpleName.unprefix()
+                enumClass = type as Class<out Enum<*>>?
+            } else if (propertyType == "StructProperty") {
+                structType = type.simpleName.unprefix()
+                structClass = type
+            }
         }
     }
 
@@ -114,7 +127,13 @@ class FUnversionedPropertySerializer(val propertyInfo: PropertyInfo, val arrayIn
     }
 
     fun loadZero(Ar: FAssetArchive): FPropertyTag {
-        TODO()
+        val propertyType = propertyInfo.type!!
+        val tag = FPropertyTag(propertyInfo)
+        tag.prop = when (propertyType) {
+            "ArrayProperty" -> ArrayProperty(UScriptArray(FPropertyTag(propertyInfo), mutableListOf(), propertyInfo.innerType!!), propertyType)
+            else -> null
+        }
+        return tag
     }
 
     fun writeToField() {
@@ -124,30 +143,18 @@ class FUnversionedPropertySerializer(val propertyInfo: PropertyInfo, val arrayIn
     override fun toString() = propertyInfo.field.type.simpleName + ' ' + propertyInfo.field.name
 }
 
-@Target(AnnotationTarget.CLASS)
-annotation class OnlyAnnotated
-
-@Target(AnnotationTarget.FIELD)
-annotation class UProperty(
-    val skipPrevious: Int = 0,
-    val arrayDim: Int = 1,
-    val enumType: KClass<out Number> = Byte::class,
-    val innerType: KClass<*> = Object::class,
-    val valueType: KClass<*> = Object::class
-)
-
 /**
  * Serialization is based on indices into this property array
  */
-class FUnversionedStructSchema(struct: Class<out UObject>) {
+class FUnversionedStructSchema(struct: Class<*>) {
     val num = 0u
     val serializers = mutableMapOf<Int, FUnversionedPropertySerializer>()
 
     init {
         var index = 0
         var lastClassIndex = 0
-        var clazz = struct
-        while (clazz != UObject::class.java) {
+        var clazz: Class<*>? = struct
+        while (clazz != null && clazz != UObject::class.java && clazz != Object::class.java) {
             val bOnlyAnnotated = clazz.isAnnotationPresent(OnlyAnnotated::class.java)
             for (field in clazz.declaredFields) {
                 val ann = field.getAnnotation(UProperty::class.java)
@@ -160,16 +167,16 @@ class FUnversionedStructSchema(struct: Class<out UObject>) {
                     println("${lastClassIndex + index} = ${propertyInfo.field.name}")
                     serializers[lastClassIndex + index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                 }
-                ++index
+                index += (ann?.skipNext ?: 0) + 1
             }
             lastClassIndex += index
             index = 0
-            clazz = clazz.superclass as Class<out UObject>
+            clazz = clazz.superclass
         }
     }
 }
 
-fun getOrCreateUnversionedSchema(struct: Class<out UObject>): FUnversionedStructSchema {
+fun getOrCreateUnversionedSchema(struct: Class<*>): FUnversionedStructSchema {
     /*val existingSchema = struct.existingSchema
     if (existingSchema != null) {
         return existingSchema
@@ -199,7 +206,7 @@ class FUnversionedHeader {
         var unmaskedNum = 0u
         do {
             val packed = Ar.readUInt16()
-            fragment = FFragment.unpack(packed)
+            fragment = FFragment(packed)
 
             fragments.add(fragment)
 
@@ -222,19 +229,41 @@ class FUnversionedHeader {
     fun hasValues() = bHasNonZeroValues || (zeroMask.size() > 0)
 
     protected fun loadZeroMaskData(Ar: FArchive, numBits: UInt): BitSet {
-        val num = numBits.divideAndRoundUp(32u).toInt()
-        val buf = ByteBuffer.allocate(num)
+        /*val num = numBits.divideAndRoundUp(64u).toInt()
+        println("load zero mask num = $num")
+        val data = LongArray(num)
         when {
-            numBits <= 8u -> buf.putInt(Ar.readInt8().toInt())
-            numBits <= 16u -> buf.putInt(Ar.readInt16().toInt())
+            numBits <= 8u -> data[0] = Ar.readInt8().toLong()
+            numBits <= 16u -> data[0] = Ar.readInt16().toLong()
+            numBits <= 32u -> data[0] = Ar.readInt32().toLong()
             else -> for (idx in 0 until num) {
-                buf.putInt(Ar.readInt32())
+                data[idx] = Ar.readInt64()
             }
-        }
-        return BitSet.valueOf(buf)
+        }*/
+        /*return BitSet.valueOf(Ar.read(when {
+            numBits <= 8u -> 1u
+            numBits <= 16u -> 2u
+            else -> numBits.divideAndRoundUp(32u) * 4u
+        }.toInt()))*/
+        val size = when {
+            numBits <= 8u -> 1u
+            numBits <= 16u -> 2u
+            else -> numBits.divideAndRoundUp(32u) * 4u
+        }.toInt()
+        return BitSet.valueOf(Ar.read(size))//.also { println("zeromask $size, ${it.size()}") }
     }
 
     protected class FFragment {
+        companion object {
+            val SKIP_MAX = 127u
+            val VALUE_MAX = 127u
+
+            val SKIP_NUM_MASK: UShort = 0x007fu
+            val HAS_ZERO_MASK: UShort = 0x0080u
+            val VALUE_NUM_SHIFT = 9
+            val IS_LAST_MASK: UShort = 0x0100u
+        }
+
         /** Number of properties to skip before values */
         var skipNum: UByte = 0u
         var bHasAnyZeroes = false
@@ -243,22 +272,11 @@ class FUnversionedHeader {
         /** Is this the last fragment of the header? */
         var bIsLast = false
 
-        companion object {
-            val SkipMax = 127u
-            val ValueMax = 127u
-
-            val SKIP_NUM_MASK: UShort = 0x007fu
-            val HAS_ZERO_MASK: UShort = 0x0080u
-            val VALUE_NUM_SHIFT = 9
-            val IS_LAST_MASK: UShort = 0x0100u
-
-            @JvmStatic
-            fun unpack(int: UShort) = FFragment().apply {
-                skipNum = (int and SKIP_NUM_MASK).toUByte()
-                bHasAnyZeroes = (int and HAS_ZERO_MASK) != 0u.toUShort()
-                valueNum = (int.toUInt() shr VALUE_NUM_SHIFT).toUByte()
-                bIsLast = (int and IS_LAST_MASK) != 0u.toUShort()
-            }
+        constructor(int: UShort) {
+            skipNum = (int and SKIP_NUM_MASK).toUByte()
+            bHasAnyZeroes = (int and HAS_ZERO_MASK) != 0u.toUShort()
+            valueNum = (int.toUInt() shr VALUE_NUM_SHIFT).toUByte()
+            bIsLast = (int and IS_LAST_MASK) != 0u.toUShort()
         }
     }
 
@@ -312,11 +330,12 @@ class FUnversionedHeader {
     }
 }
 
-fun deserializeUnversionedProperties(struct: Class<out UObject>, Ar: FAssetArchive, properties: MutableList<FPropertyTag>) {
+fun deserializeUnversionedProperties(struct: Class<*>, Ar: FAssetArchive, properties: MutableList<FPropertyTag>) {
     //check(canUseUnversionedPropertySerialization())
 
     val header = FUnversionedHeader()
     header.load(Ar)
+    println("Load: $struct, $header")
 
     if (header.hasValues()) {
         val schemas = getOrCreateUnversionedSchema(struct).serializers
@@ -330,7 +349,9 @@ fun deserializeUnversionedProperties(struct: Class<out UObject>, Ar: FAssetArchi
                 if (serializer != null) {
                     println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
                     if (it.isNonZero()) {
-                        properties.add(serializer.deserialize(Ar))
+                        val element = serializer.deserialize(Ar)
+                        properties.add(element)
+                        println(element.toString())
                     } else {
                         properties.add(serializer.loadZero(Ar))
                     }
@@ -349,6 +370,4 @@ fun deserializeUnversionedProperties(struct: Class<out UObject>, Ar: FAssetArchi
             }
         }
     }
-
-    Ar.skip(4) // TODO don't know why I had to do this
 }

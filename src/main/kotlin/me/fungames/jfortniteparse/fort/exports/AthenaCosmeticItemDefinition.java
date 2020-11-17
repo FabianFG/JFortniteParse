@@ -1,12 +1,14 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import me.fungames.jfortniteparse.ue4.assets.UProperty;
+import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
-import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.UProperty;
 
 import java.util.List;
 
@@ -32,8 +34,7 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     public List<FPackageIndex> /*List<UFortMontageItemDefinitionBase>*/ BuiltInEmotes;
     public List<FPackageIndex> /*List<UFortCosmeticVariant>*/ ItemVariants;
     public FName /*FName*/ VariantChannelToUseForThumbnails;
-    //public List<FortCosmeticVariantPreview> ItemVariantPreviews;
-    @UProperty(skipPrevious = 1)
+    public List<FortCosmeticVariantPreview> ItemVariantPreviews;
     public FText DirectAquisitionStyleDisclaimerOverride;
     //public List<FortCosmeticAdaptiveStatPreview> ItemObservedStatPreviews;
     @UProperty(skipPrevious = 1)
@@ -53,5 +54,32 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
 
     public enum EVariantUnlockType {
         UnlockAll, ExclusiveChoice
+    }
+
+    @UStruct
+    public static class FortCosmeticVariantPreview {
+        public FText UnlockCondition;
+        public Float PreviewTime;
+        public List<McpVariantChannelInfo> VariantOptions;
+        public List<FortCosmeticVariantPreviewElement> AdditionalItems;
+    }
+
+    @UStruct
+    public static class CosmeticVariantInfo {
+        public FGameplayTag VariantChannelTag;
+        public FGameplayTag ActiveVariantTag;
+    }
+
+    @UStruct
+    public static class McpVariantChannelInfo extends CosmeticVariantInfo {
+        public FGameplayTagContainer OwnedVariantTags;
+        public FPackageIndex /*FortItemDefinition*/ ItemVariantIsUsedFor;
+        public String CustomData;
+    }
+
+    @UStruct
+    public static class FortCosmeticVariantPreviewElement {
+        public List<McpVariantChannelInfo> VariantOptions;
+        public FPackageIndex /*AthenaCosmeticItemDefinition*/ Item;
     }
 }

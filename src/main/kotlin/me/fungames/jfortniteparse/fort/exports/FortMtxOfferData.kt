@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports
 
+import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
 import me.fungames.jfortniteparse.ue4.objects.slatecore.styling.FSlateBrush
@@ -27,14 +27,14 @@ class FortMtxOfferData : UObject {
 }
 
 @ExperimentalUnsignedTypes
-@StructFallbackClass
+@UStruct
 class FortMtxDetailsAttribute {
     var Name: FText? = null
     var Value: FText? = null
 }
 
 @ExperimentalUnsignedTypes
-@StructFallbackClass
+@UStruct
 class FortMtxGradient {
     var Start: FLinearColor? = null
     var Stop: FLinearColor? = null

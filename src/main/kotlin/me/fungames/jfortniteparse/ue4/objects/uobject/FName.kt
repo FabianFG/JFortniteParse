@@ -27,12 +27,10 @@ open class FName(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as FName
+        if (other !is FName) return false
 
         if (number != other.number) return false
-        if (text.toLowerCase() != other.text.toLowerCase()) return false
+        if (!text.equals(other.text, true)) return false
 
         return true
     }
@@ -57,7 +55,7 @@ open class FName(
         fun dummy(text: String, number: Int = 0) = FNameDummy(text.intern(), number)
 
         fun getByNameMap(text: String, nameMap: List<FNameEntry>): FName? {
-            val nameEntry = nameMap.find { text == it.name } ?: return null
+            val nameEntry = nameMap.firstOrNull { text == it.name } ?: return null
             return FName(nameMap, nameMap.indexOf(nameEntry), 0)
         }
 

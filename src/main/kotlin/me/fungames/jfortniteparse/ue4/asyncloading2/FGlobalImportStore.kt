@@ -6,7 +6,6 @@ class FGlobalImportStore {
     val scriptObjects = mutableMapOf<FPackageObjectIndex, UObject?>()
     val publicExportObjects = mutableMapOf<FPackageObjectIndex, FPublicExport>()
     //val objectIndexToPublicExport = mutableMapOf<Int, FPackageObjectIndex>()
-
     // Temporary initial load data
     val scriptObjectEntries = mutableListOf<FScriptObjectEntry>()
     val scriptObjectEntriesMap = mutableMapOf<FPackageObjectIndex, FScriptObjectEntry>()

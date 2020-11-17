@@ -16,7 +16,7 @@ class FByteBulkDataHeader : UClass {
         bulkDataFlags = Ar.readInt32()
         elementCount = Ar.readInt32()
         sizeOnDisk = Ar.readInt32()
-        offsetInFile = Ar.readInt64() + (Ar.owner.info.bulkDataStartOffset)
+        offsetInFile = Ar.readInt64() + Ar.bulkDataStartOffset
         super.complete(Ar)
     }
 

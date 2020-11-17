@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.UProperty;
+import me.fungames.jfortniteparse.ue4.assets.UProperty;
 
 public class FortAccountItemDefinition extends FortPersistableItemDefinition {
 	/*public FCurveTableRowHandle LevelToXpHandle;

@@ -1,9 +1,10 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.PakPackage
+import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
@@ -11,9 +12,9 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.UInterfaceProperty
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 import java.lang.reflect.Array
 
-@ExperimentalUnsignedTypes
 sealed class FPropertyTagType(val propertyType: String) {
     inline fun <reified T> getTagTypeValue(): T? {
         val value = getTagTypeValue(T::class.java)
@@ -33,7 +34,7 @@ sealed class FPropertyTagType(val propertyType: String) {
             value is Long && clazz == Long::class.javaPrimitiveType -> value
             value is Float && clazz == Float::class.javaPrimitiveType -> value
             value is Double && clazz == Double::class.javaPrimitiveType -> value
-            value is FStructFallback && clazz.isAnnotationPresent(StructFallbackClass::class.java) -> value.mapToClass(clazz)
+            value is FStructFallback && clazz.isAnnotationPresent(UStruct::class.java) -> value.mapToClass(clazz)
             value is UScriptArray && clazz.isArray -> {
                 val content = clazz.componentType
                 val array = Array.newInstance(content, value.data.size)
@@ -47,7 +48,7 @@ sealed class FPropertyTagType(val propertyType: String) {
                 array
             }
             value is FPackageIndex && UExport::class.java.isAssignableFrom(clazz) -> {
-                val export = value.owner?.provider?.loadObject(value)
+                val export = value.owner?.loadObjectGeneric(value)
                 if (export != null && clazz.isAssignableFrom(export::class.java)) export else null
             }
             value is FSoftObjectPath && UExport::class.java.isAssignableFrom(clazz) -> {
@@ -105,7 +106,7 @@ sealed class FPropertyTagType(val propertyType: String) {
             return
         when (this) {
             is BoolProperty -> this.bool = value as Boolean
-            is StructProperty -> this.struct.structType = value as UClass
+            is StructProperty -> this.struct.structType = value
             is ObjectProperty -> this.`object` = value as FPackageIndex
             is InterfaceProperty -> this.interfaceProperty = value as UInterfaceProperty
             is FloatProperty -> this.float = value as Float
@@ -139,72 +140,39 @@ sealed class FPropertyTagType(val propertyType: String) {
         ): FPropertyTagType? {
             when (propertyType) {
                 "BoolProperty" -> return when (type) {
-                    Type.NORMAL -> BoolProperty(tagData!!.boolVal, propertyType)
+                    Type.NORMAL -> BoolProperty(if (Ar.useUnversionedPropertySerialization) Ar.readFlag() else tagData!!.boolVal, propertyType)
                     Type.MAP, Type.ARRAY -> BoolProperty(Ar.readFlag(), propertyType)
                 }
-                "StructProperty" -> return StructProperty(
-                    UScriptStruct(Ar, tagData!!.structName.text),
-                    propertyType
-                )
-                "ObjectProperty" -> return ObjectProperty(
-                    FPackageIndex(Ar),
-                    propertyType
-                )
-                "InterfaceProperty" -> return InterfaceProperty(
-                    UInterfaceProperty(Ar),
-                    propertyType
-                )
-                "FloatProperty" -> return FloatProperty(
-                    Ar.readFloat32(),
-                    propertyType
-                )
-                "TextProperty" -> return TextProperty(
-                    FText(Ar),
-                    propertyType
-                )
-                "StrProperty" -> return StrProperty(
-                    Ar.readString(),
-                    propertyType
-                )
-                "NameProperty" -> return NameProperty(
-                    Ar.readFName(),
-                    propertyType
-                )
-                "IntProperty" -> return IntProperty(
-                    Ar.readInt32(),
-                    propertyType
-                )
-                "UInt16Property" -> return UInt16Property(
-                    Ar.readUInt16(),
-                    propertyType
-                )
-                "UInt32Property" -> return UInt32Property(
-                    Ar.readUInt32(),
-                    propertyType
-                )
-                "UInt64Property" -> return UInt64Property(
-                    Ar.readUInt64(),
-                    propertyType
-                )
-                "ArrayProperty" -> return ArrayProperty(
-                    UScriptArray(Ar, tagData!!),
-                    propertyType
-                )
-                "SetProperty" -> return SetProperty(
-                    UScriptArray(Ar, tagData!!),
-                    propertyType
-                )
-                "MapProperty" -> return MapProperty(
-                    UScriptMap(Ar, tagData!!),
-                    propertyType
-                )
+                "StructProperty" ->
+                    return if (Ar.useUnversionedPropertySerialization && tagData!!.structClass!!.isAnnotationPresent(UStruct::class.java)) {
+                        //val struct = tagData.field!!.type.newInstance()
+                        val properties = mutableListOf<FPropertyTag>()
+                        deserializeUnversionedProperties(tagData.structClass!!, Ar, properties)
+                        StructProperty(UScriptStruct(tagData.structName.text, FStructFallback(properties)), propertyType)
+                    } else {
+                        StructProperty(UScriptStruct(Ar, tagData!!.structName.text), propertyType)
+                    }
+                "ObjectProperty" -> return ObjectProperty(FPackageIndex(Ar), propertyType)
+                "InterfaceProperty" -> return InterfaceProperty(UInterfaceProperty(Ar), propertyType)
+                "FloatProperty" -> return FloatProperty(Ar.readFloat32(), propertyType)
+                "TextProperty" -> return TextProperty(FText(Ar), propertyType)
+                "StrProperty" -> return StrProperty(Ar.readString(), propertyType)
+                "NameProperty" -> return NameProperty(Ar.readFName(), propertyType)
+                "IntProperty" -> return IntProperty(Ar.readInt32(), propertyType)
+                "UInt16Property" -> return UInt16Property(Ar.readUInt16(), propertyType)
+                "UInt32Property" -> return UInt32Property(Ar.readUInt32(), propertyType)
+                "UInt64Property" -> return UInt64Property(Ar.readUInt64(), propertyType)
+                "ArrayProperty" -> return ArrayProperty(UScriptArray(Ar, tagData!!), propertyType)
+                "SetProperty" -> return SetProperty(UScriptArray(Ar, tagData!!), propertyType)
+                "MapProperty" -> return MapProperty(UScriptMap(Ar, tagData!!), propertyType)
                 "ByteProperty" -> {
                     return when (type) {
                         // Type.NORMAL -> ByteProperty(Ar.readFName().index.toUByte(), propertyType)
                         Type.NORMAL -> { // FIXME: this is a hack to match John Wick Parse's output
                             val nameIndex = Ar.readInt32()
-                            if (nameIndex in Ar.owner.nameMap.indices)
-                                NameProperty(FName(Ar.owner.nameMap, nameIndex, Ar.readInt32()), propertyType)
+                            val nameMap = (Ar.owner as PakPackage).nameMap
+                            if (nameIndex in nameMap.indices)
+                                NameProperty(FName(nameMap, nameIndex, Ar.readInt32()), propertyType)
                             else
                                 ByteProperty(nameIndex.toUByte(), propertyType)
                         }

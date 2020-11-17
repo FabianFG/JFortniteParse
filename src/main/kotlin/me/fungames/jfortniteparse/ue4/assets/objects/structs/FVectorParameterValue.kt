@@ -1,11 +1,11 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.structs
 
-import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
+import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 @ExperimentalUnsignedTypes
-@StructFallbackClass
+@UStruct
 class FVectorParameterValue(
     val ParameterName: FName?,
     val ParameterInfo: FMaterialParameterInfo,

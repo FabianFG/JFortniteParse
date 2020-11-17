@@ -25,7 +25,7 @@ class FSoftObjectPath : UClass {
         assetPathName = Ar.readFName()
         subPathString = Ar.readString()
         super.complete(Ar)
-        owner = if (Ar.useUnversionedPropertySerialization) null else Ar.owner // TODO
+        owner = Ar.owner
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {

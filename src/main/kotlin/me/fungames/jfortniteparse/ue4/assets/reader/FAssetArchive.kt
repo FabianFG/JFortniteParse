@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.ue4.assets.reader
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
@@ -20,6 +21,7 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
     private var payloads = mutableMapOf<PayloadType, FAssetArchive>()
     var uassetSize = 0
     var uexpSize = 0
+    var bulkDataStartOffset = 0
 
     fun getPayload(type: PayloadType) = payloads[type] ?: throw ParserException("${type.name} is needed to parse the current package")
     fun addPayload(type: PayloadType, payload: FAssetArchive) {
@@ -47,6 +49,7 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
     fun toRelativePos(normalPos: Int) = normalPos + uassetSize + uexpSize
 
     override fun readFName(): FName {
+        val owner = owner as PakPackage
         val nameIndex = this.readInt32()
         val extraIndex = this.readInt32()
         if (nameIndex in owner.nameMap.indices)
