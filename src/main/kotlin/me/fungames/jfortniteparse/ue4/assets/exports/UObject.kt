@@ -23,7 +23,7 @@ open class UObject : UExport {
     var objectGuid: FGuid? = null
     var readGuid = false
     var flags = 0
-    val pathName = ""
+    var pathName = ""
 
     @JvmOverloads
     constructor(exportObject: FObjectExport, readGuid: Boolean = true) : super(exportObject) {

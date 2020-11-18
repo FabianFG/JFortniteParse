@@ -8,6 +8,7 @@ import me.fungames.jfortniteparse.ue4.asyncloading2.EEventLoadNode2.*
 import me.fungames.jfortniteparse.ue4.asyncloading2.FAsyncPackage2.EExternalReadAction.ExternalReadAction_Poll
 import me.fungames.jfortniteparse.ue4.io.FIoRequest
 import me.fungames.jfortniteparse.ue4.objects.uobject.EObjectFlags.*
+import me.fungames.jfortniteparse.ue4.objects.uobject.EPackageFlags
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
@@ -34,6 +35,8 @@ class FAsyncPackage2 {
     private var asyncPackageLoadingState = EAsyncPackageLoadingState2.NewPackage
     /** True if our load has failed  */
     internal var bLoadHasFailed = false
+    /** True if this package was created by this async package */
+    private var bCreatedLinkerRoot = false
 
     /** List of all request handles */
     private val requestIDs = mutableListOf<Int>()
@@ -112,8 +115,8 @@ class FAsyncPackage2 {
 
         val globalPackageStore = asyncLoadingThread.globalPackageStore
         for (importedPackageId in desc.storeEntry!!.importedPackages) {
-            val packageRef = globalPackageStore.loadedPackageStore[importedPackageId]
-            if (packageRef == null || packageRef.areAllPublicExportsLoaded()) {
+            val packageRef = globalPackageStore.loadedPackageStore.getOrPut(importedPackageId) { FLoadedPackageRef() }
+            if (packageRef.areAllPublicExportsLoaded()) {
                 continue
             }
 
@@ -176,7 +179,7 @@ class FAsyncPackage2 {
         if (!bLoadHasFailed) {
             val allExportDataSize = ioBuffer.size.toULong() - (allExportDataPtr - ioBufferOff.toULong())
             val Ar = FExportArchive(ByteBuffer.wrap(ioBuffer, currentExportDataPtr.toInt(), allExportDataSize.toInt())).also {
-                it.useUnversionedPropertySerialization = true
+                it.useUnversionedPropertySerialization = (linkerRoot!!.packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
                 it.owner = linkerRoot!!
                 it.uassetSize = (cookedHeaderSize - allExportDataPtr).toInt()
 
@@ -301,7 +304,7 @@ class FAsyncPackage2 {
             data.exportBundleHeaders = Array(data.exportBundleCount) { FExportBundleHeader(packageSummaryAr) }
             data.exportBundleEntries = Array(data.exportCount * FExportBundleEntry.EExportCommandType.ExportCommandType_Count.ordinal) { FExportBundleEntry(packageSummaryAr) }
 
-            linkerRoot = IoPackage(importStore, nameMap, data.exports, desc.diskPackageName.text, provider) //createUPackage(packageSummary)
+            createUPackage(packageSummary)
             packageSummaryAr.seek(graphData)
             setupSerializedArcs(packageSummaryAr)
 
@@ -336,6 +339,23 @@ class FAsyncPackage2 {
         check(asyncPackageLoadingState == EAsyncPackageLoadingState2.PostLoad)
         check(externalReadDependencies.isEmpty())
         check(exportBundleIndex < data.exportBundleCount)
+
+        if (exportBundleIndex + 1 < data.exportBundleCount) {
+            getExportBundleNode(ExportBundle_PostLoad, exportBundleIndex + 1).releaseBarrier()
+        } else {
+            if (linkerRoot != null && !bLoadHasFailed) {
+                asyncPackageLog(Level.DEBUG, desc, "AsyncThread: FullyLoaded",
+                    "Async loading of package is done, and UPackage is marked as fully loaded.")
+                // mimic old loader behavior for now, but this is more correctly also done in FinishUPackage
+                // called from ProcessLoadedPackagesFromGameThread just before completion callbacks
+                //linkerRoot.markAsFullyLoaded()
+            }
+
+            check(asyncPackageLoadingState == EAsyncPackageLoadingState2.PostLoad)
+            asyncPackageLoadingState = EAsyncPackageLoadingState2.DeferredPostLoad
+            getExportBundleNode(ExportBundle_DeferredPostLoad, 0).releaseBarrier()
+        }
+
         return EAsyncPackageState.Complete
     }
 
@@ -424,6 +444,7 @@ class FAsyncPackage2 {
         }
         obj = importStore.findOrGetImportObject(trigger)!!.apply {
             name = objectName.toString()
+            pathName = desc.diskPackageName.toString() + '.' + name
             flags = flags or export.objectFlags.toInt()
         }
         exportObject.exportObject = obj
@@ -502,6 +523,8 @@ class FAsyncPackage2 {
         obj.flags = obj.flags or RF_LoadCompleted.value
         //loadContext.serializedObject = prevSerializedObject
 
+        asyncPackageLogVerbose(Level.TRACE, desc, "SerializeExport", "Serialized export ${obj.pathName}")
+
         return true
     }
 
@@ -531,13 +554,13 @@ class FAsyncPackage2 {
     }
 
     fun getPackageNode(phase: EEventLoadNode2): FEventLoadNode2 {
-        check(phase < EEventLoadNode2.Package_NumPhases)
+        check(phase < Package_NumPhases)
         return data.packageNodes[phase.value]!!
     }
 
     fun getExportBundleNode(phase: EEventLoadNode2, exportBundleIndex: Int = 0): FEventLoadNode2 {
         check(exportBundleIndex < data.exportBundleCount)
-        val exportBundleNodeIndex = exportBundleIndex * EEventLoadNode2.ExportBundle_NumPhases.value + phase.value
+        val exportBundleNodeIndex = exportBundleIndex * ExportBundle_NumPhases.value + phase.value
         return data.exportBundleNodes[exportBundleNodeIndex]!!
     }
     // endregion
@@ -552,14 +575,14 @@ class FAsyncPackage2 {
 
     private fun createNodes(eventSpecs: List<FAsyncLoadEventSpec>) {
         val barrierCount = 1
-        for (phase in 0 until EEventLoadNode2.Package_NumPhases.value) {
+        for (phase in 0 until Package_NumPhases.value) {
             data.packageNodes[phase] = FEventLoadNode2(eventSpecs[phase], this, -1, barrierCount)
         }
 
         for (exportBundleIndex in 0 until data.exportBundleCount) {
-            val nodeIndex = EEventLoadNode2.ExportBundle_NumPhases.value * exportBundleIndex
-            for (phase in 0 until EEventLoadNode2.ExportBundle_NumPhases.value) {
-                data.exportBundleNodes[nodeIndex + phase] = FEventLoadNode2(eventSpecs[EEventLoadNode2.Package_NumPhases.value + phase], this, exportBundleIndex, barrierCount)
+            val nodeIndex = ExportBundle_NumPhases.value * exportBundleIndex
+            for (phase in 0 until ExportBundle_NumPhases.value) {
+                data.exportBundleNodes[nodeIndex + phase] = FEventLoadNode2(eventSpecs[Package_NumPhases.value + phase], this, exportBundleIndex, barrierCount)
             }
         }
     }
@@ -582,9 +605,9 @@ class FAsyncPackage2 {
 
                     check(fromExportBundleIndex < importedPackage.data.exportBundleCount)
                     check(toExportBundleIndex < data.exportBundleCount)
-                    val fromNodeIndexBase = fromExportBundleIndex * EEventLoadNode2.ExportBundle_NumPhases.value
-                    val toNodeIndexBase = toExportBundleIndex * EEventLoadNode2.ExportBundle_NumPhases.value
-                    for (phase in 0 until EEventLoadNode2.ExportBundle_NumPhases.value) {
+                    val fromNodeIndexBase = fromExportBundleIndex * ExportBundle_NumPhases.value
+                    val toNodeIndexBase = toExportBundleIndex * ExportBundle_NumPhases.value
+                    for (phase in 0 until ExportBundle_NumPhases.value) {
                         val toNodeIndex = toNodeIndexBase + phase
                         val fromNodeIndex = fromNodeIndexBase + phase
                         data.exportBundleNodes[toNodeIndex]!!.dependsOn(importedPackage.data.exportBundleNodes[fromNodeIndex]!!)
@@ -595,6 +618,61 @@ class FAsyncPackage2 {
     }
 
     private fun setupScriptDependencies() {}
+
+    /**
+     * Create UPackage
+     *
+     * @return true
+     */
+    private fun createUPackage(packageSummary: FPackageSummary) {
+        check(linkerRoot == null)
+
+        // temp packages are never stored or found in loaded package store
+        var packageRef: FLoadedPackageRef? = null
+
+        // Try to find existing package or create it if not already present.
+        val existingPackage: Package? = null
+        if (desc.canBeImported()) {
+            packageRef = importStore.globalPackageStore.loadedPackageStore[desc.diskPackageId]
+            linkerRoot = packageRef!!.`package`
+        }
+        if (linkerRoot == null) {
+            if (existingPackage != null) {
+                linkerRoot = existingPackage
+            } else {
+                linkerRoot = IoPackage(importStore, nameMap, data.exports, desc.diskPackageName.toString(), provider)
+                bCreatedLinkerRoot = true
+            }
+            linkerRoot!!.apply {
+                flags = flags or (RF_Public.value or RF_WasLoaded.value)
+                //fileName = desc.diskPackageName
+                //canBeImportedFlag = desc.canBeImported()
+                //packageId = desc.diskPackageId
+                packageFlags = packageSummary.packageFlags.toInt()
+                //linkerPackageVersion = GPackageFileUE4Version
+                //linkerLicenseeVersion = GPackageFileLicenseeUE4Version
+                //linkerCustomVersion = packageSummaryVersions // only if (!bCustomVersionIsLatest)
+            }
+            if (packageRef != null) {
+                packageRef.`package` = linkerRoot
+            }
+        } else linkerRoot!!.apply {
+            //check(canBeImported() == desc.canBeImported())
+            //check(getPackageId() == desc.diskPackageId)
+            check(packageFlags == packageSummary.packageFlags.toInt())
+            //check(linkerPackageVersion == GPackageFileUE4Version)
+            //check(linkerLicenseeVersion == GPackageFileLicenseeUE4Version)
+            check(hasAnyFlags(RF_WasLoaded.value))
+        }
+
+        if (bCreatedLinkerRoot) {
+            asyncPackageLogVerbose(Level.TRACE, desc, "CreateUPackage: AddPackage",
+                "New UPackage created.")
+        } else {
+            asyncPackageLogVerbose(Level.TRACE, desc, "CreateUPackage: UpdatePackage",
+                "Existing UPackage updated.")
+        }
+    }
 
     /**
      * Finalizes external dependencies till time limit is exceeded

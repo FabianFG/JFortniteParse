@@ -15,9 +15,9 @@ import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 class IoPackage(val importStore: FPackageImportStore,
                 val nameMap: FNameMap,
                 val exportMap: Array<FExportObject>,
-                name: String,
+                fileName: String,
                 provider: FileProvider? = null,
-                game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : Package(name, provider, game) {
+                game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : Package(fileName, provider, game) {
 
     override val exports: List<UExport>
         get() = exportMap.map { it.exportObject!! }
@@ -72,5 +72,5 @@ class IoPackage(val importStore: FPackageImportStore,
     fun FPackageIndex.getResource() = getImportObject() ?: getExportObject()
 
     fun FPackageObjectIndex.findFromGlobal() = if (isNull()) null else importStore.globalImportStore.scriptObjectEntriesMap[this]
-    //endregion
+    // endregion
 }

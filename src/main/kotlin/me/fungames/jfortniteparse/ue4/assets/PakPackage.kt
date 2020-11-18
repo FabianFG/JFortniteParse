@@ -4,7 +4,6 @@ import com.github.salomonbrys.kotson.jsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.fort.exports.*
-import me.fungames.jfortniteparse.ue4.UClass.Companion.logger
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.exports.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
@@ -25,9 +24,9 @@ import java.nio.ByteBuffer
 class PakPackage(uasset: ByteBuffer,
                  uexp: ByteBuffer,
                  ubulk: ByteBuffer? = null,
-                 name: String,
+                 fileName: String,
                  provider: FileProvider? = null,
-                 game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : Package(name, provider, game) {
+                 game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : Package(fileName, provider, game) {
     companion object {
         val packageMagic = 0x9E2A83C1u
     }
@@ -49,9 +48,9 @@ class PakPackage(uasset: ByteBuffer,
         get() = exportMap.map { it.exportObject.value }
 
     init {
-        val uassetAr = FAssetArchive(uasset, provider, name)
-        val uexpAr = FAssetArchive(uexp, provider, name)
-        val ubulkAr = if (ubulk != null) FAssetArchive(ubulk, provider, name) else null
+        val uassetAr = FAssetArchive(uasset, provider, fileName)
+        val uexpAr = FAssetArchive(uexp, provider, fileName)
+        val ubulkAr = if (ubulk != null) FAssetArchive(ubulk, provider, fileName) else null
         uassetAr.game = game.game
         uassetAr.ver = game.version
         uexpAr.game = game.game
@@ -124,7 +123,7 @@ class PakPackage(uasset: ByteBuffer,
             if (!exports.contains(value))
                 exports.add(value)
         }*/
-        logger.info("Successfully parsed package: $name")
+        logger.info("Successfully parsed package: $fileName")
     }
 
     fun constructExport(exportType: String) = when (exportType) {
@@ -210,7 +209,7 @@ class PakPackage(uasset: ByteBuffer,
     fun FPackageIndex.getExportObject() = if (isExport()) exportMap[toExport()] else null
 
     fun FPackageIndex.getResource() = getImportObject() ?: getExportObject()
-    //endregion
+    // endregion
 
     fun toJson(locres: Locres? = null) = gson.toJson(jsonObject(
         "import_map" to gson.toJsonTree(importMap),

@@ -13,13 +13,13 @@ class FPackageImportStore {
         this.globalPackageStore = globalPackageStore
         globalImportStore = globalPackageStore.importStore
         this.desc = desc
-        //addPackageReferences()
+        addPackageReferences()
     }
 
-    /*fun destroy() {
+    fun destroy() {
         check(importMap.isEmpty())
         releasePackageReferences()
-    }*/
+    }
 
     inline fun isValidLocalImportIndex(localIndex: FPackageIndex): Boolean {
         check(importMap.isNotEmpty())
@@ -120,44 +120,36 @@ class FPackageImportStore {
         }, *//* bIncludeNestedObjects*//* true);
         checkf(ImportedPackage->HasAnyInternalFlags(EInternalObjectFlags::Async), TEXT("%s"), *ImportedPackage->GetFullName());
         ImportedPackage->AtomicallyClearInternalFlags(EInternalObjectFlags::Async);
-    }
+    }*/
 
     private fun addPackageReferences() {
-        for (const FPackageId& ImportedPackageId : desc.StoreEntry->ImportedPackages)
-        {
-            FLoadedPackageRef& PackageRef = globalPackageStore.LoadedPackageStore.GetPackageRef(ImportedPackageId);
-            if (PackageRef.AddRef())
-            {
-                AddAsyncFlags(PackageRef.GetPackage());
-            }
+        for (importedPackageId in desc.storeEntry!!.importedPackages) {
+            val packageRef = globalPackageStore.loadedPackageStore.getOrPut(importedPackageId) { FLoadedPackageRef() }
+            /*if (packageRef.addRef()) {
+                addAsyncFlags(packageRef.`package`)
+            }*/
         }
-        if (desc.CanBeImported())
-        {
-            FLoadedPackageRef& PackageRef = globalPackageStore.LoadedPackageStore.GetPackageRef(desc.DiskPackageId);
-            if (PackageRef.AddRef())
-            {
-                AddAsyncFlags(PackageRef.GetPackage());
-            }
+        if (desc.canBeImported()) {
+            val packageRef = globalPackageStore.loadedPackageStore.getOrPut(desc.diskPackageId) { FLoadedPackageRef() }
+            /*if (packageRef.addRef()) {
+                addAsyncFlags(packageRef.`package`)
+            }*/
         }
     }
 
     private fun releasePackageReferences() {
-        for (const FPackageId& ImportedPackageId : desc.StoreEntry->ImportedPackages)
-        {
-            FLoadedPackageRef& PackageRef = globalPackageStore.LoadedPackageStore.GetPackageRef(ImportedPackageId);
-            if (PackageRef.ReleaseRef(desc.DiskPackageId, ImportedPackageId))
-            {
-                ClearAsyncFlags(PackageRef.GetPackage());
-            }
+        for (importedPackageId in desc.storeEntry!!.importedPackages) {
+            val packageRef = globalPackageStore.loadedPackageStore.getOrPut(importedPackageId) { FLoadedPackageRef() }
+            /*if (packageRef.releaseRef(desc.diskPackageId, importedPackageId)) {
+                clearAsyncFlags(packageRef.`package`)
+            }*/
         }
-        if (desc.CanBeImported())
-        {
+        if (desc.canBeImported()) {
             // clear own reference, and possible all async flags if no remaining ref count
-            FLoadedPackageRef& PackageRef =	globalPackageStore.LoadedPackageStore.GetPackageRef(desc.DiskPackageId);
-            if (PackageRef.ReleaseRef(desc.DiskPackageId, desc.DiskPackageId))
-            {
-                ClearAsyncFlags(PackageRef.GetPackage());
-            }
+            val packageRef = globalPackageStore.loadedPackageStore.getOrPut(desc.diskPackageId) { FLoadedPackageRef() }
+            /*if (packageRef.releaseRef(desc.diskPackageId, desc.diskPackageId)) {
+                clearAsyncFlags(packageRef.`package`)
+            }*/
         }
-    }*/
+    }
 }

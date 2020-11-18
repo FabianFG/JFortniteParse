@@ -4,13 +4,15 @@ import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.gson.GsonBuilder
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 
-abstract class Package(val name: String,
+abstract class Package(val fileName: String,
                        val provider: FileProvider? = null,
-                       val game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) {
+                       val game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : UObject() {
     abstract val exports: List<UExport>
+    var packageFlags = 0
 
     /**
      * @return the first export of the given type

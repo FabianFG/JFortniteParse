@@ -97,7 +97,8 @@ class FAsyncLoadingThread2 : Runnable {
 
             FAsyncLoadEventSpec(FAsyncPackage2::eventProcessExportBundle, eventQueue, false),
             FAsyncLoadEventSpec(FAsyncPackage2::eventPostLoadExportBundle, eventQueue, false),
-            FAsyncLoadEventSpec(FAsyncPackage2::eventDeferredPostLoadExportBundle, mainThreadEventQueue, false),
+            //FAsyncLoadEventSpec(FAsyncPackage2::eventDeferredPostLoadExportBundle, mainThreadEventQueue, false)
+            FAsyncLoadEventSpec(FAsyncPackage2::eventDeferredPostLoadExportBundle, eventQueue, false)
         )
 
         FAsyncLoadingThreadState2.create(ioDispatcher)
