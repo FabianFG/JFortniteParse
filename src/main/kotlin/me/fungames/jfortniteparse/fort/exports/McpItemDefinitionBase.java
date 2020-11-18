@@ -1,4 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-public class McpItemDefinitionBase extends PrimaryDataAsset {
+import me.fungames.jfortniteparse.ue4.assets.exports.UPrimaryDataAsset;
+
+public class McpItemDefinitionBase extends UPrimaryDataAsset {
 }

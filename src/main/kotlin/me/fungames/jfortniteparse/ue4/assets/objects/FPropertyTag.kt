@@ -69,7 +69,7 @@ class FPropertyTag : UClass {
     constructor(Ar: FAssetArchive, readData: Boolean) {
         super.init(Ar)
         name = Ar.readFName()
-        if (name != FName.NAME_None) {
+        if (!name.isNone()) {
             type = Ar.readFName()
             size = Ar.readInt32()
             arrayIndex = Ar.readInt32()

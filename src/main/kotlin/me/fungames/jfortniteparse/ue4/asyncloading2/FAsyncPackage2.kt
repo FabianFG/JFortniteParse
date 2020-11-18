@@ -111,7 +111,7 @@ class FAsyncPackage2 {
             asyncPackageLoadingState = EAsyncPackageLoadingState2.ImportPackages
         }
 
-        val importedPackageIndex = 0
+        var importedPackageIndex = 0
 
         val globalPackageStore = asyncLoadingThread.globalPackageStore
         for (importedPackageId in desc.storeEntry!!.importedPackages) {
@@ -147,6 +147,7 @@ class FAsyncPackage2 {
             //importedPackage.addRef()
             check(importedPackageIndex == data.importedAsyncPackages.size)
             data.importedAsyncPackages.add(importedPackage)
+            ++importedPackageIndex
             if (bInserted.element) {
                 importedPackage.importPackagesRecursive()
                 importedPackage.startLoading()

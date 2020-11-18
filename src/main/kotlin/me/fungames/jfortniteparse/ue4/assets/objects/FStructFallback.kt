@@ -15,7 +15,7 @@ class FStructFallback : UClass {
         properties = mutableListOf()
         while (true) {
             val tag = FPropertyTag(Ar, true)
-            if (tag.name.text == "None")
+            if (tag.name.isNone())
                 break
             properties.add(tag)
         }

@@ -17,7 +17,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
-@ExperimentalUnsignedTypes
 open class UObject : UExport {
     lateinit var properties: MutableList<FPropertyTag>
     var objectGuid: FGuid? = null
@@ -109,7 +108,7 @@ open class UObject : UExport {
             val properties = mutableListOf<FPropertyTag>()
             while (true) {
                 val tag = FPropertyTag(Ar, true)
-                if (tag.name.text == "None")
+                if (tag.name.isNone())
                     break
                 properties.add(tag)
             }

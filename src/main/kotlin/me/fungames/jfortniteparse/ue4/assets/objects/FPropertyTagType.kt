@@ -181,7 +181,7 @@ sealed class FPropertyTagType(val propertyType: String) {
                     }
                 }
                 "EnumProperty" -> {
-                    return if (type == Type.NORMAL && (tagData == null || tagData.enumName == FName.NAME_None))
+                    return if (type == Type.NORMAL && (tagData == null || tagData.enumName.isNone()))
                         EnumProperty(FName.NAME_None, propertyType)
                     else if (Ar.useUnversionedPropertySerialization) {
                         val enumValue = tagData!!.enumClass!!.enumConstants[if (tagData.enumType == "IntProperty") Ar.readInt32() else Ar.read()]

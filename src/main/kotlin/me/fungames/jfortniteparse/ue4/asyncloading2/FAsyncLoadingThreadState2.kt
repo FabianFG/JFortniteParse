@@ -4,16 +4,16 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.io.FIoDispatcher
 
 class FAsyncLoadingThreadState2(val ioDispatcher: FIoDispatcher) {
-    val deferredFreeArcs = mutableListOf<Pair<FEventLoadNode2, UInt>>()
+    //val deferredFreeArcs = mutableListOf<Array<FEventLoadNode2>>()
     val nodesToFire = mutableListOf<FEventLoadNode2>()
     var currentEventNode: FEventLoadNode2? = null
-    val bShouldFireNodes = true
+    var bShouldFireNodes = true
     var bUseTimeLimit = false
     var timeLimit = 0.0
     var startTime = 0.0
     var lastTestTime = -1.0
 
-    fun hasDeferredFrees() = deferredFreeArcs.isNotEmpty()
+    //fun hasDeferredFrees() = deferredFreeArcs.isNotEmpty()
 
     /*fun processDeferredFrees() {
         if (deferredFreeArcs.isNotEmpty()) {

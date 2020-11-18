@@ -2,21 +2,52 @@ package me.fungames.jfortniteparse.ue4.assets
 
 import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.exports.*
+import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import java.util.concurrent.ConcurrentHashMap
 
-object UObjectRegistry {
+object ObjectTypeRegistry {
     private val classes = ConcurrentHashMap<String, Class<out UObject>>()
 
     init {
+        registerEngine()
+        registerFortnite()
+    }
+
+    private inline fun registerEngine() {
+        registerClass(UCurveTable::class.java)
+        registerClass(UDataAsset::class.java)
+        registerClass(UDataTable::class.java)
+        registerClass(ULevel::class.java)
+        registerClass(UPrimaryDataAsset::class.java)
+        registerClass(USoundWave::class.java)
+        registerClass(UStaticMesh::class.java)
+        registerClass(UStreamableRenderAsset::class.java)
+        registerClass(UStringTable::class.java)
+        registerClass(UTexture2D::class.java)
+        registerClass(UTexture::class.java)
+    }
+
+    private inline fun registerFortnite() {
         registerClass(AthenaBackpackItemDefinition::class.java)
         registerClass(AthenaCharacterItemDefinition::class.java)
+        registerClass(AthenaCharacterPartItemDefinition::class.java)
+        registerClass(AthenaCosmeticItemDefinition::class.java)
+        registerClass(AthenaDailyQuestDefinition::class.java)
         registerClass(AthenaEmojiItemDefinition::class.java)
         registerClass(AthenaPickaxeItemDefinition::class.java)
+        registerClass(FortAccountItemDefinition::class.java)
+        registerClass(FortCatalogMessaging::class.java)
         registerClass(FortCosmeticParticleVariant::class.java)
+        registerClass(FortCosmeticVariant::class.java)
+        registerClass(FortItemCategory::class.java)
+        registerClass(FortItemDefinition::class.java)
+        registerClass(FortItemSeriesDefinition::class.java)
+        registerClass(FortMtxOfferData::class.java)
+        registerClass(FortPersistableItemDefinition::class.java)
         registerClass(FortQuestItemDefinition::class.java)
-        registerClass(UTexture2D::class.java)
+        registerClass(McpItemDefinitionBase::class.java)
     }
 
     fun registerClass(clazz: Class<out UObject>) {

@@ -13,7 +13,6 @@ import java.nio.ByteOrder
 /**
  * UE4 Generic Binary reader
  */
-@ExperimentalUnsignedTypes
 abstract class FArchive : Cloneable, InputStream() {
     var game = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)
     var ver = GAME_UE4_GET_AR_VER(game)
@@ -27,13 +26,14 @@ abstract class FArchive : Cloneable, InputStream() {
     abstract fun size(): Int
     abstract fun pos(): Int
 
-    open fun readBuffer(size: Int) : ByteBuffer {
+    open fun readBuffer(size: Int): ByteBuffer {
         //if (!rangeCheck(pos() + size))
         //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
         val buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
         read(buffer.array())
         return buffer
     }
+
     open fun readBuffer(buffer: ByteBuffer) {
         val pos = buffer.position()
         buffer.put(read(buffer.remaining()))
@@ -45,9 +45,10 @@ abstract class FArchive : Cloneable, InputStream() {
     abstract override fun skip(n: Long): Long
     override fun read() = try {
         readUInt8().toInt()
-    } catch (t : Throwable) {
+    } catch (t: Throwable) {
         -1
     }
+
     abstract fun printError(): String
 
     open fun read(size: Int): ByteArray {
@@ -118,15 +119,13 @@ abstract class FArchive : Cloneable, InputStream() {
     fun readFlag() = readUInt8() != 0.toUByte()
 
     //FString
-    fun readString() : String {
-        val length = this.readInt32()
+    fun readString(): String {
+        val length = readInt32()
         if (!(-65536..65536).contains(length))
             throw ParserException("Invalid String length '$length'", this)
         return if (length < 0) {
             val utf16length = -length
-            val data = IntArray(utf16length)
-            for (i in 0..utf16length)
-                data[i] = readUInt16().toInt()
+            val data = IntArray(utf16length - 1) { readUInt16().toInt() }
             if (readUInt16() != 0.toUShort())
                 throw ParserException("Serialized FString is not null-terminated", this)
             String(data, 0, utf16length - 1)
@@ -144,7 +143,7 @@ abstract class FArchive : Cloneable, InputStream() {
         }
     }
 
-    inline fun <reified K, reified V> readTMap(length: Int, init : (FArchive) -> Pair<K,V>): MutableMap<K, V> {
+    inline fun <reified K, reified V> readTMap(length: Int, init: (FArchive) -> Pair<K, V>): MutableMap<K, V> {
         val res = HashMap<K, V>(length)
         for (i in 0 until length) {
             val (key, value) = init(this)
@@ -153,9 +152,9 @@ abstract class FArchive : Cloneable, InputStream() {
         return res
     }
 
-    inline fun <reified K, reified V> readTMap(init : (FArchive) -> Pair<K, V>) = readTMap(readInt32(), init)
+    inline fun <reified K, reified V> readTMap(init: (FArchive) -> Pair<K, V>) = readTMap(readInt32(), init)
 
-    inline fun <reified T> readTArray(length : Int, init : (FArchive) -> T) = Array(length) {init(this)}
+    inline fun <reified T> readTArray(length: Int, init: (FArchive) -> T) = Array(length) { init(this) }
 
     inline fun <reified T> readTArray(init: (FArchive) -> T) = readTArray(readInt32(), init)
 

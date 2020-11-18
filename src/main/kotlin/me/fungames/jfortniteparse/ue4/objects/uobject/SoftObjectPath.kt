@@ -44,7 +44,7 @@ class FSoftObjectPath : UClass {
     override fun toString() =
         // Most of the time there is no sub path so we can do a single string allocation
         if (subPathString.isEmpty()) {
-            if (assetPathName == FName.NAME_None) "" else assetPathName.toString()
+            if (assetPathName.isNone()) "" else assetPathName.toString()
         } else {
             "$assetPathName:$subPathString"
         }

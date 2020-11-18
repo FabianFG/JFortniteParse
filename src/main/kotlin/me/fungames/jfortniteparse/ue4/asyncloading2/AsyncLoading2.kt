@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.ue4.assets.ObjectTypeRegistry
 import me.fungames.jfortniteparse.ue4.assets.Package
-import me.fungames.jfortniteparse.ue4.assets.UObjectRegistry
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
@@ -397,5 +397,5 @@ fun GFindExistingScriptImport(
     }
 
 fun staticFindObjectFast(clazz: Class<*>, outer: UObject?, name: FName, exactClass: Boolean, anyPackage: Boolean = false): UObject? {
-    return UObjectRegistry.constructClass(name.toString())
+    return ObjectTypeRegistry.constructClass(name.toString())
 }

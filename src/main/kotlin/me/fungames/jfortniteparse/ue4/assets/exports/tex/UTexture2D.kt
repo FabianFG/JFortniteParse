@@ -33,7 +33,7 @@ class UTexture2D : UTexture() {
         textures = mutableMapOf()
         if (cooked) {
             var pixelFormat = Ar.readFName()
-            while (pixelFormat != FName.NAME_None) {
+            while (!pixelFormat.isNone()) {
                 val skipOffset = Ar.readInt64()
                 textures[FTexturePlatformData(Ar)] = pixelFormat
                 if (Ar.relativePos().toLong() != skipOffset) {
