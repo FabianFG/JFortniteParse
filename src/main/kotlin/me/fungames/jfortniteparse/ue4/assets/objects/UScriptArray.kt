@@ -4,7 +4,6 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
-@ExperimentalUnsignedTypes
 class UScriptArray : UClass {
     var innerTag: FPropertyTag? = null
     val contents: MutableList<FPropertyTagType>
@@ -20,7 +19,7 @@ class UScriptArray : UClass {
         }
         contents = mutableListOf()
         for (i in 0u until elementCount) {
-            val content = FPropertyTagType.readFPropertyTagType(Ar, tag.innerType.text, innerTag, FPropertyTagType.Type.ARRAY)
+            val content = FPropertyTagType.readFPropertyTagType(Ar, tag.innerType.text, innerTag, FPropertyTagType.ReadType.ARRAY)
             if (content != null)
                 contents.add(content)
             else
@@ -38,7 +37,7 @@ class UScriptArray : UClass {
         Ar.writeInt32(contents.size)
         innerTag?.serialize(Ar, false)
         contents.forEach {
-            FPropertyTagType.writeFPropertyTagType(Ar, it, FPropertyTagType.Type.ARRAY)
+            FPropertyTagType.writeFPropertyTagType(Ar, it, FPropertyTagType.ReadType.ARRAY)
         }
         super.completeWrite(Ar)
     }

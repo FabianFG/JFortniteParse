@@ -111,7 +111,7 @@ class FPropertyTag : UClass {
                     prop =
                         FPropertyTagType.readFPropertyTagType(
                             Ar, type.text, this,
-                            FPropertyTagType.Type.NORMAL
+                            FPropertyTagType.ReadType.NORMAL
                         )
                     if (finalPos != Ar.pos()) {
                         logger.warn("FPropertyTagType $name (${type}) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
@@ -161,7 +161,7 @@ class FPropertyTag : UClass {
                     FPropertyTagType.writeFPropertyTagType(
                         tempAr,
                         prop ?: throw ParserException("FPropertyTagType is needed when trying to write it"),
-                        FPropertyTagType.Type.NORMAL
+                        FPropertyTagType.ReadType.NORMAL
                     )
                     Ar.writeInt32(tempAr.pos() - Ar.pos())
                     tagTypeData = tempAr.toByteArray()

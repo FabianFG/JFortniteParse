@@ -15,7 +15,6 @@ import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.get
 import org.slf4j.event.Level
 import java.nio.ByteBuffer
-import kotlin.jvm.internal.Ref.BooleanRef
 
 /**
  * Structure containing intermediate data required for async loading of all exports of a package.
@@ -114,7 +113,7 @@ class FAsyncPackage2 {
         var importedPackageIndex = 0
 
         val globalPackageStore = asyncLoadingThread.globalPackageStore
-        for (importedPackageId in desc.storeEntry!!.importedPackages) {
+        /*for (importedPackageId in desc.storeEntry!!.importedPackages) {
             val packageRef = globalPackageStore.loadedPackageStore.getOrPut(importedPackageId) { FLoadedPackageRef() }
             if (packageRef.areAllPublicExportsLoaded()) {
                 continue
@@ -152,7 +151,7 @@ class FAsyncPackage2 {
                 importedPackage.importPackagesRecursive()
                 importedPackage.startLoading()
             }
-        }
+        }*/
         asyncPackageLogVerbose(Level.TRACE, desc, "ImportPackages: ImportsDone",
             "All imported packages are now being loaded.")
 
@@ -179,19 +178,21 @@ class FAsyncPackage2 {
 
         if (!bLoadHasFailed) {
             val allExportDataSize = ioBuffer.size.toULong() - (allExportDataPtr - ioBufferOff.toULong())
-            val Ar = FExportArchive(ByteBuffer.wrap(ioBuffer, currentExportDataPtr.toInt(), allExportDataSize.toInt())).also {
+            val Ar = FExportArchive(
+                data = ByteBuffer.wrap(ioBuffer, currentExportDataPtr.toInt(), allExportDataSize.toInt()),
+                packageDesc = desc,
+                nameMap = nameMap,
+                importStore = importStore,
+                exports = data.exports,
+                exportMap = exportMap,
+                externalReadDependencies = externalReadDependencies
+            ).also {
                 it.useUnversionedPropertySerialization = (linkerRoot!!.packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
                 it.owner = linkerRoot!!
                 it.uassetSize = (cookedHeaderSize - allExportDataPtr).toInt()
 
                 // FExportArchive special fields
                 it.cookedHeaderSize = cookedHeaderSize
-                it.packageDesc = desc
-                it.nameMap = nameMap
-                it.importStore = importStore
-                it.exports = data.exports
-                it.exportMap = exportMap
-                it.externalReadDependencies = externalReadDependencies
             }
             val exportBundle = data.exportBundleHeaders[exportBundleIndex]
             for (i in 0u until exportBundle.entryCount) {
@@ -223,9 +224,10 @@ class FAsyncPackage2 {
                     if (!bSerialized) {
                         Ar.skip(cookedSerialSize.toLong())
                     }
-                    check(cookedSerialSize == (Ar.pos() - pos).toULong()) {
-                        "Package %s: Expected read size: %d - Actual read size: %d"
-                            .format(desc.diskPackageName.toString(), cookedSerialSize.toLong(), Ar.pos() - pos)
+                    if (cookedSerialSize != (Ar.pos() - pos).toULong()) {
+                        LOG_STREAMING.warn("Package %s: Expected read size: %d - Actual read size: %d"
+                            .format(desc.diskPackageName.toString(), cookedSerialSize.toLong(), Ar.pos() - pos))
+                        Ar.seek(pos + cookedSerialSize.toInt())
                     }
 
                     //Ar.exportBufferEnd()
@@ -240,7 +242,7 @@ class FAsyncPackage2 {
         if (exportBundleIndex + 1 < data.exportBundleCount) {
             getExportBundleNode(ExportBundle_Process, exportBundleIndex + 1).releaseBarrier()
         } else {
-            importStore.importMap.clear()
+            //importStore.importMap.clear()
             ioBuffer = ByteArray(0)
 
             if (externalReadDependencies.isEmpty()) {
@@ -445,6 +447,7 @@ class FAsyncPackage2 {
         }
         obj = importStore.findOrGetImportObject(trigger)!!.apply {
             name = objectName.toString()
+            owner = linkerRoot
             pathName = desc.diskPackageName.toString() + '.' + name
             flags = flags or export.objectFlags.toInt()
         }
@@ -517,7 +520,12 @@ class FAsyncPackage2 {
         if (obj.hasAnyFlags(RF_ClassDefaultObject.value)) {
             //obj.clazz.serializeDefaultObject(obj, Ar)
         } else {
-            obj.deserialize(Ar, 0)
+            try {
+                obj.deserialize(Ar, 0)
+            } catch (e: Throwable) {
+                LOG_STREAMING.warn("Failed to deserialize ${obj.pathName}", e)
+                bLoadHasFailed = true
+            }
         }
         //Ar.templateForGetArchetypeFromLoader = null
 

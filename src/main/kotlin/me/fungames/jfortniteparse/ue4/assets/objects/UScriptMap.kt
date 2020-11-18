@@ -5,7 +5,6 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
-@ExperimentalUnsignedTypes
 class UScriptMap : UClass {
     var numKeysToRemove: Int
     val mapData: MutableMap<FPropertyTagType, FPropertyTagType>
@@ -19,15 +18,15 @@ class UScriptMap : UClass {
         numKeysToRemove = Ar.readInt32()
         if (numKeysToRemove != 0) {
             for (i in 0 until numKeysToRemove) {
-                FPropertyTagType.readFPropertyTagType(Ar, keyType, tag, FPropertyTagType.Type.MAP)
+                FPropertyTagType.readFPropertyTagType(Ar, keyType, tag, FPropertyTagType.ReadType.MAP)
             }
         }
         val length = Ar.readInt32()
         mapData = mutableMapOf()
         for (i in 0 until length) {
             try {
-                mapData[FPropertyTagType.readFPropertyTagType(Ar, keyType, tag, FPropertyTagType.Type.MAP)!!] =
-                    FPropertyTagType.readFPropertyTagType(Ar, valueType, tag, FPropertyTagType.Type.MAP)!!
+                mapData[FPropertyTagType.readFPropertyTagType(Ar, keyType, tag, FPropertyTagType.ReadType.MAP)!!] =
+                    FPropertyTagType.readFPropertyTagType(Ar, valueType, tag, FPropertyTagType.ReadType.MAP)!!
             } catch (e: ParserException) {
                 throw ParserException("Failed to read key/value pair for index $i in map", Ar, e)
             }
@@ -40,8 +39,8 @@ class UScriptMap : UClass {
         Ar.writeInt32(numKeysToRemove)
         Ar.writeInt32(mapData.size)
         mapData.forEach {
-            FPropertyTagType.writeFPropertyTagType(Ar, it.key, FPropertyTagType.Type.MAP)
-            FPropertyTagType.writeFPropertyTagType(Ar, it.value, FPropertyTagType.Type.MAP)
+            FPropertyTagType.writeFPropertyTagType(Ar, it.key, FPropertyTagType.ReadType.MAP)
+            FPropertyTagType.writeFPropertyTagType(Ar, it.value, FPropertyTagType.ReadType.MAP)
         }
         super.completeWrite(Ar)
     }

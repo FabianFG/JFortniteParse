@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.assets.util
 
 import com.google.gson.annotations.SerializedName
@@ -11,17 +9,15 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
-import me.fungames.jfortniteparse.ue4.assets.objects.FStructFallback
+import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
 import org.objenesis.ObjenesisStd
 import java.lang.reflect.Field
 import java.util.*
 
-inline fun <reified T> FStructFallback.mapToClass() = mapToClass(properties, T::class.java)
-inline fun <reified T> UObject.mapToClass() = mapToClass(properties, T::class.java)
-fun <T> FStructFallback.mapToClass(clazz: Class<T>): T = mapToClass(properties, clazz)
-fun <T> UObject.mapToClass(clazz: Class<T>): T = mapToClass(properties, clazz)
+inline fun <reified T> IPropertyHolder.mapToClass() = mapToClass(properties, T::class.java)
+inline fun <T> IPropertyHolder.mapToClass(clazz: Class<T>): T = mapToClass(properties, clazz)
 
-fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>): T = mapToClass(properties, clazz, ObjenesisStd().newInstance(clazz))
+inline fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>): T = mapToClass(properties, clazz, ObjenesisStd().newInstance(clazz))
 fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
     try {
         val boundFields = getBoundFields(TypeToken.get(clazz), clazz)

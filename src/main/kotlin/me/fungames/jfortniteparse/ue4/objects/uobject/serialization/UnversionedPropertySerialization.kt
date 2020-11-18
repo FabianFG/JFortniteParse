@@ -7,8 +7,6 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType
-import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType.ArrayProperty
-import me.fungames.jfortniteparse.ue4.assets.objects.UScriptArray
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
@@ -122,17 +120,14 @@ class FUnversionedPropertySerializer(val propertyInfo: PropertyInfo, val arrayIn
         val propertyType = propertyInfo.type!!
         val tag = FPropertyTag(propertyInfo)
         tag.arrayIndex = arrayIndex
-        tag.prop = FPropertyTagType.readFPropertyTagType(Ar, propertyType, tag, FPropertyTagType.Type.NORMAL)
+        tag.prop = FPropertyTagType.readFPropertyTagType(Ar, propertyType, tag, FPropertyTagType.ReadType.NORMAL)
         return tag
     }
 
     fun loadZero(Ar: FAssetArchive): FPropertyTag {
         val propertyType = propertyInfo.type!!
         val tag = FPropertyTag(propertyInfo)
-        tag.prop = when (propertyType) {
-            "ArrayProperty" -> ArrayProperty(UScriptArray(FPropertyTag(propertyInfo), mutableListOf(), propertyInfo.innerType!!), propertyType)
-            else -> null
-        }
+        tag.prop = FPropertyTagType.readFPropertyTagType(Ar, propertyType, tag, FPropertyTagType.ReadType.ZERO)
         return tag
     }
 
@@ -147,7 +142,6 @@ class FUnversionedPropertySerializer(val propertyInfo: PropertyInfo, val arrayIn
  * Serialization is based on indices into this property array
  */
 class FUnversionedStructSchema(struct: Class<*>) {
-    val num = 0u
     val serializers = mutableMapOf<Int, FUnversionedPropertySerializer>()
 
     init {
@@ -176,17 +170,15 @@ class FUnversionedStructSchema(struct: Class<*>) {
     }
 }
 
+val schemaCache = mutableMapOf<Class<*>, FUnversionedStructSchema>()
+
 fun getOrCreateUnversionedSchema(struct: Class<*>): FUnversionedStructSchema {
     /*val existingSchema = struct.existingSchema
     if (existingSchema != null) {
         return existingSchema
     }*/
 
-    val createdSchema = FUnversionedStructSchema(struct)
-
-    // TODO cache the schema
-
-    return createdSchema
+    return schemaCache.getOrPut(struct) { FUnversionedStructSchema(struct) }
 }
 
 /**
@@ -330,12 +322,13 @@ class FUnversionedHeader {
     }
 }
 
-fun deserializeUnversionedProperties(struct: Class<*>, Ar: FAssetArchive, properties: MutableList<FPropertyTag>) {
+fun deserializeUnversionedProperties(struct: Class<*>, Ar: FAssetArchive): MutableList<FPropertyTag> {
     //check(canUseUnversionedPropertySerialization())
 
+    val properties = mutableListOf<FPropertyTag>()
     val header = FUnversionedHeader()
     header.load(Ar)
-    println("Load: $struct, $header")
+    println("Load: ${struct.simpleName}")
 
     if (header.hasValues()) {
         val schemas = getOrCreateUnversionedSchema(struct).serializers
@@ -370,4 +363,6 @@ fun deserializeUnversionedProperties(struct: Class<*>, Ar: FAssetArchive, proper
             }
         }
     }
+
+    return properties
 }

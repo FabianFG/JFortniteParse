@@ -45,6 +45,7 @@ class UScriptStruct : UClass {
             "Rotator" -> FRotator(Ar)
             "Quat" -> FQuat(Ar)
             "IntVector" -> FIntVector(Ar)
+            "Transform" -> FTransform(Ar)
             "PerPlatformInt" -> FPerPlatformInt(Ar)
             "PerPlatformFloat" -> FPerPlatformFloat(Ar)
             "PerPlatformBool" -> FPerPlatformBool(Ar)

@@ -8,6 +8,7 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
+import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -17,8 +18,8 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
-open class UObject : UExport {
-    lateinit var properties: MutableList<FPropertyTag>
+open class UObject : UExport, IPropertyHolder {
+    override lateinit var properties: MutableList<FPropertyTag>
     var objectGuid: FGuid? = null
     var readGuid = false
     var flags = 0
@@ -59,10 +60,10 @@ open class UObject : UExport {
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.init(Ar)
-        if (Ar.useUnversionedPropertySerialization) {
-            deserializeUnversionedProperties(javaClass, Ar, properties)
+        properties = if (Ar.useUnversionedPropertySerialization) {
+            deserializeUnversionedProperties(javaClass, Ar)
         } else {
-            properties = deserializeProperties(Ar)
+            deserializeProperties(Ar)
         }
         if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
             objectGuid = FGuid(Ar)

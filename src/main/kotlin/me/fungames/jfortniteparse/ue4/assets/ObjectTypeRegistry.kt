@@ -20,6 +20,7 @@ object ObjectTypeRegistry {
         registerClass(UDataAsset::class.java)
         registerClass(UDataTable::class.java)
         registerClass(ULevel::class.java)
+        registerClass(UPaperSprite::class.java)
         registerClass(UPrimaryDataAsset::class.java)
         registerClass(USoundWave::class.java)
         registerClass(UStaticMesh::class.java)
@@ -63,12 +64,18 @@ object ObjectTypeRegistry {
     }
 
     fun constructClass(serializedName: String): UObject {
+        if (serializedName.startsWith("/Script/") || serializedName.startsWith("Default__")) {
+            return UObject().apply { exportType = serializedName }
+        }
         var clazz = classes[serializedName]
         if (clazz == null) {
             UClass.logger.warn("Didn't find class $serializedName in registry")
             clazz = UObject::class.java
         }
-        return clazz.newInstance().apply { readGuid = true }
+        return clazz.newInstance().apply {
+            readGuid = true
+            exportType = serializedName
+        }
     }
 }
 

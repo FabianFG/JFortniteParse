@@ -18,12 +18,12 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
 
     // Asset Specific Fields
     lateinit var owner: Package
-    private var payloads = mutableMapOf<PayloadType, FAssetArchive>()
+    protected var payloads = mutableMapOf<PayloadType, FAssetArchive>()
     var uassetSize = 0
     var uexpSize = 0
     var bulkDataStartOffset = 0
 
-    fun getPayload(type: PayloadType) = payloads[type] ?: throw ParserException("${type.name} is needed to parse the current package")
+    open fun getPayload(type: PayloadType) = payloads[type] ?: throw ParserException("${type.name} is needed to parse the current package")
     fun addPayload(type: PayloadType, payload: FAssetArchive) {
         if (payloads.containsKey(type))
             throw ParserException("Can't add a payload that is already attached of type ${type.name}")
