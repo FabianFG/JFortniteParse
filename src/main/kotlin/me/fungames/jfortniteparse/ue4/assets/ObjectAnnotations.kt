@@ -7,6 +7,7 @@ annotation class OnlyAnnotated
 
 @Target(AnnotationTarget.FIELD)
 annotation class UProperty(
+    val name: String = "",
     val skipPrevious: Int = 0,
     val skipNext: Int = 0,
     val arrayDim: Int = 1,

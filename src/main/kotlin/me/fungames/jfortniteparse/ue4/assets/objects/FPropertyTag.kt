@@ -12,6 +12,7 @@ import me.fungames.jfortniteparse.ue4.versions.VER_UE4_PROPERTY_GUID_IN_PROPERTY
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_PROPERTY_TAG_SET_MAP_SUPPORT
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_STRUCT_GUID_IN_PROPERTY_TAG
 import me.fungames.jfortniteparse.util.INDEX_NONE
+import java.lang.reflect.Type
 
 /**
  * A tag describing a class property, to aid in serialization.
@@ -131,10 +132,10 @@ class FPropertyTag : UClass {
         super.complete(Ar)
     }
 
-    fun <T> getTagTypeValue(clazz: Class<T>): T? {
+    fun <T> getTagTypeValue(clazz: Class<T>, type: Type? = null): T? {
         if (prop == null)
             throw IllegalArgumentException("This tag was read without data")
-        return prop?.getTagTypeValue(clazz)
+        return prop?.getTagTypeValue(clazz, type)
     }
 
     inline fun <reified T> getTagTypeValue(): T? {

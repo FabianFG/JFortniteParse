@@ -1,16 +1,23 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
-import me.fungames.jfortniteparse.ue4.assets.Package
+import jdk.nashorn.internal.runtime.ParserException
+import me.fungames.jfortniteparse.ue4.assets.*
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
-@ExperimentalUnsignedTypes
+@OnlyAnnotated
 class UDataTable : UObject {
-    var RowStruct: FPackageIndex? = null
+    @JvmField @UProperty var RowStruct: FPackageIndex? = null // UScriptStruct
+    @JvmField @UProperty var bStripFromClientBuilds: Boolean? = null
+    @JvmField @UProperty var bIgnoreExtraFields: Boolean? = null
+    @JvmField @UProperty var bIgnoreMissingFields: Boolean? = null
+    @JvmField @UProperty var ImportKeyField: String? = null
+
     lateinit var rows: MutableMap<FName, UObject>
 
     constructor() : this(mutableMapOf())
@@ -24,8 +31,21 @@ class UDataTable : UObject {
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
         rows = Ar.readTMap {
-            Ar.readFName() to UObject(deserializeProperties(Ar), null, "RowStruct")
-                .apply { mapToClass(properties, javaClass, this) }
+            val key = Ar.readFName()
+            val rowProperties = if (Ar.useUnversionedPropertySerialization) {
+                val rowStructName = if (Ar.owner is IoPackage) {
+                    (Ar.owner as IoPackage).run { RowStruct!!.getImportObject()!!.findFromGlobal()!!.objectName.toName() }
+                } else {
+                    (Ar.owner as PakPackage).run { RowStruct!!.getResource()!!.objectName }
+                }
+                val clazz = ObjectTypeRegistry.structs[rowStructName.text]
+                    ?: throw ParserException("$rowStructName can't be parsed yet")
+                deserializeUnversionedProperties(clazz, Ar)
+            } else {
+                deserializeTaggedProperties(Ar)
+            }
+            val value = UObject(rowProperties, null, "RowStruct")
+            key to value
         }
         super.complete(Ar)
     }
@@ -38,6 +58,10 @@ class UDataTable : UObject {
         }
         super.completeWrite(Ar)
     }
+
+    fun findRow(rowName: String) = rows[FName.dummy(rowName)]
+    fun findRow(rowName: FName) = rows[rowName]
+    fun <T> findRow(rowName: String, clazz: Class<T>): T? = findRow(rowName)?.mapToClass(clazz)
 
     fun toJson(): String {
         val data = rows.mapKeys { it.key.text }.mapValues { Package.gson.toJsonTree(it.value) }

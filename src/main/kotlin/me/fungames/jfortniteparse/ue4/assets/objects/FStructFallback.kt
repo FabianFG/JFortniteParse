@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -11,13 +12,7 @@ class FStructFallback : UClass, IPropertyHolder {
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
-        properties = mutableListOf()
-        while (true) {
-            val tag = FPropertyTag(Ar, true)
-            if (tag.name.isNone())
-                break
-            properties.add(tag)
-        }
+        properties = UObject.deserializeTaggedProperties(Ar)
         super.complete(Ar)
     }
 

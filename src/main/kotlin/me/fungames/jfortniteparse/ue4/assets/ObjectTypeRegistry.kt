@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import me.fungames.jfortniteparse.fort.exports.*
+import me.fungames.jfortniteparse.fort.objects.FortPhoenixLevelRewardData
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.*
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
@@ -8,7 +9,8 @@ import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import java.util.concurrent.ConcurrentHashMap
 
 object ObjectTypeRegistry {
-    private val classes = ConcurrentHashMap<String, Class<out UObject>>()
+    val classes = ConcurrentHashMap<String, Class<out UObject>>()
+    val structs = ConcurrentHashMap<String, Class<*>>()
 
     init {
         registerEngine()
@@ -49,6 +51,8 @@ object ObjectTypeRegistry {
         registerClass(FortPersistableItemDefinition::class.java)
         registerClass(FortQuestItemDefinition::class.java)
         registerClass(McpItemDefinitionBase::class.java)
+
+        registerStruct(FortPhoenixLevelRewardData::class.java)
     }
 
     fun registerClass(clazz: Class<out UObject>) {
@@ -61,6 +65,18 @@ object ObjectTypeRegistry {
 
     fun registerClass(serializedName: String, clazz: Class<out UObject>) {
         classes[serializedName] = clazz
+    }
+
+    fun registerStruct(clazz: Class<*>) {
+        var name = clazz.simpleName
+        if (name[0] == 'F' && name[1].isUpperCase()) {
+            name = name.substring(1)
+        }
+        registerStruct(name, clazz)
+    }
+
+    fun registerStruct(serializedName: String, clazz: Class<*>) {
+        structs[serializedName] = clazz
     }
 
     fun constructClass(serializedName: String): UObject {
@@ -76,6 +92,18 @@ object ObjectTypeRegistry {
             readGuid = true
             exportType = serializedName
         }
+    }
+
+    fun constructStruct(serializedName: String): Any {
+        if (serializedName.startsWith("/Script/") || serializedName.startsWith("Default__")) {
+            return Object()
+        }
+        val clazz = structs[serializedName]
+        if (clazz == null) {
+            UClass.logger.warn("Didn't find class $serializedName in registry")
+            return Object()
+        }
+        return clazz.newInstance()
     }
 }
 

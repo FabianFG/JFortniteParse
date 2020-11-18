@@ -24,7 +24,7 @@ fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
         for (prop in properties) {
             val field = boundFields[prop.name.text] ?: continue
             val fieldType = field.type
-            val content = prop.getTagTypeValue(fieldType)
+            val content = prop.getTagTypeValue(fieldType, field.genericType)
             if (content == null)
                 UClass.logger.warn { "Failed to get tag type value for field ${prop.name} of type ${fieldType.simpleName}" }
             else {

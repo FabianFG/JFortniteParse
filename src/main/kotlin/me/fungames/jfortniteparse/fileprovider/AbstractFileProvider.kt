@@ -59,7 +59,7 @@ abstract class AbstractFileProvider : FileProvider() {
             return try {
                 event.await()
             } catch (e: Throwable) {
-                logger.error("Failed to load package $path from IoStore", e)
+                logger.error("Failed to load package $path from IoStore")
                 null
             }
         }

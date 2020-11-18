@@ -3,7 +3,6 @@ package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType
@@ -40,11 +39,14 @@ class PropertyInfo {
 
     constructor(field: Field, ann: UProperty?) {
         this.field = field
-        name = field.name
 
         if (ann != null) {
-            this.arrayDim = ann.arrayDim
-            this.enumType = ann.enumType
+            name = ann.name.takeIf { it.isNotEmpty() }
+            arrayDim = ann.arrayDim
+            enumType = ann.enumType.takeIf { it.isNotEmpty() }
+        }
+        if (name == null) {
+            name = field.name
         }
 
         type = propertyType(field.type)
@@ -108,7 +110,7 @@ class PropertyInfo {
             List::class.java.isAssignableFrom(c) -> "ArrayProperty"
             Set::class.java.isAssignableFrom(c) -> "SetProperty"
             Map::class.java.isAssignableFrom(c) -> "MapProperty"
-            c == FPackageIndex::class.java || UExport::class.java.isAssignableFrom(c) -> "ObjectProperty"
+            c == FPackageIndex::class.java || UObject::class.java.isAssignableFrom(c) -> "ObjectProperty"
             c == FSoftObjectPath::class.java -> "SoftObjectProperty"
             else -> "StructProperty"
         }

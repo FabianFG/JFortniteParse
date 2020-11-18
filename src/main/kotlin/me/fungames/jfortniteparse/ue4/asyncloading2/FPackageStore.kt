@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
-import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_High
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
@@ -172,8 +171,8 @@ class FPackageStore(
     fun finalizeInitialLoad() {
         //importStore.findAllScriptObjects()
 
-        LOG_STREAMING.info("AsyncLoading2 - InitialLoad Finalized: %d script object entries in %.2f KB"
-            .format(importStore.scriptObjects.size, ObjectSizeCalculator.getObjectSize(importStore.scriptObjects) / 1024f))
+        /*LOG_STREAMING.info("AsyncLoading2 - InitialLoad Finalized: %d script object entries in %.2f KB"
+            .format(importStore.scriptObjects.size, ObjectSizeCalculator.getObjectSize(importStore.scriptObjects) / 1024f))*/
     }
 
     //inline val globalImportStore get() = importStore

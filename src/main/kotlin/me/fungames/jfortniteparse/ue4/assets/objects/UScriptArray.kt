@@ -7,7 +7,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 class UScriptArray : UClass {
     var innerTag: FPropertyTag? = null
     val contents: MutableList<FPropertyTagType>
-    val data: MutableList<Any>
+    //val data: MutableList<Any>
     var innerType: String
 
     constructor(Ar: FAssetArchive, tag: FPropertyTag) {
@@ -26,8 +26,8 @@ class UScriptArray : UClass {
                 logger.warn("Failed to read array content of type $innerType at ${Ar.pos()}, index $i")
         }
 
-        data = mutableListOf()
-        contents.forEach { data.add(it.getTagTypeValueLegacy()) }
+        //data = mutableListOf()
+        //contents.forEach { data.add(it.getTagTypeValueLegacy()) }
 
         super.complete(Ar)
     }
@@ -47,8 +47,8 @@ class UScriptArray : UClass {
     constructor(innerTag: FPropertyTag?, contents: MutableList<FPropertyTagType>, innerType: String) {
         this.innerTag = innerTag
         this.contents = contents
-        this.data = mutableListOf()
-        contents.forEach { this.data.add(it.getTagTypeValueLegacy()) }
+        //this.data = mutableListOf()
+        //contents.forEach { this.data.add(it.getTagTypeValueLegacy()) }
         this.innerType = innerType
     }
 }

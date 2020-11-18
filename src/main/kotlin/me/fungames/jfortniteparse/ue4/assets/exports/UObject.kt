@@ -63,7 +63,7 @@ open class UObject : UExport, IPropertyHolder {
         properties = if (Ar.useUnversionedPropertySerialization) {
             deserializeUnversionedProperties(javaClass, Ar)
         } else {
-            deserializeProperties(Ar)
+            deserializeTaggedProperties(Ar)
         }
         if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
             objectGuid = FGuid(Ar)
@@ -105,7 +105,7 @@ open class UObject : UExport, IPropertyHolder {
     }
 
     companion object {
-        fun deserializeProperties(Ar: FAssetArchive): MutableList<FPropertyTag> {
+        fun deserializeTaggedProperties(Ar: FAssetArchive): MutableList<FPropertyTag> {
             val properties = mutableListOf<FPropertyTag>()
             while (true) {
                 val tag = FPropertyTag(Ar, true)

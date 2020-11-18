@@ -16,6 +16,8 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.UInterfaceProperty
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 import java.lang.reflect.Array
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 
 sealed class FPropertyTagType(val propertyType: String) {
     inline fun <reified T> getTagTypeValue(): T? {
@@ -24,7 +26,7 @@ sealed class FPropertyTagType(val propertyType: String) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T> getTagTypeValue(clazz: Class<T>): T? {
+    fun <T> getTagTypeValue(clazz: Class<T>, type: Type? = null): T? {
         val value = getTagTypeValueLegacy()
         return when {
             clazz.isAssignableFrom(value::class.java) -> value
@@ -39,7 +41,7 @@ sealed class FPropertyTagType(val propertyType: String) {
             value is FStructFallback && clazz.isAnnotationPresent(UStruct::class.java) -> value.mapToClass(clazz)
             value is UScriptArray && clazz.isArray -> {
                 val content = clazz.componentType
-                val array = Array.newInstance(content, value.data.size)
+                val array = Array.newInstance(content, value.contents.size)
                 value.contents.forEachIndexed { i, tag ->
                     val data = tag.getTagTypeValue(content)
                     if (data != null)
@@ -48,6 +50,40 @@ sealed class FPropertyTagType(val propertyType: String) {
                         UClass.logger.error { "Failed to get value at index $i in UScriptArray for content class ${content::class.java.simpleName}" }
                 }
                 array
+            }
+            value is UScriptArray && List::class.java.isAssignableFrom(clazz) && type != null -> {
+                val typeArgs = (type as ParameterizedType).actualTypeArguments
+                val innerType = typeArgs[0]
+                value.contents.mapIndexed { i, tag ->
+                    val mapped = if (innerType is ParameterizedType) {
+                        tag.getTagTypeValue(innerType.rawType as Class<*>, innerType)
+                    } else {
+                        tag.getTagTypeValue(innerType as Class<Any>)
+                    }
+                    if (mapped == null)
+                        UClass.logger.error { "Failed to get value at index $i in UScriptArray for content class ${innerType::class.java.simpleName}" }
+                    mapped
+                }
+            }
+            value is UScriptMap && Map::class.java.isAssignableFrom(clazz) && type != null -> {
+                val typeArgs = (type as ParameterizedType).actualTypeArguments
+                val keyType = typeArgs[0]
+                val valueType = typeArgs[1]
+                val map = linkedMapOf<Any?, Any?>()
+                value.mapData.forEach { (k, v) ->
+                    val mappedKey = if (keyType is ParameterizedType) {
+                        k.getTagTypeValue(keyType.rawType as Class<*>, keyType)
+                    } else {
+                        k.getTagTypeValue(keyType as Class<Any>)
+                    }
+                    val mappedValue = if (valueType is ParameterizedType) {
+                        v.getTagTypeValue(valueType.rawType as Class<*>, valueType)
+                    } else {
+                        v.getTagTypeValue(valueType as Class<Any>)
+                    }
+                    map[mappedKey] = mappedValue
+                }
+                map
             }
             value is FPackageIndex && UExport::class.java.isAssignableFrom(clazz) -> {
                 val export = value.owner?.loadObjectGeneric(value)
@@ -69,7 +105,6 @@ sealed class FPropertyTagType(val propertyType: String) {
                     values.getOrNull(idx)
                 }
             }
-            //TODO maybe also add Map
             else -> null
         } as T
     }

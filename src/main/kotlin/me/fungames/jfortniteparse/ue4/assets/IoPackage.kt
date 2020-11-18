@@ -69,8 +69,6 @@ class IoPackage(val importStore: FPackageImportStore,
 
     fun FPackageIndex.getExportObject() = if (isExport()) exportMap[toExport()] else null
 
-    fun FPackageIndex.getResource() = getImportObject() ?: getExportObject()
-
     fun FPackageObjectIndex.findFromGlobal() = if (isNull()) null else importStore.globalImportStore.scriptObjectEntriesMap[this]
     // endregion
 }
