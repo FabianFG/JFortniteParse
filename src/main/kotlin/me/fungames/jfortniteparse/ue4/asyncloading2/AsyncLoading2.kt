@@ -1,8 +1,6 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
-import me.fungames.jfortniteparse.ue4.assets.ObjectTypeRegistry
 import me.fungames.jfortniteparse.ue4.assets.Package
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -379,11 +377,12 @@ class FExportMapEntry {
 
 var GIsInitialLoad = true
 
-fun GFindExistingScriptImport(
+/*fun GFindExistingScriptImport(
     globalImportIndex: FPackageObjectIndex,
     scriptObjects: MutableMap<FPackageObjectIndex, UObject?>,
     scriptObjectEntriesMap: Map<FPackageObjectIndex, FScriptObjectEntry>): UObject? =
-    scriptObjects.getOrPut(globalImportIndex) {
+    scriptObjects.getOrPut(globalImportIndex.apply { println(hashCode()) }) {
+        println("put: ${globalImportIndex.hashCode()}")
         val entry = scriptObjectEntriesMap[globalImportIndex]
         check(entry != null)
         var obj: UObject?
@@ -401,4 +400,4 @@ fun GFindExistingScriptImport(
 
 fun staticFindObjectFast(clazz: Class<*>, outer: UObject?, name: FName, exactClass: Boolean, anyPackage: Boolean = false): UObject? {
     return ObjectTypeRegistry.constructClass(name.toString())
-}
+}*/

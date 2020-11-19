@@ -1,11 +1,11 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.fort.converters
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.fort.*
 import me.fungames.jfortniteparse.fort.exports.*
+import me.fungames.jfortniteparse.fort.exports.FortMtxOfferData.EFortMtxOfferDisplaySize
+import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariantBackedByArray
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
@@ -116,13 +116,6 @@ fun FortItemDefinition.createContainer(
     }
     val seriesDef = Series?.load<FortItemSeriesDefinition>()
     val seriesIcon = seriesDef?.BackgroundTexture?.load<UTexture2D>()?.toBufferedImage()
-    if (loadVariants) {
-        this.ItemVariants.forEach { variants ->
-            variants?.variants?.forEach {
-                it.previewImage?.load<UTexture2D>()?.apply { it.previewIcon = toBufferedImage() }
-            }
-        }
-    }
     return ItemDefinitionContainer(this, icon, Rarity.rarityName.copy(), isFeatured, set?.run { ItemDefinitionInfo.sets[text] }?.run { SetName(this) }, seriesIcon, seriesDef)
 }
 
@@ -133,9 +126,19 @@ open class SetName(
     open fun finalTextForLocres(locres: Locres?) = wrapper.textForLocres(locres).replace("<SetName>{0}</>", set.textForLocres(locres))
 }
 
-class ItemDefinitionContainer(val itemDefinition: FortItemDefinition, var icon: BufferedImage, var rarityText: FText, var isFeaturedIcon: Boolean, val setName: SetName?, var seriesIcon: BufferedImage?, var seriesDef: FortItemSeriesDefinition?) : Cloneable {
+class ItemDefinitionContainer(val itemDefinition: FortItemDefinition,
+                              var icon: BufferedImage,
+                              var rarityText: FText,
+                              var isFeaturedIcon: Boolean,
+                              val setName: SetName?,
+                              var seriesIcon: BufferedImage?,
+                              var seriesDef: FortItemSeriesDefinition?) : Cloneable {
     val variantsLoaded: Boolean
-        get() = itemDefinition.ItemVariants.firstOrNull { variant -> variant?.variants?.firstOrNull { it.previewIcon != null } != null } != null
+        get() = itemDefinition is AthenaCosmeticItemDefinition && itemDefinition.ItemVariants.firstOrNull { channel ->
+            channel is FortCosmeticVariantBackedByArray && channel.variants?.firstOrNull { variantDef ->
+                variantDef.PreviewImage != null && !variantDef.PreviewImage.assetPathName.isNone()
+            } != null
+        } != null
 
     fun getImage(locres: Locres? = null) = getImage(this, locres)
     fun getImageWithVariants(locres: Locres? = null) = getImageWithVariants(this, locres)
@@ -158,9 +161,10 @@ private const val variantsSpaceBetween = 5
 private const val variantsMaxPerRow = 7
 private const val variantsBeginX = 11
 private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Locres?): BufferedImage {
-    val itemDef = container.itemDefinition
+    val itemDef = container.itemDefinition as AthenaCosmeticItemDefinition
     var icon = container.icon
-    val vars = itemDef.ItemVariants.toMutableList()
+    //Don't include numeric and pattern channels (used for soccer skins, cannot be displayed properly)
+    val vars = itemDef.ItemVariants.filterIsInstance<FortCosmeticVariantBackedByArray>()
     if (icon.width != variantsIconSize || icon.height != variantsIconSize)
         icon = icon.scale(
             variantsIconSize,
@@ -180,13 +184,6 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
     val burbank = FortResources.burbank
     val notoSans = FortResources.notoSans
 
-    //Remove numeric and pattern channels (used for soccer skins, cannot be displayed properly)
-    vars.removeIf {
-        it?.VariantChannelTag?.toString() == "Cosmetics.Variant.Channel.Pattern" || it?.VariantChannelTag?.toString() == "Cosmetics.Variant.Channel.Numeric"
-                || it?.VariantChannelTag?.toString()?.contains("PATTERN") == true || it?.VariantChannelTag?.toString()?.contains("NUMBER") == true
-                || it?.exportType == "FortCosmeticRichColorVariant"
-    }
-
     var numChannels = vars.size
 
     if (numChannels > 2) {
@@ -196,7 +193,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
     val availableX = variantsX - (numChannels * g.fontMetrics.height)
 
     val totalRows = vars.sumBy {
-        var count = it?.variants?.size ?: 0
+        var count = it.variants?.size ?: 0
         if (count < variantsMaxPerRow)
             return@sumBy 1
         while (count % variantsMaxPerRow != 0)
@@ -207,8 +204,8 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
 
     var cY = 35
     vars.forEach {
-        val varCount = it?.variants?.size ?: 0
-        val channelName = it?.VariantChannelName?.textForLocres(locres)
+        val varCount = it.variants?.size ?: 0
+        val channelName = it.VariantChannelName?.textForLocres(locres)
         if (channelName != null) {
             g.font = burbank.deriveFont(25f)
             g.paint = Color.WHITE
@@ -222,8 +219,8 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
         else
             maxVarSize
         for (i in 0 until varCount) {
-            val varContainer = it?.variants?.get(i)
-            var varIcon = varContainer?.previewIcon ?: continue
+            val varContainer = it.variants?.get(i)
+            var varIcon = varContainer?.PreviewImage?.load<UTexture2D>()?.toBufferedImage() ?: continue
             if (varIcon.width != varSize || varIcon.height != varSize)
                 varIcon = varIcon.scale(varSize, varSize)
             if (cX + varSize > variantsBeginX + variantsX) {
@@ -238,7 +235,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
             g.fillRect(cX, cY, varSize, varSize)
             g.drawImage(varIcon, cX, cY, null)
 
-            val varName = varContainer.variantName?.textForLocres(locres)
+            val varName = varContainer.VariantName?.textForLocres(locres)
             if (varName != null) {
                 g.paint = Color(0, 0, 0, 100)
                 g.fillRect(cX, cY + varSize - varSize / 4, varSize, varSize / 4)

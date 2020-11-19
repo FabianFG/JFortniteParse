@@ -29,7 +29,6 @@ open class FName(
         if (this === other) return true
         if (other !is FName) return false
 
-        if (number != other.number) return false
         if (!text.equals(other.text, true)) return false
 
         return true
@@ -44,7 +43,14 @@ open class FName(
     /** True for FName(), FName(NAME_None) and FName("None") */
     inline fun isNone() = text == "None"
 
-    class FNameDummy(override var text: String, number: Int = 0): FName(emptyList(), -1, number)
+    class FNameDummy(var name: String, number: Int = 0) : FName(emptyList(), -1, number) {
+        override var text = name
+            get() = if (number == 0) name else "${name}_${number - 1}"
+            set(value) {
+                field = value
+                name = value
+            }
+    }
 
     companion object {
         val NONE_SINGLETON_LIST = listOf(FNameEntry("None", 0u, 0u))

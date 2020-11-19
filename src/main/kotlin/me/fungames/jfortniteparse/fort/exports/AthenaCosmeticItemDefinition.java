@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariant;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
@@ -27,13 +28,12 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     @UProperty(skipPrevious = 1)
     public FGameplayTagContainer DisallowedCosmeticTags;
     public FGameplayTagContainer MetaTags;
-    public List<FName> /*FName*/ VariantChannelsToNeverSendToMCP;
-    //public List<AthenaCosmeticMaterialOverride> MaterialOverrides;
-    @UProperty(skipPrevious = 1)
+    public List<FGameplayTag> VariantChannelsToNeverSendToMCP;
+    public List<AthenaCosmeticMaterialOverride> MaterialOverrides;
     public FGameplayTagContainer ObservedPlayerStats;
     public List<FPackageIndex> /*List<UFortMontageItemDefinitionBase>*/ BuiltInEmotes;
-    public List<FPackageIndex> /*List<UFortCosmeticVariant>*/ ItemVariants;
-    public FName /*FName*/ VariantChannelToUseForThumbnails;
+    public List<FortCosmeticVariant> ItemVariants;
+    public FGameplayTag VariantChannelToUseForThumbnails;
     public List<FortCosmeticVariantPreview> ItemVariantPreviews;
     public FText DirectAquisitionStyleDisclaimerOverride;
     //public List<FortCosmeticAdaptiveStatPreview> ItemObservedStatPreviews;
@@ -54,6 +54,13 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
 
     public enum EVariantUnlockType {
         UnlockAll, ExclusiveChoice
+    }
+
+    @UStruct
+    public static class AthenaCosmeticMaterialOverride {
+        public FName ComponentName;
+        public Integer MaterialOverrideIndex;
+        public FSoftObjectPath OverrideMaterial;
     }
 
     @UStruct

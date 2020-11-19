@@ -1,0 +1,25 @@
+package me.fungames.jfortniteparse.fort.exports;
+
+import me.fungames.jfortniteparse.ue4.assets.UProperty;
+import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
+import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform;
+import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
+
+public class AthenaPickaxeItemDefinition extends AthenaCosmeticItemDefinition {
+    public FPackageIndex /*FortWeaponMeleeItemDefinition*/ WeaponDefinition;
+    public FName MainMeshAttachmentSocketName;
+    public FName OffhandMeshAttachmentSocketName;
+    public FTransform MainMeshRelativeTransform;
+    public FTransform OffhandMeshRelativeTransform;
+    public FVector PickaxeImpactFXPreviewOffset;
+    public FVector PickaxeDualWieldPreviewOffset;
+    public FRotator PickaxeDualWieldPreviewRotation;
+    public FSoftObjectPath PreviewIdleMontage;
+    public FSoftObjectPath PreviewSwingMontage;
+    //public FFortUICameraFrameTargetBounds CameraFramingBounds;
+    @UProperty(skipPrevious = 1)
+    public FVector CameraFramingBoundsCenterOffset;
+}

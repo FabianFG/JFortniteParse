@@ -13,7 +13,6 @@ import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurveKey
-import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
 import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceObjectReferenceMap
 import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
@@ -71,7 +70,6 @@ class UScriptStruct : UClass {
             "MovieSceneEvaluationKey" -> FMovieSceneEvaluationKey(Ar)
             "MovieSceneFloatValue" -> FRichCurveKey(Ar)
             "MovieSceneEvaluationTemplate" -> FMovieSceneEvaluationTemplate(Ar)
-            "GameplayTag" -> FGameplayTag(Ar.readFName())
 
             else -> {
                 if (Ar.useUnversionedPropertySerialization) {

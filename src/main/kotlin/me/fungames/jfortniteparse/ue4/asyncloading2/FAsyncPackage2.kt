@@ -522,7 +522,7 @@ class FAsyncPackage2 {
             //obj.clazz.serializeDefaultObject(obj, Ar)
         } else {
             try {
-                obj.deserialize(Ar, 0)
+                obj.deserialize(Ar, -1)
             } catch (e: Throwable) {
                 LOG_STREAMING.warn("Failed to deserialize ${obj.pathName}", e)
                 failedException = e

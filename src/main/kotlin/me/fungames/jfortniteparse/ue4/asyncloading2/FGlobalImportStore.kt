@@ -1,9 +1,10 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.ue4.assets.ObjectTypeRegistry
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 
 class FGlobalImportStore {
-    val scriptObjects = mutableMapOf<FPackageObjectIndex, UObject?>()
+    //val scriptObjects = mutableMapOf<FPackageObjectIndex, UObject?>()
     val publicExportObjects = mutableMapOf<FPackageObjectIndex, FPublicExport>()
     //val objectIndexToPublicExport = mutableMapOf<Int, FPackageObjectIndex>()
     // Temporary initial load data
@@ -19,17 +20,19 @@ class FGlobalImportStore {
 
     fun findScriptImportObjectFromIndex(globalImportIndex: FPackageObjectIndex): UObject? {
         check(scriptObjectEntries.isNotEmpty())
-        return GFindExistingScriptImport(globalImportIndex, scriptObjects, scriptObjectEntriesMap)
+        //return GFindExistingScriptImport(globalImportIndex, scriptObjects, scriptObjectEntriesMap)
+        val entry = scriptObjectEntriesMap[globalImportIndex]!!
+        return ObjectTypeRegistry.constructClass(entry.objectName.toName().toString())
     }
 
     fun findOrGetImportObject(globalIndex: FPackageObjectIndex): UObject? {
         check(globalIndex.isImport())
         return if (globalIndex.isScriptImport()) {
-            if (GIsInitialLoad) {
-                findScriptImportObjectFromIndex(globalIndex)
-            } else {
-                scriptObjects[globalIndex]
-            }
+            //if (GIsInitialLoad) {
+            findScriptImportObjectFromIndex(globalIndex)
+            //} else {
+            //    scriptObjects[globalIndex]
+            //}
         } else {
             getPublicExportObject(globalIndex)
         }

@@ -29,8 +29,7 @@ public class FortWeaponItemDefinition extends FortWorldItemDefinition {
     public FSoftObjectPath /*SoftClassPath*/ SecondaryFireAbility;
     public FSoftObjectPath /*SoftClassPath*/ ReloadAbility;
     public FSoftObjectPath /*SoftClassPath*/ OnHitAbility;
-    //public List<?> EquippedAbilities;
-    @UProperty(skipPrevious = 1)
+    public List<FSoftObjectPath /*SoftClassPath*/> EquippedAbilities;
     public FSoftObjectPath EquippedAbilitySet;
     public List<FPackageIndex /*CustomCharacterPart*/> EquippedCharacterParts;
     public FSoftObjectPath AmmoData;

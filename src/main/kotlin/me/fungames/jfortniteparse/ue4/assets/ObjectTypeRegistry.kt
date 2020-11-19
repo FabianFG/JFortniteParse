@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import me.fungames.jfortniteparse.fort.exports.*
+import me.fungames.jfortniteparse.fort.exports.variants.*
 import me.fungames.jfortniteparse.fort.objects.FortPhoenixLevelRewardData
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.*
@@ -39,15 +40,22 @@ object ObjectTypeRegistry {
         registerClass(AthenaCharacterPartItemDefinition::class.java)
         registerClass(AthenaCosmeticItemDefinition::class.java)
         registerClass(AthenaDailyQuestDefinition::class.java)
+        registerClass(AthenaDanceItemDefinition::class.java)
         registerClass(AthenaEmojiItemDefinition::class.java)
         registerClass(AthenaPickaxeItemDefinition::class.java)
+        registerClass(AthenaSprayItemDefinition::class.java)
+        registerClass(AthenaToyItemDefinition::class.java)
         registerClass(FortAccountItemDefinition::class.java)
         registerClass(FortCatalogMessaging::class.java)
+        registerClass(FortCosmeticMaterialVariant::class.java)
         registerClass(FortCosmeticParticleVariant::class.java)
+        registerClass(FortCosmeticProfileBannerVariant::class.java)
+        registerClass(FortCosmeticProfileLoadoutVariant::class.java)
         registerClass(FortCosmeticVariant::class.java)
         registerClass(FortItemCategory::class.java)
         registerClass(FortItemDefinition::class.java)
         registerClass(FortItemSeriesDefinition::class.java)
+        registerClass(FortMontageItemDefinitionBase::class.java)
         registerClass(FortMtxOfferData::class.java)
         registerClass(FortPersistableItemDefinition::class.java)
         registerClass(FortPersistentResourceItemDefinition::class.java)

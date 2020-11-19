@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.enums.*;
 import me.fungames.jfortniteparse.fort.objects.FScalableFloat;
+import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
@@ -11,10 +12,9 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
-import java.util.List;
-
 public class FortItemDefinition extends McpItemDefinitionBase {
-    public List<FortCosmeticVariant> ItemVariants;
+    //public MulticastInlineDelegateProperty OnItemCountChanged;
+    @UProperty(skipPrevious = 1)
     public EFortRarity Rarity = EFortRarity.Uncommon;
     public EFortItemType ItemType;
     public EFortItemType PrimaryAssetIdItemTypeOverride;
