@@ -24,8 +24,7 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     public Double DynamicInstallBundlesUpdateStartTime;
     public EVariantUnlockType VariantUnlockType;
     public FRotator PreviewPawnRotationOffset;
-    //public List<FoleySoundLibrary> FoleyLibraries;
-    @UProperty(skipPrevious = 1)
+    public List<FPackageIndex /*FoleySoundLibrary*/> FoleyLibraries;
     public FGameplayTagContainer DisallowedCosmeticTags;
     public FGameplayTagContainer MetaTags;
     public List<FGameplayTag> VariantChannelsToNeverSendToMCP;

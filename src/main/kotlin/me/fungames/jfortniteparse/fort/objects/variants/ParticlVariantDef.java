@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fort.objects.variants;
 
+import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 
 import java.util.List;
@@ -12,5 +13,6 @@ public class ParticlVariantDef extends BaseVariantDef {
     public List<ParticleVariant> VariantParticles;
     public List<ParticleParamterVariant> VariantParticleParams;
     public List<ManagedParticleParamVariant> VariantAlteredParticleParams;
-    public ScriptedActionVariant MetaTags;
+    @UProperty(skipPrevious = 1) // TODO there's a new property here
+    public CosmeticMetaTagContainer MetaTags;
 }

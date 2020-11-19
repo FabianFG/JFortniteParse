@@ -14,7 +14,6 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 enum class EFormatArgumentType { Int, UInt, Float, Double, Text, Gender }
 
-@ExperimentalUnsignedTypes
 class FText : UClass {
     var flags: UInt
     var historyType: ETextHistoryType
@@ -79,24 +78,30 @@ class FText : UClass {
     }
 }
 
-@ExperimentalUnsignedTypes
 sealed class FTextHistory : UClass() {
     class None : FTextHistory {
-        //private var unk: Int
-        override val text = ""
+        var cultureInvariantString: String? = null
+        override val text: String
+            get() = cultureInvariantString ?: ""
 
         constructor()
 
         constructor(Ar: FArchive) {
             super.init(Ar)
-            Ar.readInt32() // TODO is this bHasCultureInvariantString?
+            val bHasCultureInvariantString = Ar.readBoolean()
+            if (bHasCultureInvariantString) {
+                cultureInvariantString = Ar.readString()
+            }
             super.complete(Ar)
         }
 
         override fun serialize(Ar: FAssetArchiveWriter) {
             super.initWrite(Ar)
-            Ar.writeInt32(0)
-            //Ar.writeInt32(unk)
+            val bHasCultureInvariantString = cultureInvariantString.isNullOrEmpty()
+            Ar.writeBoolean(bHasCultureInvariantString)
+            if (bHasCultureInvariantString) {
+                Ar.writeString(cultureInvariantString!!)
+            }
             super.completeWrite(Ar)
         }
     }
@@ -270,7 +275,6 @@ sealed class FTextHistory : UClass() {
     abstract val text: String
 }
 
-@ExperimentalUnsignedTypes
 class FFormatArgumentValue : UClass {
     var type: EFormatArgumentType
     var value: Any

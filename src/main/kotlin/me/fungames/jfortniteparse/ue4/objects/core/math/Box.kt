@@ -12,7 +12,6 @@ import kotlin.math.min
  * Boxes describe an axis-aligned extent in three dimensions. They are used for many different things in the
  * Engine and in games, such as bounding volumes, collision detection and visibility calculation.
  */
-@ExperimentalUnsignedTypes
 class FBox : UClass {
     /** Holds the box's minimum point. */
     var min: FVector
@@ -37,6 +36,13 @@ class FBox : UClass {
         max.serialize(Ar)
         Ar.writeFlag(isValid)
         super.completeWrite(Ar)
+    }
+
+    /**
+     * Creates and initializes a new box with zero extent and marks it as invalid.
+     */
+    constructor() : this(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f)) {
+        isValid = false
     }
 
     /**

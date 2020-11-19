@@ -311,9 +311,9 @@ class FUnversionedHeader {
 fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: Class<*>, Ar: FAssetArchive) {
     //check(canUseUnversionedPropertySerialization())
 
+    println("Load: ${struct.simpleName}")
     val header = FUnversionedHeader()
     header.load(Ar)
-    println("Load: ${struct.simpleName}")
 
     if (header.hasValues()) {
         val schemas = getOrCreateUnversionedSchema(struct).serializers

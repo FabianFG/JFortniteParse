@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets
 
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.asyncloading2.FExportObject
 import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
 import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageImportStore
@@ -20,7 +21,8 @@ class IoPackage(val importStore: FPackageImportStore,
                 game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : Package(fileName, provider, game) {
 
     override val exports: List<UExport>
-        get() = exportMap.map { it.exportObject!! }
+        get() = exportMap.map { it.exportObject ?: UObject() }
+        //get() = exportMap.map { it.exportObject!! }
 
     override fun loadObjectGeneric(index: FPackageIndex?): UExport? {
         if (index == null || index.isNull()) {

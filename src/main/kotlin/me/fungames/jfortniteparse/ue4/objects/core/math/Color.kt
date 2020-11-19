@@ -8,7 +8,6 @@ import java.awt.Color
 /**
  * A linear, 32-bit/component floating point RGBA color.
  */
-@ExperimentalUnsignedTypes
 class FLinearColor : UClass {
     var r: Float
     var g: Float
@@ -35,11 +34,10 @@ class FLinearColor : UClass {
 
     fun toColor() = Color(r, g, b, a)
 
-    constructor(r: Float, g: Float, b: Float, a: Float) {
-        this.r = r
-        this.g = g
-        this.b = b
-        this.a = a
+    constructor() : this(0f, 0f, 0f, 0f)
+
+    constructor(r: Float, g: Float, b: Float, a: Float = 1.0f) {
+        this.r = r; this.g = g; this.b = b; this.a = a
     }
 
     override fun toString() = "(R=%f,G=%f,B=%f,A=%f)".format(r, g, b, a)
@@ -51,7 +49,6 @@ class FLinearColor : UClass {
  * Note: Linear color values should always be converted to gamma space before stored in an FColor, as 8 bits of precision is not enough to store linear space colors!
  * This can be done with FLinearColor.toFColor(true)
  */
-@ExperimentalUnsignedTypes
 class FColor : UClass {
     var r: UByte
     var g: UByte

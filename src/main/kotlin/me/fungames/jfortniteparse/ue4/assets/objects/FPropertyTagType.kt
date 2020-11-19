@@ -177,10 +177,12 @@ sealed class FPropertyTagType(val propertyType: String) {
                     if (Ar.useUnversionedPropertySerialization && tagData!!.structClass!!.isAnnotationPresent(UStruct::class.java)) {
                         //val struct = tagData.field!!.type.newInstance()
                         val properties = mutableListOf<FPropertyTag>()
-                        deserializeUnversionedProperties(properties, tagData.structClass!!, Ar)
+                        if (type != ReadType.ZERO) {
+                            deserializeUnversionedProperties(properties, tagData.structClass!!, Ar)
+                        }
                         StructProperty(UScriptStruct(tagData.structName.text, FStructFallback(properties)), propertyType)
                     } else {
-                        StructProperty(UScriptStruct(Ar, tagData!!.structName.text), propertyType)
+                        StructProperty(UScriptStruct(Ar, tagData!!.structName.text, type), propertyType)
                     }
                 "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type), propertyType)
                 "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type), propertyType)
@@ -302,7 +304,7 @@ sealed class FPropertyTagType(val propertyType: String) {
             }
         }
 
-        private inline fun <T> valueOr(valueIfNonzero: () -> T, valueIfZero: () -> T, type: ReadType) =
+        inline fun <T> valueOr(valueIfNonzero: () -> T, valueIfZero: () -> T, type: ReadType) =
             if (type != ReadType.ZERO) valueIfNonzero() else valueIfZero()
     }
 

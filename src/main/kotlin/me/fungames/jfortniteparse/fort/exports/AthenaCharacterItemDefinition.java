@@ -6,6 +6,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
+import java.util.List;
 import java.util.Map;
 
 public class AthenaCharacterItemDefinition extends AthenaCosmeticItemDefinition {
@@ -14,7 +15,7 @@ public class AthenaCharacterItemDefinition extends AthenaCosmeticItemDefinition 
     @UProperty(skipPrevious = 1)
     public FPackageIndex /*FortHeroType*/ HeroDefinition;
     public FPackageIndex /*AthenaBackpackItemDefinition*/ DefaultBackpack;
-    public FPackageIndex[] /*AthenaCosmeticItemDefinition[]*/ RequiredCosmeticItems;
+    public List<FPackageIndex /*AthenaCosmeticItemDefinition*/> RequiredCosmeticItems;
     public EFortCustomGender Gender;
     @UProperty(skipNext = 1)
     public FSoftObjectPath FeedbackBank;

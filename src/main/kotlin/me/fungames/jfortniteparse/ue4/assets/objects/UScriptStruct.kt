@@ -2,6 +2,8 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType.Companion.valueOr
+import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.*
@@ -26,50 +28,50 @@ class UScriptStruct : UClass {
     val structName: String
     var structType: Any
 
-    constructor(Ar: FAssetArchive, structName: String) {
+    constructor(Ar: FAssetArchive, structName: String, type: ReadType = ReadType.NORMAL) {
         super.init(Ar)
         this.structName = structName
-        structType = when (structName) {
-            "IntPoint" -> FIntPoint(Ar)
-            "Guid" -> FGuid(Ar)
-            "GameplayTagContainer" -> FGameplayTagContainer(Ar)
-            "Color" -> FColor(Ar)
-            "LinearColor" -> FLinearColor(Ar)
-            "SoftObjectPath", "SoftClassPath" -> FSoftObjectPath(Ar)
-            "Vector" -> FVector(Ar)
-            "Vector2D" -> FVector2D(Ar)
-            "Vector4" -> FVector4(Ar)
-            "Box" -> FBox(Ar)
+        structType = when (structName) { // TODO please complete the zero constructors
+            "Box" -> valueOr({ FBox(Ar) }, { FBox() }, type)
             "Box2D" -> FBox2D(Ar)
-            "Rotator" -> FRotator(Ar)
-            "Quat" -> FQuat(Ar)
-            "IntVector" -> FIntVector(Ar)
-            "PerPlatformInt" -> FPerPlatformInt(Ar)
-            "PerPlatformFloat" -> FPerPlatformFloat(Ar)
-            "PerPlatformBool" -> FPerPlatformBool(Ar)
-            "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
-            "LevelSequenceObjectReferenceMap" -> FLevelSequenceObjectReferenceMap(Ar)
-            "FrameNumber" -> FFrameNumber(Ar)
-            "SmartName" -> FSmartName(Ar)
-            "RichCurveKey" -> FRichCurveKey(Ar)
-            "SimpleCurveKey" -> FSimpleCurveKey(Ar)
-            "Timespan", "DateTime" -> FDateTime(Ar)
-            "NavAgentSelector" -> FNavAgentSelectorCustomization(Ar)
-            "ExpressionInput" -> FExpressionInput(Ar)
+            "Color" -> valueOr({ FColor(Ar) }, { FColor() }, type)
             "ColorMaterialInput" -> FColorMaterialInput(Ar)
-            "ScalarMaterialInput" -> FScalarMaterialInput(Ar)
-            "VectorMaterialInput" -> FVectorMaterialInput(Ar)
-            "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
+            "ExpressionInput" -> FExpressionInput(Ar)
+            "FrameNumber" -> FFrameNumber(Ar)
+            "GameplayTagContainer" -> FGameplayTagContainer(Ar)
+            "Guid" -> valueOr({ FGuid(Ar) }, { FGuid() }, type)
+            "IntPoint" -> FIntPoint(Ar)
+            "IntVector" -> FIntVector(Ar)
+            "LevelSequenceObjectReferenceMap" -> FLevelSequenceObjectReferenceMap(Ar)
+            "LinearColor" -> valueOr({ FLinearColor(Ar) }, { FLinearColor() }, type)
             "MaterialAttributesInput" -> FExpressionInput(Ar) // FMaterialAttributesInput(Ar)
-            "MovieSceneTrackIdentifier" -> FFrameNumber(Ar)
+            "MovieSceneEvaluationKey" -> FMovieSceneEvaluationKey(Ar)
+            "MovieSceneEvaluationTemplate" -> FMovieSceneEvaluationTemplate(Ar)
+            "MovieSceneFloatValue" -> FRichCurveKey(Ar)
+            "MovieSceneFrameRange" -> FMovieSceneFrameRange(Ar)
+            "MovieSceneSegment" -> FMovieSceneSegment(Ar)
             "MovieSceneSegmentIdentifier" -> FFrameNumber(Ar)
             "MovieSceneSequenceID" -> FFrameNumber(Ar)
-            "MovieSceneSegment" -> FMovieSceneSegment(Ar)
+            "MovieSceneTrackIdentifier" -> FFrameNumber(Ar)
+            "NavAgentSelector" -> FNavAgentSelectorCustomization(Ar)
+            "PerPlatformBool" -> FPerPlatformBool(Ar)
+            "PerPlatformFloat" -> FPerPlatformFloat(Ar)
+            "PerPlatformInt" -> FPerPlatformInt(Ar)
+            "Quat" -> FQuat(Ar)
+            "RichCurveKey" -> FRichCurveKey(Ar)
+            "Rotator" -> valueOr({ FRotator(Ar) }, { FRotator() }, type)
+            "ScalarMaterialInput" -> FScalarMaterialInput(Ar)
             "SectionEvaluationDataTree" -> FSectionEvaluationDataTree(Ar)
-            "MovieSceneFrameRange" -> FMovieSceneFrameRange(Ar)
-            "MovieSceneEvaluationKey" -> FMovieSceneEvaluationKey(Ar)
-            "MovieSceneFloatValue" -> FRichCurveKey(Ar)
-            "MovieSceneEvaluationTemplate" -> FMovieSceneEvaluationTemplate(Ar)
+            "SimpleCurveKey" -> FSimpleCurveKey(Ar)
+            "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
+            "SmartName" -> FSmartName(Ar)
+            "SoftObjectPath", "SoftClassPath" -> FSoftObjectPath(Ar)
+            "Timespan", "DateTime" -> FDateTime(Ar)
+            "Vector" -> valueOr({ FVector(Ar) }, { FVector() }, type)
+            "Vector2D" -> FVector2D(Ar)
+            "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
+            "Vector4" -> valueOr({ FVector4(Ar) }, { FVector4() }, type)
+            "VectorMaterialInput" -> FVectorMaterialInput(Ar)
 
             else -> {
                 if (Ar.useUnversionedPropertySerialization) {
