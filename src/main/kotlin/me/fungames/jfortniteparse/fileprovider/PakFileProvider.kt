@@ -21,6 +21,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     protected abstract val mountedPaks: MutableList<PakFileReader>
     protected abstract val requiredKeys: MutableList<FGuid>
     protected abstract val keys: MutableMap<FGuid, ByteArray>
+    protected val mountListeners = mutableListOf<PakMountListener>()
     open fun keys(): Map<FGuid, ByteArray> = keys
     open fun keysStr(): Map<FGuid, String> = keys.mapValues { it.value.printAesKey() }
     open fun requiredKeys(): List<FGuid> = requiredKeys
@@ -70,16 +71,18 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         reader.files.associateByTo(files) { it.path.toLowerCase() }
         mountedPaks.add(reader)
 
-        if (reader.Ar is FPakFileArchive) {
+        if (FIoDispatcher.isInitialized() && reader.Ar is FPakFileArchive) {
             val ioStoreEnvironment = FIoStoreEnvironment(reader.Ar.file.path.substringBeforeLast('.'))
             val encryptionKeyGuid = reader.pakInfo.encryptionKeyGuid
             try {
                 FIoDispatcher.get().mount(ioStoreEnvironment, encryptionKeyGuid, reader.aesKey)
-                PakFileReader.logger.info("Mounted IoStore environment \"%s\"".format(ioStoreEnvironment.path))
+                PakFileReader.logger.info("Mounted IoStore environment \"{}\"", ioStoreEnvironment.path)
             } catch (e: FIoStatusException) {
-                PakFileReader.logger.warn("Failed to mount IoStore environment \"%s\" [%s]".format(ioStoreEnvironment.path, e.message))
+                PakFileReader.logger.warn("Failed to mount IoStore environment \"{}\" [{}]", ioStoreEnvironment.path, e.message)
             }
         }
+
+        mountListeners.forEach { it.onMount(reader) }
     }
 
     override fun saveGameFile(filePath: String): ByteArray? {
@@ -91,5 +94,17 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     override fun saveGameFile(file: GameFile): ByteArray {
         val reader = mountedPaks.firstOrNull { it.fileName == file.pakFileName } ?: throw IllegalArgumentException("Couldn't find any possible pak file readers")
         return reader.extract(file)
+    }
+
+    fun addOnMountListener(listener: PakMountListener) {
+        mountListeners.add(listener)
+    }
+
+    fun removeOnMountListener(listener: PakMountListener) {
+        mountListeners.remove(listener)
+    }
+
+    interface PakMountListener {
+        fun onMount(reader: PakFileReader)
     }
 }

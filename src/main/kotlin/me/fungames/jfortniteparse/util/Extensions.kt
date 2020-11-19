@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 import javax.imageio.ImageIO
 import kotlin.jvm.internal.Ref.IntRef
 import kotlin.jvm.internal.Ref.ObjectRef
+import kotlin.math.min
 
 fun BufferedImage.scale(newWidth: Int, newHeight: Int, flags: Int = Image.SCALE_SMOOTH): BufferedImage {
     val scaled = this.getScaledInstance(newWidth, newHeight, flags)
@@ -76,7 +77,9 @@ fun String.pathAppend(str: String, strLength: Int = str.length): String {
         data.append('/')
     }
     if (strLength > 0) {
-        data.append(str, 0, kotlin.math.min(str.length, strLength))
+        val start = if (str[0] == '/' || str[0] == '\\') 1 else 0
+        data.append(str, start, min(str.length, strLength))
+        //data.append(str, 0, min(str.length, strLength))
     }
     return data.toString()
 }

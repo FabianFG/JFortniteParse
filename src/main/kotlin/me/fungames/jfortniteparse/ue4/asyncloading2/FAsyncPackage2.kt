@@ -33,7 +33,8 @@ class FAsyncPackage2 {
     private var deferredClusterIndex = 0
     private var asyncPackageLoadingState = EAsyncPackageLoadingState2.NewPackage
     /** True if our load has failed  */
-    internal var bLoadHasFailed = false
+    internal val bLoadHasFailed get() = failedException != null//= false
+    internal var failedException: Throwable? = null
     /** True if this package was created by this async package */
     private var bCreatedLinkerRoot = false
 
@@ -524,7 +525,7 @@ class FAsyncPackage2 {
                 obj.deserialize(Ar, 0)
             } catch (e: Throwable) {
                 LOG_STREAMING.warn("Failed to deserialize ${obj.pathName}", e)
-                bLoadHasFailed = true
+                failedException = e
             }
         }
         //Ar.templateForGetArchetypeFromLoader = null
@@ -575,9 +576,9 @@ class FAsyncPackage2 {
     // endregion
 
     fun callCompletionCallbacks(loadingResult: EAsyncLoadingResult) {
-        val loadedPackage = if (!bLoadHasFailed) linkerRoot else null
+        val result = if (!bLoadHasFailed) Result.success(linkerRoot!!) else Result.failure(failedException!!)
         for (completionCallback in completionCallbacks) {
-            completionCallback(desc.getUPackageName(), loadedPackage, loadingResult)
+            completionCallback.onCompletion(desc.getUPackageName(), result/*, loadingResult*/)
         }
         completionCallbacks.clear()
     }

@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.pak
 
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
+import me.fungames.jfortniteparse.util.div
 
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 0L,
@@ -13,7 +14,7 @@ open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 
                     val pakFileName: String
 ) {
     constructor(pakEntry: FPakEntry, mountPrefix : String, pakFileName : String) : this(
-        mountPrefix + pakEntry.name, pakEntry.pos, pakEntry.size, pakEntry.uncompressedSize,
+        mountPrefix / pakEntry.name, pakEntry.pos, pakEntry.size, pakEntry.uncompressedSize,
         pakEntry.compressionMethod, pakEntry.compressionBlocks, pakEntry.compressionBlockSize,
         pakEntry.isEncrypted, pakFileName
     )
@@ -24,7 +25,7 @@ open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 
     fun getExtension() = path.substringAfterLast('.')
     fun isUE4Package() = getExtension().run { this == "uasset" || this == "umap" }
     fun isLocres() = getExtension() == "locres"
-    fun isAssetRegistry() = getExtension() == "bin"
+    fun isAssetRegistry() = getName().run { startsWith("AssetRegistry") && endsWith(".bin") }
 
     fun hasUexp() = ::uexp.isInitialized
     fun hasUbulk() = ubulk != null

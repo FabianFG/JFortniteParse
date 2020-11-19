@@ -110,6 +110,7 @@ class PakPackage(uasset: ByteBuffer,
             export.exportType = it.classIndex.getResource()!!.objectName.text
             export.name = it.objectName.text
             export.owner = this
+            export.readGuid = true
             export.deserialize(uexpAr, validPos)
             if (validPos != uexpAr.pos())
                 logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
@@ -167,7 +168,7 @@ class PakPackage(uasset: ByteBuffer,
             } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
                 FortCosmeticVariant()
             } else
-                UObject().apply { readGuid = true }
+                UObject()
         }
     }
 

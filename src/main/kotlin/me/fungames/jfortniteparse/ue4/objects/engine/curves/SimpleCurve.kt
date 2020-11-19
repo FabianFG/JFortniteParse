@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.engine.curves
 
-import com.google.gson.annotations.SerializedName
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.objects.core.math.isNearlyZero
@@ -43,10 +42,8 @@ class FSimpleCurveKey : UClass {
 @UStruct
 class SimpleCurve : FRealCurve() {
     /** Interpolation mode between this key and the next */
-    @SerializedName("InterpMode")
     var InterpMode: ERichCurveInterpMode = ERichCurveInterpMode.RCIM_Linear
     /** Sorted array of keys */
-    @SerializedName("Keys")
     lateinit var Keys: MutableList<FSimpleCurveKey>
 
     /** Get range of input time values. Outside this region curve continues constantly the start/end values. */

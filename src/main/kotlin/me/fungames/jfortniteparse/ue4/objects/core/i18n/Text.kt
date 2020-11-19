@@ -82,19 +82,23 @@ class FText : UClass {
 @ExperimentalUnsignedTypes
 sealed class FTextHistory : UClass() {
     class None : FTextHistory {
-        private var unk: Int
+        //private var unk: Int
         override val text = ""
+
+        constructor()
 
         constructor(Ar: FArchive) {
             super.init(Ar)
-            unk = Ar.readInt32() // TODO is this bHasCultureInvariantString?
+            Ar.readInt32() // TODO is this bHasCultureInvariantString?
             super.complete(Ar)
         }
 
         override fun serialize(Ar: FAssetArchiveWriter) {
             super.initWrite(Ar)
-            Ar.writeInt32(unk)
-            super.completeWrite(Ar)}
+            Ar.writeInt32(0)
+            //Ar.writeInt32(unk)
+            super.completeWrite(Ar)
+        }
     }
 
     class Base : FTextHistory {

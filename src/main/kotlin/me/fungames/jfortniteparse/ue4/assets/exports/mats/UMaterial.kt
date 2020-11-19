@@ -5,11 +5,9 @@ import me.fungames.jfortniteparse.ue4.assets.enums.EBlendMode
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.converters.CMaterialParams
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_BASE
 
-@ExperimentalUnsignedTypes
-class UMaterial : UMaterialInterface {
+class UMaterial : UMaterialInterface() {
     val TwoSided = false
     val bDisableDepthTest = false
     val bIsMasked = false
@@ -17,9 +15,6 @@ class UMaterial : UMaterialInterface {
     val OpacityMaskClipValue = 0.333f
     val ReferencedTextures = emptyArray<UTexture>()
     var referencedTextures = mutableListOf<UTexture>()
-
-    constructor() : super()
-    constructor(exportObject: FObjectExport) : super(exportObject)
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)

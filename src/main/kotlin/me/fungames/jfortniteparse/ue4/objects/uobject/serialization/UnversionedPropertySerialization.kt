@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
@@ -99,7 +100,7 @@ class PropertyInfo {
             c == Short::class.javaPrimitiveType || c == Short::class.javaObjectType -> "Int16Property"
             c == Int::class.javaPrimitiveType || c == Int::class.javaObjectType -> "IntProperty"
             c == Long::class.javaPrimitiveType || c == Long::class.javaObjectType -> "Int64Property"
-            c == UByte::class.java -> "UInt8Property"
+            c == UByte::class.java -> "ByteProperty"
             c == UShort::class.java -> "UInt16Property"
             c == UInt::class.java -> "UIntProperty"
             c == ULong::class.java -> "UInt64Property"
@@ -129,6 +130,7 @@ class FUnversionedPropertySerializer(val propertyInfo: PropertyInfo, val arrayIn
     fun loadZero(Ar: FAssetArchive): FPropertyTag {
         val propertyType = propertyInfo.type!!
         val tag = FPropertyTag(propertyInfo)
+        tag.arrayIndex = 0
         tag.prop = FPropertyTagType.readFPropertyTagType(Ar, propertyType, tag, FPropertyTagType.ReadType.ZERO)
         return tag
     }
@@ -222,30 +224,12 @@ class FUnversionedHeader {
 
     fun hasValues() = bHasNonZeroValues || (zeroMask.size() > 0)
 
-    protected fun loadZeroMaskData(Ar: FArchive, numBits: UInt): BitSet {
-        /*val num = numBits.divideAndRoundUp(64u).toInt()
-        println("load zero mask num = $num")
-        val data = LongArray(num)
-        when {
-            numBits <= 8u -> data[0] = Ar.readInt8().toLong()
-            numBits <= 16u -> data[0] = Ar.readInt16().toLong()
-            numBits <= 32u -> data[0] = Ar.readInt32().toLong()
-            else -> for (idx in 0 until num) {
-                data[idx] = Ar.readInt64()
-            }
-        }*/
-        /*return BitSet.valueOf(Ar.read(when {
+    protected fun loadZeroMaskData(Ar: FArchive, numBits: UInt) =
+        BitSet.valueOf(Ar.read(when {
             numBits <= 8u -> 1u
             numBits <= 16u -> 2u
             else -> numBits.divideAndRoundUp(32u) * 4u
-        }.toInt()))*/
-        val size = when {
-            numBits <= 8u -> 1u
-            numBits <= 16u -> 2u
-            else -> numBits.divideAndRoundUp(32u) * 4u
-        }.toInt()
-        return BitSet.valueOf(Ar.read(size))//.also { println("zeromask $size, ${it.size()}") }
-    }
+        }.toInt()))
 
     protected class FFragment {
         companion object {
@@ -324,10 +308,9 @@ class FUnversionedHeader {
     }
 }
 
-fun deserializeUnversionedProperties(struct: Class<*>, Ar: FAssetArchive): MutableList<FPropertyTag> {
+fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: Class<*>, Ar: FAssetArchive) {
     //check(canUseUnversionedPropertySerialization())
 
-    val properties = mutableListOf<FPropertyTag>()
     val header = FUnversionedHeader()
     header.load(Ar)
     println("Load: ${struct.simpleName}")
@@ -351,7 +334,10 @@ fun deserializeUnversionedProperties(struct: Class<*>, Ar: FAssetArchive): Mutab
                         properties.add(serializer.loadZero(Ar))
                     }
                 } else {
-                    UClass.logger.warn("Unknown property for ${struct.simpleName} with value ${it.schemaIt}${if (it.isNonZero()) ", cannot proceed with serialization" else " but it's zero so we are good"}")
+                    if (it.isNonZero()) {
+                        throw ParserException("Unknown property for ${struct.simpleName} with value ${it.schemaIt}, cannot proceed with serialization")
+                    }
+                    UClass.logger.warn("Unknown property for ${struct.simpleName} with value ${it.schemaIt} but it's zero so we are good")
                 }
                 it.next()
             }
@@ -365,6 +351,4 @@ fun deserializeUnversionedProperties(struct: Class<*>, Ar: FAssetArchive): Mutab
             }
         }
     }
-
-    return properties
 }

@@ -33,6 +33,7 @@ object ObjectTypeRegistry {
     }
 
     private inline fun registerFortnite() {
+        // -- Classes --
         registerClass(AthenaBackpackItemDefinition::class.java)
         registerClass(AthenaCharacterItemDefinition::class.java)
         registerClass(AthenaCharacterPartItemDefinition::class.java)
@@ -49,9 +50,15 @@ object ObjectTypeRegistry {
         registerClass(FortItemSeriesDefinition::class.java)
         registerClass(FortMtxOfferData::class.java)
         registerClass(FortPersistableItemDefinition::class.java)
+        registerClass(FortPersistentResourceItemDefinition::class.java)
         registerClass(FortQuestItemDefinition::class.java)
+        registerClass(FortSchematicItemDefinition::class.java)
+        registerClass(FortWeaponItemDefinition::class.java)
+        registerClass(FortWeaponRangedItemDefinition::class.java)
+        registerClass(FortWorldItemDefinition::class.java)
         registerClass(McpItemDefinitionBase::class.java)
 
+        // -- Data table row structs --
         registerStruct(FortPhoenixLevelRewardData::class.java)
     }
 
@@ -100,7 +107,7 @@ object ObjectTypeRegistry {
         }
         val clazz = structs[serializedName]
         if (clazz == null) {
-            UClass.logger.warn("Didn't find class $serializedName in registry")
+            UClass.logger.warn("Didn't find struct $serializedName in registry")
             return Object()
         }
         return clazz.newInstance()

@@ -20,7 +20,7 @@ public class FortCosmeticParticleVariant extends FortCosmeticVariantBackedByArra
         public ParticleVariant[] VariantParticles;
         public ParticleParamterVariant[] VariantParticleParams;
         public ManagedParticleParamVariant[] VariantAlteredParticleParams;
-//        public Boolean bIndex7;
+        //        public Boolean bIndex7;
         public CosmeticMetaTagContainer MetaTags;
     }
 

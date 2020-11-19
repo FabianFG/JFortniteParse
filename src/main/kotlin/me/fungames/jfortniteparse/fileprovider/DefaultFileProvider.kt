@@ -41,10 +41,10 @@ open class DefaultFileProvider : PakFileProvider {
                         FIoDispatcher.initializePostSettings()
                         PakFileReader.logger.info("Initialized I/O dispatcher")
                     } catch (e: FIoStatusException) {
-                        PakFileReader.logger.error("Failed to mount I/O dispatcher global environment: '%s'".format(e.message))
+                        PakFileReader.logger.error("Failed to mount I/O dispatcher global environment: '{}'", e.message)
                     }
                 } catch (e: FIoStatusException) {
-                    PakFileReader.logger.error("Failed to initialize I/O dispatcher: '%s'".format(e.message))
+                    PakFileReader.logger.error("Failed to initialize I/O dispatcher: '{}'", e.message)
                 }
             }
         }

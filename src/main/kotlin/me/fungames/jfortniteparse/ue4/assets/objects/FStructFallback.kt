@@ -12,7 +12,8 @@ class FStructFallback : UClass, IPropertyHolder {
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
-        properties = UObject.deserializeTaggedProperties(Ar)
+        properties = mutableListOf()
+        UObject.deserializeTaggedProperties(properties, Ar)
         super.complete(Ar)
     }
 

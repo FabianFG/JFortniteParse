@@ -16,7 +16,7 @@ import java.util.List;
 public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public EFortQuestType QuestType;
     public EFortQuestSubtype QuestSubtype;
-    public Boolean UnknownData00;
+    @UProperty(skipPrevious = 1) // TODO an unknown property here
     public Boolean bShouldDisplayOverallQuestInformation;
     public Boolean bAthenaUpdateObjectiveOncePerMatch;
     public Boolean bAthenaMustCompleteInSingleMatch;

@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_Medium
@@ -420,7 +421,7 @@ class FAsyncLoadingThread2 : Runnable {
             if (completionCallback != null) {
                 // Queue completion callback and execute at next process loaded packages call to maintain behavior compatibility with old loader
                 //queuedFailedPackageCallbacks.add(FQueuedFailedPackageCallback(name, completionCallback))
-                completionCallback(name, null, EAsyncLoadingResult.Failed)
+                completionCallback.onCompletion(name, Result.failure(ParserException("The package to load does not exist on disk or in the loader")))
             }
         }
 
@@ -556,7 +557,7 @@ class FAsyncLoadingThread2 : Runnable {
                 }, {
                     asyncPackageLog(Level.WARN, pkg.desc, "StartBundleIoRequests: FailedRead",
                         "Failed reading chunk for package: ${(it as? FIoStatusException)?.status ?: it}")
-                    pkg.bLoadHasFailed = true
+                    pkg.failedException = it
                 })
                 pkg.getPackageNode(EEventLoadNode2.Package_ProcessSummary).releaseBarrier()
                 pkg.asyncLoadingThread.waitingForIoBundleCounter.getAndDecrement()

@@ -82,14 +82,12 @@ public class CityHash {
     }
 
     private static long hashLen16(long u, long v, long mul) {
-        System.out.printf("HashLen16(u, v, mul) = %x, %x, %x\n", u, v, mul);
         // Murmur-inspired hashing.
         long a = (u ^ v) * mul;
         a ^= (a >>> 47);
         long b = (v ^ a) * mul;
         b ^= (b >>> 47);
         b *= mul;
-        System.out.printf("return %x;\n", b);
         return b;
     }
 

@@ -358,11 +358,12 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
         }
     }
 
-    fun mount(environment: FIoStoreEnvironment, encryptionKeyGuid: FGuid, encryptionKey: ByteArray?) {
+    fun mount(environment: FIoStoreEnvironment, encryptionKeyGuid: FGuid, encryptionKey: ByteArray?): FIoDispatcherMountedContainer {
         val containerId = fileIoStore.mount(environment, encryptionKeyGuid, encryptionKey)
         val mountedContainer = FIoDispatcherMountedContainer(environment, containerId)
         containerMountedListeners.forEach { it.onContainerMounted(mountedContainer) }
         mountedContainers.add(mountedContainer)
+        return mountedContainer
     }
 
     fun doesChunkExist(chunkId: FIoChunkId) = fileIoStore.doesChunkExist(chunkId)

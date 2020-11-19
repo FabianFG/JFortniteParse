@@ -1,7 +1,8 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.enums.*;
-import me.fungames.jfortniteparse.ue4.assets.UProperty;
+import me.fungames.jfortniteparse.fort.objects.FScalableFloat;
+import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
@@ -37,14 +38,12 @@ public class FortItemDefinition extends McpItemDefinitionBase {
     public FGameplayTagContainer AutomationTags;
     public FGameplayTagContainer SecondaryCategoryOverrideTags;
     public FGameplayTagContainer TertiaryCategoryOverrideTags;
-    /*public FScalableFloat MaxStackSize;
-    public FScalableFloat PurchaseItemLimit;*/
-    @UProperty(skipPrevious = 2)
+    public FScalableFloat MaxStackSize;
+    public FScalableFloat PurchaseItemLimit;
     public Float FrontendPreviewScale;
     public FSoftObjectPath /*SoftClassPath*/ TooltipClass;
     public FSoftObjectPath StatList;
-    //public FCurveTableRowHandle RatingLookup;
-    @UProperty(skipPrevious = 1)
+    public FCurveTableRowHandle RatingLookup;
     public FSoftObjectPath WidePreviewImage;
     public FSoftObjectPath SmallPreviewImage;
     public FSoftObjectPath LargePreviewImage;

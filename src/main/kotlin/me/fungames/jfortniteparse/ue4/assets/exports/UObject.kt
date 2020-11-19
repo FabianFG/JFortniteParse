@@ -60,10 +60,14 @@ open class UObject : UExport, IPropertyHolder {
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.init(Ar)
-        properties = if (Ar.useUnversionedPropertySerialization) {
-            deserializeUnversionedProperties(javaClass, Ar)
+        properties = mutableListOf()
+        if (Ar.useUnversionedPropertySerialization) {
+            if (javaClass == UObject::class.java) {
+                throw ParserException("Missing schema for class $exportType")
+            }
+            deserializeUnversionedProperties(properties, javaClass, Ar)
         } else {
-            deserializeTaggedProperties(Ar)
+            deserializeTaggedProperties(properties, Ar)
         }
         if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
             objectGuid = FGuid(Ar)
@@ -105,15 +109,13 @@ open class UObject : UExport, IPropertyHolder {
     }
 
     companion object {
-        fun deserializeTaggedProperties(Ar: FAssetArchive): MutableList<FPropertyTag> {
-            val properties = mutableListOf<FPropertyTag>()
+        fun deserializeTaggedProperties(properties: MutableList<FPropertyTag>, Ar: FAssetArchive) {
             while (true) {
                 val tag = FPropertyTag(Ar, true)
                 if (tag.name.isNone())
                     break
                 properties.add(tag)
             }
-            return properties
         }
 
         fun serializeProperties(Ar: FAssetArchiveWriter, properties: List<FPropertyTag>) {

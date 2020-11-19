@@ -52,6 +52,8 @@ open class FName(
         @JvmField
         val NAME_None = FName()
 
+        @JvmStatic
+        @JvmOverloads
         fun dummy(text: String, number: Int = 0) = FNameDummy(text.intern(), number)
 
         fun getByNameMap(text: String, nameMap: List<FNameEntry>): FName? {

@@ -6,16 +6,11 @@ import me.fungames.jfortniteparse.ue4.assets.objects.structs.FTextureParameterVa
 import me.fungames.jfortniteparse.ue4.assets.objects.structs.FVectorParameterValue
 import me.fungames.jfortniteparse.ue4.converters.CMaterialParams
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
-@ExperimentalUnsignedTypes
-class UMaterialInstanceConstant : UMaterialInstance {
+class UMaterialInstanceConstant : UMaterialInstance() {
     val ScalarParameterValues = emptyArray<FScalarParameterValue>()
     val TextureParameterValues = emptyArray<FTextureParameterValue>()
     val VectorParameterValues = emptyArray<FVectorParameterValue>()
-
-    constructor() : super()
-    constructor(exportObject: FObjectExport) : super(exportObject)
 
     override fun getParams(params: CMaterialParams) {
         // get params from linked UMaterial3

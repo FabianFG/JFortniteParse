@@ -1,16 +1,18 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.tex;
 
+import me.fungames.jfortniteparse.ue4.assets.exports.UStreamableRenderAsset;
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UUnrealMaterial;
 import me.fungames.jfortniteparse.ue4.converters.CMaterialParams;
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid;
 import me.fungames.jfortniteparse.ue4.objects.engine.FPerPlatformFloat;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class UTexture extends UUnrealMaterial {
+public class UTexture extends UStreamableRenderAsset implements UUnrealMaterial {
     public FGuid LightingGuid;
-    public int LodBias;
+    public Integer LodBias;
     public ETextureCompressionSettings CompressionSettings;
     public ETextureFilter Filter;
     public ETextureMipLoadOptions MipLoadOptions;
@@ -28,6 +30,12 @@ public class UTexture extends UUnrealMaterial {
     @Override
     public void getParams(CMaterialParams params) {
         //???
+    }
+
+    @NotNull
+    @Override
+    public String name() {
+        return getName();
     }
 
     public enum ETextureCompressionSettings {

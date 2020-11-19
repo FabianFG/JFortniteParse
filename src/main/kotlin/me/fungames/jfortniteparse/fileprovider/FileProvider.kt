@@ -39,7 +39,7 @@ abstract class FileProvider {
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    abstract fun loadGameFile(filePath: String): Package?
+    abstract fun loadGameFile(filePath: String): Package
 
     /**
      * Loads a UE4 Package
@@ -47,7 +47,7 @@ abstract class FileProvider {
      * @return the parsed package or null if the file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    abstract fun loadGameFile(file: GameFile): Package?
+    abstract fun loadGameFile(file: GameFile): Package
 
     // Load object by object path string
     inline fun <reified T> loadObject(objectPath: String?): T? {
@@ -68,10 +68,7 @@ abstract class FileProvider {
             packagePath = packagePath.substring(0, dotIndex)
         }
         val pkg = loadGameFile(packagePath) // TODO allow reading umaps via this route, currently fixPath() only appends .uasset
-        if (pkg != null) {
-            return pkg.findExport(objectName)
-        } else logger.warn { "Failed to load SoftObjectPath" }
-        return null
+        return pkg.findExport(objectName)
     }
 
     // Load object by FSoftObjectPath

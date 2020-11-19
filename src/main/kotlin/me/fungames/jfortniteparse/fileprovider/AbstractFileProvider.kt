@@ -3,17 +3,17 @@ package me.fungames.jfortniteparse.fileprovider
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
-import me.fungames.jfortniteparse.ue4.asyncloading2.EAsyncLoadingResult
 import me.fungames.jfortniteparse.ue4.asyncloading2.FAsyncLoadingThread2
 import me.fungames.jfortniteparse.ue4.io.FIoDispatcher
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 import me.fungames.jfortniteparse.util.await
+import me.fungames.jfortniteparse.util.complete
 import java.util.concurrent.CompletableFuture
 
 abstract class AbstractFileProvider : FileProvider() {
-    val asyncLoadingThread by lazy {
+    val asyncPackageLoader by lazy {
         FAsyncLoadingThread2(FIoDispatcher.get()).apply {
             provider = this@AbstractFileProvider
             initializeLoading()
@@ -21,18 +21,13 @@ abstract class AbstractFileProvider : FileProvider() {
         }
     }
 
-    override fun loadGameFile(file: GameFile): Package? {
+    override fun loadGameFile(file: GameFile): Package {
         if (!file.isUE4Package() || !file.hasUexp())
-            return null
+            throw IllegalArgumentException("The provided file is not a package file")
         val uasset = saveGameFile(file)
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
-        return try {
-            PakPackage(uasset, uexp, ubulk, file.path, this, game)
-        } catch (e: Exception) {
-            logger.error("Failed to load package ${file.path}", e)
-            null
-        }
+        return PakPackage(uasset, uexp, ubulk, file.path, this, game)
     }
 
     override fun findGameFile(filePath: String): GameFile? {
@@ -40,7 +35,7 @@ abstract class AbstractFileProvider : FileProvider() {
         return files[path]
     }
 
-    override fun loadGameFile(filePath: String): Package? {
+    override fun loadGameFile(filePath: String): Package {
         val path = fixPath(filePath)
         // try load from PAKs
         val gameFile = findGameFile(path)
@@ -49,32 +44,20 @@ abstract class AbstractFileProvider : FileProvider() {
         // try load from IoStore
         if (FIoDispatcher.isInitialized()) {
             val event = CompletableFuture<Package>()
-            asyncLoadingThread.loadPackage(compactFilePath(filePath)) { packageName, loadedPackage, result ->
-                if (result == EAsyncLoadingResult.Succeeded) {
-                    event.complete(loadedPackage)
-                } else {
-                    event.completeExceptionally(ParserException("FAsyncLoadingThread2::LoadPackage failed with result $result"))
-                }
+            asyncPackageLoader.loadPackage(compactFilePath(filePath)) { packageName, loadedPackage ->
+                event.complete(loadedPackage)
             }
-            return try {
-                event.await()
-            } catch (e: Throwable) {
-                logger.error("Failed to load package $path from IoStore")
-                null
-            }
+            return event.await()
         }
         // try load from file system
         if (!path.endsWith(".uasset") && !path.endsWith(".umap"))
-            return null
-        val uasset = saveGameFile(path) ?: return null
-        val uexp = saveGameFile(path.substringBeforeLast(".") + ".uexp") ?: return null
+            throw IllegalArgumentException("Bad file path")
+        val uasset = saveGameFile(path)
+            ?: throw IllegalArgumentException("Bad file path")
+        val uexp = saveGameFile(path.substringBeforeLast(".") + ".uexp")
+            ?: throw IllegalArgumentException("Bad file path")
         val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
-        return try {
-            PakPackage(uasset, uexp, ubulk, path, this, game)
-        } catch (e: ParserException) {
-            logger.error("Failed to load package $path", e)
-            null
-        }
+        return PakPackage(uasset, uexp, ubulk, path, this, game)
     }
 
     override fun loadLocres(filePath: String): Locres? {

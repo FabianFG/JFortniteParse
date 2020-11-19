@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
@@ -177,7 +176,8 @@ sealed class FPropertyTagType(val propertyType: String) {
                 "StructProperty" ->
                     if (Ar.useUnversionedPropertySerialization && tagData!!.structClass!!.isAnnotationPresent(UStruct::class.java)) {
                         //val struct = tagData.field!!.type.newInstance()
-                        val properties = deserializeUnversionedProperties(tagData.structClass!!, Ar)
+                        val properties = mutableListOf<FPropertyTag>()
+                        deserializeUnversionedProperties(properties, tagData.structClass!!, Ar)
                         StructProperty(UScriptStruct(tagData.structName.text, FStructFallback(properties)), propertyType)
                     } else {
                         StructProperty(UScriptStruct(Ar, tagData!!.structName.text), propertyType)
@@ -185,7 +185,7 @@ sealed class FPropertyTagType(val propertyType: String) {
                 "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type), propertyType)
                 "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type), propertyType)
                 "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type), propertyType)
-                "TextProperty" -> TextProperty(valueOr({ FText(Ar) }, { FText(0u, ETextHistoryType.None, FTextHistory.None(Ar)) }, type), propertyType)
+                "TextProperty" -> TextProperty(valueOr({ FText(Ar) }, { FText(0u, ETextHistoryType.None, FTextHistory.None()) }, type), propertyType)
                 "StrProperty" -> StrProperty(valueOr({ Ar.readString() }, { "" }, type), propertyType)
                 "NameProperty" -> NameProperty(valueOr({ Ar.readFName() }, { FName.NAME_None }, type), propertyType)
                 "IntProperty" -> IntProperty(valueOr({ Ar.readInt32() }, { 0 }, type), propertyType)
@@ -206,14 +206,11 @@ sealed class FPropertyTagType(val propertyType: String) {
                     }, propertyType)
                 "MapProperty" -> MapProperty(UScriptMap(Ar, tagData!!), propertyType)
                 "ByteProperty" -> when (type) {
-                    // Type.NORMAL -> ByteProperty(Ar.readFName().index.toUByte(), propertyType)
-                    ReadType.NORMAL -> { // FIXME: this is a hack to match John Wick Parse's output
-                        val nameIndex = Ar.readInt32()
-                        val nameMap = (Ar.owner as PakPackage).nameMap
-                        if (nameIndex in nameMap.indices) {
-                            NameProperty(FName(nameMap, nameIndex, Ar.readInt32()), propertyType)
+                    ReadType.NORMAL -> {
+                        if (!Ar.useUnversionedPropertySerialization && tagData?.enumName != null && !tagData.enumName.isNone()) {
+                            EnumProperty(Ar.readFName(), propertyType) // TEnumAsByte
                         } else {
-                            ByteProperty(nameIndex.toUByte(), propertyType)
+                            ByteProperty(Ar.readUInt8(), propertyType)
                         }
                     }
                     ReadType.MAP -> ByteProperty(Ar.readUInt32().toUByte(), propertyType)

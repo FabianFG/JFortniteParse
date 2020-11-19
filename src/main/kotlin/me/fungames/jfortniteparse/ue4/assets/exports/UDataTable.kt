@@ -1,7 +1,8 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
-import jdk.nashorn.internal.runtime.ParserException
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.*
+import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -30,19 +31,22 @@ class UDataTable : UObject {
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
+        val rowStructName = if (Ar.owner is IoPackage) {
+            (Ar.owner as IoPackage).run { RowStruct!!.getImportObject()!!.findFromGlobal()!!.objectName.toName() }
+        } else {
+            (Ar.owner as PakPackage).run { RowStruct!!.getResource()!!.objectName }
+        }
+        val clazz = ObjectTypeRegistry.structs[rowStructName.text]
+        if (Ar.useUnversionedPropertySerialization && clazz == null) {
+            throw ParserException("Missing schema for row struct $rowStructName")
+        }
         rows = Ar.readTMap {
             val key = Ar.readFName()
-            val rowProperties = if (Ar.useUnversionedPropertySerialization) {
-                val rowStructName = if (Ar.owner is IoPackage) {
-                    (Ar.owner as IoPackage).run { RowStruct!!.getImportObject()!!.findFromGlobal()!!.objectName.toName() }
-                } else {
-                    (Ar.owner as PakPackage).run { RowStruct!!.getResource()!!.objectName }
-                }
-                val clazz = ObjectTypeRegistry.structs[rowStructName.text]
-                    ?: throw ParserException("$rowStructName can't be parsed yet")
-                deserializeUnversionedProperties(clazz, Ar)
+            val rowProperties = mutableListOf<FPropertyTag>()
+            if (Ar.useUnversionedPropertySerialization) {
+                deserializeUnversionedProperties(rowProperties, clazz!!, Ar)
             } else {
-                deserializeTaggedProperties(Ar)
+                deserializeTaggedProperties(rowProperties, Ar)
             }
             val value = UObject(rowProperties, null, "RowStruct")
             key to value

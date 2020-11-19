@@ -3,6 +3,8 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.UProperty
+import me.fungames.jfortniteparse.ue4.assets.UStruct
+import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -23,7 +25,6 @@ enum class ECurveTableMode {
     RichCurves
 }
 
-@ExperimentalUnsignedTypes
 class UCurveTable : UObject() {
     companion object {
         internal val LOGGER = KotlinLogging.logger("LogCurveTable")
@@ -55,11 +56,15 @@ class UCurveTable : UObject() {
         rowMap = Ar.readTMap(numRows) {
             Ar.readFName() to when (curveTableMode) {
                 ECurveTableMode.Empty -> TODO()
-                ECurveTableMode.SimpleCurves -> SimpleCurve().apply { mapToClass(if (Ar.useUnversionedPropertySerialization) {
-                    deserializeUnversionedProperties(javaClass, Ar)
-                } else {
-                    deserializeTaggedProperties(Ar)
-                }, javaClass, this) }
+                ECurveTableMode.SimpleCurves -> SimpleCurve().apply {
+                    val properties = mutableListOf<FPropertyTag>()
+                    if (Ar.useUnversionedPropertySerialization) {
+                        deserializeUnversionedProperties(properties, javaClass, Ar)
+                    } else {
+                        deserializeTaggedProperties(properties, Ar)
+                    }
+                    mapToClass(properties, javaClass, this)
+                }
                 ECurveTableMode.RichCurves -> TODO() // RichCurve()
             }
         }
@@ -102,13 +107,13 @@ class UCurveTable : UObject() {
 /**
  * Handle to a particular row in a table.
  */
-@ExperimentalUnsignedTypes
+@UStruct
 class FCurveTableRowHandle {
     /** Pointer to table we want a row from */
-    @UProperty(name = "CurveTable")
+    @UProperty("CurveTable")
     var curveTable: UCurveTable? = null
     /** Name of row in the table that we want */
-    @UProperty(name = "RowName")
+    @UProperty("RowName")
     var rowName: FName = NAME_None
 
     /** Get the curve straight from the row handle */

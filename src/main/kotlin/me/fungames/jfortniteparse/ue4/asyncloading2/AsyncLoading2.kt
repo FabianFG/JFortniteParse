@@ -26,7 +26,10 @@ enum class EAsyncLoadingResult {
     /** Async loading was canceled */
     Canceled
 }
-typealias FCompletionCallback = (packageName: FName, loadedPackage: Package?, result: EAsyncLoadingResult) -> Unit
+
+fun interface FCompletionCallback {
+    fun onCompletion(packageName: FName, loadedPackage: Result<Package>/*, result: EAsyncLoadingResult*/)
+}
 
 const val ALT2_LOG_VERBOSE = true
 
