@@ -1,4 +1,4 @@
-package me.fungames.jfortniteparse.fort.objects;
+package me.fungames.jfortniteparse.ue4.objects;
 
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable;

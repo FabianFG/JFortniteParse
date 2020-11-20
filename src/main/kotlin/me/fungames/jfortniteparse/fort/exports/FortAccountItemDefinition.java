@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import me.fungames.jfortniteparse.fort.objects.FDataTableRowHandle;
 import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle;
+import me.fungames.jfortniteparse.ue4.objects.FDataTableRowHandle;
 
 import java.util.List;
 

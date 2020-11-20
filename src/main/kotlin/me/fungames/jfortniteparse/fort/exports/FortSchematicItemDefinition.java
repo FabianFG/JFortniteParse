@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import me.fungames.jfortniteparse.fort.objects.FDataTableCategoryHandle;
-import me.fungames.jfortniteparse.fort.objects.FDataTableRowHandle;
+import me.fungames.jfortniteparse.ue4.objects.FDataTableCategoryHandle;
+import me.fungames.jfortniteparse.ue4.objects.FDataTableRowHandle;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;

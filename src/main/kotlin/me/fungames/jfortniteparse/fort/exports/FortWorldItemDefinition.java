@@ -1,10 +1,10 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import kotlin.UByte;
-import me.fungames.jfortniteparse.fort.objects.FDataTableCategoryHandle;
-import me.fungames.jfortniteparse.fort.objects.FDataTableRowHandle;
-import me.fungames.jfortniteparse.fort.objects.FScalableFloat;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
+import me.fungames.jfortniteparse.ue4.objects.FDataTableCategoryHandle;
+import me.fungames.jfortniteparse.ue4.objects.FDataTableRowHandle;
+import me.fungames.jfortniteparse.ue4.objects.FScalableFloat;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D;

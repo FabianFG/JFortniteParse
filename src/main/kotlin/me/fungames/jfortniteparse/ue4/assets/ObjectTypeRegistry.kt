@@ -43,8 +43,13 @@ object ObjectTypeRegistry {
         registerClass(AthenaDanceItemDefinition::class.java)
         registerClass(AthenaEmojiItemDefinition::class.java)
         registerClass(AthenaGliderItemDefinition::class.java)
+        registerClass(AthenaItemWrapDefinition::class.java)
+        registerClass(AthenaLoadingScreenItemDefinition::class.java)
+        registerClass(AthenaMusicPackItemDefinition::class.java)
         registerClass(AthenaPetCarrierItemDefinition::class.java)
         registerClass(AthenaPickaxeItemDefinition::class.java)
+        registerClass(AthenaSeasonItemDefinition::class.java)
+        registerClass(AthenaSkyDiveContrailItemDefinition::class.java)
         registerClass(AthenaSprayItemDefinition::class.java)
         registerClass(AthenaToyItemDefinition::class.java)
         registerClass(FortAccountItemDefinition::class.java)
@@ -79,6 +84,7 @@ object ObjectTypeRegistry {
         registerClass(McpItemDefinitionBase::class.java)
         registerClass(VariantTypeBase::class.java)
         registerClass(VariantTypeMaterials::class.java)
+        registerClass(VariantTypeParticles::class.java)
         registerClass(VariantTypeSounds::class.java)
 
         // -- Data table row structs --

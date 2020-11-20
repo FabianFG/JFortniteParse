@@ -1,9 +1,9 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.enums.*;
-import me.fungames.jfortniteparse.fort.objects.FScalableFloat;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle;
+import me.fungames.jfortniteparse.ue4.objects.FScalableFloat;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;

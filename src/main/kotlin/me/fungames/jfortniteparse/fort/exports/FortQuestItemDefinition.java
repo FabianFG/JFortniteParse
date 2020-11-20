@@ -2,13 +2,13 @@ package me.fungames.jfortniteparse.fort.exports;
 
 import kotlin.UInt;
 import kotlin.UShort;
-import me.fungames.jfortniteparse.fort.objects.FDataTableRowHandle;
 import me.fungames.jfortniteparse.fort.objects.FortHiddenRewardQuantityPair;
 import me.fungames.jfortniteparse.fort.objects.FortItemQuantityPair;
 import me.fungames.jfortniteparse.fort.objects.FortMcpQuestObjectiveInfo;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable;
+import me.fungames.jfortniteparse.ue4.objects.FDataTableRowHandle;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;

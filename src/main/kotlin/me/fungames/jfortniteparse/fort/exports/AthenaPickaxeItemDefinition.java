@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import me.fungames.jfortniteparse.ue4.assets.UProperty;
+import me.fungames.jfortniteparse.fort.objects.FortUICameraFrameTargetBounds;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
@@ -19,7 +19,6 @@ public class AthenaPickaxeItemDefinition extends AthenaCosmeticItemDefinition {
     public FRotator PickaxeDualWieldPreviewRotation;
     public FSoftObjectPath PreviewIdleMontage;
     public FSoftObjectPath PreviewSwingMontage;
-    //public FFortUICameraFrameTargetBounds CameraFramingBounds;
-    @UProperty(skipPrevious = 1)
+    public FortUICameraFrameTargetBounds CameraFramingBounds;
     public FVector CameraFramingBoundsCenterOffset;
 }
