@@ -13,8 +13,11 @@ import me.fungames.jfortniteparse.ue4.objects.engine.curves.SimpleCurve
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
-import mu.KotlinLogging
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import kotlin.jvm.internal.Ref
+
+val LOG_CURVE_TABLE: Logger = LoggerFactory.getLogger("CurveTable")
 
 /**
  * Whether the curve table contains simple, rich, or no curves
@@ -26,9 +29,6 @@ enum class ECurveTableMode {
 }
 
 class UCurveTable : UObject() {
-    companion object {
-        internal val LOGGER = KotlinLogging.logger("LogCurveTable")
-    }
     /**
      * Map of name of row to row data structure.
      * If curveTableMode is SimpleCurves the value type will be FSimpleCurve
@@ -84,14 +84,14 @@ class UCurveTable : UObject() {
     @JvmOverloads
     fun findCurve(RowName: FName, warnIfNotFound: Boolean = true): FRealCurve? {
         if (RowName == NAME_None) {
-            if (warnIfNotFound) LOGGER.warn("UCurveTable::FindCurve : NAME_None is invalid row name for CurveTable '%s'.".format(pathName))
+            if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : NAME_None is invalid row name for CurveTable '$pathName'.")
             return null
         }
 
         val foundCurve = rowMap[RowName]
 
         if (foundCurve == null) {
-            if (warnIfNotFound) LOGGER.warn("UCurveTable::FindCurve : Row '%s' not found in CurveTable '%s'.".format(RowName.toString(), pathName))
+            if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : Row '$RowName' not found in CurveTable '$pathName'.")
             return null
         }
 
@@ -121,7 +121,7 @@ class FCurveTableRowHandle {
     fun getCurve(warnIfNotFound: Boolean = true): FRealCurve? {
         if (curveTable == null) {
             if (rowName != NAME_None) {
-                if (warnIfNotFound) UCurveTable.LOGGER.warn("LogCurveTable", "FCurveTableRowHandle::FindRow : No CurveTable for row %s.".format(rowName.toString()))
+                if (warnIfNotFound) LOG_CURVE_TABLE.warn("FCurveTableRowHandle::FindRow : No CurveTable for row $rowName.")
             }
             return null
         }

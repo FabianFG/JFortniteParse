@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.fort.objects.variants;
 
 import me.fungames.jfortniteparse.fort.enums.EAttachmentRule;
+import me.fungames.jfortniteparse.fort.enums.EFXType;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
@@ -24,6 +25,13 @@ public class BaseVariantDef {
 
     public String getBackendVariantName() {
         return CustomizationVariantTag != null ? CustomizationVariantTag.toString().substring("Cosmetics.Variant.Property.".length()) : null;
+    }
+
+    @UStruct
+    public static class MeshVariant {
+        public FSoftObjectPath MeshToSwap;
+        public FName ComponentToOverride;
+        public FSoftObjectPath OverrideMesh;
     }
 
     @UStruct
@@ -82,29 +90,6 @@ public class BaseVariantDef {
         public EFXType FXType;
         public FSoftObjectPath NiagaraVersion;
         public FSoftObjectPath CascadeVersion;
-    }
-
-    public enum EFXType {
-        GenericAnimNotify,
-        TrailAnimNotify,
-        WeaponImpactEffect,
-        WeaponMeleeImpactEffect,
-        Contrail,
-        Emote,
-        Trap,
-        Skin,
-        Glider,
-        Vehicle,
-        BackpackBling,
-        Water,
-        LootChest,
-        EnvironmentalAmbient,
-        WeaponRangedBeam,
-        WeaponBulletShells,
-        WeaponMuzzleFlashes,
-        PickAxe,
-        Curie,
-        Projectile
     }
 
     @UStruct

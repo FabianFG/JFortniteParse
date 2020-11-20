@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.fort.objects
 
-import com.google.gson.annotations.SerializedName
+import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRealCurve
@@ -8,11 +8,11 @@ import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRealCurve
 @UStruct
 class FScalableFloat {
 	/** Raw value, is multiplied by curve */
-	@SerializedName("Value")
+	@UProperty("Value")
 	var value: Float = 0f
 
 	/** Curve that is evaluated at a specific level. If found, it is multipled by Value */
-	@SerializedName("Curve")
+	@UProperty("Curve")
 	var curve: FCurveTableRowHandle? = null
 
 	/** Cached direct pointer to the RealCurve we should evaluate */

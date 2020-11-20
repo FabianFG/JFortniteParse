@@ -11,7 +11,8 @@ import java.util.Map;
 
 public class AthenaCharacterItemDefinition extends AthenaCosmeticItemDefinition {
     public Map<FName, FPackageIndex /*UObject*/> RequestedDataStores;
-    //public Map<EFortCustomPartType, PackageIndex /*UMarshalledVFX_AuthoredDataConfig*/> RequestedDataStores;
+    //@Deprecated
+    //public Map<EFortCustomPartType, FPackageIndex /*MarshalledVFX_AuthoredDataConfig*/> AuthoredVFXData_ByPart;
     @UProperty(skipPrevious = 1)
     public FPackageIndex /*FortHeroType*/ HeroDefinition;
     public FPackageIndex /*AthenaBackpackItemDefinition*/ DefaultBackpack;

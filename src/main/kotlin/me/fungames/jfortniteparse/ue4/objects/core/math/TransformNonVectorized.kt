@@ -1,8 +1,10 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
 import me.fungames.jfortniteparse.ue4.assets.UProperty
+import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
+@UStruct
 class FTransform {
     @UProperty("Rotation")
     var rotation: FQuat

@@ -102,7 +102,7 @@ class PropertyInfo {
             c == Long::class.javaPrimitiveType || c == Long::class.javaObjectType -> "Int64Property"
             c == UByte::class.java -> "ByteProperty"
             c == UShort::class.java -> "UInt16Property"
-            c == UInt::class.java -> "UIntProperty"
+            c == UInt::class.java -> "UInt32Property"
             c == ULong::class.java -> "UInt64Property"
             c == String::class.java -> "StrProperty"
             c == FName::class.java -> "NameProperty"

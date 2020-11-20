@@ -222,13 +222,15 @@ sealed class FPropertyTagType(val propertyType: String) {
                 "EnumProperty" ->
                     if (type == ReadType.NORMAL && (tagData == null || tagData.enumName.isNone())) {
                         EnumProperty(FName.NAME_None, propertyType)
-                    } else if (Ar.useUnversionedPropertySerialization) {
-                        val enumValue = if (type == ReadType.ZERO) {
-                            tagData!!.enumClass!!.enumConstants[0]
+                    } else if (type != ReadType.MAP && Ar.useUnversionedPropertySerialization) {
+                        val ordinal = valueOr({ if (tagData?.enumType == "IntProperty") Ar.readInt32() else Ar.read() }, { 0 }, type)
+                        if (tagData?.enumClass != null) {
+                            val enumValue = tagData.enumClass!!.enumConstants[ordinal]
+                            EnumProperty(FName.dummy(tagData.enumName.text + "::" + enumValue), propertyType)
                         } else {
-                            tagData!!.enumClass!!.enumConstants[if (tagData.enumType == "IntProperty") Ar.readInt32() else Ar.read()]
+                            UClass.logger.warn("Enum class not supplied")
+                            EnumProperty(FName.dummy((tagData?.enumName?.text ?: "UnknownEnum") + "::" + ordinal), propertyType)
                         }
-                        EnumProperty(FName.dummy(tagData.enumName.text + "::" + enumValue), propertyType)
                     } else {
                         EnumProperty(Ar.readFName(), propertyType)
                     }
@@ -237,7 +239,7 @@ sealed class FPropertyTagType(val propertyType: String) {
                         SoftObjectProperty(FSoftObjectPath(FName(), ""), propertyType)
                     } else {
                         val path = SoftObjectProperty(FSoftObjectPath(Ar), propertyType)
-                        if (type == ReadType.MAP) {
+                        if (type == ReadType.MAP && !Ar.useUnversionedPropertySerialization) { //TODO check if this is true
                             Ar.skip(4)
                         }
                         path
