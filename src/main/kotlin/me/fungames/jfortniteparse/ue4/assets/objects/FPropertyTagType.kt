@@ -7,6 +7,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FTextHistory
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -133,6 +134,7 @@ sealed class FPropertyTagType(val propertyType: String) {
         is Int8Property -> this.number
         is Int16Property -> this.number
         is Int64Property -> this.number
+        is FieldPathProperty -> this.fieldPath
     }
 
     fun setTagTypeValue(value: Any?) {
@@ -162,6 +164,7 @@ sealed class FPropertyTagType(val propertyType: String) {
             is Int8Property -> this.number = value as Byte
             is Int16Property -> this.number = value as Short
             is Int64Property -> this.number = value as Long
+            is FieldPathProperty -> this.fieldPath = value as FFieldPath
         }
     }
 
@@ -250,6 +253,7 @@ sealed class FPropertyTagType(val propertyType: String) {
                 "Int8Property" -> Int8Property(valueOr({ Ar.readInt8() }, { 0 }, type), propertyType)
                 "Int16Property" -> Int16Property(valueOr({ Ar.readInt16() }, { 0 }, type), propertyType)
                 "Int64Property" -> Int64Property(valueOr({ Ar.readInt64() }, { 0 }, type), propertyType)
+                "FieldPathProperty" -> FieldPathProperty(valueOr({ FFieldPath(Ar) }, { FFieldPath() }, type), propertyType)
                 /*"MulticastDelegateProperty" -> throw ParserException("MulticastDelegateProperty not implemented yet")
                 "LazyObjectProperty" -> throw ParserException("LazyObjectProperty not implemented yet")*/
 
@@ -333,6 +337,7 @@ sealed class FPropertyTagType(val propertyType: String) {
     class Int8Property(var number: Byte, propertyType: String) : FPropertyTagType(propertyType)
     class Int16Property(var number: Short, propertyType: String) : FPropertyTagType(propertyType)
     class Int64Property(var number: Long, propertyType: String) : FPropertyTagType(propertyType)
+    class FieldPathProperty(var fieldPath: FFieldPath, propertyType: String) : FPropertyTagType(propertyType)
 
     enum class ReadType {
         NORMAL,

@@ -3,13 +3,11 @@ package me.fungames.jfortniteparse.ue4.assets
 import com.github.salomonbrys.kotson.jsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.fort.exports.*
+import me.fungames.jfortniteparse.fort.exports.FortItemDefinition
 import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariant
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
-import me.fungames.jfortniteparse.ue4.assets.exports.*
-import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
-import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
-import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
+import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -129,17 +127,6 @@ class PakPackage(uasset: ByteBuffer,
     }
 
     fun constructExport(exportType: String) = when (exportType) {
-        // UE generic export classes
-        // "BlueprintGeneratedClass" -> UBlueprintGeneratedClass(it)
-        "CurveTable" -> UCurveTable()
-        "DataTable" -> UDataTable()
-        "Level" -> ULevel()
-        "Material" -> UMaterial()
-        "MaterialInstanceConstant" -> UMaterialInstanceConstant()
-        "SoundWave" -> USoundWave()
-        "Texture2D" -> UTexture2D()
-        "StaticMesh" -> UStaticMesh()
-        "StringTable" -> UStringTable()
         // Valorant specific classes
         "CharacterAbilityUIData" -> CharacterAbilityUIData()
         "BaseCharacterPrimaryDataAsset_C",
@@ -148,28 +135,17 @@ class PakPackage(uasset: ByteBuffer,
         "CharacterRoleUIData" -> CharacterRoleUIData()
         "CharacterUIData" -> CharacterUIData()
         // Fortnite specific classes
-        "AthenaCharacterItemDefinition" -> AthenaCharacterItemDefinition()
-        "AthenaEmojiItemDefinition" -> AthenaEmojiItemDefinition()
-        "AthenaPickaxeItemDefinition" -> AthenaPickaxeItemDefinition()
-        "CatalogMessaging" -> FortCatalogMessaging()
-        "FortItemCategory" -> FortItemCategory()
-        "FortItemSeriesDefinition" -> FortItemSeriesDefinition()
-        "FortMtxOfferData" -> FortMtxOfferData()
-        "AthenaItemWrapDefinition",
-        "FortAbilityKit",
         "FortBannerTokenType",
         "FortDailyRewardScheduleTokenDefinition",
-        "FortHeroType",
-        "FortTokenType",
-        "FortVariantTokenType",
-        "FortWorkerType" -> FortItemDefinition()
+        "FortVariantTokenType" -> FortItemDefinition()
         else -> {
             if (exportType.contains("ItemDefinition")) {
                 FortItemDefinition()
             } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
                 FortCosmeticVariant()
-            } else
-                UObject()
+            } else {
+                ObjectTypeRegistry.constructClass(exportType)
+            }
         }
     }
 

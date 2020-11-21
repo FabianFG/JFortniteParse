@@ -11,10 +11,10 @@ public class AthenaGliderItemDefinition extends AthenaCosmeticItemDefinition {
     public EFortGliderType GliderType;
     public FVector CameraFramingBoundsCenterOffset;
     public Boolean bActivateTrailsOnRotationalMovement;
-    public FSoftObjectPath /*SoftClassProperty*/ ParachutePrefabClass;
+    public FSoftObjectPath /*SoftClassPath*/ ParachutePrefabClass;
     public FSoftObjectPath SkeletalMesh;
-    public FSoftObjectPath /*SoftClassProperty*/ AnimClass;
-    public FSoftObjectPath /*SoftClassProperty*/ CameraClass;
+    public FSoftObjectPath /*SoftClassPath*/ AnimClass;
+    public FSoftObjectPath /*SoftClassPath*/ CameraClass;
     public FSoftObjectPath PlayerAnimSet;
     public FSoftObjectPath TrailParticles;
     public FSoftObjectPath OwnerTrailParticles;

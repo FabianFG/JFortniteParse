@@ -2,8 +2,6 @@ package me.fungames.jfortniteparse.fort.objects;
 
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 
-import java.util.Locale;
-
 @UStruct
 public class FortItemQuantityPair {
     public PrimaryAssetId ItemPrimaryAssetId;
@@ -11,6 +9,6 @@ public class FortItemQuantityPair {
 
     @Override
     public String toString() {
-        return ItemPrimaryAssetId.PrimaryAssetType.Name.toString() + ':' + ItemPrimaryAssetId.PrimaryAssetName.toString().toLowerCase(Locale.ENGLISH);
+        return String.format("%d x %s", Quantity, ItemPrimaryAssetId.toString());
     }
 }

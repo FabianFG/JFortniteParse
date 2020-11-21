@@ -24,23 +24,26 @@ class FAsyncLoadingThread2 : Runnable {
     private val activeWorkersCount = AtomicInteger()
     private var bWorkersSuspended = false
 
-    /** true if the async thread is actually started. We don't start it until after we boot because the boot process on the game thread can create objects that are also being created by the loader  */
+    /** [ASYNC/GAME THREAD] true if the async thread is actually started. We don't start it until after we boot because the boot process on the game thread can create objects that are also being created by the loader  */
     private var bThreadStarted = false
 
     private var bLazyInitializedFromLoadPackage = false
 
-    /** Event used to signal loading should be cancelled */
+    /** [ASYNC/GAME THREAD] Event used to signal loading should be cancelled */
     private val cancelLoadingEvent = CompletableFuture<Void>()
-    /** Event used to signal that the async loading thread should be suspended */
+    /** [ASYNC/GAME THREAD] Event used to signal that the async loading thread should be suspended */
     private val threadSuspendedEvent = CompletableFuture<Void>()
-    /** Event used to signal that the async loading thread has resumed */
+    /** [ASYNC/GAME THREAD] Event used to signal that the async loading thread has resumed */
     private val threadResumedEvent = CompletableFuture<Void>()
-    /** List of queued packages to stream */
+    /** [ASYNC/GAME THREAD] List of queued packages to stream */
     private var queuedPackages = mutableListOf<FAsyncPackageDesc2>()
-    /** Package queue critical section */
+    /** [ASYNC/GAME THREAD] Package queue critical section */
     private var queueCritical = Object()
+    /*internal val loadedPackagesToProcess = mutableListOf<FAsyncPackage2>()
+    /** [GAME THREAD] Game thread completedPackages list */
+    private val completedPackages = mutableListOf<FAsyncPackage2>()
 
-    /*class FQueuedFailedPackageCallback(
+    class FQueuedFailedPackageCallback(
         val packageName: FName,
         val callback: FCompletionCallback
     )
@@ -57,7 +60,7 @@ class FAsyncLoadingThread2 : Runnable {
     /** List of all pending package requests */
     private val pendingRequests = ConcurrentHashMap.newKeySet<Int>()
 
-    /** Number of package load requests in the async loading queue */
+    /** [ASYNC/GAME THREAD] Number of package load requests in the async loading queue */
     private val queuedPackagesCounter = AtomicInteger()
 
     private val packageRequestID = AtomicInteger()
@@ -106,37 +109,6 @@ class FAsyncLoadingThread2 : Runnable {
 
         LOG_STREAMING.info("AsyncLoading2 - Created: Event Driven Loader: ${true}, Async Loading Thread: ${true}, Async Post Load: ${true}")
     }
-
-    /*override fun run() {
-        var bSuspended = false
-        while (!bStopRequested.get()) {
-            if (bSuspended) {
-                if (!bSuspendRequested.get()) {
-                    bSuspended = false
-                } else {
-                    Thread.sleep(1)
-                }
-            } else {
-                var bDidSomething = false
-                activeWorkersCount.getAndIncrement()
-
-                do {
-                    bDidSomething = eventQueue.popAndExecute(threadState)
-
-                    if (bSuspendRequested.get()) {
-                        bSuspended = true
-                        bDidSomething = true
-                        break
-                    }
-                } while (bDidSomething)
-                activeWorkersCount.getAndDecrement()
-                if (!bDidSomething) {
-                    threadState.processDeferredFrees()
-                    waiter.wait0()
-                }
-            }
-        }
-    }*/
 
     override fun run() {
         //asyncLoadingThreadId = Thread.currentThread().id
@@ -246,6 +218,13 @@ class FAsyncLoadingThread2 : Runnable {
         }
     }
 
+    fun stop() {
+        //workers.forEach { it.stopThread() }
+        bSuspendRequested.set(true)
+        bStopRequested.set(true)
+        altZenaphore.notifyAll0()
+    }
+
     /** Start the async loading thread */
     fun startThread() {
         val bAsyncLoadingThreadEnabled = true/*FAsyncLoadingThreadSettings.get().bAsyncLoadingThreadEnabled*/
@@ -258,6 +237,25 @@ class FAsyncLoadingThread2 : Runnable {
         }
 
         LOG_STREAMING.info("AsyncLoading2 - Thread Started: $bAsyncLoadingThreadEnabled, IsInitialLoad: $GIsInitialLoad")
+    }
+
+    /** Returns true if async loading is suspended */
+    fun isAsyncLoadingSuspended() = bSuspendRequested.get()
+
+    /**
+     * [ASYNC THREAD] Finds an existing async package in the AsyncPackages by its name.
+     *
+     * @param packageName async package name.
+     * @return Package or null if not found
+     */
+    fun findAsyncPackage(packageName: FName): FAsyncPackage2? {
+        val packageId = FPackageId.fromName(packageName)
+        if (packageId.isValid()) {
+            synchronized(asyncPackagesCritical) {
+                return asyncPackageLookup[packageId]
+            }
+        }
+        return null
     }
 
     fun getAsyncPackage(packageId: FPackageId): FAsyncPackage2? {
@@ -288,7 +286,7 @@ class FAsyncLoadingThread2 : Runnable {
     }
 
     /**
-     * Queues a package for streaming.
+     * [ASYNC/GAME THREAD] Queues a package for streaming.
      *
      * @param pkg package descriptor.
      */
@@ -429,18 +427,19 @@ class FAsyncLoadingThread2 : Runnable {
     }
 
     /**
-     * Adds a request ID to the list of pending requests
+     * [ASYNC/GAME THREAD] Checks if a request ID already is added to the loading queue
      */
-    fun addPendingRequest(requestID: Int) {
-        pendingRequests.add(requestID)
-    }
+    fun containsRequestID(requestID: Int) = requestID in pendingRequests
 
     /**
-     * Removes a request ID from the list of pending requests
+     * [ASYNC/GAME THREAD] Adds a request ID to the list of pending requests
      */
-    fun removePendingRequests(requestIDs: Collection<Int>) {
-        pendingRequests.removeAll(requestIDs)
-    }
+    fun addPendingRequest(requestID: Int) = pendingRequests.add(requestID)
+
+    /**
+     * [ASYNC/GAME THREAD] Removes a request ID from the list of pending requests
+     */
+    fun removePendingRequests(requestIDs: Collection<Int>) = pendingRequests.removeAll(requestIDs)
 
     //fun addPendingCDOs(package: FAsyncPackage2, classes: Collection<Class>) {}
 
@@ -462,6 +461,29 @@ class FAsyncLoadingThread2 : Runnable {
         globalPackageStore.finalizeInitialLoad()
         //check(pendingCDOs.isEmpty())
         //pendingCDOs.clear()
+    }
+
+    // custom method so no "main thread loops" are required
+    fun processLoadedPackage(pkg: FAsyncPackage2) {
+        check(pkg.asyncPackageLoadingState == EAsyncPackageLoadingState2.DeferredPostLoadDone)
+        pkg.asyncPackageLoadingState = EAsyncPackageLoadingState2.Finalize
+
+        synchronized(asyncPackagesCritical) {
+            asyncPackageLookup.remove(pkg.desc.getAsyncPackageId())
+        }
+
+        // Call external callbacks
+        pkg.callCompletionCallbacks()
+
+        // We don't need the package anymore
+        check(pkg.asyncPackageLoadingState == EAsyncPackageLoadingState2.Finalize)
+        pkg.asyncPackageLoadingState = EAsyncPackageLoadingState2.DeferredDelete
+        pkg.markRequestIDsAsComplete()
+
+        asyncPackageLog(Level.DEBUG, pkg.desc, "GameThread: LoadCompleted",
+            "All loading of package is done, and the async package and load request will be deleted.")
+
+        pkg.clearImportedPackages()
     }
 
     private fun createAsyncPackagesFromQueue(): Boolean {

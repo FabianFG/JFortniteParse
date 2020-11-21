@@ -6,8 +6,8 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.FTableRowBase
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
@@ -19,15 +19,13 @@ class UDataTable : UObject {
     @JvmField @UProperty var bIgnoreMissingFields: Boolean? = null
     @JvmField @UProperty var ImportKeyField: String? = null
 
-    lateinit var rows: MutableMap<FName, UObject>
+    var rows: MutableMap<FName, UObject>
 
     constructor() : this(mutableMapOf())
 
     constructor(rows: MutableMap<FName, UObject>) : super() {
         this.rows = rows
     }
-
-    constructor(exportObject: FObjectExport) : super(exportObject)
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
@@ -65,7 +63,8 @@ class UDataTable : UObject {
 
     fun findRow(rowName: String) = rows[FName.dummy(rowName)]
     fun findRow(rowName: FName) = rows[rowName]
-    fun <T> findRow(rowName: String, clazz: Class<T>): T? = findRow(rowName)?.mapToClass(clazz)
+    fun <T> findRow(rowName: String, clazz: Class<T>): T? where T : FTableRowBase =
+        findRow(rowName)?.mapToClass(clazz)
 
     fun toJson(): String {
         val data = rows.mapKeys { it.key.text }.mapValues { Package.gson.toJsonTree(it.value) }

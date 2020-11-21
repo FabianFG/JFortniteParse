@@ -15,6 +15,7 @@ import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.get
 import org.slf4j.event.Level
 import java.nio.ByteBuffer
+import kotlin.jvm.internal.Ref.ObjectRef
 
 /**
  * Structure containing intermediate data required for async loading of all exports of a package.
@@ -22,7 +23,7 @@ import java.nio.ByteBuffer
 class FAsyncPackage2 {
     /** Basic information associated with this package  */
     internal val desc: FAsyncPackageDesc2
-    private val data: FAsyncPackageData
+    internal val data: FAsyncPackageData
     /** Cached async loading thread object this package was created by */
     internal val asyncLoadingThread: FAsyncLoadingThread2
     /** Package which is going to have its exports and imports loaded */
@@ -31,7 +32,7 @@ class FAsyncPackage2 {
     private var externalReadIndex = 0
     /** Current index into deferredClusterObjects array used to spread routing createClusters over several frames */
     private var deferredClusterIndex = 0
-    private var asyncPackageLoadingState = EAsyncPackageLoadingState2.NewPackage
+    internal var asyncPackageLoadingState = EAsyncPackageLoadingState2.NewPackage
     /** True if our load has failed  */
     internal val bLoadHasFailed get() = failedException != null//= false
     internal var failedException: Throwable? = null
@@ -77,6 +78,17 @@ class FAsyncPackage2 {
         createNodes(eventSpecs)
     }
 
+    fun clearImportedPackages() {
+        //data.importedAsyncPackages.forEach { it.releaseRef() }
+        data.importedAsyncPackages.clear()
+    }
+
+    /** Marks a specific request as complete */
+    fun markRequestIDsAsComplete() {
+        asyncLoadingThread.removePendingRequests(requestIDs)
+        requestIDs.clear()
+    }
+
     fun addCompletionCallback(callback: FCompletionCallback) {
         // This is to ensure that there is no one trying to subscribe to a already loaded package
         //check(!bLoadHasFinished && !bLoadHasFailed)
@@ -95,7 +107,21 @@ class FAsyncPackage2 {
         }
     }
 
+    /** Returns the UPackage wrapped by this, if it is valid */
     fun getLoadedPackage() = if (!bLoadHasFailed) linkerRoot else null
+
+    /** Checks if all dependencies (imported packages) of this package have been fully loaded */
+    fun areAllDependenciesFullyLoaded(visitedPackages: MutableSet<FPackageId>): Boolean {
+        visitedPackages.clear()
+        val packageId = ObjectRef<FPackageId>()
+        val bLoaded = areAllDependenciesFullyLoadedInternal(this, visitedPackages, packageId)
+        if (!bLoaded) {
+            val asyncRoot = asyncLoadingThread.getAsyncPackage(packageId.element)
+            LOG_STREAMING.debug("AreAllDependenciesFullyLoaded: '%s' doesn't have all exports processed by DeferredPostLoad"
+                .format(asyncRoot?.desc?.diskPackageName))
+        }
+        return bLoaded
+    }
 
     fun importPackagesRecursive() {
         if (asyncPackageLoadingState >= EAsyncPackageLoadingState2.ImportPackages) {
@@ -167,6 +193,29 @@ class FAsyncPackage2 {
 
         asyncLoadingThread.addBundleIoRequest(this)
         asyncPackageLoadingState = EAsyncPackageLoadingState2.WaitingForIo
+    }
+
+    /** Checks if all dependencies (imported packages) of this package have been fully loaded */
+    private fun areAllDependenciesFullyLoadedInternal(pkg: FAsyncPackage2, visitedPackages: MutableSet<FPackageId>, outPackageId: ObjectRef<FPackageId>): Boolean {
+        for (importedPackageId in pkg.desc.storeEntry?.importedPackages ?: emptyArray()) {
+            if (importedPackageId in visitedPackages) {
+                continue
+            }
+            visitedPackages.add(importedPackageId)
+
+            val asyncRoot = asyncLoadingThread.getAsyncPackage(importedPackageId)
+            if (asyncRoot != null) {
+                if (asyncRoot.asyncPackageLoadingState < EAsyncPackageLoadingState2.DeferredPostLoadDone) {
+                    outPackageId.element = importedPackageId
+                    return false
+                }
+
+                if (!areAllDependenciesFullyLoadedInternal(asyncRoot, visitedPackages, outPackageId)) {
+                    return false
+                }
+            }
+        }
+        return true
     }
 
     // region Event driven loader specific stuff
@@ -370,18 +419,7 @@ class FAsyncPackage2 {
             check(asyncPackageLoadingState == EAsyncPackageLoadingState2.DeferredPostLoad)
             asyncPackageLoadingState = EAsyncPackageLoadingState2.DeferredPostLoadDone
             //asyncLoadingThread.loadedPackagesToProcess.add(this)
-            // region Callback code from FAsyncLoadingThread2::ProcessLoadedPackagesFromGameThread
-            // Call external callbacks
-            val loadingResult = if (bLoadHasFailed) EAsyncLoadingResult.Failed else EAsyncLoadingResult.Succeeded
-            callCompletionCallbacks(loadingResult)
-            // We don't need the package anymore
-            //check(asyncPackageLoadingState == EAsyncPackageLoadingState2.Finalize)
-            //if (bHasClusterObjects) {
-            //    asyncPackageLoadingState = EAsyncPackageLoadingState2.CreateClusters
-            //} else {
-            asyncPackageLoadingState = EAsyncPackageLoadingState2.Complete
-            //}
-            // endregion
+            asyncLoadingThread.processLoadedPackage(this)
         }
 
         return EAsyncPackageState.Complete
@@ -575,7 +613,7 @@ class FAsyncPackage2 {
     }
     // endregion
 
-    fun callCompletionCallbacks(loadingResult: EAsyncLoadingResult) {
+    fun callCompletionCallbacks() {
         val result = if (!bLoadHasFailed) Result.success(linkerRoot!!) else Result.failure(failedException!!)
         for (completionCallback in completionCallbacks) {
             completionCallback.onCompletion(desc.getUPackageName(), result/*, loadingResult*/)

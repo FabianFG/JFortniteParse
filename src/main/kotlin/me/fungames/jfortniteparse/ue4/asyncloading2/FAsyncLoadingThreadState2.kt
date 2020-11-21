@@ -23,14 +23,14 @@ class FAsyncLoadingThreadState2(val ioDispatcher: FIoDispatcher) {
     fun setTimeLimit(bInUseTimeLimit: Boolean, timeLimit: Double) {
         this.bUseTimeLimit = bInUseTimeLimit
         this.timeLimit = timeLimit
-        this.startTime = (System.currentTimeMillis() / 1000).toDouble()
+        this.startTime = System.currentTimeMillis() / 1000.0
     }
 
     fun isTimeLimitExceeded(lastTypeOfWorkPerformed: String? = null, lastObjectWorkWasPerformedOn: UObject? = null): Boolean {
         var bTimeLimitExceeded = false
 
         if (bUseTimeLimit) {
-            val currentTime = (System.currentTimeMillis() / 1000).toDouble()
+            val currentTime = System.currentTimeMillis() / 1000.0
             bTimeLimitExceeded = currentTime - startTime > timeLimit
 
             /*if (bTimeLimitExceeded && GWarnIfTimeLimitExceeded) {

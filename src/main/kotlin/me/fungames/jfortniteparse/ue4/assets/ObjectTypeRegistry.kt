@@ -2,9 +2,13 @@ package me.fungames.jfortniteparse.ue4.assets
 
 import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.fort.exports.variants.*
-import me.fungames.jfortniteparse.fort.objects.FortPhoenixLevelRewardData
+import me.fungames.jfortniteparse.fort.objects.rows.*
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.*
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstance
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import java.util.concurrent.ConcurrentHashMap
@@ -23,8 +27,13 @@ object ObjectTypeRegistry {
         registerClass(UDataAsset::class.java)
         registerClass(UDataTable::class.java)
         registerClass(ULevel::class.java)
+        registerClass(UMaterial::class.java)
+        registerClass(UMaterialInstance::class.java)
+        registerClass(UMaterialInstanceConstant::class.java)
+        registerClass(UMaterialInterface::class.java)
         registerClass(UPaperSprite::class.java)
         registerClass(UPrimaryDataAsset::class.java)
+        registerClass(UUserDefinedEnum::class.java)
         registerClass(USoundWave::class.java)
         registerClass(UStaticMesh::class.java)
         registerClass(UStreamableRenderAsset::class.java)
@@ -52,8 +61,12 @@ object ObjectTypeRegistry {
         registerClass(AthenaSkyDiveContrailItemDefinition::class.java)
         registerClass(AthenaSprayItemDefinition::class.java)
         registerClass(AthenaToyItemDefinition::class.java)
+        registerClass(FortAbilityKit::class.java)
+        registerClass(FortAbilitySet::class.java)
         registerClass(FortAccountItemDefinition::class.java)
+        registerClass(FortCardPackItemDefinition::class.java)
         registerClass(FortCatalogMessaging::class.java)
+        registerClass(FortCharacterType::class.java)
         registerClass(FortCosmeticCharacterPartVariant::class.java)
         registerClass(FortCosmeticDynamicVariant::class.java)
         registerClass(FortCosmeticFloatSliderVariant::class.java)
@@ -67,7 +80,13 @@ object ObjectTypeRegistry {
         registerClass(FortCosmeticRichColorVariant::class.java)
         registerClass(FortCosmeticVariant::class.java)
         registerClass(FortCosmeticVariantBackedByArray::class.java)
+        registerClass(FortEventCurrencyItemDefinitionRedir::class.java)
         registerClass(FortFeatItemDefinition::class.java)
+        registerClass(FortGadgetItemDefinition::class.java)
+        registerClass(FortHeroType::class.java)
+        registerClass(FortHomebaseBannerColorMap::class.java)
+        registerClass(FortHomebaseBannerIconItemDefinition::class.java)
+        registerClass(FortIngredientItemDefinition::class.java)
         registerClass(FortItemCategory::class.java)
         registerClass(FortItemDefinition::class.java)
         registerClass(FortItemSeriesDefinition::class.java)
@@ -77,8 +96,10 @@ object ObjectTypeRegistry {
         registerClass(FortPersistentResourceItemDefinition::class.java)
         registerClass(FortQuestItemDefinition::class.java)
         registerClass(FortSchematicItemDefinition::class.java)
+        registerClass(FortTokenType::class.java)
         registerClass(FortWeaponItemDefinition::class.java)
         registerClass(FortWeaponRangedItemDefinition::class.java)
+        registerClass(FortWorkerType::class.java)
         registerClass(FortWorldItemDefinition::class.java)
         registerClass(MarshalledVFX_AuthoredDataConfig::class.java)
         registerClass(McpItemDefinitionBase::class.java)
@@ -88,7 +109,35 @@ object ObjectTypeRegistry {
         registerClass(VariantTypeSounds::class.java)
 
         // -- Data table row structs --
+        registerStruct(AlterationGroup::class.java)
+        registerStruct(AlterationIntrinsicMapping::class.java)
+        registerStruct(AlterationMapping::class.java)
+        registerStruct(AlterationNamedExclusions::class.java)
+        registerStruct(AlterationSlotDefinition::class.java)
+        registerStruct(AlterationSlotsLoadout::class.java)
+        registerStruct(AthenaExtendedXPCurveEntry::class.java)
+        registerStruct(AthenaSeasonalXPCurveEntry::class.java)
+        registerStruct(CosmeticFilterTagDataRow::class.java)
+        registerStruct(CosmeticMarkupTagDataRow::class.java)
+        registerStruct(CosmeticSetDataRow::class.java)
+        registerStruct(FortBaseWeaponStats::class.java)
+        registerStruct(FortCategoryTableRow::class.java)
+        registerStruct(FortCollectionBookData::class.java)
+        registerStruct(FortCollectionBookPageCategoryTableRow::class.java)
+        registerStruct(FortCollectionBookPageData::class.java)
+        registerStruct(FortCollectionBookSectionData::class.java)
+        registerStruct(FortCollectionBookSlotData::class.java)
+        registerStruct(FortCollectionBookXPData::class.java)
+        registerStruct(FortLoginReward::class.java)
         registerStruct(FortPhoenixLevelRewardData::class.java)
+        registerStruct(FortRangedWeaponStats::class.java)
+        registerStruct(FortTrapStats::class.java)
+        registerStruct(FortWeaponAlterationRarityMappingData::class.java)
+        registerStruct(GameDifficultyInfo::class.java)
+        registerStruct(HomebaseBannerColorData::class.java)
+        registerStruct(HomebaseBannerIconData::class.java)
+        registerStruct(HomebaseSquad::class.java)
+        registerStruct(Recipe::class.java)
     }
 
     fun registerClass(clazz: Class<out UObject>) {

@@ -150,7 +150,6 @@ class FUnversionedStructSchema(struct: Class<*>) {
 
     init {
         var index = 0
-        var lastClassIndex = 0
         var clazz: Class<*>? = struct
         while (clazz != null && clazz != UObject::class.java && clazz != Object::class.java) {
             val bOnlyAnnotated = clazz.isAnnotationPresent(OnlyAnnotated::class.java)
@@ -162,13 +161,11 @@ class FUnversionedStructSchema(struct: Class<*>) {
                 index += ann?.skipPrevious ?: 0
                 val propertyInfo = PropertyInfo(field, ann)
                 for (arrayIdx in 0 until propertyInfo.arrayDim) {
-                    println("${lastClassIndex + index} = ${propertyInfo.field.name}")
-                    serializers[lastClassIndex + index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
+                    //println("$index = ${propertyInfo.field.name}")
+                    serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                 }
                 index += (ann?.skipNext ?: 0) + 1
             }
-            lastClassIndex += index
-            index = 0
             clazz = clazz.superclass
         }
     }
@@ -311,7 +308,7 @@ class FUnversionedHeader {
 fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: Class<*>, Ar: FAssetArchive) {
     //check(canUseUnversionedPropertySerialization())
 
-    println("Load: ${struct.simpleName}")
+    //println("Load: ${struct.simpleName}")
     val header = FUnversionedHeader()
     header.load(Ar)
 
@@ -325,11 +322,11 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 val serializer = it.serializer
                 if (serializer != null) {
-                    println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
+                    //println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
                     if (it.isNonZero()) {
                         val element = serializer.deserialize(Ar)
                         properties.add(element)
-                        println(element.toString())
+                        //println(element.toString())
                     } else {
                         properties.add(serializer.loadZero(Ar))
                     }
