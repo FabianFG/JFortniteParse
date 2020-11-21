@@ -59,4 +59,10 @@ class FExportArchive(
         }
         return name
     }
+
+    fun checkDummyName(dummyName: String) {
+        check(dummyName in nameMap.nameEntries) {
+            "$dummyName is not in the package name map. There must be something wrong."
+        }
+    }
 }

@@ -38,7 +38,7 @@ class UScriptStruct : UClass {
             "ColorMaterialInput" -> FColorMaterialInput(Ar)
             "ExpressionInput" -> FExpressionInput(Ar)
             "FrameNumber" -> FFrameNumber(Ar)
-            "GameplayTagContainer" -> FGameplayTagContainer(Ar)
+            "GameplayTagContainer" -> valueOr({ FGameplayTagContainer(Ar) }, { FGameplayTagContainer() }, type)
             "Guid" -> valueOr({ FGuid(Ar) }, { FGuid() }, type)
             "IntPoint" -> FIntPoint(Ar)
             "IntVector" -> FIntVector(Ar)

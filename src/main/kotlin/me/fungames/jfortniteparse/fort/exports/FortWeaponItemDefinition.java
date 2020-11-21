@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import me.fungames.jfortniteparse.fort.objects.FortCreativeTagsHelper;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
-import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.FDataTableRowHandle;
 import me.fungames.jfortniteparse.ue4.objects.FScalableFloat;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D;
@@ -81,10 +81,5 @@ public class FortWeaponItemDefinition extends FortWorldItemDefinition {
         Shadowshard,
         Sunbeam,
         Moonglow
-    }
-
-    @UStruct
-    public static class FortCreativeTagsHelper {
-        public List<FName> CreativeTags;
     }
 }

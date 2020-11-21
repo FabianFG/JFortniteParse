@@ -7,6 +7,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.asyncloading2.FExportArchive
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FTextHistory
@@ -222,21 +223,24 @@ sealed class FPropertyTagType(val propertyType: String) {
                     ReadType.ARRAY -> ByteProperty(Ar.readUInt8(), propertyType)
                     ReadType.ZERO -> ByteProperty(0u, propertyType)
                 }
-                "EnumProperty" ->
-                    if (type == ReadType.NORMAL && (tagData == null || tagData.enumName.isNone())) {
-                        EnumProperty(FName.NAME_None, propertyType)
-                    } else if (type != ReadType.MAP && Ar.useUnversionedPropertySerialization) {
+                "EnumProperty" -> {
+                    EnumProperty(if (type == ReadType.NORMAL && (tagData == null || tagData.enumName.isNone())) {
+                        FName.NAME_None
+                    } else if (type != ReadType.MAP && type != ReadType.ARRAY && Ar.useUnversionedPropertySerialization) {
                         val ordinal = valueOr({ if (tagData?.enumType == "IntProperty") Ar.readInt32() else Ar.read() }, { 0 }, type)
-                        if (tagData?.enumClass != null) {
-                            val enumValue = tagData.enumClass!!.enumConstants[ordinal]
-                            EnumProperty(FName.dummy(tagData.enumName.text + "::" + enumValue), propertyType)
+                        val enumClass = tagData?.enumClass
+                        val fakeName = if (enumClass != null) {
+                            val enumValue = enumClass.enumConstants[ordinal]
+                            (tagData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
                         } else {
                             UClass.logger.warn("Enum class not supplied")
-                            EnumProperty(FName.dummy((tagData?.enumName?.text ?: "UnknownEnum") + "::" + ordinal), propertyType)
+                            (tagData?.enumName?.text ?: "UnknownEnum") + "::" + ordinal
                         }
+                        FName.dummy(fakeName)
                     } else {
-                        EnumProperty(Ar.readFName(), propertyType)
-                    }
+                        Ar.readFName()
+                    }, propertyType)
+                }
                 "SoftObjectProperty" -> {
                     if (type == ReadType.ZERO) {
                         SoftObjectProperty(FSoftObjectPath(FName(), ""), propertyType)

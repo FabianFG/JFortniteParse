@@ -8,7 +8,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import java.util.List;
 
 public class FortCollectionBookSectionData extends FTableRowBase {
-	public FText Name;
-	public List<FName> SlotRowNames;
-	public FortRewardInfo Rewards;
+    public FText Name;
+    public List<FName> SlotRowNames;
+    public FortRewardInfo Rewards;
 }

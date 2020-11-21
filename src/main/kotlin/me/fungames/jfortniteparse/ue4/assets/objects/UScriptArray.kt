@@ -19,7 +19,7 @@ class UScriptArray : UClass {
         }
         contents = mutableListOf()
         for (i in 0u until elementCount) {
-            val content = FPropertyTagType.readFPropertyTagType(Ar, tag.innerType.text, innerTag, FPropertyTagType.ReadType.ARRAY)
+            val content = FPropertyTagType.readFPropertyTagType(Ar, tag.innerType.text, innerTag ?: tag, FPropertyTagType.ReadType.ARRAY)
             if (content != null)
                 contents.add(content)
             else

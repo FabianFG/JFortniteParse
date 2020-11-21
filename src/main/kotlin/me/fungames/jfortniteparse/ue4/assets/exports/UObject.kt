@@ -10,6 +10,7 @@ import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
@@ -32,8 +33,8 @@ open class UObject : UExport, IPropertyHolder {
 
     /** Arbitrary UObject construction */
     constructor() : this(mutableListOf(), null, "") {
-        exportType = javaClass.simpleName
-        name = javaClass.simpleName
+        exportType = javaClass.simpleName.unprefix()
+        name = exportType
     }
 
     /** For use in UDataTable and UCurveTable */

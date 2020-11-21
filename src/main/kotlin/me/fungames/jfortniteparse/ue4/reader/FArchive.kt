@@ -167,5 +167,9 @@ abstract class FArchive : Cloneable, InputStream() {
         return array
     }
 
+    inline fun <reified T> readArray(length: Int, init: (FArchive) -> T) = MutableList(length) { init(this) }
+
+    inline fun <reified T> readArray(init: (FArchive) -> T) = readArray(readInt32(), init)
+
     open fun readFName() = FName.NAME_None
 }

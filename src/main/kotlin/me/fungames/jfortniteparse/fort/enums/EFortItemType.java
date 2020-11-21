@@ -31,6 +31,7 @@ public enum EFortItemType {
     CreativeUserPrefab,
     CreativePlayset,
     Vehicle,
+    Npc,
     AccountItem,
     AccountResource,
     CollectedResource,

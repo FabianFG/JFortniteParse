@@ -27,7 +27,7 @@ public class HomebaseSquad extends FTableRowBase {
     @UStruct
     public static class HomebaseSquadSlot {
         public FText DisplayName;
-        public List<EFortItemType> ValidSlottableItemTypes; // List<EFortItemType>
+        public List<EFortItemType> ValidSlottableItemTypes;
         public FGameplayTagContainer TagFilter;
         public List<HomebaseSquadAttributeBonus> SlottingBonuses;
         public FPackageIndex /*CurveTable*/ PersonalityMatchBonusTable;

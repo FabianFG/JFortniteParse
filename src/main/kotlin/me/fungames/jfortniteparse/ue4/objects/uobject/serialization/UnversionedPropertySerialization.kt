@@ -9,6 +9,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.unprefix
+import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
@@ -113,6 +114,7 @@ class PropertyInfo {
             Map::class.java.isAssignableFrom(c) -> "MapProperty"
             c == FPackageIndex::class.java || UObject::class.java.isAssignableFrom(c) -> "ObjectProperty"
             c == FSoftObjectPath::class.java -> "SoftObjectProperty"
+            c == FFieldPath::class.java -> "FieldPathProperty"
             else -> "StructProperty"
         }
     }
