@@ -25,8 +25,9 @@ class UScriptMap : UClass {
         mapData = mutableMapOf()
         for (i in 0 until length) {
             try {
-                mapData[FPropertyTagType.readFPropertyTagType(Ar, keyType, tag, FPropertyTagType.ReadType.MAP)!!] =
-                    FPropertyTagType.readFPropertyTagType(Ar, valueType, tag, FPropertyTagType.ReadType.MAP)!!
+                val key = FPropertyTagType.readFPropertyTagType(Ar, keyType, tag, FPropertyTagType.ReadType.MAP)!!
+                val value = FPropertyTagType.readFPropertyTagType(Ar, valueType, tag, FPropertyTagType.ReadType.MAP)!!
+                mapData[key] = value
             } catch (e: ParserException) {
                 throw ParserException("Failed to read key/value pair for index $i in map", Ar, e)
             }

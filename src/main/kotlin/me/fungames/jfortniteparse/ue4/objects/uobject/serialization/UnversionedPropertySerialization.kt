@@ -161,7 +161,7 @@ class FUnversionedStructSchema(struct: Class<*>) {
                 index += ann?.skipPrevious ?: 0
                 val propertyInfo = PropertyInfo(field, ann)
                 for (arrayIdx in 0 until propertyInfo.arrayDim) {
-                    //println("$index = ${propertyInfo.field.name}")
+                    println("$index = ${propertyInfo.field.name}")
                     serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                 }
                 index += (ann?.skipNext ?: 0) + 1
@@ -322,11 +322,11 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 val serializer = it.serializer
                 if (serializer != null) {
-                    //println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
+                    println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
                     if (it.isNonZero()) {
                         val element = serializer.deserialize(Ar)
                         properties.add(element)
-                        //println(element.toString())
+                        println(element.toString())
                     } else {
                         properties.add(serializer.loadZero(Ar))
                     }

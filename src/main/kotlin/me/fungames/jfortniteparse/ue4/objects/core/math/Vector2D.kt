@@ -29,6 +29,11 @@ class FVector2D : UClass {
     }
 
     /**
+     * Constructor which initializes all components to zero.
+     */
+    constructor() : this(0f, 0f)
+
+    /**
      * Constructor using initial values for each component.
      *
      * @param x X coordinate.

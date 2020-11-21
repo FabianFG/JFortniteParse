@@ -241,9 +241,11 @@ sealed class FPropertyTagType(val propertyType: String) {
                     if (type == ReadType.ZERO) {
                         SoftObjectProperty(FSoftObjectPath(FName(), ""), propertyType)
                     } else {
+                        val pos = Ar.pos()
                         val path = SoftObjectProperty(FSoftObjectPath(Ar), propertyType)
-                        if (type == ReadType.MAP && !Ar.useUnversionedPropertySerialization) { //TODO check if this is true
-                            Ar.skip(4)
+                        if (type == ReadType.MAP) {
+                            // skip ahead, putting the total bytes read to 16
+                            Ar.skip(16L - (Ar.pos() - pos))
                         }
                         path
                     }

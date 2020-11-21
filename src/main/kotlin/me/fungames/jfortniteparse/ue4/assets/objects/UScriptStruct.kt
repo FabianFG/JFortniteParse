@@ -65,10 +65,9 @@ class UScriptStruct : UClass {
             "SimpleCurveKey" -> FSimpleCurveKey(Ar)
             "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
             "SmartName" -> FSmartName(Ar)
-            "SoftObjectPath", "SoftClassPath" -> FSoftObjectPath(Ar)
-            "Timespan", "DateTime" -> FDateTime(Ar)
+            "Timespan", "DateTime" -> valueOr({ FDateTime(Ar) }, { FDateTime() }, type)
             "Vector" -> valueOr({ FVector(Ar) }, { FVector() }, type)
-            "Vector2D" -> FVector2D(Ar)
+            "Vector2D" -> valueOr({ FVector2D(Ar) }, { FVector2D() }, type)
             "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
             "Vector4" -> valueOr({ FVector4(Ar) }, { FVector4() }, type)
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)
@@ -77,7 +76,7 @@ class UScriptStruct : UClass {
                 if (Ar.useUnversionedPropertySerialization) {
                     throw ParserException("Unknown struct type $structName, can't proceed with serialization", Ar)
                 }
-                logger.debug("Unknown struct type $structName, using FStructFallback")
+                logger.debug("Using FStructFallback $structName")
                 //TODO this should in theory map the struct fallbacks directly to their target, not implemented yet
                 //For now it will be done with the getTagTypeValue method, not optimal though
                 FStructFallback(Ar)
