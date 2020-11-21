@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariant;
+import me.fungames.jfortniteparse.fort.objects.CosmeticVariantInfo;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
@@ -68,12 +69,6 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
         public Float PreviewTime;
         public List<McpVariantChannelInfo> VariantOptions;
         public List<FortCosmeticVariantPreviewElement> AdditionalItems;
-    }
-
-    @UStruct
-    public static class CosmeticVariantInfo {
-        public FGameplayTag VariantChannelTag;
-        public FGameplayTag ActiveVariantTag;
     }
 
     @UStruct
