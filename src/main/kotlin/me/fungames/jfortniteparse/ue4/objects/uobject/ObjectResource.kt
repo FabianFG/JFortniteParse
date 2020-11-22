@@ -122,6 +122,8 @@ class FPackageIndex : UClass {
     }
 
     inline fun <reified T> load() = owner?.loadObject<T>(this)
+
+    fun load() = owner?.loadObjectGeneric(this)
 }
 
 /**

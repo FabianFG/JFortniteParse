@@ -76,7 +76,7 @@ class UScriptStruct : UClass {
                 if (Ar.useUnversionedPropertySerialization) {
                     throw ParserException("Unknown struct type $structName, can't proceed with serialization", Ar)
                 }
-                logger.debug("Using FStructFallback $structName")
+                logger.debug("Using FStructFallback for struct $structName")
                 //TODO this should in theory map the struct fallbacks directly to their target, not implemented yet
                 //For now it will be done with the getTagTypeValue method, not optimal though
                 FStructFallback(Ar)

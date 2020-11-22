@@ -42,7 +42,7 @@ abstract class Package(val fileName: String,
             if (export != null) return export.exportObject.value
         } else if (this is IoPackage) {
             val export = exportMap.firstOrNull {
-                nameMap.getName(it.exportMapEntry.objectName).text.equals(objectName, true) && (className == null || it.exportMapEntry.classIndex.findFromGlobal()!!.objectName.toName().toString() == className)
+                nameMap.getName(it.exportMapEntry.objectName).text.equals(objectName, true) && (className == null || it.exportMapEntry.classIndex.findScriptObjectEntry()!!.objectName.toName().toString() == className)
             }
             if (export != null) return export.exportObject!! // no lazy exports for IoPackage yet
         }

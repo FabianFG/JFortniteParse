@@ -97,7 +97,8 @@ class FEventLoadNode2 {
                 threadState.nodesToFire.add(singleDependent)
             }
         } else if (dependents.isNotEmpty()) {
-            for (dependent in dependents) {
+            for (i in 0 until dependenciesCount) {
+                val dependent = dependents[i]
                 check(dependent != null && dependent.barrierCount.get() > 0)
                 if (dependent.barrierCount.decrementAndGet() == 0) {
                     threadState.nodesToFire.add(dependent)

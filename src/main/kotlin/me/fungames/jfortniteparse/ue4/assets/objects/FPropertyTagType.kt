@@ -61,8 +61,6 @@ sealed class FPropertyTagType(val propertyType: String) {
                     } else {
                         tag.getTagTypeValue(innerType as Class<Any>)
                     }
-                    if (mapped == null)
-                        UClass.logger.error { "Failed to get value at index $i in UScriptArray for content class ${innerType::class.java.simpleName}" }
                     mapped
                 }
             }
@@ -90,22 +88,18 @@ sealed class FPropertyTagType(val propertyType: String) {
                 val export = value.owner?.loadObjectGeneric(value)
                 if (export != null && clazz.isAssignableFrom(export::class.java)) export else null
             }
-            value is FSoftObjectPath && UExport::class.java.isAssignableFrom(clazz) -> {
-                val export = value.owner?.provider?.loadObject(value)
-                if (export != null && clazz.isAssignableFrom(export::class.java)) export else null
-            }
-            this is EnumProperty && clazz.isEnum -> {
-                val storedEnum = this.name.text
-                if (clazz.simpleName != storedEnum.substringBefore("::"))
-                    null
-                else {
-                    val search = storedEnum.substringAfter("::")
-                    val values = clazz.enumConstants
-                    val names = clazz.fields.mapNotNull { if (!it.isSynthetic && it.name != "Companion") it.name else null }
-                    val idx = names.indexOfFirst { it == search }
-                    values.getOrNull(idx)
+            this is EnumProperty && clazz.isEnum ->
+                if (enumConstant != null) {
+                    enumConstant // already searched by the unversioned property serializer
+                } else {
+                    val storedEnum = this.name.text
+                    if (clazz.simpleName != storedEnum.substringBefore("::")) {
+                        null
+                    } else {
+                        val search = storedEnum.substringAfter("::")
+                        clazz.enumConstants.firstOrNull { (it as Enum<*>).name == search }
+                    }
                 }
-            }
             else -> null
         } as T
     }
@@ -114,7 +108,7 @@ sealed class FPropertyTagType(val propertyType: String) {
     fun getTagTypeValueLegacy() = when (this) {
         is BoolProperty -> this.bool
         is StructProperty -> this.struct.structType
-        is ObjectProperty -> this.`object`
+        is ObjectProperty -> this.index
         is InterfaceProperty -> this.interfaceProperty
         is FloatProperty -> this.float
         is TextProperty -> this.text
@@ -144,7 +138,7 @@ sealed class FPropertyTagType(val propertyType: String) {
         when (this) {
             is BoolProperty -> this.bool = value as Boolean
             is StructProperty -> this.struct.structType = value
-            is ObjectProperty -> this.`object` = value as FPackageIndex
+            is ObjectProperty -> this.index = value as FPackageIndex
             is InterfaceProperty -> this.interfaceProperty = value as UInterfaceProperty
             is FloatProperty -> this.float = value as Float
             is TextProperty -> this.text = value as FText
@@ -214,7 +208,7 @@ sealed class FPropertyTagType(val propertyType: String) {
                 "ByteProperty" -> when (type) {
                     ReadType.NORMAL -> {
                         if (!Ar.useUnversionedPropertySerialization && tagData?.enumName != null && !tagData.enumName.isNone()) {
-                            EnumProperty(Ar.readFName(), propertyType) // TEnumAsByte
+                            EnumProperty(Ar.readFName(), null, propertyType) // TEnumAsByte
                         } else {
                             ByteProperty(Ar.readUInt8(), propertyType)
                         }
@@ -224,22 +218,23 @@ sealed class FPropertyTagType(val propertyType: String) {
                     ReadType.ZERO -> ByteProperty(0u, propertyType)
                 }
                 "EnumProperty" -> {
-                    EnumProperty(if (type == ReadType.NORMAL && (tagData == null || tagData.enumName.isNone())) {
-                        FName.NAME_None
+                    if (type == ReadType.NORMAL && (tagData == null || tagData.enumName.isNone())) {
+                        EnumProperty(FName.NAME_None, null, propertyType)
                     } else if (type != ReadType.MAP && type != ReadType.ARRAY && Ar.useUnversionedPropertySerialization) {
                         val ordinal = valueOr({ if (tagData?.enumType == "IntProperty") Ar.readInt32() else Ar.read() }, { 0 }, type)
                         val enumClass = tagData?.enumClass
+                        var enumValue: Enum<*>? = null
                         val fakeName = if (enumClass != null) {
-                            val enumValue = enumClass.enumConstants[ordinal]
+                            enumValue = enumClass.enumConstants[ordinal]
                             (tagData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
                         } else {
                             UClass.logger.warn("Enum class not supplied")
                             (tagData?.enumName?.text ?: "UnknownEnum") + "::" + ordinal
                         }
-                        FName.dummy(fakeName)
+                        EnumProperty(FName.dummy(fakeName), enumValue, propertyType)
                     } else {
-                        Ar.readFName()
-                    }, propertyType)
+                        EnumProperty(Ar.readFName(), null, propertyType)
+                    }
                 }
                 "SoftObjectProperty" -> {
                     if (type == ReadType.ZERO) {
@@ -272,7 +267,7 @@ sealed class FPropertyTagType(val propertyType: String) {
         fun writeFPropertyTagType(Ar: FAssetArchiveWriter, tag: FPropertyTagType, type: ReadType) {
             when (tag) {
                 is StructProperty -> tag.struct.serialize(Ar)
-                is ObjectProperty -> tag.`object`.serialize(Ar)
+                is ObjectProperty -> tag.index.serialize(Ar)
                 is InterfaceProperty -> tag.interfaceProperty.serialize(Ar)
                 is FloatProperty -> Ar.writeFloat32(tag.float)
                 is TextProperty -> tag.text.serialize(Ar)
@@ -322,7 +317,7 @@ sealed class FPropertyTagType(val propertyType: String) {
 
     class BoolProperty(var bool: Boolean, propertyType: String) : FPropertyTagType(propertyType)
     class StructProperty(var struct: UScriptStruct, propertyType: String) : FPropertyTagType(propertyType)
-    class ObjectProperty(var `object`: FPackageIndex, propertyType: String) : FPropertyTagType(propertyType)
+    class ObjectProperty(var index: FPackageIndex, propertyType: String) : FPropertyTagType(propertyType)
     class InterfaceProperty(var interfaceProperty: UInterfaceProperty, propertyType: String) : FPropertyTagType(propertyType)
     class FloatProperty(var float: Float, propertyType: String) : FPropertyTagType(propertyType)
     class TextProperty(var text: FText, propertyType: String) : FPropertyTagType(propertyType)
@@ -336,7 +331,7 @@ sealed class FPropertyTagType(val propertyType: String) {
     class SetProperty(var array: UScriptArray, propertyType: String) : FPropertyTagType(propertyType)
     class MapProperty(var map: UScriptMap, propertyType: String) : FPropertyTagType(propertyType)
     class ByteProperty(var byte: UByte, propertyType: String) : FPropertyTagType(propertyType)
-    class EnumProperty(var name: FName, propertyType: String) : FPropertyTagType(propertyType)
+    class EnumProperty(var name: FName, var enumConstant: Enum<*>?, propertyType: String) : FPropertyTagType(propertyType)
     class SoftObjectProperty(var `object`: FSoftObjectPath, propertyType: String) : FPropertyTagType(propertyType)
     class DelegateProperty(var `object`: Int, var name: FName, propertyType: String) : FPropertyTagType(propertyType)
     class DoubleProperty(var number: Double, propertyType: String) : FPropertyTagType(propertyType)

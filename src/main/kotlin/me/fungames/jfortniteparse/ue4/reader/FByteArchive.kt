@@ -4,7 +4,6 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.min
 
-@ExperimentalUnsignedTypes
 open class FByteArchive(val data: ByteBuffer) : FArchive() {
     init {
         data.order(ByteOrder.LITTLE_ENDIAN)

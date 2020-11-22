@@ -18,6 +18,7 @@ class UDataTable : UObject {
     @JvmField @UProperty var bIgnoreExtraFields: Boolean? = null
     @JvmField @UProperty var bIgnoreMissingFields: Boolean? = null
     @JvmField @UProperty var ImportKeyField: String? = null
+    lateinit var rowStructName: FName
 
     var rows: MutableMap<FName, UObject>
 
@@ -29,8 +30,8 @@ class UDataTable : UObject {
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
-        val rowStructName = if (Ar.owner is IoPackage) {
-            (Ar.owner as IoPackage).run { RowStruct!!.getImportObject()!!.findFromGlobal()!!.objectName.toName() }
+        rowStructName = if (Ar.owner is IoPackage) {
+            (Ar.owner as IoPackage).run { RowStruct!!.getImportObject()!!.findScriptObjectEntry()!!.objectName.toName() }
         } else {
             (Ar.owner as PakPackage).run { RowStruct!!.getResource()!!.objectName }
         }
@@ -63,8 +64,10 @@ class UDataTable : UObject {
 
     fun findRow(rowName: String) = rows[FName.dummy(rowName)]
     fun findRow(rowName: FName) = rows[rowName]
-    fun <T> findRow(rowName: String, clazz: Class<T>): T? where T : FTableRowBase =
-        findRow(rowName)?.mapToClass(clazz)
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T> findRowMapped(rowName: FName): T? where T : FTableRowBase =
+        findRow(rowName)?.mapToClass(ObjectTypeRegistry.structs[rowStructName.text] as Class<*>) as T?
 
     fun toJson(): String {
         val data = rows.mapKeys { it.key.text }.mapValues { Package.gson.toJsonTree(it.value) }

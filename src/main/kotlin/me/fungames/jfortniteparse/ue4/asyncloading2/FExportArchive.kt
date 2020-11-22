@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.io.EIoChunkType
@@ -11,6 +12,8 @@ import me.fungames.jfortniteparse.util.await
 import org.slf4j.event.Level
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
+
+const val DO_CHECK = false
 
 class FExportArchive(
     data: ByteBuffer,
@@ -39,12 +42,10 @@ class FExportArchive(
         return FAssetArchive(request.result.getOrThrow(), provider, pkgName)
     }
 
-    fun handleBadNameIndex(nameIndex: Int) {
+    override fun handleBadNameIndex(nameIndex: Int) {
         asyncPackageLog(Level.ERROR, packageDesc, "HandleBadNameIndex",
             "Index: %d/%d".format(nameIndex, nameMap.size()))
-
-        //name = FName()
-        //setCriticalError()
+        throw ParserException("FName could not be read, requested index $nameIndex, name map size ${nameMap.nameEntries.size}", this)
     }
 
     override fun readFName(): FName {
@@ -61,8 +62,10 @@ class FExportArchive(
     }
 
     fun checkDummyName(dummyName: String) {
-        check(dummyName in nameMap.nameEntries) {
-            "$dummyName is not in the package name map. There must be something wrong."
+        if (DO_CHECK) {
+            check(dummyName in nameMap.nameEntries) {
+                "$dummyName is not in the package name map. There must be something wrong."
+            }
         }
     }
 }

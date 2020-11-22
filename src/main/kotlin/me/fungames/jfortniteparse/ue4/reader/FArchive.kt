@@ -144,7 +144,7 @@ abstract class FArchive : Cloneable, InputStream() {
     }
 
     inline fun <reified K, reified V> readTMap(length: Int, init: (FArchive) -> Pair<K, V>): MutableMap<K, V> {
-        val res = HashMap<K, V>(length)
+        val res = LinkedHashMap<K, V>(length)
         for (i in 0 until length) {
             val (key, value) = init(this)
             res[key] = value

@@ -3,12 +3,10 @@ package me.fungames.jfortniteparse.ue4.assets
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.asyncloading2.FExportObject
-import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
-import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageImportStore
-import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageObjectIndex
+import me.fungames.jfortniteparse.ue4.asyncloading2.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import org.slf4j.event.Level
 
 /**
  * Linker for I/O Store packages
@@ -36,28 +34,18 @@ class IoPackage(val importStore: FPackageImportStore,
             }*/
         } else {
             if (importStore.isValidLocalImportIndex(index)) {
-                /*val obj = importStore.findOrGetImportObjectFromLocalIndex(index)
+                val obj = importStore.findOrGetImportObjectFromLocalIndex(index)
 
                 if (obj == null) {
                     asyncPackageLogVerbose(Level.DEBUG, importStore.desc,
                         "FExportArchive: Object", "Import index ${index.toImport()} is null")
-                } else {
+                } /*else {
                     handleBadImportIndex(index.toImport())
-                }
+                }*/
 
-                return obj*/
-                return loadImport(index.getImportObject())
+                return obj
             }
         }
-        return null
-    }
-
-    fun loadImport(import: FPackageObjectIndex?): UExport? {
-        val entry = import?.findFromGlobal() ?: return null
-        check(provider != null) { "Loading an import requires a file provider" }
-        val pkg = provider.loadGameFile(entry.outerIndex.findFromGlobal()!!.objectName.toName().toString())
-        if (pkg != null) return pkg.findExport(entry.objectName.toName().toString(), entry.cdoClassIndex.findFromGlobal()?.objectName?.toName().toString())
-        else FileProvider.logger.warn { "Failed to load referenced import" }
         return null
     }
 
@@ -66,11 +54,11 @@ class IoPackage(val importStore: FPackageImportStore,
 
     fun FPackageIndex.getOuterImportObject(): FPackageObjectIndex? {
         val importObject = getImportObject()
-        return importObject?.findFromGlobal()?.outerIndex ?: importObject
+        return importObject?.findScriptObjectEntry()?.outerIndex ?: importObject
     }
 
     fun FPackageIndex.getExportObject() = if (isExport()) exportMap[toExport()] else null
 
-    fun FPackageObjectIndex.findFromGlobal() = if (isNull()) null else importStore.globalImportStore.scriptObjectEntriesMap[this]
+    fun FPackageObjectIndex.findScriptObjectEntry() = if (isNull()) null else importStore.globalImportStore.scriptObjectEntriesMap[this]
     // endregion
 }

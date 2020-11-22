@@ -9,7 +9,6 @@ import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 import me.fungames.jfortniteparse.util.await
-import me.fungames.jfortniteparse.util.complete
 import java.util.concurrent.CompletableFuture
 
 abstract class AbstractFileProvider : FileProvider() {
@@ -44,12 +43,20 @@ abstract class AbstractFileProvider : FileProvider() {
         // try load from IoStore
         if (FIoDispatcher.isInitialized()) {
             val event = CompletableFuture<Package>()
-            asyncPackageLoader.loadPackage(compactFilePath(filePath)) { packageName, loadedPackage ->
-                event.complete(loadedPackage)
+            val name = compactFilePath(filePath)
+            asyncPackageLoader.loadPackage(name) { _, loadedPackage, exceptions ->
+                if (loadedPackage != null) { // Package loaded successfully, although there can be some errors
+                    event.complete(loadedPackage)
+                    if (exceptions.isNotEmpty()) {
+                        logger.warn("${exceptions.size} errors occurred when loading $name")
+                    }
+                } else { // Package could not be loaded at all
+                    event.completeExceptionally(exceptions.last())
+                }
             }
             return event.await()
         }
-        // try load from file system
+        // try load from file system, will only work if IoStore is not initialized
         if (!path.endsWith(".uasset") && !path.endsWith(".umap"))
             throw IllegalArgumentException("Bad file path")
         val uasset = saveGameFile(path)

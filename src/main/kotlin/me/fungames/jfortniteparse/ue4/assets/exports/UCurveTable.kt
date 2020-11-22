@@ -12,6 +12,7 @@ import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRealCurve
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.SimpleCurve
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -111,7 +112,7 @@ class UCurveTable : UObject() {
 class FCurveTableRowHandle {
     /** Pointer to table we want a row from */
     @UProperty("CurveTable")
-    var curveTable: UCurveTable? = null
+    var curveTable: FPackageIndex? = null /*CurveTable*/
     /** Name of row in the table that we want */
     @UProperty("RowName")
     var rowName: FName = NAME_None
@@ -126,7 +127,7 @@ class FCurveTableRowHandle {
             return null
         }
 
-        return curveTable!!.findCurve(rowName, warnIfNotFound)
+        return curveTable?.load<UCurveTable>()?.findCurve(rowName, warnIfNotFound)
     }
 
     /** Evaluate the curve if it is valid

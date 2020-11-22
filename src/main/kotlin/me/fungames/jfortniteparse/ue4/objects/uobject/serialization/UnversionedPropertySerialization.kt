@@ -22,6 +22,8 @@ import java.lang.reflect.Field
 import java.lang.reflect.ParameterizedType
 import java.util.*
 
+const val DEBUG = false
+
 // custom class
 class PropertyInfo {
     @JvmField var name: String? = null
@@ -163,7 +165,7 @@ class FUnversionedStructSchema(struct: Class<*>) {
                 index += ann?.skipPrevious ?: 0
                 val propertyInfo = PropertyInfo(field, ann)
                 for (arrayIdx in 0 until propertyInfo.arrayDim) {
-                    println("$index = ${propertyInfo.field.name}")
+                    if (DEBUG) println("$index = ${propertyInfo.field.name}")
                     serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                 }
                 index += (ann?.skipNext ?: 0) + 1
@@ -310,7 +312,7 @@ class FUnversionedHeader {
 fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: Class<*>, Ar: FAssetArchive) {
     //check(canUseUnversionedPropertySerialization())
 
-    //println("Load: ${struct.simpleName}")
+    if (DEBUG) println("Load: ${struct.simpleName}")
     val header = FUnversionedHeader()
     header.load(Ar)
 
@@ -324,11 +326,11 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 val serializer = it.serializer
                 if (serializer != null) {
-                    println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
+                    if (DEBUG) println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
                     if (it.isNonZero()) {
                         val element = serializer.deserialize(Ar)
                         properties.add(element)
-                        println(element.toString())
+                        if (DEBUG) println(element.toString())
                     } else {
                         properties.add(serializer.loadZero(Ar))
                     }

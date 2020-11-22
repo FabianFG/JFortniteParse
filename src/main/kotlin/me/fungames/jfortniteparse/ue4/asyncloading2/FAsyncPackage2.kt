@@ -15,6 +15,7 @@ import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.get
 import org.slf4j.event.Level
 import java.nio.ByteBuffer
+import kotlin.jvm.internal.Ref.BooleanRef
 import kotlin.jvm.internal.Ref.ObjectRef
 
 /**
@@ -34,8 +35,8 @@ class FAsyncPackage2 {
     private var deferredClusterIndex = 0
     internal var asyncPackageLoadingState = EAsyncPackageLoadingState2.NewPackage
     /** True if our load has failed  */
-    internal val bLoadHasFailed get() = failedException != null//= false
-    internal var failedException: Throwable? = null
+    internal val bLoadHasFailed get() = failedExceptions.isNotEmpty()//= false
+    internal var failedExceptions = mutableListOf<Throwable>()
     /** True if this package was created by this async package */
     private var bCreatedLinkerRoot = false
 
@@ -140,7 +141,7 @@ class FAsyncPackage2 {
         var importedPackageIndex = 0
 
         val globalPackageStore = asyncLoadingThread.globalPackageStore
-        /*for (importedPackageId in desc.storeEntry!!.importedPackages) {
+        for (importedPackageId in desc.storeEntry!!.importedPackages) {
             val packageRef = globalPackageStore.loadedPackageStore.getOrPut(importedPackageId) { FLoadedPackageRef() }
             if (packageRef.areAllPublicExportsLoaded()) {
                 continue
@@ -178,7 +179,7 @@ class FAsyncPackage2 {
                 importedPackage.importPackagesRecursive()
                 importedPackage.startLoading()
             }
-        }*/
+        }
         asyncPackageLogVerbose(Level.TRACE, desc, "ImportPackages: ImportsDone",
             "All imported packages are now being loaded.")
 
@@ -265,9 +266,9 @@ class FAsyncPackage2 {
                     check(currentExportDataPtr + cookedSerialSize <= (ioBufferOff + ioBuffer.size).toULong())
 
                     val pos = Ar.pos()
-                    check(cookedSerialSize <= (Ar.size() - pos).toULong()) {
-                        "Package %s: Expected read size: %d - Remaining archive size: %d"
-                            .format(desc.diskPackageName.toString(), cookedSerialSize, Ar.size() - pos)
+                    if (cookedSerialSize > (Ar.size() - pos).toULong()) {
+                        LOG_STREAMING.warn("Package %s: Expected read size: %d - Remaining archive size: %d"
+                            .format(desc.diskPackageName.toString(), cookedSerialSize, Ar.size() - pos))
                     }
 
                     val bSerialized = eventDrivenSerializeExport(bundleEntry.localExportIndex, Ar)
@@ -485,6 +486,7 @@ class FAsyncPackage2 {
             }
         }
         obj = importStore.findOrGetImportObject(trigger)!!.apply {
+            export2 = export
             name = objectName.toString()
             owner = linkerRoot
             pathName = desc.diskPackageName.toString() + '.' + name
@@ -563,7 +565,7 @@ class FAsyncPackage2 {
                 obj.deserialize(Ar, -1)
             } catch (e: Throwable) {
                 LOG_STREAMING.warn("Failed to deserialize ${obj.pathName}", e)
-                failedException = e
+                failedExceptions.add(e)
             }
         }
         //Ar.templateForGetArchetypeFromLoader = null
@@ -614,9 +616,8 @@ class FAsyncPackage2 {
     // endregion
 
     fun callCompletionCallbacks() {
-        val result = if (!bLoadHasFailed) Result.success(linkerRoot!!) else Result.failure(failedException!!)
         for (completionCallback in completionCallbacks) {
-            completionCallback.onCompletion(desc.getUPackageName(), result/*, loadingResult*/)
+            completionCallback.onCompletion(desc.getUPackageName(), linkerRoot!!, failedExceptions)
         }
         completionCallbacks.clear()
     }

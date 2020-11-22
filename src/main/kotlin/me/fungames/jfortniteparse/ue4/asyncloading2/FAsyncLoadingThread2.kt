@@ -419,7 +419,7 @@ class FAsyncLoadingThread2 : Runnable {
             if (completionCallback != null) {
                 // Queue completion callback and execute at next process loaded packages call to maintain behavior compatibility with old loader
                 //queuedFailedPackageCallbacks.add(FQueuedFailedPackageCallback(name, completionCallback))
-                completionCallback.onCompletion(name, Result.failure(ParserException("The package to load does not exist on disk or in the loader")))
+                completionCallback.onCompletion(name, null, listOf(ParserException("The package to load does not exist on disk or in the loader")))
             }
         }
 
@@ -579,7 +579,7 @@ class FAsyncLoadingThread2 : Runnable {
                 }, {
                     asyncPackageLog(Level.WARN, pkg.desc, "StartBundleIoRequests: FailedRead",
                         "Failed reading chunk for package: ${(it as? FIoStatusException)?.status ?: it}")
-                    pkg.failedException = it
+                    pkg.failedExceptions.add(it)
                 })
                 pkg.getPackageNode(EEventLoadNode2.Package_ProcessSummary).releaseBarrier()
                 pkg.asyncLoadingThread.waitingForIoBundleCounter.getAndDecrement()

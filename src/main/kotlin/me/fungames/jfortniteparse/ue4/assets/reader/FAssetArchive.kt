@@ -12,7 +12,6 @@ import java.nio.ByteBuffer
 /**
  * Binary reader for UE4 Assets
  */
-@ExperimentalUnsignedTypes
 open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgName: String) : FByteArchive(data) {
     constructor(data: ByteArray, provider: FileProvider?, pkgName: String) : this(ByteBuffer.wrap(data), provider, pkgName)
 
@@ -48,14 +47,19 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
     fun toNormalPos(relativePos: Int) = relativePos - uassetSize - uexpSize
     fun toRelativePos(normalPos: Int) = normalPos + uassetSize + uexpSize
 
+    open fun handleBadNameIndex(nameIndex: Int) {
+        throw ParserException("FName could not be read, requested index $nameIndex, name map size ${(owner as PakPackage).nameMap.size}", this)
+    }
+
     override fun readFName(): FName {
         val owner = owner as PakPackage
         val nameIndex = this.readInt32()
         val extraIndex = this.readInt32()
-        if (nameIndex in owner.nameMap.indices)
+        if (nameIndex in owner.nameMap.indices) {
             return FName(owner.nameMap, nameIndex, extraIndex)
-        else
-            throw ParserException("FName could not be read, requested index $nameIndex, name map size ${owner.nameMap.size}", this)
+        }
+        handleBadNameIndex(nameIndex)
+        return FName()
     }
 
     override fun printError() = "FAssetArchive Info: pos $pos, stopper $size, package $pkgName"
