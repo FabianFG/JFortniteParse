@@ -3,7 +3,6 @@ package me.fungames.jfortniteparse.ue4.assets
 import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.fort.exports.variants.*
 import me.fungames.jfortniteparse.fort.objects.rows.*
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstance
@@ -212,7 +211,7 @@ object ObjectTypeRegistry {
         }
         var clazz = classes[serializedName]
         if (clazz == null) {
-            UClass.logger.warn("Didn't find class $serializedName in registry")
+            //UClass.logger.warn("Didn't find class $serializedName in registry")
             clazz = UObject::class.java
         }
         return clazz.newInstance().apply {
@@ -227,7 +226,7 @@ object ObjectTypeRegistry {
         }
         val clazz = structs[serializedName]
         if (clazz == null) {
-            UClass.logger.warn("Didn't find struct $serializedName in registry")
+            //UClass.logger.warn("Didn't find struct $serializedName in registry")
             return Object()
         }
         return clazz.newInstance()

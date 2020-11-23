@@ -25,8 +25,8 @@ class FNameMap {
         val hashesId = FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNameHashes)
 
         val batch = ioDispatcher.newBatch()
-        val nameRequest = batch.read(namesId, FIoReadOptions(), IoDispatcherPriority_High)
-        val hashRequest = batch.read(hashesId, FIoReadOptions(), IoDispatcherPriority_High)
+        val nameRequest = batch.read(namesId, FIoReadOptions(), IoDispatcherPriority_High.value)
+        val hashRequest = batch.read(hashesId, FIoReadOptions(), IoDispatcherPriority_High.value)
         val batchCompletedEvent = CompletableFuture<Void>()
         batch.issueAndTriggerEvent(batchCompletedEvent)
 

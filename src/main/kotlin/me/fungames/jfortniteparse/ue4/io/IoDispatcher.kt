@@ -173,12 +173,12 @@ interface FIoRequest {
 
 typealias FIoReadCallback = (Result<ByteArray>) -> Unit
 
-enum class EIoDispatcherPriority {
-    IoDispatcherPriority_Low,
-    IoDispatcherPriority_Medium,
-    IoDispatcherPriority_High,
-
-    IoDispatcherPriority_Count
+enum class EIoDispatcherPriority(val value: Int) {
+    IoDispatcherPriority_Min(Int.MIN_VALUE),
+    IoDispatcherPriority_Low(Int.MIN_VALUE / 2),
+    IoDispatcherPriority_Medium(0),
+    IoDispatcherPriority_High(Int.MAX_VALUE / 2),
+    IoDispatcherPriority_Max(Int.MAX_VALUE)
 }
 
 /**
@@ -201,17 +201,17 @@ class FIoBatch {
         other.headRequest = null
     }
 
-    fun read(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority): FIoRequest =
+    fun read(chunkId: FIoChunkId, options: FIoReadOptions, priority: Int): FIoRequest =
         readInternal(chunkId, options, priority)
 
-    fun readWithCallback(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority, callback: FIoReadCallback): FIoRequest =
+    fun readWithCallback(chunkId: FIoChunkId, options: FIoReadOptions, priority: Int, callback: FIoReadCallback): FIoRequest =
         readInternal(chunkId, options, priority).also { it.callback = callback }
 
     fun issue() {
         dispatcher.issueBatch(this)
     }
 
-    fun issue(priority: EIoDispatcherPriority) {
+    fun issue(priority: Int) {
         var request = headRequest
         while (request != null) {
             request.priority = priority
@@ -232,7 +232,7 @@ class FIoBatch {
         dispatcher.issueBatchAndDispatchSubsequents(this, event)
     }*/
 
-    private fun readInternal(chunkId: FIoChunkId, options: FIoReadOptions, priority: EIoDispatcherPriority): FIoRequestImpl {
+    private fun readInternal(chunkId: FIoChunkId, options: FIoReadOptions, priority: Int): FIoRequestImpl {
         val request = dispatcher.allocRequest(chunkId, options)
         request.priority = priority
         //request.addRef()
@@ -324,7 +324,7 @@ class FIoDispatcher private constructor() {
 class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
     val eventQueue = FIoDispatcherEventQueue()
 
-    private val fileIoStore = FFileIoStore(eventQueue, bIsMultithreaded)
+    private val fileIoStore = FFileIoStore(eventQueue, true /*bIsMultithreaded*/)
     private val waitingLock = Object()
     private var waitingRequestsHead: FIoRequestImpl? = null
     private var waitingRequestsTail: FIoRequestImpl? = null

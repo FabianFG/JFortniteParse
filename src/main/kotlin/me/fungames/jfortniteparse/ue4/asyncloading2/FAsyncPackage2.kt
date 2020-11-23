@@ -1,5 +1,7 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.GSuppressMissingSchemaErrors
+import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
@@ -158,7 +160,7 @@ class FAsyncPackage2 {
                 packageRef.clearIsMissingPackage()
             }
 
-            val packageDesc = FAsyncPackageDesc2(INDEX_NONE, importedPackageId, importedPackageEntry)
+            val packageDesc = FAsyncPackageDesc2(INDEX_NONE, desc.priority, importedPackageId, importedPackageEntry)
             val bInserted = BooleanRef()
             val importedPackage = asyncLoadingThread.findOrInsertPackage(packageDesc, bInserted)
 
@@ -475,43 +477,54 @@ class FAsyncPackage2 {
             return
         }
 
-        // region Own implementation of object creation code
-        val trigger = when {
-            export.classIndex.isExport() -> export.superIndex
-            export.classIndex.isImport() -> export.classIndex
-            else -> {
+        // Try to find existing object first as we cannot in-place replace objects, could have been created by other export in this package
+        obj = importStore.globalImportStore.publicExportObjects[export.globalImportIndex]?.obj
+
+        val bIsNewObject = obj == null
+
+        // Object is found in memory.
+        if (obj != null) {
+            // If this object was allocated but never loaded (components created by a constructor, CDOs, etc) make sure it gets loaded
+            // Do this for all subobjects created in the native constructor.
+            val objectFlags = obj.flags
+            bIsCompletelyLoaded = (objectFlags and RF_LoadCompleted.value) != 0
+            if (!bIsCompletelyLoaded) {
+                check((objectFlags and (RF_NeedLoad.value or RF_WasLoaded.value)) == 0) // If export exist but is not completed, it is expected to have been created from a native constructor and not from EventDrivenCreateExport, but who knows...?
+                if ((objectFlags and RF_ClassDefaultObject.value) != 0) {
+                    // never call PostLoadSubobjects on class default objects, this matches the behavior of the old linker where
+                    // StaticAllocateObject prevents setting of RF_NeedPostLoad and RF_NeedPostLoadSubobjects, but FLinkerLoad::Preload
+                    // assigns RF_NeedPostLoad for blueprint CDOs:
+                    obj.flags = obj.flags or (RF_NeedLoad.value or RF_NeedPostLoad.value or RF_WasLoaded.value)
+                } else {
+                    obj.flags = obj.flags or (RF_NeedLoad.value or RF_NeedPostLoad.value or RF_NeedPostLoadSubobjects.value or RF_WasLoaded.value)
+                }
+            }
+        } else {
+            // region Own implementation of object creation code
+            val trigger = when {
+                export.classIndex.isExport() -> export.superIndex
+                export.classIndex.isImport() -> export.classIndex
+                else -> null
+            }?.takeIf { !it.isNull() }
+            if (trigger == null) {
                 asyncPackageLog(Level.ERROR, desc, "CreateExport", "Could not find class name for $objectName")
                 exportObject.bExportLoadFailed = true
                 return
             }
-        }
-        obj = importStore.findOrGetImportObject(trigger)!!.apply {
-            export2 = export
-            name = objectName.toString()
-            owner = linkerRoot
-            pathName = desc.diskPackageName.toString() + '.' + name
-            flags = flags or export.objectFlags.toInt()
-        }
-        exportObject.exportObject = obj
-        // endregion
-
-        // If this object was allocated but never loaded (components created by a constructor, CDOs, etc) make sure it gets loaded
-        // Do this for all subobjects created in the native constructor.
-        val objectFlags = obj.flags
-        bIsCompletelyLoaded = (objectFlags and RF_LoadCompleted.value) != 0
-        if (!bIsCompletelyLoaded) {
-            check((objectFlags and (RF_NeedLoad.value or RF_WasLoaded.value)) == 0) // If export exist but is not completed, it is expected to have been created from a native constructor and not from EventDrivenCreateExport, but who knows...?
-            if ((objectFlags and RF_ClassDefaultObject.value) != 0) {
-                // never call PostLoadSubobjects on class default objects, this matches the behavior of the old linker where
-                // StaticAllocateObject prevents setting of RF_NeedPostLoad and RF_NeedPostLoadSubobjects, but FLinkerLoad::Preload
-                // assigns RF_NeedPostLoad for blueprint CDOs:
-                obj.flags = obj.flags or (RF_NeedLoad.value or RF_NeedPostLoad.value or RF_WasLoaded.value)
-            } else {
-                obj.flags = obj.flags or (RF_NeedLoad.value or RF_NeedPostLoad.value or RF_NeedPostLoadSubobjects.value or RF_WasLoaded.value)
+            // Create the export object, marking it with the appropriate flags to
+            // indicate that the object's data still needs to be loaded.
+            val objectLoadFlags = export.objectFlags.toInt() or RF_NeedLoad.value or RF_NeedPostLoad.value or RF_NeedPostLoadSubobjects.value or RF_WasLoaded.value
+            obj = importStore.findOrGetImportObject(trigger)!!.apply {
+                export2 = export
+                name = objectName.toString()
+                owner = linkerRoot
+                pathName = desc.diskPackageName.toString() + '.' + name
+                flags = objectLoadFlags
             }
+            // endregion
         }
 
-        check(obj != null)
+        exportObject.exportObject = obj
 
         if (desc.canBeImported() && !export.globalImportIndex.isNull()) {
             check(obj.hasAnyFlags(RF_Public.value))
@@ -564,8 +577,12 @@ class FAsyncPackage2 {
             try {
                 obj.deserialize(Ar, -1)
             } catch (e: Throwable) {
-                LOG_STREAMING.warn("Failed to deserialize ${obj.pathName}", e)
-                failedExceptions.add(e)
+                if (e is MissingSchemaException && GSuppressMissingSchemaErrors) {
+                    LOG_STREAMING.warn(e.message)
+                } else {
+                    LOG_STREAMING.warn("Failed to deserialize ${obj.pathName}", e)
+                    failedExceptions.add(e)
+                }
             }
         }
         //Ar.templateForGetArchetypeFromLoader = null

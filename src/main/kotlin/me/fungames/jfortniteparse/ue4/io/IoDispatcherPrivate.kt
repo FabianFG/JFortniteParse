@@ -29,7 +29,7 @@ class FIoRequestImpl : FIoRequest {
     var ioBufferOff = 0
     var callback: FIoReadCallback? = null
     var unfinishedReadsCount = 0
-    var priority = EIoDispatcherPriority.IoDispatcherPriority_Medium
+    var priority = 0
     val errorCode = AtomicReference(EIoErrorCode.Unknown)
     var bFailed = false
 

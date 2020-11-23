@@ -6,6 +6,9 @@ class FAsyncPackageDesc2 {
     /** A unique request id for each external call to LoadPackage */
     var requestID: Int
 
+    /** Package priority */
+    var priority: Int
+
     /** The package store entry with meta data about the actual disk package */
     var storeEntry: FPackageStoreEntry?
 
@@ -41,6 +44,7 @@ class FAsyncPackageDesc2 {
 
     constructor(
         requestID: Int,
+        priority: Int,
         packageIdToLoad: FPackageId,
         storeEntry: FPackageStoreEntry?,
         diskPackageName: FName = FName(),
@@ -49,6 +53,7 @@ class FAsyncPackageDesc2 {
         completionCallback: FCompletionCallback? = null
     ) {
         this.requestID = requestID
+        this.priority = priority
         this.storeEntry = storeEntry
         this.diskPackageId = packageIdToLoad
         this.customPackageId = packageId
@@ -60,6 +65,7 @@ class FAsyncPackageDesc2 {
     /** This constructor does not modify the package loaded callback as this is not safe outside the game thread */
     constructor(oldPackage: FAsyncPackageDesc2) {
         requestID = oldPackage.requestID
+        priority = oldPackage.priority
         storeEntry = oldPackage.storeEntry
         diskPackageId = oldPackage.diskPackageId
         customPackageId = oldPackage.customPackageId

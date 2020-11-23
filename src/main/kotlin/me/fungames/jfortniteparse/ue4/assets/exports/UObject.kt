@@ -4,6 +4,7 @@ import com.github.salomonbrys.kotson.jsonObject
 import com.github.salomonbrys.kotson.set
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.Package
@@ -64,7 +65,7 @@ open class UObject : UExport, IPropertyHolder {
         properties = mutableListOf()
         if (Ar.useUnversionedPropertySerialization) {
             if (javaClass == UObject::class.java) {
-                throw ParserException("Missing schema for class $exportType")
+                throw MissingSchemaException("Missing schema for class $exportType")
             }
             deserializeUnversionedProperties(properties, javaClass, Ar)
         } else {

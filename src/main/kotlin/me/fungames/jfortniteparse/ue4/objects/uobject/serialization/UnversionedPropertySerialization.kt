@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 
+import me.fungames.jfortniteparse.GDebugUnversionedPropertySerialization
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
@@ -21,8 +22,6 @@ import me.fungames.jfortniteparse.util.indexOfFirst
 import java.lang.reflect.Field
 import java.lang.reflect.ParameterizedType
 import java.util.*
-
-const val DEBUG = false
 
 // custom class
 class PropertyInfo {
@@ -165,7 +164,7 @@ class FUnversionedStructSchema(struct: Class<*>) {
                 index += ann?.skipPrevious ?: 0
                 val propertyInfo = PropertyInfo(field, ann)
                 for (arrayIdx in 0 until propertyInfo.arrayDim) {
-                    if (DEBUG) println("$index = ${propertyInfo.field.name}")
+                    if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.field.name}")
                     serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                 }
                 index += (ann?.skipNext ?: 0) + 1
@@ -312,7 +311,7 @@ class FUnversionedHeader {
 fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: Class<*>, Ar: FAssetArchive) {
     //check(canUseUnversionedPropertySerialization())
 
-    if (DEBUG) println("Load: ${struct.simpleName}")
+    if (GDebugUnversionedPropertySerialization) println("Load: ${struct.simpleName}")
     val header = FUnversionedHeader()
     header.load(Ar)
 
@@ -326,11 +325,11 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 val serializer = it.serializer
                 if (serializer != null) {
-                    if (DEBUG) println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
+                    if (GDebugUnversionedPropertySerialization) println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
                     if (it.isNonZero()) {
                         val element = serializer.deserialize(Ar)
                         properties.add(element)
-                        if (DEBUG) println(element.toString())
+                        if (GDebugUnversionedPropertySerialization) println(element.toString())
                     } else {
                         properties.add(serializer.loadZero(Ar))
                     }

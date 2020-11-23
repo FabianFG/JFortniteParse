@@ -44,7 +44,7 @@ class FPackageStore(
         val initialLoadEvent = CompletableFuture<Void>()
 
         val ioBatch = ioDispatcher.newBatch()
-        val ioRequest = ioBatch.read(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta), FIoReadOptions(), IoDispatcherPriority_High)
+        val ioRequest = ioBatch.read(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta), FIoReadOptions(), IoDispatcherPriority_High.value)
         ioBatch.issueAndTriggerEvent(initialLoadEvent)
 
         initialLoadEvent.await()
@@ -88,7 +88,7 @@ class FPackageStore(
             loadedContainer.order = container.environment.order
 
             val headerChunkId = FIoChunkId(containerId.value(), 0u, EIoChunkType.ContainerHeader)
-            ioBatch.readWithCallback(headerChunkId, FIoReadOptions(), IoDispatcherPriority_High) { result ->
+            ioBatch.readWithCallback(headerChunkId, FIoReadOptions(), IoDispatcherPriority_High.value) { result ->
                 val ioBuffer = result.getOrThrow()
 
                 Thread {

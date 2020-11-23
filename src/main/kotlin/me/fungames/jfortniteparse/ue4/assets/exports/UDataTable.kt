@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
-import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.ue4.assets.*
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -37,7 +37,7 @@ class UDataTable : UObject {
         }
         val clazz = ObjectTypeRegistry.structs[rowStructName.text]
         if (Ar.useUnversionedPropertySerialization && clazz == null) {
-            throw ParserException("Missing schema for row struct $rowStructName")
+            throw MissingSchemaException("Missing schema for row struct $rowStructName")
         }
         rows = Ar.readTMap {
             val key = Ar.readFName()

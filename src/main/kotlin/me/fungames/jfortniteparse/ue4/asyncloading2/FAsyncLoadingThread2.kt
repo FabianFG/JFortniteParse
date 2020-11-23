@@ -3,7 +3,6 @@ package me.fungames.jfortniteparse.ue4.asyncloading2
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.io.*
-import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_Medium
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import org.slf4j.event.Level
@@ -54,7 +53,7 @@ class FAsyncLoadingThread2 : Runnable {
     /** Packages in active loading with GetAsyncPackageId() as key */
     private val asyncPackageLookup = mutableMapOf<FPackageId, FAsyncPackage2>()
 
-    internal val externalReadQueue = LinkedList<FAsyncPackage2>() // TODO MPSC please
+    internal val externalReadQueue = LinkedList<FAsyncPackage2>() // TODO multi producer single consumer please
     private val waitingForIoBundleCounter = AtomicInteger()
 
     /** List of all pending package requests */
@@ -319,7 +318,7 @@ class FAsyncLoadingThread2 : Runnable {
         //threadResumedEvent = null
     }
 
-    fun loadPackage(inName: String, inPackageToLoadFrom: String? = null, completionCallback: FCompletionCallback? = null): Int {
+    fun loadPackage(inName: String, inPackageToLoadFrom: String? = null, inPackagePriority: Int = 0, completionCallback: FCompletionCallback? = null): Int {
         if (!bLazyInitializedFromLoadPackage) {
             bLazyInitializedFromLoadPackage = true
             lazyInitializeFromLoadPackage()
@@ -394,7 +393,7 @@ class FAsyncLoadingThread2 : Runnable {
             addPendingRequest(requestID)
 
             // Add new package request
-            val packageDesc = FAsyncPackageDesc2(requestID, diskPackageId, storeEntry, diskPackageName, customPackageId, customPackageName, completionCallback)
+            val packageDesc = FAsyncPackageDesc2(requestID, inPackagePriority, diskPackageId, storeEntry, diskPackageName, customPackageId, customPackageName, completionCallback)
 
             // Fixup for redirected packages since the slim StoreEntry itself has been stripped from both package names and package ids
             val redirectedDiskPackageId = globalPackageStore.getRedirectedPackageId(diskPackageId)
@@ -408,7 +407,7 @@ class FAsyncLoadingThread2 : Runnable {
 
             asyncPackageLog(Level.DEBUG, packageDesc, "LoadPackage: QueuePackage", "Package added to pending queue.")
         } else {
-            val packageDesc = FAsyncPackageDesc2(requestID, diskPackageId, storeEntry, diskPackageName, customPackageId, customPackageName)
+            val packageDesc = FAsyncPackageDesc2(requestID, inPackagePriority, diskPackageId, storeEntry, diskPackageName, customPackageId, customPackageName)
             if (!bDiskPackageIdIsValid) {
                 asyncPackageLog(Level.WARN, packageDesc, "LoadPackage: SkipPackage",
                     "The package to load does not exist on disk or in the loader")
@@ -572,7 +571,7 @@ class FAsyncLoadingThread2 : Runnable {
             val readOptions = FIoReadOptions()
             pkg.ioRequest = ioBatch.readWithCallback(FIoChunkId(pkg.desc.diskPackageId.value(), 0u, EIoChunkType.ExportBundleData),
                 readOptions,
-                IoDispatcherPriority_Medium
+                pkg.desc.priority
             ) { result ->
                 result.fold({
                     pkg.ioBuffer = it

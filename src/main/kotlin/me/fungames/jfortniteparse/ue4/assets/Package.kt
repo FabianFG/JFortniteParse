@@ -50,6 +50,8 @@ abstract class Package(val fileName: String,
         return null
     }
 
+    override fun toString() = fileName
+
     companion object {
         val gson = GsonBuilder()
             .setPrettyPrinting()

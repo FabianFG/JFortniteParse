@@ -27,6 +27,7 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     public FRotator PreviewPawnRotationOffset;
     public List<FPackageIndex /*FoleySoundLibrary*/> FoleyLibraries;
     public FGameplayTagContainer DisallowedCosmeticTags;
+    @UProperty(skipPrevious = 3) // TODO 3 new properties introduced in 14.60
     public FGameplayTagContainer MetaTags;
     public List<FGameplayTag> VariantChannelsToNeverSendToMCP;
     public List<AthenaCosmeticMaterialOverride> MaterialOverrides;

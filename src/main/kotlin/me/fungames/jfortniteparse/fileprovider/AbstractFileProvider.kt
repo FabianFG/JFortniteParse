@@ -13,10 +13,10 @@ import java.util.concurrent.CompletableFuture
 
 abstract class AbstractFileProvider : FileProvider() {
     val asyncPackageLoader by lazy {
-        FAsyncLoadingThread2(FIoDispatcher.get()).apply {
-            provider = this@AbstractFileProvider
-            initializeLoading()
-            startThread()
+        FAsyncLoadingThread2(FIoDispatcher.get()).also {
+            it.provider = this
+            it.initializeLoading()
+            it.startThread()
         }
     }
 
@@ -48,7 +48,7 @@ abstract class AbstractFileProvider : FileProvider() {
                 if (loadedPackage != null) { // Package loaded successfully, although there can be some errors
                     event.complete(loadedPackage)
                     if (exceptions.isNotEmpty()) {
-                        logger.warn("${exceptions.size} errors occurred when loading $name")
+                        logger.warn("${exceptions.size} error(s) occurred when loading $name")
                     }
                 } else { // Package could not be loaded at all
                     event.completeExceptionally(exceptions.last())

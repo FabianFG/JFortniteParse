@@ -33,7 +33,7 @@ class FExportArchive(
         val request = batch.read(
             FIoChunkId(packageDesc.diskPackageId.value(), 0u, if (type == PayloadType.UBULK) EIoChunkType.BulkData else EIoChunkType.OptionalBulkData),
             FIoReadOptions(),
-            IoDispatcherPriority_High
+            IoDispatcherPriority_High.value
         )
 
         val batchCompletedEvent = CompletableFuture<Void>()
