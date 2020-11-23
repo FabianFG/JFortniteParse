@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 
 import me.fungames.jfortniteparse.GDebugUnversionedPropertySerialization
+import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
@@ -8,12 +9,15 @@ import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType
+import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.unprefix
+import me.fungames.jfortniteparse.ue4.asyncloading2.FExportArchive
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
@@ -115,6 +119,7 @@ class PropertyInfo {
             Map::class.java.isAssignableFrom(c) -> "MapProperty"
             c == FPackageIndex::class.java || UObject::class.java.isAssignableFrom(c) -> "ObjectProperty"
             c == FSoftObjectPath::class.java -> "SoftObjectProperty"
+            c == FSoftClassPath::class.java -> "SoftClassProperty"
             c == FFieldPath::class.java -> "FieldPathProperty"
             else -> "StructProperty"
         }
@@ -122,24 +127,20 @@ class PropertyInfo {
 }
 
 class FUnversionedPropertySerializer(val propertyInfo: PropertyInfo, val arrayIndex: Int) {
-    fun deserialize(Ar: FAssetArchive): FPropertyTag {
+    fun deserialize(Ar: FAssetArchive, type: ReadType): FPropertyTag {
+        if (GExportArchiveCheckDummyName && Ar is FExportArchive) {
+            propertyInfo.name?.let { Ar.checkDummyName(it) }
+            //propertyInfo.type?.let { Ar.checkDummyName(it) }
+            propertyInfo.structType?.let { Ar.checkDummyName(it) }
+            propertyInfo.enumName?.let { Ar.checkDummyName(it) }
+            propertyInfo.innerType?.let { Ar.checkDummyName(it) }
+            propertyInfo.valueType?.let { Ar.checkDummyName(it) }
+        }
         val propertyType = propertyInfo.type!!
         val tag = FPropertyTag(propertyInfo)
         tag.arrayIndex = arrayIndex
-        tag.prop = FPropertyTagType.readFPropertyTagType(Ar, propertyType, tag, FPropertyTagType.ReadType.NORMAL)
+        tag.prop = FPropertyTagType.readFPropertyTagType(Ar, propertyType, tag, type)
         return tag
-    }
-
-    fun loadZero(Ar: FAssetArchive): FPropertyTag {
-        val propertyType = propertyInfo.type!!
-        val tag = FPropertyTag(propertyInfo)
-        tag.arrayIndex = 0
-        tag.prop = FPropertyTagType.readFPropertyTagType(Ar, propertyType, tag, FPropertyTagType.ReadType.ZERO)
-        return tag
-    }
-
-    fun writeToField() {
-
     }
 
     override fun toString() = propertyInfo.field.type.simpleName + ' ' + propertyInfo.field.name
@@ -327,11 +328,11 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                 if (serializer != null) {
                     if (GDebugUnversionedPropertySerialization) println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
                     if (it.isNonZero()) {
-                        val element = serializer.deserialize(Ar)
+                        val element = serializer.deserialize(Ar, ReadType.NORMAL)
                         properties.add(element)
                         if (GDebugUnversionedPropertySerialization) println(element.toString())
                     } else {
-                        properties.add(serializer.loadZero(Ar))
+                        properties.add(serializer.deserialize(Ar, ReadType.ZERO))
                     }
                 } else {
                     if (it.isNonZero()) {
@@ -345,7 +346,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             val it = FUnversionedHeader.FIterator(header, schemas)
             while (!it.bDone) {
                 check(!it.isNonZero())
-                it.serializer?.run { properties.add(loadZero(Ar)) }
+                it.serializer?.run { properties.add(deserialize(Ar, ReadType.ZERO)) }
                     ?: UClass.logger.warn("Unknown property for ${struct.simpleName} with value ${it.schemaIt} but it's zero so we are good")
                 it.next()
             }

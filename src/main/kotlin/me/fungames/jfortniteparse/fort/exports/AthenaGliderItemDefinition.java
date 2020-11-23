@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.fort.exports;
 import me.fungames.jfortniteparse.fort.objects.MarshalledVFXAuthoredData;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.Map;
@@ -11,10 +12,10 @@ public class AthenaGliderItemDefinition extends AthenaCosmeticItemDefinition {
     public EFortGliderType GliderType;
     public FVector CameraFramingBoundsCenterOffset;
     public Boolean bActivateTrailsOnRotationalMovement;
-    public FSoftObjectPath /*SoftClassPath*/ ParachutePrefabClass;
+    public FSoftClassPath ParachutePrefabClass;
     public FSoftObjectPath SkeletalMesh;
-    public FSoftObjectPath /*SoftClassPath*/ AnimClass;
-    public FSoftObjectPath /*SoftClassPath*/ CameraClass;
+    public FSoftClassPath AnimClass;
+    public FSoftClassPath CameraClass;
     public FSoftObjectPath PlayerAnimSet;
     public FSoftObjectPath TrailParticles;
     public FSoftObjectPath OwnerTrailParticles;

@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fileprovider
 
+import me.fungames.jfortniteparse.GTreatReadErrorsAsFatal
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
@@ -46,9 +47,17 @@ abstract class AbstractFileProvider : FileProvider() {
             val name = compactFilePath(filePath)
             asyncPackageLoader.loadPackage(name) { _, loadedPackage, exceptions ->
                 if (loadedPackage != null) { // Package loaded successfully, although there can be some errors
-                    event.complete(loadedPackage)
-                    if (exceptions.isNotEmpty()) {
-                        logger.warn("${exceptions.size} error(s) occurred when loading $name")
+                    if (GTreatReadErrorsAsFatal) {
+                        if (exceptions.isNotEmpty()) {
+                            event.completeExceptionally(exceptions.first())
+                        } else {
+                            event.complete(loadedPackage)
+                        }
+                    } else {
+                        event.complete(loadedPackage)
+                        if (exceptions.isNotEmpty()) {
+                            logger.warn("${exceptions.size} error(s) occurred when loading $name")
+                        }
                     }
                 } else { // Package could not be loaded at all
                     event.completeExceptionally(exceptions.last())

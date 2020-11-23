@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
@@ -12,8 +13,6 @@ import me.fungames.jfortniteparse.util.await
 import org.slf4j.event.Level
 import java.nio.ByteBuffer
 import java.util.concurrent.CompletableFuture
-
-const val DO_CHECK = false
 
 class FExportArchive(
     data: ByteBuffer,
@@ -62,10 +61,8 @@ class FExportArchive(
     }
 
     fun checkDummyName(dummyName: String) {
-        if (DO_CHECK) {
-            check(dummyName in nameMap.nameEntries) {
-                "$dummyName is not in the package name map. There must be something wrong."
-            }
+        if (GExportArchiveCheckDummyName && dummyName !in nameMap.nameEntries) {
+            throw ParserException("$dummyName is not in the package name map. There must be something wrong.")
         }
     }
 }

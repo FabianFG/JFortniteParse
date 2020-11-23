@@ -577,7 +577,7 @@ class FAsyncPackage2 {
             try {
                 obj.deserialize(Ar, -1)
             } catch (e: Throwable) {
-                if (e is MissingSchemaException && GSuppressMissingSchemaErrors) {
+                if (e is MissingSchemaException && !GSuppressMissingSchemaErrors) {
                     LOG_STREAMING.warn(e.message)
                 } else {
                     LOG_STREAMING.warn("Failed to deserialize ${obj.pathName}", e)

@@ -12,6 +12,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -96,6 +97,6 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     @UStruct
     public static class FortMissionConfigDataBucket {
         public FGameplayTag Tag;
-        public FSoftObjectPath /*SoftClassPath*/ ConfigDataClass;
+        public FSoftClassPath ConfigDataClass;
     }
 }

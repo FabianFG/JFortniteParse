@@ -10,6 +10,7 @@ import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -23,11 +24,11 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     public Boolean bDynamicInstallBundlesError;
     public Boolean bDynamicInstallBundlesComplete;
     public Double DynamicInstallBundlesUpdateStartTime;
+    @UProperty(skipPrevious = 3) // TODO 3 new properties introduced in 14.60
     public EVariantUnlockType VariantUnlockType;
     public FRotator PreviewPawnRotationOffset;
     public List<FPackageIndex /*FoleySoundLibrary*/> FoleyLibraries;
     public FGameplayTagContainer DisallowedCosmeticTags;
-    @UProperty(skipPrevious = 3) // TODO 3 new properties introduced in 14.60
     public FGameplayTagContainer MetaTags;
     public List<FGameplayTag> VariantChannelsToNeverSendToMCP;
     public List<AthenaCosmeticMaterialOverride> MaterialOverrides;
@@ -41,7 +42,7 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     @UProperty(skipPrevious = 1)
     public FText UnlockRequirements;
     public FSoftObjectPath UnlockingItemDef;
-    public FSoftObjectPath /*SoftClassPath*/ ItemPreviewActorClass;
+    public FSoftClassPath ItemPreviewActorClass;
     public FSoftObjectPath ItemPreviewParticleSystem;
     public FSoftObjectPath ItemPreviewMontage_Male;
     public FSoftObjectPath ItemPreviewMontage_Female;

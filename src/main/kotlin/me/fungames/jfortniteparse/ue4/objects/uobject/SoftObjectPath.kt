@@ -11,8 +11,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
  * This is stored internally as an FName pointing to the top level asset (/package/path.assetname) and an option a string subobject path.
  * If the MetaClass metadata is applied to a FProperty with this the UI will restrict to that type of asset.
  */
-@ExperimentalUnsignedTypes
-class FSoftObjectPath : UClass {
+open class FSoftObjectPath : UClass {
     /** Asset path, patch to a top level object in a package. This is /package/path.assetname */
     var assetPathName: FName
 
@@ -35,6 +34,9 @@ class FSoftObjectPath : UClass {
         super.completeWrite(Ar)
     }
 
+    constructor() : this(FName.NAME_None, "")
+
+    /** Construct from an asset FName and subobject pair */
     constructor(assetPathName: FName, subPathString: String) {
         this.assetPathName = assetPathName
         this.subPathString = subPathString
@@ -50,4 +52,13 @@ class FSoftObjectPath : UClass {
         }
 
     inline fun <reified T> load() = owner?.provider?.loadObject<T>(this)
+}
+
+/**
+ * A struct that contains a string reference to a class, can be used to make soft references to classes
+ */
+class FSoftClassPath : FSoftObjectPath {
+    constructor(Ar: FAssetArchive) : super(Ar)
+    constructor() : super()
+    constructor(assetPathName: FName, subPathString: String) : super(assetPathName, subPathString)
 }

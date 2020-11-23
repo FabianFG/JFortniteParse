@@ -1,4 +1,6 @@
 package me.fungames.jfortniteparse
 
-const val GDebugUnversionedPropertySerialization = false
-const val GSuppressMissingSchemaErrors = false
+var GDebugUnversionedPropertySerialization = false
+var GExportArchiveCheckDummyName = false
+var GSuppressMissingSchemaErrors = false
+var GTreatReadErrorsAsFatal = false

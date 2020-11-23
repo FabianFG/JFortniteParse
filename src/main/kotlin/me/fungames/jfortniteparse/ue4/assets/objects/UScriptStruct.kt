@@ -22,6 +22,7 @@ import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneE
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationTemplate
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneSegment
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEvaluationDataTree
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 
 class UScriptStruct : UClass {
@@ -65,6 +66,8 @@ class UScriptStruct : UClass {
             "SimpleCurveKey" -> FSimpleCurveKey(Ar)
             "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
             "SmartName" -> FSmartName(Ar)
+            "SoftObjectPath" -> valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type)
+            "SoftClassPath" -> valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type)
             "Timespan", "DateTime" -> valueOr({ FDateTime(Ar) }, { FDateTime() }, type)
             "Vector" -> valueOr({ FVector(Ar) }, { FVector() }, type)
             "Vector2D" -> valueOr({ FVector2D(Ar) }, { FVector2D() }, type)

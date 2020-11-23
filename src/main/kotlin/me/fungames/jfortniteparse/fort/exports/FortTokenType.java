@@ -2,12 +2,12 @@ package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.enums.EItemProfileType;
 import me.fungames.jfortniteparse.ue4.objects.slatecore.styling.FSlateColor;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 
 public class FortTokenType extends FortAccountItemDefinition {
-    public FSoftObjectPath /*SoftClassPath*/ ScriptedAction;
+    public FSoftClassPath ScriptedAction;
     public FSlateColor NodeTintColour;
     public Boolean bPercentageRepresentation;
     public EItemProfileType ProfileType;
-    public FSoftObjectPath /*SoftClassPath*/ ItemPreviewActorClass;
+    public FSoftClassPath ItemPreviewActorClass;
 }

@@ -42,10 +42,7 @@ class FPackageImportStore {
     }
 
     inline fun findOrGetImportObject(globalIndex: FPackageObjectIndex): UObject? {
-        val globalIndex = globalIndex
-        check(globalIndex.isImport()) {
-            "H"
-        }
+        check(globalIndex.isImport())
         return globalImportStore.findOrGetImportObject(globalIndex)
     }
 

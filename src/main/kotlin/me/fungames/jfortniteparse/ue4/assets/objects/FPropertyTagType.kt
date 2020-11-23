@@ -11,10 +11,7 @@ import me.fungames.jfortniteparse.ue4.asyncloading2.FExportArchive
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FTextHistory
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
-import me.fungames.jfortniteparse.ue4.objects.uobject.UInterfaceProperty
+import me.fungames.jfortniteparse.ue4.objects.uobject.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 import java.lang.reflect.Array
 import java.lang.reflect.ParameterizedType
@@ -124,6 +121,7 @@ sealed class FPropertyTagType(val propertyType: String) {
         is ByteProperty -> this.byte
         is EnumProperty -> this.name
         is SoftObjectProperty -> this.`object`
+        is SoftClassProperty -> this.`object`
         is DelegateProperty -> this.name
         is DoubleProperty -> this.number
         is Int8Property -> this.number
@@ -154,6 +152,7 @@ sealed class FPropertyTagType(val propertyType: String) {
             is ByteProperty -> this.byte = value as UByte
             is EnumProperty -> this.name = value as FName
             is SoftObjectProperty -> this.`object` = value as FSoftObjectPath
+            is SoftClassProperty -> this.`object` = value as FSoftClassPath
             is DelegateProperty -> this.name = value as FName
             is DoubleProperty -> this.number = value as Double
             is Int8Property -> this.number = value as Byte
@@ -236,19 +235,8 @@ sealed class FPropertyTagType(val propertyType: String) {
                         EnumProperty(Ar.readFName(), null, propertyType)
                     }
                 }
-                "SoftObjectProperty" -> {
-                    if (type == ReadType.ZERO) {
-                        SoftObjectProperty(FSoftObjectPath(FName(), ""), propertyType)
-                    } else {
-                        val pos = Ar.pos()
-                        val path = SoftObjectProperty(FSoftObjectPath(Ar), propertyType)
-                        if (type == ReadType.MAP) {
-                            // skip ahead, putting the total bytes read to 16
-                            Ar.skip(16L - (Ar.pos() - pos))
-                        }
-                        path
-                    }
-                }
+                "SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type), propertyType)
+                "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type), propertyType)
                 "DelegateProperty" -> DelegateProperty(valueOr({ Ar.readInt32() }, { 0 }, type), valueOr({ Ar.readFName() }, { FName() }, type), propertyType)
                 "DoubleProperty" -> DoubleProperty(valueOr({ Ar.readDouble() }, { 0.0 }, type), propertyType)
                 "Int8Property" -> Int8Property(valueOr({ Ar.readInt8() }, { 0 }, type), propertyType)
@@ -333,6 +321,7 @@ sealed class FPropertyTagType(val propertyType: String) {
     class ByteProperty(var byte: UByte, propertyType: String) : FPropertyTagType(propertyType)
     class EnumProperty(var name: FName, var enumConstant: Enum<*>?, propertyType: String) : FPropertyTagType(propertyType)
     class SoftObjectProperty(var `object`: FSoftObjectPath, propertyType: String) : FPropertyTagType(propertyType)
+    class SoftClassProperty(var `object`: FSoftClassPath, propertyType: String) : FPropertyTagType(propertyType)
     class DelegateProperty(var `object`: Int, var name: FName, propertyType: String) : FPropertyTagType(propertyType)
     class DoubleProperty(var number: Double, propertyType: String) : FPropertyTagType(propertyType)
     class Int8Property(var number: Byte, propertyType: String) : FPropertyTagType(propertyType)

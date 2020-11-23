@@ -8,12 +8,13 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
 
 public class FortWeaponItemDefinition extends FortWorldItemDefinition {
-    public FSoftObjectPath /*SoftClassPath*/ WeaponActorClass;
+    public FSoftClassPath WeaponActorClass;
     public FSoftObjectPath WeaponMeshOverride;
     public FSoftObjectPath IntrinsicOverrideWrap;
     public FDataTableRowHandle WeaponStatHandle;
@@ -25,11 +26,11 @@ public class FortWeaponItemDefinition extends FortWorldItemDefinition {
     public FSoftObjectPath BaseAlteration;
     public FSoftObjectPath BaseCosmeticAlteration;
     @UProperty(skipPrevious = 1) // TODO a missing property preventing parsing of 5 star Sunbeam Nocturno
-    public FSoftObjectPath /*SoftClassPath*/ PrimaryFireAbility;
-    public FSoftObjectPath /*SoftClassPath*/ SecondaryFireAbility;
-    public FSoftObjectPath /*SoftClassPath*/ ReloadAbility;
-    public FSoftObjectPath /*SoftClassPath*/ OnHitAbility;
-    public List<FSoftObjectPath /*SoftClassPath*/> EquippedAbilities;
+    public FSoftClassPath PrimaryFireAbility;
+    public FSoftClassPath SecondaryFireAbility;
+    public FSoftClassPath ReloadAbility;
+    public FSoftClassPath OnHitAbility;
+    public List<FSoftClassPath> EquippedAbilities;
     public FSoftObjectPath EquippedAbilitySet;
     public List<FPackageIndex /*CustomCharacterPart*/> EquippedCharacterParts;
     public FSoftObjectPath AmmoData;
