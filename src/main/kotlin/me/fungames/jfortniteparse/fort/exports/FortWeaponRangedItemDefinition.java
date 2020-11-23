@@ -1,10 +1,9 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 public class FortWeaponRangedItemDefinition extends FortWeaponItemDefinition {
-    public FSoftClassPath ProjectileTemplate;
+    public FSoftObjectPath /*SoftClassPath*/ ProjectileTemplate;
     public FSoftObjectPath BulletShellFXTemplate;
     public Boolean bUseNativeWeaponTrace;
     public Boolean bTraceThroughPawns;

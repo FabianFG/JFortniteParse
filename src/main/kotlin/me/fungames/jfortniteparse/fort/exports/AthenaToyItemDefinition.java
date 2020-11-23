@@ -1,9 +1,9 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 public class AthenaToyItemDefinition extends AthenaDanceItemDefinition {
-    public FSoftClassPath ToySpawnAbility;
-    public FSoftClassPath ToyActorClass;
-    public FSoftClassPath FrontEndPreviewActor;
+    public FSoftObjectPath /*SoftClassPath*/ ToySpawnAbility;
+    public FSoftObjectPath /*SoftClassPath*/ ToyActorClass;
+    public FSoftObjectPath /*SoftClassPath*/ FrontEndPreviewActor;
 }

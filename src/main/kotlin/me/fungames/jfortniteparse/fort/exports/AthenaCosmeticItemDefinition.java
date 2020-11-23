@@ -10,7 +10,6 @@ import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -42,7 +41,7 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     @UProperty(skipPrevious = 1)
     public FText UnlockRequirements;
     public FSoftObjectPath UnlockingItemDef;
-    public FSoftClassPath ItemPreviewActorClass;
+    public FSoftObjectPath /*SoftClassPath*/ ItemPreviewActorClass;
     public FSoftObjectPath ItemPreviewParticleSystem;
     public FSoftObjectPath ItemPreviewMontage_Male;
     public FSoftObjectPath ItemPreviewMontage_Female;

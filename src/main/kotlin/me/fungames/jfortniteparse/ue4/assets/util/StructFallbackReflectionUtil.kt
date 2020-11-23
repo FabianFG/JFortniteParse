@@ -25,9 +25,9 @@ fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
             val field = boundFields[prop.name.text] ?: continue
             val fieldType = field.type
             val content = prop.getTagTypeValue(fieldType, field.genericType)
-            if (content == null)
+            if (content == null) {
                 UClass.logger.warn { "Failed to get tag type value for field ${prop.name} of type ${fieldType.simpleName}" }
-            else {
+            } else {
                 val isValid = when {
                     fieldType.isAssignableFrom(content::class.java) -> true
                     content is Boolean && fieldType == Boolean::class.javaPrimitiveType -> true

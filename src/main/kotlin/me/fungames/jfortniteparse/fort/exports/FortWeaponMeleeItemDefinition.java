@@ -5,7 +5,6 @@ import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -32,7 +31,7 @@ public class FortWeaponMeleeItemDefinition extends FortWeaponItemDefinition {
     public Map<UByte, FSoftObjectPath> ImpactNiagaraPhysicalSurfaceEffectsMap;
     public List<AttachedParticleComponentDef> ParticleComponentsDefs;
     public List<FSoftObjectPath> WeaponMaterialOverrides;
-    public FSoftClassPath AnimClass;
+    public FSoftObjectPath /*SoftClassPath*/ AnimClass;
     public FSoftObjectPath SingleAnimationToPlay;
     public Map<UByte, FSoftObjectPath> ImpactPhysicalSurfaceSoundsMap;
     public Map<UByte, FSoftObjectPath> ReloadSoundsMap;

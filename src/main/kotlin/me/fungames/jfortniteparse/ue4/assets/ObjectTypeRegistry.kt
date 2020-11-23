@@ -164,6 +164,7 @@ object ObjectTypeRegistry {
         registerStruct(FortCollectionBookXPData::class.java)
         registerStruct(FortCriteriaRequirementData::class.java)
         registerStruct(FortLoginReward::class.java)
+        registerStruct(FortMeleeWeaponStats::class.java)
         registerStruct(FortPhoenixLevelRewardData::class.java)
         registerStruct(FortPostMaxPhoenixLevelRewardData::class.java)
         registerStruct(FortQuestObjectiveStatTableRow::class.java)

@@ -10,7 +10,6 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 public class FortItemDefinition extends McpItemDefinitionBase {
@@ -42,7 +41,7 @@ public class FortItemDefinition extends McpItemDefinitionBase {
     public FScalableFloat MaxStackSize;
     public FScalableFloat PurchaseItemLimit;
     public Float FrontendPreviewScale;
-    public FSoftClassPath TooltipClass;
+    public FSoftObjectPath /*SoftClassPath*/ TooltipClass;
     public FSoftObjectPath StatList;
     public FCurveTableRowHandle RatingLookup;
     public FSoftObjectPath WidePreviewImage;

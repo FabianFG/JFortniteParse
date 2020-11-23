@@ -62,7 +62,7 @@ class FExportArchive(
 
     fun checkDummyName(dummyName: String) {
         if (GExportArchiveCheckDummyName && dummyName !in nameMap.nameEntries) {
-            throw ParserException("$dummyName is not in the package name map. There must be something wrong.")
+            asyncPackageLog(Level.WARN, packageDesc, "CheckDummyName", "$dummyName is not in the package name map. There must be something wrong.")
         }
     }
 }

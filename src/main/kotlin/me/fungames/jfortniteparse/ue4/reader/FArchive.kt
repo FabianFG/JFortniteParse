@@ -132,7 +132,6 @@ abstract class FArchive : Cloneable, InputStream() {
         } else {
             if (length == 0)
                 return ""
-            String
             val string = Charsets.UTF_8.decode(readBuffer(length - 1)).toString()
             if (readUInt8() != 0.toUByte())
                 throw ParserException("Serialized FString is not null-terminated", this)

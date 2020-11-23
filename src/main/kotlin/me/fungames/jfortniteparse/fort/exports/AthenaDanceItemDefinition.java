@@ -7,7 +7,6 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -33,7 +32,7 @@ public class AthenaDanceItemDefinition extends FortMontageItemDefinitionBase {
     public Float GroupEmoteFollowerRotationYawOffset;
     public FSoftObjectPath FrontEndAnimation;
     public FSoftObjectPath FrontEndAnimationFemaleOverride;
-    public FSoftClassPath CustomDanceAbility;
+    public FSoftObjectPath /*SoftClassPath*/ CustomDanceAbility;
     public FText ChatTriggerCommandName;
 
     @UStruct

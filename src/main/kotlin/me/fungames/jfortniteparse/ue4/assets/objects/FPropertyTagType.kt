@@ -235,8 +235,34 @@ sealed class FPropertyTagType(val propertyType: String) {
                         EnumProperty(Ar.readFName(), null, propertyType)
                     }
                 }
-                "SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type), propertyType)
-                "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type), propertyType)
+                /*"SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type), propertyType)
+                "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type), propertyType)*/
+                "SoftObjectProperty" -> {
+                    if (type == ReadType.ZERO) {
+                        SoftObjectProperty(FSoftObjectPath(), propertyType)
+                    } else {
+                        val pos = Ar.pos()
+                        val path = SoftObjectProperty(FSoftObjectPath(Ar), propertyType)
+                        if (type == ReadType.MAP && tagData?.innerType?.text != "EnumProperty") {
+                            // skip ahead, putting the total bytes read to 16
+                            Ar.skip(16L - (Ar.pos() - pos))
+                        }
+                        path
+                    }
+                }
+                "SoftClassProperty" -> {
+                    if (type == ReadType.ZERO) {
+                        SoftClassProperty(FSoftClassPath(), propertyType)
+                    } else {
+                        val pos = Ar.pos()
+                        val path = SoftClassProperty(FSoftClassPath(Ar), propertyType)
+                        if (type == ReadType.MAP && tagData?.innerType?.text != "EnumProperty") {
+                            // skip ahead, putting the total bytes read to 16
+                            Ar.skip(16L - (Ar.pos() - pos))
+                        }
+                        path
+                    }
+                }
                 "DelegateProperty" -> DelegateProperty(valueOr({ Ar.readInt32() }, { 0 }, type), valueOr({ Ar.readFName() }, { FName() }, type), propertyType)
                 "DoubleProperty" -> DoubleProperty(valueOr({ Ar.readDouble() }, { 0.0 }, type), propertyType)
                 "Int8Property" -> Int8Property(valueOr({ Ar.readInt8() }, { 0 }, type), propertyType)

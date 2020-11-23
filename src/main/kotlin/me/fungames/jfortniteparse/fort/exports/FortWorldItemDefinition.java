@@ -12,7 +12,6 @@ import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.slatecore.styling.FSlateBrush;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 public class FortWorldItemDefinition extends FortItemDefinition {
@@ -65,7 +64,7 @@ public class FortWorldItemDefinition extends FortItemDefinition {
     public FScalableFloat NetworkCullDistanceOverride;
     public FSoftObjectPath PickupStaticMesh;
     public FSoftObjectPath PickupSkeletalMesh;
-    public FSoftClassPath PickupEffectOverride;
+    public FSoftObjectPath /*SoftClassPath*/ PickupEffectOverride;
     public FSoftObjectPath PickupSound;
     public FSoftObjectPath PickupByNearbyPawnSound;
     public FSoftObjectPath DropSound;

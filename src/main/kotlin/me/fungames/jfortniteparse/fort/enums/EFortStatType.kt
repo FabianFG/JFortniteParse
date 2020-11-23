@@ -17,14 +17,14 @@ enum class EFortStatType(val displayName: FText, val icon: String?) {
     companion object {
         @JvmStatic
         fun from(s: String) = when (s.toLowerCase(Locale.ENGLISH)) {
-			"fortitude" -> Fortitude
-			"offense" -> Offense
-			"resistance" -> Resistance
-			"tech", "technology" -> Technology
-			"fortitude_team" -> Fortitude_Team
-			"offense_team" -> Offense_Team
-			"resistance_team" -> Resistance_Team
-			"tech_team", "technology_team" -> Technology_Team
+            "fortitude" -> Fortitude
+            "offense" -> Offense
+            "resistance" -> Resistance
+            "tech", "technology" -> Technology
+            "fortitude_team" -> Fortitude_Team
+            "offense_team" -> Offense_Team
+            "resistance_team" -> Resistance_Team
+            "tech_team", "technology_team" -> Technology_Team
             else -> Invalid
         }
     }

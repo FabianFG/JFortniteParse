@@ -7,7 +7,6 @@ import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -22,16 +21,16 @@ public class FortGadgetItemDefinition extends FortWorldItemDefinition {
     public FGameplayTagContainer SkinMetaTagsToSkip;
     public FGameplayTag PartSwapTag;
     public List<CharacterPartsExtraSpecial> CharacterPartsExtraSpecial;
-    public FSoftClassPath AnimBPOverride;
+    public FSoftObjectPath /*SoftClassPath*/ AnimBPOverride;
     public FSoftObjectPath FootstepBankOverride;
     public FSoftObjectPath AbilitySet;
-    public FSoftClassPath AttributeSet;
+    public FSoftObjectPath /*SoftClassPath*/ AttributeSet;
     public FortAttributeInitializationKey AttributeInitKey;
     public List<FGameplayAttribute> TrackedAttributes;
     public FSoftObjectPath OnDestroyParticleSystem;
     public FSoftObjectPath OnDestroySound;
     public FName OnDestroyAttachToSocketName;
-    public FSoftClassPath GameplayAbility;
+    public FSoftObjectPath /*SoftClassPath*/ GameplayAbility;
     public FGameplayTagContainer HUDVisibilityTags;
     public FSoftObjectPath WeaponItemDefinition;
     public List<FSoftObjectPath> AdditionalItemsToLoadWhenEquipped;
