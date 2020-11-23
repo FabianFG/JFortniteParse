@@ -24,19 +24,18 @@ data class SoundWave(var data: ByteArray, var format: String) {
 @Throws(IllegalArgumentException::class)
 fun USoundWave.convert(): SoundWave {
     UClass.logger.debug("Starting to convert USoundWave")
-    return if (!bStreaming) {
+    return if (!isStreaming()) {
         if (bCooked) {
             UClass.logger.debug("Found cooked sound data, exporting...")
-            val compressedFormatData = this.compressedFormatData ?: throw ParserException("Cooked sounds need compressed format data")
+            val compressedFormatData = this.compressedFormatData?.formats ?: throw ParserException("Cooked sounds need compressed format data")
             require(!compressedFormatData.isNullOrEmpty())
             UClass.logger.debug("Done")
-            if (compressedFormatData[0].formatName.text.startsWith("OGG1")) {
-                compressedFormatData[0].formatName.text = "OGG"
+            val firstData = compressedFormatData.entries.first()
+            var exportFormat = firstData.key.text
+            if (exportFormat.startsWith("OGG1")) {
+                exportFormat = "OGG"
             }
-            SoundWave(
-                compressedFormatData[0].data.data,
-                compressedFormatData[0].formatName.text
-            )
+            SoundWave(firstData.value.data, exportFormat)
         } else {
             UClass.logger.debug("Found non-cooked sound data, exporting...")
             val rawData = this.rawData ?: throw ParserException("Non-cooked sounds need raw data")
@@ -44,19 +43,20 @@ fun USoundWave.convert(): SoundWave {
             SoundWave(rawData.data, "ogg")
         }
     } else {
-        val streamedChunks = this.streamedAudioChunks ?: throw ParserException("Streamed sounds need streamed audio chunks")
+        val runningPlatformData = runningPlatformData ?: throw ParserException("Streamed sounds need streamed audio chunks")
+        val streamedChunks = runningPlatformData.chunks
         UClass.logger.debug("Found streamed sound data, exporting...")
         val data = ByteArray(streamedChunks.sumBy { it.audioDataSize })
         var dataOff = 0
-        if (this.format?.text?.startsWith("OGG1") == true) {
-            this.format?.text = "OGG"
+        var exportFormat = runningPlatformData.audioFormat.text
+        if (exportFormat.startsWith("OGG1")) {
+            exportFormat = "OGG"
         }
         streamedChunks.forEach {
             System.arraycopy(it.data.data, 0, data, dataOff, it.audioDataSize)
             dataOff += it.audioDataSize
         }
-        val format = this.format?.text ?: throw IllegalArgumentException("Streamed sounds need format")
         UClass.logger.debug("Done")
-        SoundWave(data, format)
+        SoundWave(data, exportFormat)
     }
 }

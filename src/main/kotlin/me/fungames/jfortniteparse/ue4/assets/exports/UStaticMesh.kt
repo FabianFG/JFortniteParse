@@ -147,7 +147,7 @@ class UStaticMesh : UObject() {
         materials = staticMaterials.mapNotNull { it.materialInterface }.toTypedArray()
 
         //Drop remaining SpeedTree data
-        Ar.seek(validPos)
+        if (validPos > 0) Ar.seek(validPos)
         super.complete(Ar)
     }
 

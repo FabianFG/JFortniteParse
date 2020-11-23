@@ -1,21 +1,18 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.mats
 
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
-import me.fungames.jfortniteparse.ue4.assets.objects.structs.FScalarParameterValue
-import me.fungames.jfortniteparse.ue4.assets.objects.structs.FTextureParameterValue
-import me.fungames.jfortniteparse.ue4.assets.objects.structs.FVectorParameterValue
 import me.fungames.jfortniteparse.ue4.converters.CMaterialParams
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 
 class UMaterialInstanceConstant : UMaterialInstance() {
-    val ScalarParameterValues = emptyArray<FScalarParameterValue>()
-    val TextureParameterValues = emptyArray<FTextureParameterValue>()
-    val VectorParameterValues = emptyArray<FVectorParameterValue>()
+    @JvmField var PhysMaterialMask: FPackageIndex? = null /*PhysicalMaterialMask*/
 
     override fun getParams(params: CMaterialParams) {
         // get params from linked UMaterial3
-        if (Parent != null && Parent != this)
-            Parent.getParams(params)
+        val parent = Parent?.load<UMaterialInterface>()
+        if (parent != null && parent != this)
+            parent.getParams(params)
 
         super.getParams(params)
 
@@ -97,8 +94,8 @@ class UMaterialInstanceConstant : UMaterialInstance() {
             params.opacity = null                   // it's better to disable opacity mask from parent material
 
         for (p in TextureParameterValues) {
-            val name = p.getName()
-            val tex = p.ParameterValue ?: continue
+            val name = p.ParameterInfo.Name.text
+            val tex = p.ParameterValue.load<UTexture>() ?: continue
 
             if (name.contains("detail", true)) continue     // details normal etc
 
@@ -118,14 +115,14 @@ class UMaterialInstanceConstant : UMaterialInstance() {
         }
 
         for (p in VectorParameterValues) {
-            val name = p.getName()
+            val name = p.ParameterInfo.Name.text
             val color = p.ParameterValue ?: continue
             emissiveColor(name.contains("Emissive", true), 100, color)
         }
 
         // try to get diffuse texture when nothing found
         if (params.diffuse == null && TextureParameterValues.size == 1)
-            params.diffuse = TextureParameterValues[0].ParameterValue
+            params.diffuse = TextureParameterValues[0].ParameterValue?.load<UUnrealMaterial>()
     }
 
     override fun appendReferencedTextures(outTextures: MutableList<UUnrealMaterial>, onlyRendered: Boolean) {
@@ -134,11 +131,12 @@ class UMaterialInstanceConstant : UMaterialInstance() {
             super.appendReferencedTextures(outTextures, onlyRendered)
         } else {
             for (value in TextureParameterValues) {
-                val tex = value.ParameterValue
+                val tex = value.ParameterValue?.load<UTexture>()
                 if (tex != null && !outTextures.contains(tex))
                     outTextures.add(tex)
             }
-            if (Parent != null && Parent != this) Parent.appendReferencedTextures(outTextures, onlyRendered)
+            val parent = Parent?.load<UMaterialInterface>()
+            if (parent != null && parent != this) parent.appendReferencedTextures(outTextures, onlyRendered)
         }
     }
 }

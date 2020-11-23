@@ -6,12 +6,15 @@ import com.google.gson.internal.reflect.ReflectionAccessor
 import com.google.gson.reflect.TypeToken
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
 import org.objenesis.ObjenesisStd
+import java.lang.reflect.Array
 import java.lang.reflect.Field
+import java.lang.reflect.GenericArrayType
 import java.util.*
 
 inline fun <reified T> IPropertyHolder.mapToClass() = mapToClass(properties, T::class.java)
@@ -24,6 +27,16 @@ fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
         for (prop in properties) {
             val field = boundFields[prop.name.text] ?: continue
             val fieldType = field.type
+            if (fieldType.isArray) {
+                var array = field.get(obj)
+                if (array == null) {
+                    array = Array.newInstance(fieldType.componentType, field.getAnnotation(UProperty::class.java).arrayDim)
+                    field.set(obj, array)
+                }
+                val content = prop.getTagTypeValue(fieldType.componentType, (field.genericType as? GenericArrayType)?.genericComponentType)
+                Array.set(array, prop.arrayIndex, content)
+                continue
+            }
             val content = prop.getTagTypeValue(fieldType, field.genericType)
             if (content == null) {
                 UClass.logger.warn { "Failed to get tag type value for field ${prop.name} of type ${fieldType.simpleName}" }

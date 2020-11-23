@@ -13,6 +13,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FFormatContainer
 
 @OnlyAnnotated
 class USoundWave : USoundBase() {
@@ -42,56 +43,64 @@ class USoundWave : USoundBase() {
     @JvmField @UProperty var Curves: FPackageIndex /*UCurveTable*/? = null
     @JvmField @UProperty var InternalCurves: FPackageIndex /*UCurveTable*/? = null
 
-    var bCooked: Boolean = false
-    var compressedFormatData: Array<FSoundFormatData>? = null
+    var bCooked = false
+    /** Uncompressed wav data 16 bit in mono or stereo - stereo not allowed for multichannel data */
     var rawData: FByteBulkData? = null
-    lateinit var compressedDataGuid: FGuid
-    var format: FName? = null
-    var streamedAudioChunks: Array<FStreamedAudioChunk>? = null
+    /** GUID used to uniquely identify this node so it can be found in the DDC */
+    var compressedDataGuid = FGuid()
+    var compressedFormatData: FFormatContainer? = null
+    /** The streaming derived data for this sound on this platform. */
+    var runningPlatformData: FStreamedAudioPlatformData? = null
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
         bCooked = Ar.readBoolean()
-        //bStreaming = bStreaming ?: (Ar.game >= GAME_UE4(25)) // TODO check whether default is really true
-        if (!bStreaming) {
-            if (bCooked) {
-                compressedFormatData = Ar.readTArray { FSoundFormatData(Ar) }
-                format = compressedFormatData?.firstOrNull()?.formatName
-            } else {
-                rawData = FByteBulkData(Ar)
+        val bShouldStreamSound = isStreaming()
+
+        if (bCooked) {
+            if (!bShouldStreamSound) {
+                compressedFormatData = FFormatContainer(Ar)
             }
-            compressedDataGuid = FGuid(Ar)
         } else {
-            compressedDataGuid = FGuid(Ar)
-            val numChunks = Ar.readInt32()
-            format = Ar.readFName()
-            streamedAudioChunks = Ar.readTArray(numChunks) { FStreamedAudioChunk(Ar) }
+            rawData = FByteBulkData(Ar)
         }
+
+        compressedDataGuid = FGuid(Ar)
+
+        if (bShouldStreamSound) {
+            if (bCooked) {
+                runningPlatformData = FStreamedAudioPlatformData(Ar)
+            }
+        }
+
         super.complete(Ar)
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
         super.serialize(Ar)
         Ar.writeBoolean(bCooked)
-        if (!bStreaming) {
-            if (bCooked) {
-                val compressedFormatData = this.compressedFormatData ?: throw ParserException("A non-streamed cooked audio needs compressed format data", Ar)
-                Ar.writeTArray(compressedFormatData) { it.serialize(Ar) }
-            } else {
-                val rawData = this.rawData ?: throw ParserException("A non-streamed non-cooked audio needs raw data", Ar)
-                rawData.serialize(Ar)
+        val bShouldStreamSound = isStreaming()
+
+        if (bCooked) {
+            if (!bShouldStreamSound) {
+                compressedFormatData!!.serialize(Ar)
             }
-            compressedDataGuid.serialize(Ar)
         } else {
-            compressedDataGuid.serialize(Ar)
-            val streamedAudioChunks = this.streamedAudioChunks ?: throw ParserException("A streamed audio needs streamed audio chunks", Ar)
-            Ar.writeInt32(streamedAudioChunks.size)
-            val format = this.format ?: throw ParserException("A streamed audio needs a format", Ar)
-            Ar.writeFName(format)
-            Ar.writeTArrayWithoutSize(streamedAudioChunks) { it.serialize(Ar) }
+            rawData!!.serialize(Ar)
         }
+
+        compressedDataGuid.serialize(Ar)
+
+        if (bShouldStreamSound) {
+            if (bCooked) {
+                runningPlatformData!!.serialize(Ar)
+            }
+        }
+
         super.completeWrite(Ar)
     }
+
+    fun isStreaming() = bStreaming || LoadingBehavior != ESoundWaveLoadingBehavior.ForceInline
 }
 
 enum class ESoundwaveSampleRateSettings {
@@ -155,30 +164,9 @@ class FSubtitleCue {
     @JvmField @UProperty var Time = 0.0f
 }
 
-class FSoundFormatData : UClass {
-    var formatName: FName
-    var data: FByteBulkData
-
-    constructor(Ar: FAssetArchive) {
-        super.init(Ar)
-        formatName = Ar.readFName()
-        data = FByteBulkData(Ar)
-        super.complete(Ar)
-    }
-
-    fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
-        Ar.writeFName(formatName)
-        data.serialize(Ar)
-        super.completeWrite(Ar)
-    }
-
-    constructor(formatName: FName, data: FByteBulkData) {
-        this.formatName = formatName
-        this.data = data
-    }
-}
-
+/**
+ * A chunk of streamed audio.
+ */
 class FStreamedAudioChunk : UClass {
     var bCooked: Boolean
     var data: FByteBulkData
@@ -214,5 +202,26 @@ class FStreamedAudioChunk : UClass {
         this.data = data
         this.dataSize = dataSize
         this.audioDataSize = audioDataSize
+    }
+}
+
+/**
+ * Platform-specific data used streaming audio at runtime.
+ */
+class FStreamedAudioPlatformData {
+    var numChunks: Int
+    var audioFormat: FName
+    var chunks: MutableList<FStreamedAudioChunk>
+
+    constructor(Ar: FAssetArchive) {
+        numChunks = Ar.readInt32()
+        audioFormat = Ar.readFName()
+        chunks = MutableList(numChunks) { FStreamedAudioChunk(Ar) }
+    }
+
+    fun serialize(Ar: FAssetArchiveWriter) {
+        Ar.writeInt32(numChunks)
+        Ar.writeFName(audioFormat)
+        chunks.forEach { it.serialize(Ar) }
     }
 }

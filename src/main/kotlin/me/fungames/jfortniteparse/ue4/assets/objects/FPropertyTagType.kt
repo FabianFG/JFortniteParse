@@ -13,7 +13,6 @@ import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FTextHistory
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
-import java.lang.reflect.Array
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
@@ -37,18 +36,6 @@ sealed class FPropertyTagType(val propertyType: String) {
             value is Float && clazz == Float::class.javaPrimitiveType -> value
             value is Double && clazz == Double::class.javaPrimitiveType -> value
             value is FStructFallback && clazz.isAnnotationPresent(UStruct::class.java) -> value.mapToClass(clazz)
-            value is UScriptArray && clazz.isArray -> {
-                val content = clazz.componentType
-                val array = Array.newInstance(content, value.contents.size)
-                value.contents.forEachIndexed { i, tag ->
-                    val data = tag.getTagTypeValue(content)
-                    if (data != null)
-                        Array.set(array, i, data)
-                    else
-                        UClass.logger.error { "Failed to get value at index $i in UScriptArray for content class ${content::class.java.simpleName}" }
-                }
-                array
-            }
             value is UScriptArray && List::class.java.isAssignableFrom(clazz) && type != null -> {
                 val typeArgs = (type as ParameterizedType).actualTypeArguments
                 val innerType = typeArgs[0]

@@ -24,6 +24,7 @@ import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.indexOfFirst
 import java.lang.reflect.Field
+import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
 import java.util.*
 
@@ -56,27 +57,34 @@ class PropertyInfo {
             name = field.name
         }
 
-        type = propertyType(field.type)
+        var fieldType = field.type
+        if (field.type.isArray) {
+            fieldType = fieldType.componentType
+        }
+        type = propertyType(fieldType)
 
         when (type) {
             "EnumProperty" -> {
-                enumName = field.type.simpleName
-                enumClass = field.type as Class<out Enum<*>>?
+                enumName = fieldType.simpleName
+                enumClass = fieldType as Class<out Enum<*>>?
             }
             "StructProperty" -> {
-                structType = field.type.simpleName.unprefix()
-                structClass = field.type
+                structType = fieldType.simpleName.unprefix()
+                structClass = fieldType
             }
-            "ArrayProperty", "SetProperty" -> applyInner(false, true)
+            "ArrayProperty", "SetProperty" -> applyInner(applyToValue = false, applyStructOrEnumClass = true)
             "MapProperty" -> {
-                applyInner(false, false)
-                applyInner(true, true)
+                applyInner(applyToValue = false, applyStructOrEnumClass = false)
+                applyInner(applyToValue = true, applyStructOrEnumClass = true)
             }
         }
     }
 
     private fun applyInner(applyToValue: Boolean, applyStructOrEnumClass: Boolean) {
-        val typeArgs = (field.genericType as ParameterizedType).actualTypeArguments
+        val typeArgs = ((if (field.type.isArray)
+            (field.genericType as GenericArrayType).genericComponentType
+        else
+            field.genericType) as ParameterizedType).actualTypeArguments
         val idx = if (applyToValue) 1 else 0
         val type = typeArgs[idx] as Class<*>
         val propertyType = propertyType(type)
@@ -167,8 +175,9 @@ class FUnversionedStructSchema(struct: Class<*>) {
                 for (arrayIdx in 0 until propertyInfo.arrayDim) {
                     if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.field.name}")
                     serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
+                    ++index
                 }
-                index += (ann?.skipNext ?: 0) + 1
+                index += ann?.skipNext ?: 0
             }
             clazz = clazz.superclass
         }
@@ -336,9 +345,9 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                     }
                 } else {
                     if (it.isNonZero()) {
-                        throw ParserException("Unknown property for ${struct.simpleName} with value ${it.schemaIt}, cannot proceed with serialization")
+                        throw ParserException("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, cannot proceed with serialization")
                     }
-                    UClass.logger.warn("Unknown property for ${struct.simpleName} with value ${it.schemaIt} but it's zero so we are good")
+                    UClass.logger.warn("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, but it's zero so we're good")
                 }
                 it.next()
             }
@@ -347,7 +356,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 check(!it.isNonZero())
                 it.serializer?.run { properties.add(deserialize(Ar, ReadType.ZERO)) }
-                    ?: UClass.logger.warn("Unknown property for ${struct.simpleName} with value ${it.schemaIt} but it's zero so we are good")
+                    ?: UClass.logger.warn("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, but it's zero so we're good")
                 it.next()
             }
         }
