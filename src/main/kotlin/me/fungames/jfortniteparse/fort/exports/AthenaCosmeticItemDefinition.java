@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import kotlin.UInt;
 import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariant;
 import me.fungames.jfortniteparse.fort.objects.CosmeticVariantInfo;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
@@ -21,9 +22,11 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     public Boolean bHideIfNotOwned;
     public Boolean bInitializedConfiguredDynamicInstallBundles;
     public Boolean bDynamicInstallBundlesError;
+    public Boolean bDynamicInstallBundlesCancelled;
     public Boolean bDynamicInstallBundlesComplete;
     public Double DynamicInstallBundlesUpdateStartTime;
-    @UProperty(skipPrevious = 3) // TODO 3 new properties introduced in 14.60
+    public Double DynamicInstallBundlesLastFailStartTime;
+    public UInt DynamicInstallBundleRequestRefCount;
     public EVariantUnlockType VariantUnlockType;
     public FRotator PreviewPawnRotationOffset;
     public List<FPackageIndex /*FoleySoundLibrary*/> FoleyLibraries;

@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
@@ -26,7 +25,7 @@ public class AthenaDanceItemDefinition extends FortMontageItemDefinitionBase {
     public FPackageIndex /*AthenaDanceItemDefinition*/ GroupEmoteToStartFollowerIfBothOwn;
     public List<FVariantSwapMontageData> MotageSelectionGroups;
     public FVector GroupEmotePositionOffset;
-    @UProperty(skipPrevious = 1) // TODO what's the new property?
+    public Float GroupEmotePositionOffsetTolerance;
     public Boolean bLockGroupEmoteLeaderRotation;
     public Float GroupEmoteLeaderRotationYawOffset;
     public Float GroupEmoteFollowerRotationYawOffset;

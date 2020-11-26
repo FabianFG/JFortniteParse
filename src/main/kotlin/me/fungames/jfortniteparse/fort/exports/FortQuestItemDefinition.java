@@ -5,7 +5,6 @@ import kotlin.UShort;
 import me.fungames.jfortniteparse.fort.objects.FortHiddenRewardQuantityPair;
 import me.fungames.jfortniteparse.fort.objects.FortItemQuantityPair;
 import me.fungames.jfortniteparse.fort.objects.FortMcpQuestObjectiveInfo;
-import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.FDataTableRowHandle;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
@@ -26,7 +25,7 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public Boolean IsStreamingRequired;
     public Boolean bExpandsStormShield;
     public Boolean bHidden;
-    @UProperty(skipPrevious = 1) // TODO an unknown property here
+    public FSoftObjectPath NpcDefinition;
     public Boolean bSuppressQuestGrantedEvent;
     public Boolean bInitiallySuppressedReplacementQuest;
     public Boolean bIncludedInCategories;

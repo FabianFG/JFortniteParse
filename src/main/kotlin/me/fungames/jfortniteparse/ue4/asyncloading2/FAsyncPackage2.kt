@@ -143,6 +143,7 @@ class FAsyncPackage2 {
         var importedPackageIndex = 0
 
         val globalPackageStore = asyncLoadingThread.globalPackageStore
+        //if (false)
         for (importedPackageId in desc.storeEntry!!.importedPackages) {
             val packageRef = globalPackageStore.loadedPackageStore.getOrPut(importedPackageId) { FLoadedPackageRef() }
             if (packageRef.areAllPublicExportsLoaded()) {
@@ -460,7 +461,7 @@ class FAsyncPackage2 {
             return
         }*/
         //check(thisParent !is UObjectRedirector)
-        if (!export.superIndex.isNull()) {
+        /*if (!export.superIndex.isNull()) {
             exportObject.superObject = eventDrivenIndexToObject(export.superIndex, false)
             if (exportObject.superObject == null) {
                 asyncPackageLog(Level.ERROR, desc, "CreateExport", "Could not find SuperStruct object for $objectName")
@@ -475,7 +476,7 @@ class FAsyncPackage2 {
             asyncPackageLog(Level.ERROR, desc, "CreateExport", "Could not find template object for $objectName")
             exportObject.bExportLoadFailed = true
             return
-        }
+        }*/
 
         // Try to find existing object first as we cannot in-place replace objects, could have been created by other export in this package
         obj = importStore.globalImportStore.publicExportObjects[export.globalImportIndex]?.obj
@@ -501,12 +502,14 @@ class FAsyncPackage2 {
             }
         } else {
             // region Own implementation of object creation code
-            val trigger = when {
-                export.classIndex.isExport() -> export.superIndex
-                export.classIndex.isImport() -> export.classIndex
-                else -> null
-            }?.takeIf { !it.isNull() }
-            if (trigger == null) {
+            val index = export.classIndex.run {
+                when {
+                    isExport() -> exportMap[toExport()].superIndex
+                    isImport() -> this
+                    else -> null
+                }
+            }
+            if (index == null || index.isNull()) {
                 asyncPackageLog(Level.ERROR, desc, "CreateExport", "Could not find class name for $objectName")
                 exportObject.bExportLoadFailed = true
                 return
@@ -514,7 +517,17 @@ class FAsyncPackage2 {
             // Create the export object, marking it with the appropriate flags to
             // indicate that the object's data still needs to be loaded.
             val objectLoadFlags = export.objectFlags.toInt() or RF_NeedLoad.value or RF_NeedPostLoad.value or RF_NeedPostLoadSubobjects.value or RF_WasLoaded.value
-            obj = importStore.findOrGetImportObject(trigger)!!.apply {
+            obj = importStore.findOrGetImportObject(index)
+            if (obj == null) {
+                LOG_STREAMING.warn("Missing %s import 0x%016X for package %s".format(
+                    if (index.isScriptImport()) "script" else "package",
+                    index.value().toLong(),
+                    desc.diskPackageName.toString()
+                ))
+                exportObject.bExportLoadFailed = true
+                return
+            }
+            obj.apply {
                 export2 = export
                 name = objectName.toString()
                 owner = linkerRoot
@@ -560,7 +573,7 @@ class FAsyncPackage2 {
 
         // cache archetype
         // prevents GetArchetype from hitting the expensive GetArchetypeFromRequiredInfoImpl
-        check(exportObject.templateObject != null)
+        //check(exportObject.templateObject != null)
         //cacheArchetypeForObject(obj, exportObject.templateObject)
 
         obj.clearFlags(RF_NeedLoad.value)

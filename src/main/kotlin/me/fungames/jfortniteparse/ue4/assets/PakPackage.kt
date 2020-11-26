@@ -31,7 +31,7 @@ class PakPackage(uasset: ByteBuffer,
     }
 
     constructor(uasset: ByteArray, uexp: ByteArray, ubulk: ByteArray? = null, name: String, provider: FileProvider? = null, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) :
-            this(ByteBuffer.wrap(uasset), ByteBuffer.wrap(uexp), ubulk?.let { ByteBuffer.wrap(it) }, name, provider, game)
+        this(ByteBuffer.wrap(uasset), ByteBuffer.wrap(uexp), ubulk?.let { ByteBuffer.wrap(it) }, name, provider, game)
 
     constructor(uasset: File, uexp: File, ubulk: File?, provider: FileProvider? = null, game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : this(
         uasset.readBytes(), uexp.readBytes(), ubulk?.readBytes(),
@@ -93,36 +93,34 @@ class PakPackage(uasset: ByteBuffer,
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
-        exportMap.forEach { it.exportObject = lazy {
-        /*exports = mutableListOf()
-        exportMap.forEach { exportsLazy[it] = lazy {*/
-            val origPos = uexpAr.pos()
-            val exportType = it.classIndex.run { when {
-                index > 0 -> getExportObject()!!.superIndex.getResource()?.objectName
-                index < 0 -> getImportObject()!!.objectName
-                else -> null
-            } } ?: throw ParserException("Can't get class name")
-            uexpAr.seekRelative(it.serialOffset.toInt())
-            val validPos = (uexpAr.pos() + it.serialSize).toInt()
-            val export = constructExport(exportType.text)
-            export.export = it
-            export.exportType = it.classIndex.getResource()!!.objectName.text
-            export.name = it.objectName.text
-            export.owner = this
-            export.readGuid = true
-            export.deserialize(uexpAr, validPos)
-            if (validPos != uexpAr.pos())
-                logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
-            else
-                logger.debug("Successfully read $exportType at ${uexpAr.toNormalPos(it.serialOffset.toInt())} with size ${it.serialSize}")
-            uexpAr.seek(origPos)
-            export
-        } }
-        /*exportsLazy.values.forEach {
-            val value = it.value
-            if (!exports.contains(value))
-                exports.add(value)
-        }*/
+        exportMap.forEach { export ->
+            export.exportObject = lazy {
+                val origPos = uexpAr.pos()
+                val exportType = export.classIndex.run {
+                    when {
+                        isExport() -> exportMap[toExport()].superIndex
+                        isImport() -> this
+                        else -> null
+                    }
+                }?.getImportObject()?.objectName ?: throw ParserException("Could not find class name for ${export.objectName}")
+                uexpAr.seekRelative(export.serialOffset.toInt())
+                val validPos = (uexpAr.pos() + export.serialSize).toInt()
+                val obj = constructExport(exportType.text)
+                obj.export = export
+                obj.exportType = export.classIndex.getResource()!!.objectName.text
+                obj.name = export.objectName.text
+                obj.owner = this
+                obj.readGuid = true
+                obj.deserialize(uexpAr, validPos)
+                if (validPos != uexpAr.pos()) {
+                    logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
+                } else {
+                    logger.debug("Successfully read $exportType at ${uexpAr.toNormalPos(export.serialOffset.toInt())} with size ${export.serialSize}")
+                }
+                uexpAr.seek(origPos)
+                obj
+            }
+        }
         logger.info("Successfully parsed package: $fileName")
     }
 
@@ -135,16 +133,17 @@ class PakPackage(uasset: ByteBuffer,
         "CharacterRoleUIData" -> CharacterRoleUIData()
         "CharacterUIData" -> CharacterUIData()
         // Fortnite specific classes
-        "FortBannerTokenType",
-        "FortDailyRewardScheduleTokenDefinition",
-        "FortVariantTokenType" -> FortItemDefinition()
+        "FortDailyRewardScheduleTokenDefinition" -> FortItemDefinition()
         else -> {
-            if (exportType.contains("ItemDefinition")) {
+            val obj = ObjectTypeRegistry.constructClass(exportType)
+            if (obj.javaClass != UObject::class.java) {
+                obj
+            } else if (exportType.contains("ItemDefinition")) {
                 FortItemDefinition()
             } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
                 FortCosmeticVariant()
             } else {
-                ObjectTypeRegistry.constructClass(exportType)
+                UObject()
             }
         }
     }
@@ -207,15 +206,15 @@ class PakPackage(uasset: ByteBuffer,
         uassetWriter.exportMap = exportMap
         info.serialize(uassetWriter)
         val nameMapOffset = uassetWriter.pos()
-        if(info.nameCount != nameMap.size)
+        if (info.nameCount != nameMap.size)
             throw ParserException("Invalid name count, summary says ${info.nameCount} names but name map is ${nameMap.size} entries long")
         nameMap.forEach { it.serialize(uassetWriter) }
         val importMapOffset = uassetWriter.pos()
-        if(info.importCount != importMap.size)
+        if (info.importCount != importMap.size)
             throw ParserException("Invalid import count, summary says ${info.importCount} imports but import map is ${importMap.size} entries long")
         importMap.forEach { it.serialize(uassetWriter) }
         val exportMapOffset = uassetWriter.pos()
-        if(info.exportCount != exportMap.size)
+        if (info.exportCount != exportMap.size)
             throw ParserException("Invalid export count, summary says ${info.exportCount} exports but export map is ${exportMap.size} entries long")
         exportMap.forEach { it.serialize(uassetWriter) }
         info.totalHeaderSize = uassetWriter.pos()
@@ -243,23 +242,23 @@ class PakPackage(uasset: ByteBuffer,
         uassetWriter.ver = game.version
         info.serialize(uassetWriter)
         val nameMapPadding = info.nameOffset - uassetWriter.pos()
-        if(nameMapPadding > 0)
+        if (nameMapPadding > 0)
             uassetWriter.write(ByteArray(nameMapPadding))
-        if(info.nameCount != nameMap.size)
+        if (info.nameCount != nameMap.size)
             throw ParserException("Invalid name count, summary says ${info.nameCount} names but name map is ${nameMap.size} entries long")
         nameMap.forEach { it.serialize(uassetWriter) }
 
         val importMapPadding = info.importOffset - uassetWriter.pos()
-        if(importMapPadding > 0)
+        if (importMapPadding > 0)
             uassetWriter.write(ByteArray(importMapPadding))
-        if(info.importCount != importMap.size)
+        if (info.importCount != importMap.size)
             throw ParserException("Invalid import count, summary says ${info.importCount} imports but import map is ${importMap.size} entries long")
         importMap.forEach { it.serialize(uassetWriter) }
 
         val exportMapPadding = info.exportOffset - uassetWriter.pos()
-        if(exportMapPadding > 0)
+        if (exportMapPadding > 0)
             uassetWriter.write(ByteArray(exportMapPadding))
-        if(info.exportCount != exportMap.size)
+        if (info.exportCount != exportMap.size)
             throw ParserException("Invalid export count, summary says ${info.exportCount} exports but export map is ${exportMap.size} entries long")
         exportMap.forEach { it.serialize(uassetWriter) }
         ubulkOutputStream?.close()

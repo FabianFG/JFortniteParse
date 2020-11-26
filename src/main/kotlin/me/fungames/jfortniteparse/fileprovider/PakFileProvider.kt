@@ -104,7 +104,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         mountListeners.remove(listener)
     }
 
-    interface PakMountListener {
+    fun interface PakMountListener {
         fun onMount(reader: PakFileReader)
     }
 }

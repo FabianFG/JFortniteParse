@@ -1,14 +1,18 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.20'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.5'
     id 'org.jetbrains.dokka' version '0.10.0'
 }
 
 group 'me.fungames'
-version '3.2.7'
+version '3.3.0'
 
 sourceCompatibility = 1.8
+
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
 
 repositories {
     mavenCentral()
@@ -79,16 +83,14 @@ dependencies {
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    compileKotlin {
-        kotlinOptions {
-            jvmTarget = "1.8"
-            freeCompilerArgs += [
-                    '-Xallow-result-return-type',
-                    '-Xno-call-assertions',
-                    '-Xno-param-assertions',
-                    '-Xno-receiver-assertions',
-                    '-Xopt-in=kotlin.ExperimentalUnsignedTypes'
-            ]
-        }
+    kotlinOptions {
+        jvmTarget = "1.8"
+        freeCompilerArgs += [
+                '-Xallow-result-return-type',
+                '-Xno-call-assertions',
+                '-Xno-param-assertions',
+                '-Xno-receiver-assertions',
+                '-Xopt-in=kotlin.ExperimentalUnsignedTypes'
+        ]
     }
 }

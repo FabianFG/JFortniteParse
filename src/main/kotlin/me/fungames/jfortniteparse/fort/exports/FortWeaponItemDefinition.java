@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.objects.FortCreativeTagsHelper;
-import me.fungames.jfortniteparse.ue4.assets.UProperty;
+import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.FDataTableRowHandle;
 import me.fungames.jfortniteparse.ue4.objects.FScalableFloat;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D;
@@ -24,7 +24,7 @@ public class FortWeaponItemDefinition extends FortWorldItemDefinition {
     public FName BaselineAlterationSlotsLoadoutRow;
     public FSoftObjectPath BaseAlteration;
     public FSoftObjectPath BaseCosmeticAlteration;
-    @UProperty(skipPrevious = 1) // TODO a missing property preventing parsing of 5 star Sunbeam Nocturno
+    public List<FortWeaponModSlot> WeaponModSlots;
     public FSoftObjectPath /*SoftClassPath*/ PrimaryFireAbility;
     public FSoftObjectPath /*SoftClassPath*/ SecondaryFireAbility;
     public FSoftObjectPath /*SoftClassPath*/ ReloadAbility;
@@ -61,6 +61,12 @@ public class FortWeaponItemDefinition extends FortWorldItemDefinition {
     public FGameplayTagContainer PlayerGrantedGameplayTags;
     public List<FName> ActualAnalyticFNames;
     public FortCreativeTagsHelper CreativeTagsHelper;
+
+    @UStruct
+    public static class FortWeaponModSlot {
+        public FPackageIndex /*FortWeaponModItemDefinition*/ WeaponMod;
+        public Boolean bIsDynamic;
+    }
 
     public enum EFortWeaponTriggerType {
         OnPress,
