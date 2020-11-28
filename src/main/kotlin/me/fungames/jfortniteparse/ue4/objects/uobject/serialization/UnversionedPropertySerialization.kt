@@ -2,7 +2,7 @@ package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 
 import me.fungames.jfortniteparse.GDebugUnversionedPropertySerialization
 import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
-import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
@@ -345,7 +345,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                     }
                 } else {
                     if (it.isNonZero()) {
-                        throw ParserException("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, cannot proceed with serialization")
+                        throw UnknownPropertyException("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, cannot proceed with serialization")
                     }
                     UClass.logger.warn("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, but it's zero so we're good")
                 }

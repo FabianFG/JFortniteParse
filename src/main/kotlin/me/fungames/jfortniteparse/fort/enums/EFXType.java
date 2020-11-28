@@ -20,5 +20,6 @@ public enum EFXType {
     WeaponMuzzleFlashes,
     PickAxe,
     Curie,
-    Projectile
+    Projectile,
+    EFXType_MAX
 }

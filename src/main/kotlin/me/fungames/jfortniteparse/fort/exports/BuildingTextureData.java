@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import me.fungames.jfortniteparse.fort.enums.EFortResourceType;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataAsset;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
@@ -25,15 +26,6 @@ public class BuildingTextureData extends UDataAsset {
         Roof,
         Pillar,
         Shingle,
-        None
-    }
-
-    public enum EFortResourceType {
-        Wood,
-        Stone,
-        Metal,
-        Permanite,
-        GoldCurrency,
         None
     }
 }

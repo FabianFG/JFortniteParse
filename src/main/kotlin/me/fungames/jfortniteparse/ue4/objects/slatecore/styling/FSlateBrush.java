@@ -73,7 +73,9 @@ public class FSlateBrush {
         Vertical,
 
         /** Mirror in both directions. */
-        Both
+        Both,
+
+        ESlateBrushMirrorType_MAX
     }
 
     /**

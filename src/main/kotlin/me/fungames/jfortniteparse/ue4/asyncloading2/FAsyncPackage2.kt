@@ -1,11 +1,15 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.GDisableRecursiveImports
 import me.fungames.jfortniteparse.GSuppressMissingSchemaErrors
+import me.fungames.jfortniteparse.GSuppressUnknownPropertyExceptionClasses
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
+import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.asyncloading2.EEventLoadNode2.*
 import me.fungames.jfortniteparse.ue4.asyncloading2.FAsyncPackage2.EExternalReadAction.ExternalReadAction_Poll
 import me.fungames.jfortniteparse.ue4.io.FIoRequest
@@ -143,7 +147,6 @@ class FAsyncPackage2 {
         var importedPackageIndex = 0
 
         val globalPackageStore = asyncLoadingThread.globalPackageStore
-        //if (false)
         for (importedPackageId in desc.storeEntry!!.importedPackages) {
             val packageRef = globalPackageStore.loadedPackageStore.getOrPut(importedPackageId) { FLoadedPackageRef() }
             if (packageRef.areAllPublicExportsLoaded()) {
@@ -179,7 +182,11 @@ class FAsyncPackage2 {
             data.importedAsyncPackages.add(importedPackage)
             ++importedPackageIndex
             if (bInserted.element) {
-                importedPackage.importPackagesRecursive()
+                if (GDisableRecursiveImports) {
+                    importedPackage.asyncPackageLoadingState = EAsyncPackageLoadingState2.ImportPackagesDone
+                } else {
+                    importedPackage.importPackagesRecursive() // disable recursive loading of imports to make exporting essential stuff faster
+                }
                 importedPackage.startLoading()
             }
         }
@@ -271,7 +278,7 @@ class FAsyncPackage2 {
                     val pos = Ar.pos()
                     if (cookedSerialSize > (Ar.size() - pos).toULong()) {
                         LOG_STREAMING.warn("Package %s: Expected read size: %d - Remaining archive size: %d"
-                            .format(desc.diskPackageName.toString(), cookedSerialSize, Ar.size() - pos))
+                            .format(desc.diskPackageName.toString(), cookedSerialSize.toLong(), Ar.size() - pos))
                     }
 
                     val bSerialized = eventDrivenSerializeExport(bundleEntry.localExportIndex, Ar)
@@ -490,7 +497,10 @@ class FAsyncPackage2 {
             val objectFlags = obj.flags
             bIsCompletelyLoaded = (objectFlags and RF_LoadCompleted.value) != 0
             if (!bIsCompletelyLoaded) {
-                check((objectFlags and (RF_NeedLoad.value or RF_WasLoaded.value)) == 0) // If export exist but is not completed, it is expected to have been created from a native constructor and not from EventDrivenCreateExport, but who knows...?
+                //check((objectFlags and (RF_NeedLoad.value or RF_WasLoaded.value)) == 0) // If export exist but is not completed, it is expected to have been created from a native constructor and not from EventDrivenCreateExport, but who knows...?
+                if ((objectFlags and (RF_NeedLoad.value or RF_WasLoaded.value)) != 0) {
+                    asyncPackageLog(Level.WARN, desc, "CreateExport", "${obj.pathName}: (ObjectFlags & (RF_NeedLoad | RF_WasLoaded)) != 0")
+                }
                 if ((objectFlags and RF_ClassDefaultObject.value) != 0) {
                     // never call PostLoadSubobjects on class default objects, this matches the behavior of the old linker where
                     // StaticAllocateObject prevents setting of RF_NeedPostLoad and RF_NeedPostLoadSubobjects, but FLinkerLoad::Preload
@@ -502,7 +512,7 @@ class FAsyncPackage2 {
             }
         } else {
             // region Own implementation of object creation code
-            val index = export.classIndex.run {
+            var index = export.classIndex.run {
                 when {
                     isExport() -> exportMap[toExport()].superIndex
                     isImport() -> this
@@ -517,22 +527,30 @@ class FAsyncPackage2 {
             // Create the export object, marking it with the appropriate flags to
             // indicate that the object's data still needs to be loaded.
             val objectLoadFlags = export.objectFlags.toInt() or RF_NeedLoad.value or RF_NeedPostLoad.value or RF_NeedPostLoadSubobjects.value or RF_WasLoaded.value
-            obj = importStore.findOrGetImportObject(index)
-            if (obj == null) {
-                LOG_STREAMING.warn("Missing %s import 0x%016X for package %s".format(
-                    if (index.isScriptImport()) "script" else "package",
-                    index.value().toLong(),
-                    desc.diskPackageName.toString()
-                ))
-                exportObject.bExportLoadFailed = true
-                return
-            }
-            obj.apply {
-                export2 = export
-                name = objectName.toString()
-                owner = linkerRoot
-                pathName = desc.diskPackageName.toString() + '.' + name
-                flags = objectLoadFlags
+            var classIndexObject: UObject? = null
+            do { // FIXME: hack to properly serialize classes that inherit a BlueprintGeneratedClass
+                obj = importStore.findOrGetImportObject(index!!)
+                if (obj == null) {
+                    LOG_STREAMING.warn("Missing %s import 0x%016X for package %s".format(
+                        if (index.isScriptImport()) "script" else "package",
+                        index.value().toLong(),
+                        desc.diskPackageName.toString()
+                    ))
+                    exportObject.bExportLoadFailed = true
+                    return
+                }
+                if (classIndexObject == null) {
+                    classIndexObject = obj
+                }
+                index = obj.export2?.superIndex // if export2 is null, it indicates that it is not imported from other package
+            } while (index != null && !index.isNull())
+            obj!!.also {
+                it.export2 = export
+                it.exportType = classIndexObject?.exportType ?: "None"
+                it.name = objectName.toString()
+                it.owner = linkerRoot
+                it.pathName = desc.diskPackageName.toString() + '.' + it.name
+                it.flags = objectLoadFlags
             }
             // endregion
         }
@@ -588,9 +606,11 @@ class FAsyncPackage2 {
             //obj.clazz.serializeDefaultObject(obj, Ar)
         } else {
             try {
-                obj.deserialize(Ar, -1)
+                obj.deserialize(Ar, Ar.pos() + export.cookedSerialSize.toInt())
             } catch (e: Throwable) {
                 if (e is MissingSchemaException && !GSuppressMissingSchemaErrors) {
+                    LOG_STREAMING.warn(e.message)
+                } else if (e is UnknownPropertyException && obj.javaClass.simpleName.unprefix() in GSuppressUnknownPropertyExceptionClasses) {
                     LOG_STREAMING.warn(e.message)
                 } else {
                     LOG_STREAMING.warn("Failed to deserialize ${obj.pathName}", e)

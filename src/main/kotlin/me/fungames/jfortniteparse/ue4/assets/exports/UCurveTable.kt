@@ -9,7 +9,7 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRealCurve
-import me.fungames.jfortniteparse.ue4.objects.engine.curves.SimpleCurve
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurve
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
@@ -57,7 +57,7 @@ class UCurveTable : UObject() {
         rowMap = Ar.readTMap(numRows) {
             Ar.readFName() to when (curveTableMode) {
                 ECurveTableMode.Empty -> TODO()
-                ECurveTableMode.SimpleCurves -> SimpleCurve().apply {
+                ECurveTableMode.SimpleCurves -> FSimpleCurve().apply {
                     val properties = mutableListOf<FPropertyTag>()
                     if (Ar.useUnversionedPropertySerialization) {
                         deserializeUnversionedProperties(properties, javaClass, Ar)

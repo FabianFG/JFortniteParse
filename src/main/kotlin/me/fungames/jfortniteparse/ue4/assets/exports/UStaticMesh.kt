@@ -33,7 +33,7 @@ class UStaticMesh : UObject() {
     var materials = emptyArray<UMaterialInterface>()
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
-        super.deserialize(Ar, validPos)
+        super.deserialize(Ar, validPos); if (Ar.useUnversionedPropertySerialization) throw ParserException("UStaticMesh deserialization with unversioned properties not yet supported")
         stripFlags = FStripDataFlags(Ar)
         val cooked = Ar.readBoolean()
         bodySetup = FPackageIndex(Ar).run { Ar.owner.loadObject(this) }

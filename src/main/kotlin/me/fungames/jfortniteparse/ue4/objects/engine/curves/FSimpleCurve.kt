@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.engine.curves
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.objects.core.math.isNearlyZero
 import me.fungames.jfortniteparse.ue4.objects.core.math.lerp
@@ -40,33 +41,37 @@ class FSimpleCurveKey : UClass {
 
 /** A rich, editable float curve */
 @UStruct
-class SimpleCurve : FRealCurve() {
+class FSimpleCurve : FRealCurve() {
     /** Interpolation mode between this key and the next */
-    var InterpMode: ERichCurveInterpMode = ERichCurveInterpMode.RCIM_Linear
+    @JvmField
+    @UProperty("InterpMode")
+    var interpMode = ERichCurveInterpMode.RCIM_Linear
     /** Sorted array of keys */
-    lateinit var Keys: MutableList<FSimpleCurveKey>
+    @JvmField
+    @UProperty("Keys")
+    var keys = mutableListOf<FSimpleCurveKey>()
 
     /** Get range of input time values. Outside this region curve continues constantly the start/end values. */
     override fun getTimeRange(minTime: FloatRef, maxTime: FloatRef) {
-        if (Keys.size == 0) {
+        if (keys.size == 0) {
             minTime.element = 0f
             maxTime.element = 0f
         } else {
-            minTime.element = Keys[0].time
-            maxTime.element = Keys[Keys.size - 1].time
+            minTime.element = keys[0].time
+            maxTime.element = keys[keys.size - 1].time
         }
     }
 
     /** Get range of output values. */
     override fun getValueRange(minValue: FloatRef, maxValue: FloatRef) {
-        if (Keys.size == 0) {
+        if (keys.size == 0) {
             minValue.element = 0f
             maxValue.element = 0f
         } else {
-            minValue.element = Keys[0].value
-            maxValue.element = Keys[0].value
+            minValue.element = keys[0].value
+            maxValue.element = keys[0].value
 
-            for (key in Keys) {
+            for (key in keys) {
                 minValue.element = min(minValue.element, key.value)
                 maxValue.element = max(maxValue.element, key.value)
             }
@@ -75,28 +80,28 @@ class SimpleCurve : FRealCurve() {
 
     /** Clear all keys. */
     override fun reset() {
-        Keys.clear()
+        keys.clear()
         // KeyHandlesToIndices.clear()
     }
 
     /** Remap inTime based on pre and post infinity extrapolation values */
     fun remapTimeValue(inTime: FloatRef, cycleValueOffset: FloatRef) {
-        val numKeys = Keys.size
+        val numKeys = keys.size
 
         if (numKeys < 2) {
             return
         }
 
-        if (inTime.element <= Keys[0].time) {
+        if (inTime.element <= keys[0].time) {
             if (preInfinityExtrap != ERichCurveExtrapolation.RCCE_Linear && preInfinityExtrap != ERichCurveExtrapolation.RCCE_Constant) {
-                val minTime = Keys[0].time
-                val maxTime = Keys[numKeys - 1].time
+                val minTime = keys[0].time
+                val maxTime = keys[numKeys - 1].time
 
                 val cycleCount = Ref.IntRef().apply { element = 0 }
                 cycleTime(minTime, maxTime, inTime, cycleCount)
 
                 if (preInfinityExtrap == ERichCurveExtrapolation.RCCE_CycleWithOffset) {
-                    val dv = Keys[0].value - Keys[numKeys - 1].value
+                    val dv = keys[0].value - keys[numKeys - 1].value
                     cycleValueOffset.element = dv * cycleCount.element
                 } else if (preInfinityExtrap == ERichCurveExtrapolation.RCCE_Oscillate) {
                     if (cycleCount.element % 2 == 1) {
@@ -104,16 +109,16 @@ class SimpleCurve : FRealCurve() {
                     }
                 }
             }
-        } else if (inTime.element >= Keys[numKeys - 1].time) {
+        } else if (inTime.element >= keys[numKeys - 1].time) {
             if (postInfinityExtrap != ERichCurveExtrapolation.RCCE_Linear && postInfinityExtrap != ERichCurveExtrapolation.RCCE_Constant) {
-                val minTime = Keys[0].time
-                val maxTime = Keys[numKeys - 1].time
+                val minTime = keys[0].time
+                val maxTime = keys[numKeys - 1].time
 
                 val cycleCount = Ref.IntRef().apply { element = 0 }
                 cycleTime(minTime, maxTime, inTime, cycleCount)
 
                 if (postInfinityExtrap == ERichCurveExtrapolation.RCCE_CycleWithOffset) {
-                    val dv = Keys[numKeys - 1].value - Keys[0].value
+                    val dv = keys[numKeys - 1].value - keys[0].value
                     cycleValueOffset.element = dv * cycleCount.element
                 } else if (postInfinityExtrap == ERichCurveExtrapolation.RCCE_Oscillate) {
                     if (cycleCount.element % 2 == 1) {
@@ -135,30 +140,30 @@ class SimpleCurve : FRealCurve() {
         inTime = inTimeRef.element
         cycleValueOffset = cycleValueOffsetRef.element
 
-        val numKeys = Keys.size
+        val numKeys = keys.size
 
         // If the default value hasn't been initialized, use the incoming default value
         var interpVal = if (defaultValue == Float.MAX_VALUE) inDefaultValue else defaultValue
 
         if (numKeys == 0) {
             // If no keys in curve, return the Default value.
-        } else if (numKeys < 2 || (inTime <= Keys[0].time)) {
+        } else if (numKeys < 2 || (inTime <= keys[0].time)) {
             if (preInfinityExtrap == ERichCurveExtrapolation.RCCE_Linear && numKeys > 1) {
-                val dt = Keys[1].time - Keys[0].time
+                val dt = keys[1].time - keys[0].time
 
                 if (isNearlyZero(dt)) {
-                    interpVal = Keys[0].value
+                    interpVal = keys[0].value
                 } else {
-                    val dv = Keys[1].value - Keys[0].value
+                    val dv = keys[1].value - keys[0].value
                     val slope = dv / dt
 
-                    interpVal = slope * (inTime - Keys[0].time) + Keys[0].value
+                    interpVal = slope * (inTime - keys[0].time) + keys[0].value
                 }
             } else {
                 // Otherwise if constant or in a cycle or oscillate, always use the first key value
-                interpVal = Keys[0].value
+                interpVal = keys[0].value
             }
-        } else if (inTime < Keys[numKeys - 1].time) {
+        } else if (inTime < keys[numKeys - 1].time) {
             // perform a lower bound to get the second of the interpolation nodes
             var first = 1
             val last = numKeys - 1
@@ -168,7 +173,7 @@ class SimpleCurve : FRealCurve() {
                 val step = count / 2
                 val middle = first + step
 
-                if (inTime >= Keys[middle].time) {
+                if (inTime >= keys[middle].time) {
                     first = middle + 1
                     count -= step + 1
                 } else {
@@ -176,22 +181,22 @@ class SimpleCurve : FRealCurve() {
                 }
             }
 
-            interpVal = evalForTwoKeys(Keys[first - 1], Keys[first], inTime)
+            interpVal = evalForTwoKeys(keys[first - 1], keys[first], inTime)
         } else {
             if (postInfinityExtrap == ERichCurveExtrapolation.RCCE_Linear) {
-                val dt = Keys[numKeys - 2].time - Keys[numKeys - 1].time
+                val dt = keys[numKeys - 2].time - keys[numKeys - 1].time
 
                 if (isNearlyZero(dt)) {
-                    interpVal = Keys[numKeys - 1].value
+                    interpVal = keys[numKeys - 1].value
                 } else {
-                    val dv = Keys[numKeys - 2].value - Keys[numKeys - 1].value
+                    val dv = keys[numKeys - 2].value - keys[numKeys - 1].value
                     val slope = dv / dt
 
-                    interpVal = slope * (inTime - Keys[numKeys - 1].time) + Keys[numKeys - 1].value
+                    interpVal = slope * (inTime - keys[numKeys - 1].time) + keys[numKeys - 1].value
                 }
             } else {
                 // Otherwise if constant or in a cycle or oscillate, always use the last key value
-                interpVal = Keys[numKeys - 1].value
+                interpVal = keys[numKeys - 1].value
             }
         }
 
@@ -201,7 +206,7 @@ class SimpleCurve : FRealCurve() {
     private fun evalForTwoKeys(key1: FSimpleCurveKey, key2: FSimpleCurveKey, inTime: Float): Float {
         val diff = key2.time - key1.time
 
-        if (diff > 0f && InterpMode != ERichCurveInterpMode.RCIM_Constant) {
+        if (diff > 0f && interpMode != ERichCurveInterpMode.RCIM_Constant) {
             val alpha = (inTime - key1.time) / diff
             val p0 = key1.value
             val p3 = key2.value

@@ -22,6 +22,9 @@ inline fun <T> IPropertyHolder.mapToClass(clazz: Class<T>): T = mapToClass(prope
 
 inline fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>): T = mapToClass(properties, clazz, ObjenesisStd().newInstance(clazz))
 fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
+    if (properties.isEmpty()) {
+        return obj
+    }
     try {
         val boundFields = getBoundFields(TypeToken.get(clazz), clazz)
         for (prop in properties) {
@@ -69,6 +72,12 @@ fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
 /** first element holds the default name  */
 private fun getFieldNames(f: Field): List<String> {
     val annotation = f.getAnnotation(SerializedName::class.java)
+    if (annotation == null) {
+        val propertyAnnotation = f.getAnnotation(UProperty::class.java)
+        if (propertyAnnotation != null && propertyAnnotation.name.isNotEmpty()) {
+            return Collections.singletonList(propertyAnnotation.name)
+        }
+    }
     if (annotation == null) {
         /*val name: String = fieldNamingPolicy.translateName(f)
         return Collections.singletonList(name)*/

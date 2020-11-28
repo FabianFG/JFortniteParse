@@ -12,7 +12,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
 @OnlyAnnotated
-class UDataTable : UObject {
+open class UDataTable : UObject {
     @JvmField @UProperty var RowStruct: FPackageIndex? = null // UScriptStruct
     @JvmField @UProperty var bStripFromClientBuilds: Boolean? = null
     @JvmField @UProperty var bIgnoreExtraFields: Boolean? = null
@@ -30,10 +30,12 @@ class UDataTable : UObject {
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
-        rowStructName = if (Ar.owner is IoPackage) {
-            (Ar.owner as IoPackage).run { RowStruct!!.getImportObject()!!.findScriptObjectEntry()!!.objectName.toName() }
-        } else {
-            (Ar.owner as PakPackage).run { RowStruct!!.getResource()!!.objectName }
+        if (!::rowStructName.isInitialized) {
+            rowStructName = if (Ar.owner is IoPackage) {
+                (Ar.owner as IoPackage).run { RowStruct?.getImportObject()?.findScriptObjectEntry()?.objectName?.toName() }
+            } else {
+                (Ar.owner as PakPackage).run { RowStruct?.getResource()?.objectName }
+            } ?: FName.NAME_None
         }
         val clazz = ObjectTypeRegistry.structs[rowStructName.text]
         if (Ar.useUnversionedPropertySerialization && clazz == null) {
