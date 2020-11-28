@@ -223,7 +223,8 @@ class FIoStoreReaderImpl {
     private val toc = FIoStoreToc()
     private var decryptionKey: ByteArray? = null
     private lateinit var containerFileHandle: RandomAccessFile
-    /*private*/ var directoryIndexReader: FIoDirectoryIndexReaderImpl? = null
+    var directoryIndexReader: FIoDirectoryIndexReaderImpl? = null
+        private set
     private val threadBuffers = object : ThreadLocal<FThreadBuffers>() {
         override fun initialValue() = FThreadBuffers()
     }
@@ -332,6 +333,45 @@ class FIoStoreReaderImpl {
         return dst
     }
 
+    fun getFilenamesByBlockIndex(inBlockIndexList: List<Int>, outFileList: MutableList<String>) {
+        val directoryIndex = directoryIndexReader
+
+        directoryIndex?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
+            for (blockIndex in inBlockIndexList) {
+                if (tocChunkContainsBlockIndex(tocEntryIndex.toInt(), blockIndex)) {
+                    //if (filename !in outFileList) {
+                    outFileList.add(filename)
+                    //}
+                    break
+                }
+            }
+
+            true
+        }
+    }
+
+    fun getFileNames(outFileList: MutableList<String>) {
+        val directoryIndex = directoryIndexReader
+
+        directoryIndex?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
+            //if (filename !in outFileList) {
+            outFileList.add(filename)
+            //}
+            true
+        }
+    }
+
+    fun tocChunkContainsBlockIndex(tocEntryIndex: Int, blockIndex: Int): Boolean {
+        val tocResource = toc.tocResource
+        val offsetLength = tocResource.chunkOffsetLengths[tocEntryIndex]
+
+        val compressionBlockSize = tocResource.header.compressionBlockSize
+        val firstBlockIndex = (offsetLength.offset / compressionBlockSize).toInt()
+        val lastBlockIndex = ((align(offsetLength.offset + offsetLength.length, compressionBlockSize.toULong()) - 1u) / compressionBlockSize).toInt()
+
+        return blockIndex in firstBlockIndex..lastBlockIndex
+    }
+
     private fun getTocChunkInfo(tocEntryIndex: Int): FIoStoreTocChunkInfo {
         val tocResource = toc.tocResource
         val meta = tocResource.chunkMetas[tocEntryIndex]
@@ -351,7 +391,7 @@ class FIoStoreReaderImpl {
         )
     }
 
-    fun getCompressedSize(chunkId: FIoChunkId, tocResource: FIoStoreTocResource, offsetLength: FIoOffsetAndLength): ULong {
+    private fun getCompressedSize(chunkId: FIoChunkId, tocResource: FIoStoreTocResource, offsetLength: FIoOffsetAndLength): ULong {
         val compressionBlockSize = tocResource.header.compressionBlockSize
         val firstBlockIndex = (offsetLength.offset / compressionBlockSize).toInt()
         val lastBlockIndex = ((align(offsetLength.offset + offsetLength.length, compressionBlockSize.toULong()) - 1u) / compressionBlockSize).toInt()

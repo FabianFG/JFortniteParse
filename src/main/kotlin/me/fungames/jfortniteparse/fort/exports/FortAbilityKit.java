@@ -10,7 +10,7 @@ import java.util.List;
 
 public class FortAbilityKit extends FortAbilitySet {
     public FText DisplayName;
-    public FText Description;
+    public List<FText> Description;
     public FText TooltipDescription;
     public FSlateBrush IconBrush;
     public FSlateBrush PrimaryTraitIconBrushOverride;

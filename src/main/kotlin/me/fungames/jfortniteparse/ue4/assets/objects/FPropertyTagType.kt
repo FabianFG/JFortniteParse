@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
@@ -211,7 +212,8 @@ sealed class FPropertyTagType(val propertyType: String) {
                         val enumClass = tagData?.enumClass
                         var enumValue: Enum<*>? = null
                         val fakeName = if (enumClass != null) {
-                            enumValue = enumClass.enumConstants[ordinal]
+                            enumValue = enumClass.enumConstants.getOrNull(ordinal)
+                                ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.simpleName}")
                             (tagData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
                         } else {
                             UClass.logger.warn("Enum class not supplied")

@@ -576,6 +576,8 @@ class FIoDirectoryIndexHandle private constructor(val handle: UInt) {
     fun toIndex() = handle
 }
 
+typealias FDirectoryIndexVisitorFunction = (filename: String, tocEntryIndex: UInt) -> Boolean
+
 interface FIoDirectoryIndexReader {
     fun getMountPoint(): String
     fun getChildDirectory(directory: FIoDirectoryIndexHandle): FIoDirectoryIndexHandle
@@ -585,6 +587,7 @@ interface FIoDirectoryIndexReader {
     fun getDirectoryName(directory: FIoDirectoryIndexHandle): String
     fun getFileName(file: FIoDirectoryIndexHandle): String
     fun getFileData(file: FIoDirectoryIndexHandle): UInt
+    fun iterateDirectoryIndex(directory: FIoDirectoryIndexHandle, path: String, visit: FDirectoryIndexVisitorFunction): Boolean
 }
 
 class FIoStoreTocChunkInfo(

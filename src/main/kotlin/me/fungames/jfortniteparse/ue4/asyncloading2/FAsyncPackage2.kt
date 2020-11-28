@@ -231,9 +231,9 @@ class FAsyncPackage2 {
         check(exportBundleIndex < data.exportBundleCount)
 
         if (!bLoadHasFailed) {
-            val allExportDataSize = ioBuffer.size.toULong() - (allExportDataPtr - ioBufferOff.toULong())
+            val remainingExportDataSize = ioBuffer.size.toULong() - (currentExportDataPtr - ioBufferOff.toULong())
             val Ar = FExportArchive(
-                data = ByteBuffer.wrap(ioBuffer, currentExportDataPtr.toInt(), allExportDataSize.toInt()),
+                data = ByteBuffer.wrap(ioBuffer, currentExportDataPtr.toInt(), remainingExportDataSize.toInt()),
                 packageDesc = desc,
                 nameMap = nameMap,
                 importStore = importStore,

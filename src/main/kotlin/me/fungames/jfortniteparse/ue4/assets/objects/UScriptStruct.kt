@@ -34,7 +34,7 @@ class UScriptStruct : UClass {
         this.structName = structName
         structType = when (structName) { // TODO please complete the zero constructors
             "Box" -> valueOr({ FBox(Ar) }, { FBox() }, type)
-            "Box2D" -> FBox2D(Ar)
+            "Box2D" -> valueOr({ FBox2D(Ar) }, { FBox2D() }, type)
             "Color" -> valueOr({ FColor(Ar) }, { FColor() }, type)
             "ColorMaterialInput" -> FColorMaterialInput(Ar)
             "ExpressionInput" -> FExpressionInput(Ar)
