@@ -3,13 +3,16 @@ package me.fungames.jfortniteparse.fort.exports;
 import me.fungames.jfortniteparse.fort.objects.FortUICameraFrameTargetBounds;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 public class FortWeaponAdditionalData_SingleWieldState extends FortWeaponAdditionalData {
+    public FGameplayTag AssociatedTagVariant;
     public FSoftObjectPath /*SoftClassPath*/ PrimaryFireAbility_InState;
     public FSoftObjectPath AnimSet_InState;
     public FSoftObjectPath EquipMontage_InState;
+    public Boolean bHideOffhandMesh;
     public Boolean bUseSeparatePreviewOffsets;
     public FVector ImpactFxPreviewOffset;
     public FVector OffHandPreviewOffset;

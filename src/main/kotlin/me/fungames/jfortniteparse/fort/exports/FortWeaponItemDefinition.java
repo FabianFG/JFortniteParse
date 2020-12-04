@@ -33,7 +33,7 @@ public class FortWeaponItemDefinition extends FortWorldItemDefinition {
     public FSoftObjectPath EquippedAbilitySet;
     public List<FPackageIndex /*CustomCharacterPart*/> EquippedCharacterParts;
     public FSoftObjectPath AmmoData;
-    public FPackageIndex /*FortWeaponAdditionalData*/ AdditionalData;
+    public List<FPackageIndex /*FortWeaponAdditionalData*/> AdditionalDataFields;
     public Float LowAmmoPercentage;
     public EFortWeaponTriggerType TriggerType;
     public EFortWeaponTriggerType SecondaryTriggerType;
@@ -61,6 +61,7 @@ public class FortWeaponItemDefinition extends FortWorldItemDefinition {
     public FGameplayTagContainer PlayerGrantedGameplayTags;
     public List<FName> ActualAnalyticFNames;
     public FortCreativeTagsHelper CreativeTagsHelper;
+    public FPackageIndex /*FortWeaponAdditionalData*/ AdditionalData;
 
     @UStruct
     public static class FortWeaponModSlot {

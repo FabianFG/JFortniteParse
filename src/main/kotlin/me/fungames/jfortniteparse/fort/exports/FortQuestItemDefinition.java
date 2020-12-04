@@ -20,12 +20,13 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public EFortQuestSubtype QuestSubtype;
     public Boolean bShouldDisplayOverallQuestInformation;
     public Boolean bAthenaUpdateObjectiveOncePerMatch;
+    public Boolean bAthenaGrantRarityToken;
     public Boolean bAthenaMustCompleteInSingleMatch;
     public Boolean bUpdateObjectiveOncePerMatch;
     public Boolean IsStreamingRequired;
     public Boolean bExpandsStormShield;
     public Boolean bHidden;
-    public FSoftObjectPath NpcDefinition;
+    public FSoftObjectPath TandemCharacterData;
     public Boolean bSuppressQuestGrantedEvent;
     public Boolean bInitiallySuppressedReplacementQuest;
     public Boolean bIncludedInCategories;
@@ -40,6 +41,7 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public Boolean bHideIncompleteObjectiveLocations;
     public Integer ExpirationDuration;
     public Integer ObjectiveCompletionCount;
+    public Integer Threshold;
     public List<FortItemQuantityPair> Rewards;
     public FPackageIndex /*DataTable*/ RewardsTable;
     public String QuestPool;
@@ -47,6 +49,10 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public List<String> FeatureRewards;
     public List<FortMcpQuestRewardInfo> SelectableRewards;
     public List<FortMcpQuestObjectiveInfo> Objectives;
+    public List<FSoftObjectPath> TransientPrerequisiteQuests;
+    public Boolean bGrantTransientQuestToSquad;
+    public Boolean bTransientAutoComplete;
+    public Boolean bAllowMultipleCompletionsPerMatch;
     public FGameplayTagContainer Prerequisites;
     public FSoftObjectPath PrerequisiteQuest;
     public FDataTableRowHandle PrerequisiteObjective;
@@ -65,13 +71,34 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public UInt ClaimPriority;
     public Integer SortPriority;
     public FSoftObjectPath QuestAbilitySet;
+    public Boolean bForceExpiryExport;
 
     public enum EFortQuestType {
-        Task, Optional, DailyQuest, TransientQuest, SurvivorQuest, Achievement, Onboarding, StreamBroadcaster, StreamViewer, StreamSubscriber, Athena, AthenaDailyQuest, AthenaEvent, AthenaChallengeBundleQuest, All
+        Task,
+        Optional,
+        DailyQuest,
+        TransientQuest,
+        SurvivorQuest,
+        Achievement,
+        Onboarding,
+        StreamBroadcaster,
+        StreamViewer,
+        StreamSubscriber,
+        Athena,
+        AthenaDailyQuest,
+        AthenaEvent,
+        AthenaChallengeBundleQuest,
+        AthenaTransientQuest,
+        All
     }
 
     public enum EFortQuestSubtype {
-        None, WeeklyChallenge, PunchCard, QuickChallenge
+        None,
+        WeeklyChallenge,
+        PunchCard,
+        QuickChallenge,
+        Milestone,
+        UrgentQuest
     }
 
     @UStruct

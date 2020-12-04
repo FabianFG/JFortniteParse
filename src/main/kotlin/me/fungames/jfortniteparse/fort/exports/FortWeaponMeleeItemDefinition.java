@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import kotlin.UByte;
+import me.fungames.jfortniteparse.fort.enums.EPhysicalSurface;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
@@ -26,16 +26,16 @@ public class FortWeaponMeleeItemDefinition extends FortWeaponItemDefinition {
     public Float AnimTrailsWidth;
     public Boolean bUseAnimTrails;
     public Boolean bAttachAnimTrailsToWeapon;
-    public Map<UByte, FSoftObjectPath> ImpactPhysicalSurfaceEffectsMap;
+    public Map<EPhysicalSurface, FSoftObjectPath> ImpactPhysicalSurfaceEffectsMap;
     public List<FSoftObjectPath> ImpactNiagaraPhysicalSurfaceEffects;
-    public Map<UByte, FSoftObjectPath> ImpactNiagaraPhysicalSurfaceEffectsMap;
+    public Map<EPhysicalSurface, FSoftObjectPath> ImpactNiagaraPhysicalSurfaceEffectsMap;
     public List<AttachedParticleComponentDef> ParticleComponentsDefs;
     public List<FSoftObjectPath> WeaponMaterialOverrides;
     public FSoftObjectPath /*SoftClassPath*/ AnimClass;
     public FSoftObjectPath SingleAnimationToPlay;
-    public Map<UByte, FSoftObjectPath> ImpactPhysicalSurfaceSoundsMap;
-    public Map<UByte, FSoftObjectPath> ReloadSoundsMap;
-    public Map<UByte, FSoftObjectPath> PrimaryFireSoundMap;
+    public Map<EPhysicalSurface, FSoftObjectPath> ImpactPhysicalSurfaceSoundsMap;
+    public Map<EFortReloadFXState, FSoftObjectPath> ReloadSoundsMap;
+    public Map<EFortWeaponSoundState, FSoftObjectPath> PrimaryFireSoundMap;
     public FSoftObjectPath GenericImpactSound;
     public Boolean bNeedsMaterial0MID;
     public Boolean bWatchKills;
@@ -53,5 +53,19 @@ public class FortWeaponMeleeItemDefinition extends FortWeaponItemDefinition {
         DM_Low,
         DM_Medium,
         DM_High
+    }
+
+    public enum EFortReloadFXState {
+        ReloadStart,
+        ReloadCartridge,
+        ReloadEnd,
+        Max_None
+    }
+
+    public enum EFortWeaponSoundState {
+        Normal,
+        LowAmmo,
+        Degraded,
+        Max_None
     }
 }

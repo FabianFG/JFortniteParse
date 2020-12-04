@@ -34,6 +34,7 @@ public class AthenaSeasonItemDefinition extends FortAccountItemDefinition {
     public List<String> BattlePassOfferIds;
     public String BattlePassLevelOfferID;
     public List<String> BattlePassLevelOfferIDs;
+    public String BattlePassLevelBundleOfferID;
     public List<PrimaryAssetId> FreeTokenItemPrimaryAssetIds;
     public List<Integer> FreeLevelsThatNavigateToBattlePass;
     public List<Integer> FreeLevelsThatAutoOpenTheAboutScreen;
@@ -65,6 +66,7 @@ public class AthenaSeasonItemDefinition extends FortAccountItemDefinition {
     public List<AthenaMidSeasonUpdate> MidSeasonUpdates;
     public Boolean bRemoveAllDailyQuestsAtSeasonEnd;
     public FSoftObjectPath NoBattleBundleToken;
+    public FSoftObjectPath CollectionsDataTable;
     public List<FGameplayTag> FirstTimeTrackedBitFlags;
 
     public enum EAthenaSeasonShopVisibility {

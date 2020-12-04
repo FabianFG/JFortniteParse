@@ -14,6 +14,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
+import java.util.Map;
 
 public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     public boolean bIsShuffleTile = false;
@@ -25,14 +26,15 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     public Boolean bDynamicInstallBundlesCancelled;
     public Boolean bDynamicInstallBundlesComplete;
     public Double DynamicInstallBundlesUpdateStartTime;
-    public Double DynamicInstallBundlesLastFailStartTime;
     public UInt DynamicInstallBundleRequestRefCount;
+    public Integer DynamicInstallBundleRequestRetryCount;
     public EVariantUnlockType VariantUnlockType;
     public FRotator PreviewPawnRotationOffset;
     public List<FPackageIndex /*FoleySoundLibrary*/> FoleyLibraries;
     public FGameplayTagContainer DisallowedCosmeticTags;
     public FGameplayTagContainer MetaTags;
     public List<FGameplayTag> VariantChannelsToNeverSendToMCP;
+    public Map<CosmeticVariantInfo, FSoftObjectPath> ReactivePreviewDrivers;
     public List<AthenaCosmeticMaterialOverride> MaterialOverrides;
     public FGameplayTagContainer ObservedPlayerStats;
     public List<FPackageIndex> /*List<UFortMontageItemDefinitionBase>*/ BuiltInEmotes;
@@ -58,6 +60,11 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
 
     public enum EVariantUnlockType {
         UnlockAll, ExclusiveChoice
+    }
+
+    @UStruct
+    public static class WeirdVariantStruct {
+        public FGameplayTag Unknown0, Unknown1;
     }
 
     @UStruct

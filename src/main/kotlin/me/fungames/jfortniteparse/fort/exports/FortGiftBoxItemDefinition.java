@@ -14,8 +14,11 @@ public class FortGiftBoxItemDefinition extends FortAccountItemDefinition {
     public FSoftObjectPath ItemDisplayAsset;
     public Integer SortPriority;
     public Boolean bReuseExistingBoxIfPossible;
-    public FSoftObjectPath GiftBoxPreMessageWidgetRef;
-    public FSoftObjectPath GiftBoxHeaderSubWidgetRef;
+    public Boolean bOverrideBackgroundMessage;
+    public FText /*SoftClassPath*/ BackgroundMessageText;
+    public FSoftObjectPath /*SoftClassPath*/ GiftBoxPreMessageWidgetRef;
+    public FSoftObjectPath /*SoftClassPath*/ GiftBoxHeaderSubWidgetRef;
+    public FSoftObjectPath /*SoftClassPath*/ CustomLeftsideContent;
 
     public enum EFortGiftWrapType {
         System,

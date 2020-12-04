@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.objects.AthenaRewardItemReference;
+import me.fungames.jfortniteparse.fort.objects.CosmeticVariantInfo;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
@@ -44,11 +45,5 @@ public class AthenaRewardEventGraph extends FortPersistableItemDefinition {
         public String RewardOperation;
         public FSoftObjectPath RewardContextItem;
         public List<CosmeticVariantInfo> HardDefinedVisuals;
-    }
-
-    @UStruct
-    public static class CosmeticVariantInfo {
-        public FGameplayTag VariantChannelTag;
-        public FGameplayTag ActiveVariantTag;
     }
 }

@@ -16,6 +16,7 @@ public class AthenaSkyDiveContrailItemDefinition extends AthenaCosmeticItemDefin
     public FName ParaGlideLeanParameterName;
     public List<VectorParticleParameter> VectorParameters;
     public List<FloatParticleParameter> FloatParameters;
+    public Boolean bWaitForFrontendSceneTransition;
 
     @UStruct
     public static class VectorParticleParameter {

@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
-import kotlin.UByte;
+import me.fungames.jfortniteparse.fort.enums.EPhysicalSurface;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
@@ -16,10 +16,10 @@ public class FortWeaponMeleeDualWieldItemDefinition extends FortWeaponMeleeItemD
     public FSoftObjectPath AnimTrailsOffhand;
     public FSoftObjectPath AnimTrailsNiagaraOffhand;
     public FSoftObjectPath OffhandGenericImpactSound;
-    public Map<UByte, FSoftObjectPath> OffhandImpactPhysicalSurfaceSoundsMap;
-    public Map<UByte, FSoftObjectPath> OffhandImpactPhysicalSurfaceEffects;
-    public Map<UByte, FSoftObjectPath> OffhandImpactNiagaraPhysicalSurfaceEffects;
-    public Map<UByte, FSoftObjectPath> OffhandPrimaryFireSoundMap;
+    public Map<EPhysicalSurface, FSoftObjectPath> OffhandImpactPhysicalSurfaceSoundsMap;
+    public Map<EPhysicalSurface, FSoftObjectPath> OffhandImpactPhysicalSurfaceEffects;
+    public Map<EPhysicalSurface, FSoftObjectPath> OffhandImpactNiagaraPhysicalSurfaceEffects;
+    public Map<EFortWeaponSoundState, FSoftObjectPath> OffhandPrimaryFireSoundMap;
     public FPackageIndex /*MarshalledVFX_AuthoredDataConfig*/ ManagedVFX_OffhandDefaults;
     public FName AnimTrailsOffhandFirstSocketName;
     public FName AnimTrailsOffhandSecondSocketName;

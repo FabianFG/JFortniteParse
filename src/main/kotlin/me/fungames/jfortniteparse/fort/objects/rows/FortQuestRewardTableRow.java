@@ -10,4 +10,5 @@ public class FortQuestRewardTableRow extends FTableRowBase {
     public boolean Hidden;
     public boolean Feature;
     public boolean Selectable;
+    public boolean Exportable;
 }

@@ -42,6 +42,7 @@ public class CustomCharacterPart extends UPrimaryDataAsset {
     public FSoftObjectPath IdleEffect;
     public FSoftObjectPath IdleEffectNiagara;
     public FName IdleFXSocketName;
+    public Boolean bAutoActivate;
     public FPackageIndex /*MarshalledVFX_AuthoredDataConfig*/ AuthoredData;
 
     @UStruct
