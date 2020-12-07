@@ -122,3 +122,5 @@ fun BitSet.indexOfFirst(value: Boolean): Int {
 
 /** Divides two integers and rounds up */
 fun UInt.divideAndRoundUp(divisor: UInt) = (this + divisor - 1u) / divisor
+
+inline fun <T> T.ref() = ObjectRef<T>().also { it.element = this }

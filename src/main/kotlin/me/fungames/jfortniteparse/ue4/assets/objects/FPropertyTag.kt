@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.PropertyInfo
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ARRAY_PROPERTY_INNER_TAGS
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_PROPERTY_GUID_IN_PROPERTY_TAG
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_PROPERTY_TAG_SET_MAP_SUPPORT
@@ -19,7 +18,7 @@ import java.lang.reflect.Type
  */
 class FPropertyTag : UClass {
     // Transient.
-    var prop: FPropertyTagType? = null // prop: FProperty
+    var prop: FProperty? = null // prop: FProperty
 
     // Variables.
     /** Type of property */
@@ -47,24 +46,10 @@ class FPropertyTag : UClass {
     var hasPropertyGuid: Boolean = false
     var propertyGuid: FGuid? = null
 
-    var structClass: Class<*>? = null
-    var enumClass: Class<out Enum<*>>? = null
+    var typeData: FPropertyTypeData? = null
 
     constructor(name: FName) {
         this.name = name
-    }
-
-    constructor(info: PropertyInfo) {
-        name = FName.dummy(info.name!!)
-        type = FName.dummy(info.type!!)
-        info.structType?.let { structName = FName.dummy(it) }
-        boolVal = info.bool ?: false
-        info.enumName?.let { enumName = FName.dummy(it) }
-        enumType = info.enumType
-        info.innerType?.let { innerType = FName.dummy(it) }
-        info.valueType?.let { valueType = FName.dummy(it) }
-        structClass = info.structClass
-        enumClass = info.enumClass
     }
 
     constructor(Ar: FAssetArchive, readData: Boolean) {
@@ -105,14 +90,16 @@ class FPropertyTag : UClass {
                     propertyGuid = FGuid(Ar)
             }
 
+            typeData = FPropertyTypeData(this)
+
             if (readData) {
                 val pos = Ar.pos()
                 val finalPos = pos + size
                 try {
                     prop =
-                        FPropertyTagType.readFPropertyTagType(
-                            Ar, type.text, this,
-                            FPropertyTagType.ReadType.NORMAL
+                        FProperty.readPropertyValue(
+                            Ar, typeData!!,
+                            FProperty.ReadType.NORMAL
                         )
                     if (finalPos != Ar.pos()) {
                         logger.warn("FPropertyTagType $name (${type}) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
@@ -159,10 +146,10 @@ class FPropertyTag : UClass {
                 //Recalculate the size of the tag and also save the serialized data
                 val tempAr = Ar.setupByteArrayWriter()
                 try {
-                    FPropertyTagType.writeFPropertyTagType(
+                    FProperty.writePropertyValue(
                         tempAr,
                         prop ?: throw ParserException("FPropertyTagType is needed when trying to write it"),
-                        FPropertyTagType.ReadType.NORMAL
+                        FProperty.ReadType.NORMAL
                     )
                     Ar.writeInt32(tempAr.pos() - Ar.pos())
                     tagTypeData = tempAr.toByteArray()

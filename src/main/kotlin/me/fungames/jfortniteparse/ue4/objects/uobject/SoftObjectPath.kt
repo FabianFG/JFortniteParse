@@ -24,7 +24,6 @@ open class FSoftObjectPath : UClass {
         assetPathName = Ar.readFName()
         subPathString = Ar.readString()
         super.complete(Ar)
-        owner = Ar.owner
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {

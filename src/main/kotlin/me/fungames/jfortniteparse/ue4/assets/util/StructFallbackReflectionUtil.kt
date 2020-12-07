@@ -29,44 +29,56 @@ fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
         val boundFields = getBoundFields(TypeToken.get(clazz), clazz)
         for (prop in properties) {
             val field = boundFields[prop.name.text] ?: continue
-            val fieldType = field.type
-            if (fieldType.isArray) {
-                var array = field.get(obj)
-                if (array == null) {
-                    array = Array.newInstance(fieldType.componentType, field.getAnnotation(UProperty::class.java).arrayDim)
-                    field.set(obj, array)
-                }
-                val content = prop.getTagTypeValue(fieldType.componentType, (field.genericType as? GenericArrayType)?.genericComponentType)
-                Array.set(array, prop.arrayIndex, content)
-                continue
-            }
-            val content = prop.getTagTypeValue(fieldType, field.genericType)
-            if (content == null) {
-                UClass.logger.warn { "Failed to get tag type value for field ${prop.name} of type ${fieldType.simpleName}" }
-            } else {
-                val isValid = when {
-                    fieldType.isAssignableFrom(content::class.java) -> true
-                    content is Boolean && fieldType == Boolean::class.javaPrimitiveType -> true
-                    content is Byte && fieldType == Byte::class.javaPrimitiveType -> true
-                    content is Short && fieldType == Short::class.javaPrimitiveType -> true
-                    content is Char && fieldType == Char::class.javaPrimitiveType -> true
-                    content is Int && fieldType == Int::class.javaPrimitiveType -> true
-                    content is Long && fieldType == Long::class.javaPrimitiveType -> true
-                    content is Float && fieldType == Float::class.javaPrimitiveType -> true
-                    content is Double && fieldType == Double::class.javaPrimitiveType -> true
-                    else -> false
-                }
-                if (isValid) {
-                    field.set(obj, content)
-                } else {
-                    UClass.logger.error { "StructFallbackClass has invalid type for field ${prop.name}, ${content::class.java.simpleName} is not assignable from ${field.type.simpleName}" }
-                }
-            }
+            writePropertyToField(prop, field, obj)
         }
         return obj
     } catch (e: ReflectiveOperationException) {
         throw ParserException("Object mapping failure", e)
     }
+}
+
+fun <T> writePropertyToField(prop: FPropertyTag, field: Field, obj: T) {
+    val fieldType = field.type
+    if (fieldType.isArray) {
+        val componentType = fieldType.componentType
+        var array = field.get(obj)
+        if (array == null) {
+            array = Array.newInstance(componentType, field.getAnnotation(UProperty::class.java).arrayDim)
+            field.set(obj, array)
+        }
+        val content = prop.getTagTypeValue(componentType, (field.genericType as? GenericArrayType)?.genericComponentType)
+        if (isContentValid(content, prop.name.text, componentType)) {
+            Array.set(array, prop.arrayIndex, content)
+        }
+    } else {
+        val content = prop.getTagTypeValue(fieldType, field.genericType)
+        if (isContentValid(content, prop.name.text, fieldType)) {
+            field.set(obj, content)
+        }
+    }
+}
+
+private fun isContentValid(content: Any?, name: String, clazz: Class<*>): Boolean {
+    if (content == null) {
+        UClass.logger.warn { "Failed to get tag type value for field $name of type ${clazz.simpleName}" }
+        return false
+    }
+    val isValid = when {
+        clazz.isAssignableFrom(content::class.java) -> true
+        content is Boolean && clazz == Boolean::class.javaPrimitiveType -> true
+        content is Byte && clazz == Byte::class.javaPrimitiveType -> true
+        content is Short && clazz == Short::class.javaPrimitiveType -> true
+        content is Char && clazz == Char::class.javaPrimitiveType -> true
+        content is Int && clazz == Int::class.javaPrimitiveType -> true
+        content is Long && clazz == Long::class.javaPrimitiveType -> true
+        content is Float && clazz == Float::class.javaPrimitiveType -> true
+        content is Double && clazz == Double::class.javaPrimitiveType -> true
+        else -> false
+    }
+    if (!isValid) {
+        UClass.logger.error { "Invalid type for field $name, ${content::class.java.simpleName} is not assignable from ${clazz.simpleName}" }
+    }
+    return isValid
 }
 
 /** first element holds the default name  */

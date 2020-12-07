@@ -68,7 +68,7 @@ class FAsyncLoadingThread2 : Runnable {
     private val ioDispatcher: FIoDispatcher
 
     private val globalNameMap = FNameMap()
-    internal val globalPackageStore: FPackageStore
+    /*internal*/ val globalPackageStore: FPackageStore
 
     class FBundleIoRequest(val pkg: FAsyncPackage2)
 
@@ -83,6 +83,7 @@ class FAsyncLoadingThread2 : Runnable {
     val altEventQueues = mutableListOf<FAsyncLoadEventQueue2>()
     val eventSpecs: List<FAsyncLoadEventSpec>
     var provider: FileProvider? = null
+    val lazyInitLock = Object() // custom
 
     constructor(ioDispatcher: FIoDispatcher) {
         this.thread = null
@@ -319,9 +320,11 @@ class FAsyncLoadingThread2 : Runnable {
     }
 
     fun loadPackage(inName: String, inPackageToLoadFrom: String? = null, inPackagePriority: Int = 0, completionCallback: FCompletionCallback? = null): Int {
-        if (!bLazyInitializedFromLoadPackage) {
-            bLazyInitializedFromLoadPackage = true
-            lazyInitializeFromLoadPackage()
+        synchronized(lazyInitLock) {
+            if (!bLazyInitializedFromLoadPackage) {
+                bLazyInitializedFromLoadPackage = true
+                lazyInitializeFromLoadPackage()
+            }
         }
 
         var requestID = INDEX_NONE

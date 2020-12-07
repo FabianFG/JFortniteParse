@@ -7,151 +7,49 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.objects.FProperty
+import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
+import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyData
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
-import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType
-import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.asyncloading2.FExportArchive
-import me.fungames.jfortniteparse.ue4.objects.FFieldPath
-import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.indexOfFirst
-import java.lang.reflect.Field
-import java.lang.reflect.GenericArrayType
-import java.lang.reflect.ParameterizedType
 import java.util.*
 
-// custom class
-class PropertyInfo {
-    @JvmField var name: String? = null
-    @JvmField var type: String? = null
-    @JvmField var structType: String? = null
-    @JvmField var bool: Boolean? = null
-    @JvmField var enumName: String? = null
-    @JvmField var enumType: String? = null
-    @JvmField var innerType: String? = null
-    @JvmField var valueType: String? = null
-    @JvmField var arrayDim = 1
-
-    var structClass: Class<*>? = null
-    var enumClass: Class<out Enum<*>>? = null
-
-    val field: Field
-
-    constructor(field: Field, ann: UProperty?) {
-        this.field = field
-
-        if (ann != null) {
-            name = ann.name.takeIf { it.isNotEmpty() }
-            arrayDim = ann.arrayDim
-            enumType = ann.enumType.takeIf { it.isNotEmpty() }
-        }
-        if (name == null) {
-            name = field.name
-        }
-
-        var fieldType = field.type
-        if (field.type.isArray) {
-            fieldType = fieldType.componentType
-        }
-        type = propertyType(fieldType)
-
-        when (type) {
-            "EnumProperty" -> {
-                enumName = fieldType.simpleName
-                enumClass = fieldType as Class<out Enum<*>>?
-            }
-            "StructProperty" -> {
-                structType = fieldType.simpleName.unprefix()
-                structClass = fieldType
-            }
-            "ArrayProperty", "SetProperty" -> applyInner(applyToValue = false, applyStructOrEnumClass = true)
-            "MapProperty" -> {
-                applyInner(applyToValue = false, applyStructOrEnumClass = false)
-                applyInner(applyToValue = true, applyStructOrEnumClass = true)
-            }
-        }
-    }
-
-    private fun applyInner(applyToValue: Boolean, applyStructOrEnumClass: Boolean) {
-        val typeArgs = ((if (field.type.isArray)
-            (field.genericType as GenericArrayType).genericComponentType
-        else
-            field.genericType) as ParameterizedType).actualTypeArguments
-        val idx = if (applyToValue) 1 else 0
-        val type = typeArgs[idx] as Class<*>
-        val propertyType = propertyType(type)
-        if (applyToValue) {
-            valueType = propertyType
-        } else {
-            innerType = propertyType
-        }
-        if (applyStructOrEnumClass) {
-            if (propertyType == "EnumProperty") {
-                enumName = type.simpleName.unprefix()
-                enumClass = type as Class<out Enum<*>>?
-            } else if (propertyType == "StructProperty") {
-                structType = type.simpleName.unprefix()
-                structClass = type
-            }
-        }
-    }
-
-    private fun propertyType(c: Class<*>): String {
-        return when {
-            c == Boolean::class.javaPrimitiveType || c == Boolean::class.javaObjectType -> "BoolProperty"
-            c == Char::class.javaPrimitiveType || c == Char::class.javaObjectType -> "CharProperty"
-            c == Double::class.javaPrimitiveType || c == Double::class.javaObjectType -> "DoubleProperty"
-            c == Float::class.javaPrimitiveType || c == Float::class.javaObjectType -> "FloatProperty"
-            c == Byte::class.javaPrimitiveType || c == Byte::class.javaObjectType -> "Int8Property"
-            c == Short::class.javaPrimitiveType || c == Short::class.javaObjectType -> "Int16Property"
-            c == Int::class.javaPrimitiveType || c == Int::class.javaObjectType -> "IntProperty"
-            c == Long::class.javaPrimitiveType || c == Long::class.javaObjectType -> "Int64Property"
-            c == UByte::class.java -> "ByteProperty"
-            c == UShort::class.java -> "UInt16Property"
-            c == UInt::class.java -> "UInt32Property"
-            c == ULong::class.java -> "UInt64Property"
-            c == String::class.java -> "StrProperty"
-            c == FName::class.java -> "NameProperty"
-            c == FText::class.java -> "TextProperty"
-            c.isEnum -> "EnumProperty"
-            List::class.java.isAssignableFrom(c) -> "ArrayProperty"
-            Set::class.java.isAssignableFrom(c) -> "SetProperty"
-            Map::class.java.isAssignableFrom(c) -> "MapProperty"
-            c == FPackageIndex::class.java || UObject::class.java.isAssignableFrom(c) -> "ObjectProperty"
-            c == FSoftObjectPath::class.java -> "SoftObjectProperty"
-            c == FSoftClassPath::class.java -> "SoftClassProperty"
-            c == FFieldPath::class.java -> "FieldPathProperty"
-            else -> "StructProperty"
-        }
-    }
-}
-
-class FUnversionedPropertySerializer(val propertyInfo: PropertyInfo, val arrayIndex: Int) {
+class FUnversionedPropertySerializer(val data: FPropertyData, val arrayIndex: Int) {
     fun deserialize(Ar: FAssetArchive, type: ReadType): FPropertyTag {
         if (GExportArchiveCheckDummyName && Ar is FExportArchive) {
-            propertyInfo.name?.let { Ar.checkDummyName(it) }
-            //propertyInfo.type?.let { Ar.checkDummyName(it) }
-            propertyInfo.structType?.let { Ar.checkDummyName(it) }
-            propertyInfo.enumName?.let { Ar.checkDummyName(it) }
-            propertyInfo.innerType?.let { Ar.checkDummyName(it) }
-            propertyInfo.valueType?.let { Ar.checkDummyName(it) }
+            data.name?.let { Ar.checkDummyName(it) }
+            val typeInfo = data.type
+            setOf(
+                typeInfo.type,
+                typeInfo.structType,
+                typeInfo.enumName,
+                typeInfo.innerType?.type,
+                typeInfo.valueType?.type
+            ).forEach { if (it != null) Ar.checkDummyName(it.text) }
         }
-        val propertyType = propertyInfo.type!!
-        val tag = FPropertyTag(propertyInfo)
+        val tag = FPropertyTag(FName.dummy(data.name!!))
+        /*if (true) {
+            tag.name = FName.dummy(data.name!!)
+            tag.type = data.type.type
+            tag.structName = data.type.structType
+            tag.boolVal = data.type.bool
+            tag.enumName = data.type.enumName
+            tag.enumType = data.type.enumType
+            tag.innerType = data.type.innerType?.type ?: FName.NAME_None
+            tag.valueType = data.type.valueType?.type ?: FName.NAME_None
+        }*/
         tag.arrayIndex = arrayIndex
-        tag.prop = FPropertyTagType.readFPropertyTagType(Ar, propertyType, tag, type)
+        tag.prop = FProperty.readPropertyValue(Ar, data.type, type)
         return tag
     }
 
-    override fun toString() = propertyInfo.field.type.simpleName + ' ' + propertyInfo.field.name
+    override fun toString() = (data.field?.type?.simpleName ?: data.type.toString()) + ' ' + data.name
 }
 
 /**
@@ -171,9 +69,9 @@ class FUnversionedStructSchema(struct: Class<*>) {
                     continue
                 }
                 index += ann?.skipPrevious ?: 0
-                val propertyInfo = PropertyInfo(field, ann)
+                val propertyInfo = FPropertyData(field, ann)
                 for (arrayIdx in 0 until propertyInfo.arrayDim) {
-                    if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.field.name}")
+                    if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.name}")
                     serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                     ++index
                 }

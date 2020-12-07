@@ -17,7 +17,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeU
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
-sealed class FPropertyTagType(val propertyType: String) {
+sealed class FProperty {
     inline fun <reified T> getTagTypeValue(): T? {
         val value = getTagTypeValue(T::class.java)
         return if (value is T) value else null
@@ -77,8 +77,9 @@ sealed class FPropertyTagType(val propertyType: String) {
                 if (enumConstant != null) {
                     enumConstant // already searched by the unversioned property serializer
                 } else {
-                    val storedEnum = this.name.text
-                    if (clazz.simpleName != storedEnum.substringBefore("::")) {
+                    val storedEnum = name.text
+                    val sep = storedEnum.indexOf("::")
+                    if (sep != -1 && clazz.simpleName != storedEnum.substring(0, sep)) {
                         null
                     } else {
                         val search = storedEnum.substringAfter("::")
@@ -151,113 +152,88 @@ sealed class FPropertyTagType(val propertyType: String) {
     }
 
     companion object {
-        fun readFPropertyTagType(Ar: FAssetArchive, propertyType: String, tagData: FPropertyTag?, type: ReadType) =
-            when (propertyType) {
+        fun readPropertyValue(Ar: FAssetArchive, typeData: FPropertyTypeData, type: ReadType) =
+            when (val propertyType = typeData.type.text) {
                 "BoolProperty" -> BoolProperty(when (type) {
-                    ReadType.NORMAL -> if (Ar.useUnversionedPropertySerialization) Ar.readFlag() else tagData!!.boolVal
+                    ReadType.NORMAL -> if (Ar.useUnversionedPropertySerialization) Ar.readFlag() else typeData.bool
                     ReadType.MAP, ReadType.ARRAY -> Ar.readFlag()
-                    ReadType.ZERO -> tagData!!.boolVal
-                }, propertyType)
+                    ReadType.ZERO -> typeData.bool
+                })
                 "StructProperty" ->
-                    if (Ar.useUnversionedPropertySerialization && tagData!!.structClass!!.isAnnotationPresent(UStruct::class.java)) {
-                        //val struct = tagData.field!!.type.newInstance()
+                    if (Ar.useUnversionedPropertySerialization && typeData.structClass!!.isAnnotationPresent(UStruct::class.java)) {
                         val properties = mutableListOf<FPropertyTag>()
                         if (type != ReadType.ZERO) {
-                            deserializeUnversionedProperties(properties, tagData.structClass!!, Ar)
+                            deserializeUnversionedProperties(properties, typeData.structClass!!, Ar)
                         }
-                        StructProperty(UScriptStruct(tagData.structName.text, FStructFallback(properties)), propertyType)
+                        StructProperty(UScriptStruct(typeData.structType, FStructFallback(properties)))
                     } else {
-                        StructProperty(UScriptStruct(Ar, tagData!!.structName.text, type), propertyType)
+                        StructProperty(UScriptStruct(Ar, typeData.structType, type))
                     }
-                "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type), propertyType)
-                "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type), propertyType)
-                "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type), propertyType)
-                "TextProperty" -> TextProperty(valueOr({ FText(Ar) }, { FText(0u, ETextHistoryType.None, FTextHistory.None()) }, type), propertyType)
-                "StrProperty" -> StrProperty(valueOr({ Ar.readString() }, { "" }, type), propertyType)
-                "NameProperty" -> NameProperty(valueOr({ Ar.readFName() }, { FName.NAME_None }, type), propertyType)
-                "IntProperty" -> IntProperty(valueOr({ Ar.readInt32() }, { 0 }, type), propertyType)
-                "UInt16Property" -> UInt16Property(valueOr({ Ar.readUInt16() }, { 0u }, type), propertyType)
-                "UInt32Property" -> UInt32Property(valueOr({ Ar.readUInt32() }, { 0u }, type), propertyType)
-                "UInt64Property" -> UInt64Property(valueOr({ Ar.readUInt64() }, { 0u }, type), propertyType)
+                "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
+                "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type))
+                "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type))
+                "TextProperty" -> TextProperty(valueOr({ FText(Ar) }, { FText(0u, ETextHistoryType.None, FTextHistory.None()) }, type))
+                "StrProperty" -> StrProperty(valueOr({ Ar.readString() }, { "" }, type))
+                "NameProperty" -> NameProperty(valueOr({ Ar.readFName() }, { FName.NAME_None }, type))
+                "IntProperty" -> IntProperty(valueOr({ Ar.readInt32() }, { 0 }, type))
+                "UInt16Property" -> UInt16Property(valueOr({ Ar.readUInt16() }, { 0u }, type))
+                "UInt32Property" -> UInt32Property(valueOr({ Ar.readUInt32() }, { 0u }, type))
+                "UInt64Property" -> UInt64Property(valueOr({ Ar.readUInt64() }, { 0u }, type))
                 "ArrayProperty" ->
                     ArrayProperty(if (type != ReadType.ZERO) {
-                        UScriptArray(Ar, tagData!!)
+                        UScriptArray(Ar, typeData)
                     } else {
-                        UScriptArray(tagData, mutableListOf(), tagData?.innerType?.text ?: "ZeroUnknown")
-                    }, propertyType)
+                        UScriptArray(null, mutableListOf())
+                    })
                 "SetProperty" ->
                     SetProperty(if (type != ReadType.ZERO) {
-                        UScriptArray(Ar, tagData!!)
+                        UScriptArray(Ar, typeData)
                     } else {
-                        UScriptArray(tagData, mutableListOf(), tagData?.innerType?.text ?: "ZeroUnknown")
-                    }, propertyType)
-                "MapProperty" -> MapProperty(UScriptMap(Ar, tagData!!), propertyType)
-                "ByteProperty" -> when (type) {
-                    ReadType.NORMAL -> {
-                        if (!Ar.useUnversionedPropertySerialization && tagData?.enumName != null && !tagData.enumName.isNone()) {
-                            EnumProperty(Ar.readFName(), null, propertyType) // TEnumAsByte
-                        } else {
-                            ByteProperty(Ar.readUInt8(), propertyType)
-                        }
+                        UScriptArray(null, mutableListOf())
+                    })
+                "MapProperty" ->
+                    MapProperty(if (type != ReadType.ZERO) {
+                        UScriptMap(Ar, typeData)
+                    } else {
+                        UScriptMap(0, mutableMapOf())
+                    })
+                "ByteProperty" ->
+                    if (Ar.useUnversionedPropertySerialization && type == ReadType.NORMAL) {
+                        ByteProperty(Ar.readUInt8())
+                    } else if (Ar.useUnversionedPropertySerialization && type == ReadType.ZERO) {
+                        ByteProperty(0u)
+                    } else if (type == ReadType.MAP || !typeData.enumName.isNone()) {
+                        EnumProperty(Ar.readFName(), null) // TEnumAsByte
+                    } else {
+                        ByteProperty(Ar.readUInt8())
                     }
-                    ReadType.MAP -> ByteProperty(Ar.readUInt32().toUByte(), propertyType)
-                    ReadType.ARRAY -> ByteProperty(Ar.readUInt8(), propertyType)
-                    ReadType.ZERO -> ByteProperty(0u, propertyType)
-                }
-                "EnumProperty" -> {
-                    if (type == ReadType.NORMAL && (tagData == null || tagData.enumName.isNone())) {
-                        EnumProperty(FName.NAME_None, null, propertyType)
+                "EnumProperty" ->
+                    if (type == ReadType.NORMAL && typeData.enumName.isNone()) {
+                        EnumProperty(FName.NAME_None, null)
                     } else if (type != ReadType.MAP && type != ReadType.ARRAY && Ar.useUnversionedPropertySerialization) {
-                        val ordinal = valueOr({ if (tagData?.enumType == "IntProperty") Ar.readInt32() else Ar.read() }, { 0 }, type)
-                        val enumClass = tagData?.enumClass
+                        val ordinal = valueOr({ if (typeData.enumType == "IntProperty") Ar.readInt32() else Ar.read() }, { 0 }, type)
+                        val enumClass = typeData.enumClass
                         var enumValue: Enum<*>? = null
                         val fakeName = if (enumClass != null) {
                             enumValue = enumClass.enumConstants.getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.simpleName}")
-                            (tagData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
+                            (typeData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
                         } else {
                             UClass.logger.warn("Enum class not supplied")
-                            (tagData?.enumName?.text ?: "UnknownEnum") + "::" + ordinal
+                            typeData.enumName.text + "::" + ordinal
                         }
-                        EnumProperty(FName.dummy(fakeName), enumValue, propertyType)
+                        EnumProperty(FName.dummy(fakeName), enumValue)
                     } else {
-                        EnumProperty(Ar.readFName(), null, propertyType)
+                        EnumProperty(Ar.readFName(), null)
                     }
-                }
-                /*"SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type), propertyType)
-                "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type), propertyType)*/
-                "SoftObjectProperty" -> {
-                    if (type == ReadType.ZERO) {
-                        SoftObjectProperty(FSoftObjectPath(), propertyType)
-                    } else {
-                        val pos = Ar.pos()
-                        val path = SoftObjectProperty(FSoftObjectPath(Ar), propertyType)
-                        if (type == ReadType.MAP && tagData?.innerType?.text != "EnumProperty") {
-                            // skip ahead, putting the total bytes read to 16
-                            Ar.skip(16L - (Ar.pos() - pos))
-                        }
-                        path
-                    }
-                }
-                "SoftClassProperty" -> {
-                    if (type == ReadType.ZERO) {
-                        SoftClassProperty(FSoftClassPath(), propertyType)
-                    } else {
-                        val pos = Ar.pos()
-                        val path = SoftClassProperty(FSoftClassPath(Ar), propertyType)
-                        if (type == ReadType.MAP && tagData?.innerType?.text != "EnumProperty") {
-                            // skip ahead, putting the total bytes read to 16
-                            Ar.skip(16L - (Ar.pos() - pos))
-                        }
-                        path
-                    }
-                }
-                "DelegateProperty" -> DelegateProperty(valueOr({ Ar.readInt32() }, { 0 }, type), valueOr({ Ar.readFName() }, { FName() }, type), propertyType)
-                "DoubleProperty" -> DoubleProperty(valueOr({ Ar.readDouble() }, { 0.0 }, type), propertyType)
-                "Int8Property" -> Int8Property(valueOr({ Ar.readInt8() }, { 0 }, type), propertyType)
-                "Int16Property" -> Int16Property(valueOr({ Ar.readInt16() }, { 0 }, type), propertyType)
-                "Int64Property" -> Int64Property(valueOr({ Ar.readInt64() }, { 0 }, type), propertyType)
-                "FieldPathProperty" -> FieldPathProperty(valueOr({ FFieldPath(Ar) }, { FFieldPath() }, type), propertyType)
+                "SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type).apply { owner = Ar.owner })
+                "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type).apply { owner = Ar.owner })
+                "DelegateProperty" -> DelegateProperty(valueOr({ Ar.readInt32() }, { 0 }, type), valueOr({ Ar.readFName() }, { FName() }, type))
+                "DoubleProperty" -> DoubleProperty(valueOr({ Ar.readDouble() }, { 0.0 }, type))
+                "Int8Property" -> Int8Property(valueOr({ Ar.readInt8() }, { 0 }, type))
+                "Int16Property" -> Int16Property(valueOr({ Ar.readInt16() }, { 0 }, type))
+                "Int64Property" -> Int64Property(valueOr({ Ar.readInt64() }, { 0 }, type))
+                "FieldPathProperty" -> FieldPathProperty(valueOr({ FFieldPath(Ar) }, { FFieldPath() }, type))
                 /*"MulticastDelegateProperty" -> throw ParserException("MulticastDelegateProperty not implemented yet")
                 "LazyObjectProperty" -> throw ParserException("LazyObjectProperty not implemented yet")*/
 
@@ -267,7 +243,7 @@ sealed class FPropertyTagType(val propertyType: String) {
                 }
             }
 
-        fun writeFPropertyTagType(Ar: FAssetArchiveWriter, tag: FPropertyTagType, type: ReadType) {
+        fun writePropertyValue(Ar: FAssetArchiveWriter, tag: FProperty, type: ReadType) {
             when (tag) {
                 is StructProperty -> tag.struct.serialize(Ar)
                 is ObjectProperty -> tag.index.serialize(Ar)
@@ -318,31 +294,31 @@ sealed class FPropertyTagType(val propertyType: String) {
             if (type != ReadType.ZERO) valueIfNonzero() else valueIfZero()
     }
 
-    class BoolProperty(var bool: Boolean, propertyType: String) : FPropertyTagType(propertyType)
-    class StructProperty(var struct: UScriptStruct, propertyType: String) : FPropertyTagType(propertyType)
-    class ObjectProperty(var index: FPackageIndex, propertyType: String) : FPropertyTagType(propertyType)
-    class InterfaceProperty(var interfaceProperty: UInterfaceProperty, propertyType: String) : FPropertyTagType(propertyType)
-    class FloatProperty(var float: Float, propertyType: String) : FPropertyTagType(propertyType)
-    class TextProperty(var text: FText, propertyType: String) : FPropertyTagType(propertyType)
-    class StrProperty(var str: String, propertyType: String) : FPropertyTagType(propertyType)
-    class NameProperty(var name: FName, propertyType: String) : FPropertyTagType(propertyType)
-    class IntProperty(var number: Int, propertyType: String) : FPropertyTagType(propertyType)
-    class UInt16Property(var number: UShort, propertyType: String) : FPropertyTagType(propertyType)
-    class UInt32Property(var number: UInt, propertyType: String) : FPropertyTagType(propertyType)
-    class UInt64Property(var number: ULong, propertyType: String) : FPropertyTagType(propertyType)
-    class ArrayProperty(var array: UScriptArray, propertyType: String) : FPropertyTagType(propertyType)
-    class SetProperty(var array: UScriptArray, propertyType: String) : FPropertyTagType(propertyType)
-    class MapProperty(var map: UScriptMap, propertyType: String) : FPropertyTagType(propertyType)
-    class ByteProperty(var byte: UByte, propertyType: String) : FPropertyTagType(propertyType)
-    class EnumProperty(var name: FName, var enumConstant: Enum<*>?, propertyType: String) : FPropertyTagType(propertyType)
-    class SoftObjectProperty(var `object`: FSoftObjectPath, propertyType: String) : FPropertyTagType(propertyType)
-    class SoftClassProperty(var `object`: FSoftClassPath, propertyType: String) : FPropertyTagType(propertyType)
-    class DelegateProperty(var `object`: Int, var name: FName, propertyType: String) : FPropertyTagType(propertyType)
-    class DoubleProperty(var number: Double, propertyType: String) : FPropertyTagType(propertyType)
-    class Int8Property(var number: Byte, propertyType: String) : FPropertyTagType(propertyType)
-    class Int16Property(var number: Short, propertyType: String) : FPropertyTagType(propertyType)
-    class Int64Property(var number: Long, propertyType: String) : FPropertyTagType(propertyType)
-    class FieldPathProperty(var fieldPath: FFieldPath, propertyType: String) : FPropertyTagType(propertyType)
+    class BoolProperty(var bool: Boolean) : FProperty()
+    class StructProperty(var struct: UScriptStruct) : FProperty()
+    class ObjectProperty(var index: FPackageIndex) : FProperty()
+    class InterfaceProperty(var interfaceProperty: UInterfaceProperty) : FProperty()
+    class FloatProperty(var float: Float) : FProperty()
+    class TextProperty(var text: FText) : FProperty()
+    class StrProperty(var str: String) : FProperty()
+    class NameProperty(var name: FName) : FProperty()
+    class IntProperty(var number: Int) : FProperty()
+    class UInt16Property(var number: UShort) : FProperty()
+    class UInt32Property(var number: UInt) : FProperty()
+    class UInt64Property(var number: ULong) : FProperty()
+    class ArrayProperty(var array: UScriptArray) : FProperty()
+    class SetProperty(var array: UScriptArray) : FProperty()
+    class MapProperty(var map: UScriptMap) : FProperty()
+    class ByteProperty(var byte: UByte) : FProperty()
+    class EnumProperty(var name: FName, var enumConstant: Enum<*>?) : FProperty()
+    class SoftObjectProperty(var `object`: FSoftObjectPath) : FProperty()
+    class SoftClassProperty(var `object`: FSoftClassPath) : FProperty()
+    class DelegateProperty(var `object`: Int, var name: FName) : FProperty()
+    class DoubleProperty(var number: Double) : FProperty()
+    class Int8Property(var number: Byte) : FProperty()
+    class Int16Property(var number: Short) : FProperty()
+    class Int64Property(var number: Long) : FProperty()
+    class FieldPathProperty(var fieldPath: FFieldPath) : FProperty()
 
     enum class ReadType {
         NORMAL,

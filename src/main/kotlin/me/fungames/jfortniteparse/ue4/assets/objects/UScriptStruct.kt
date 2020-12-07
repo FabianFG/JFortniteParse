@@ -2,8 +2,8 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType.Companion.valueOr
-import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTagType.ReadType
+import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.Companion.valueOr
+import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.*
@@ -22,17 +22,18 @@ import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneE
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationTemplate
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneSegment
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEvaluationDataTree
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 
 class UScriptStruct : UClass {
-    val structName: String
+    val structName: FName
     var structType: Any
 
-    constructor(Ar: FAssetArchive, structName: String, type: ReadType = ReadType.NORMAL) {
+    constructor(Ar: FAssetArchive, structName: FName, type: ReadType = ReadType.NORMAL) {
         super.init(Ar)
         this.structName = structName
-        structType = when (structName) { // TODO please complete the zero constructors
+        structType = when (structName.text) { // TODO please complete the zero constructors
             "Box" -> valueOr({ FBox(Ar) }, { FBox() }, type)
             "Box2D" -> valueOr({ FBox2D(Ar) }, { FBox2D() }, type)
             "Color" -> valueOr({ FColor(Ar) }, { FColor() }, type)
@@ -66,8 +67,8 @@ class UScriptStruct : UClass {
             "SimpleCurveKey" -> FSimpleCurveKey(Ar)
             "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
             "SmartName" -> FSmartName(Ar)
-            "SoftObjectPath" -> valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type)
-            "SoftClassPath" -> valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type)
+            "SoftObjectPath" -> valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type).apply { owner = Ar.owner }
+            "SoftClassPath" -> valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type).apply { owner = Ar.owner }
             "Timespan", "DateTime" -> valueOr({ FDateTime(Ar) }, { FDateTime() }, type)
             "Vector" -> valueOr({ FVector(Ar) }, { FVector() }, type)
             "Vector2D" -> valueOr({ FVector2D(Ar) }, { FVector2D() }, type)
@@ -132,7 +133,7 @@ class UScriptStruct : UClass {
         super.completeWrite(Ar)
     }
 
-    constructor(structName: String, structType: Any) {
+    constructor(structName: FName, structType: Any) {
         this.structName = structName
         this.structType = structType
     }

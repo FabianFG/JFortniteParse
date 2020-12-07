@@ -1,15 +1,15 @@
 package me.fungames.jfortniteparse.ue4.registry
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
-import me.fungames.jfortniteparse.ue4.registry.enums.EAssetRegistryDependencyType
-import me.fungames.jfortniteparse.ue4.registry.objects.*
+import me.fungames.jfortniteparse.ue4.registry.objects.FAssetData
+import me.fungames.jfortniteparse.ue4.registry.objects.FAssetPackageData
+import me.fungames.jfortniteparse.ue4.registry.objects.FAssetRegistryVersion
+import me.fungames.jfortniteparse.ue4.registry.objects.FDependsNode
 import me.fungames.jfortniteparse.ue4.registry.reader.FNameTableArchive
 import java.io.File
 import java.nio.ByteBuffer
 
-@Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
 class AssetRegistry(originalAr: FArchive, val fileName: String) {
     val preallocatedAssetDataBuffer: Array<FAssetData>
     val preallocatedDependsNodeDataBuffer: Array<FDependsNode>
@@ -21,50 +21,47 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
 
     init {
         val version = FAssetRegistryVersion(originalAr)
-
-        @Suppress("LocalVariableName")
         val Ar = FNameTableArchive(originalAr)
 
         preallocatedAssetDataBuffer = Ar.readTArray { FAssetData(Ar) }
 
-        val localNumDependsNodes = Ar.readInt32()
-        preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode() }
-
-        val depCounts = mutableMapOf<EAssetRegistryDependencyType, Int>()
-
-        fun serializeDependencyType(inDependencyType: EAssetRegistryDependencyType, assetIndex: Int) {
-            for (i in 0 until (depCounts[inDependencyType] ?: 0)) {
-                val index = Ar.readInt32()
-                if (index < 0 || index >= localNumDependsNodes)
-                    throw ParserException("Invalid DependencyType index")
-                preallocatedDependsNodeDataBuffer[assetIndex].add(index, inDependencyType)
+        if (version < FAssetRegistryVersion.Type.AddedDependencyFlags) {
+            val localNumDependsNodes = Ar.readInt32()
+            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode() }
+            if (localNumDependsNodes > 0) {
+                loadDependenciesBeforeFlags(Ar, version)
             }
-        }
-
-        for (dependsNodeIndex in 0 until localNumDependsNodes) {
-            val assetIdentifier = FAssetIdentifier(Ar)
-
-            depCounts.clear()
-
-            depCounts[EAssetRegistryDependencyType.Hard] = Ar.readInt32()
-            depCounts[EAssetRegistryDependencyType.Soft] = Ar.readInt32()
-            depCounts[EAssetRegistryDependencyType.SearchableName] = Ar.readInt32()
-            depCounts[EAssetRegistryDependencyType.SoftManage] = Ar.readInt32()
-            depCounts[EAssetRegistryDependencyType.HardManage] =
-                if (version < FAssetRegistryVersion.Type.AddedHardManage) 0 else Ar.readInt32()
-
-            preallocatedDependsNodeDataBuffer[dependsNodeIndex].identifier = assetIdentifier
-            preallocatedDependsNodeDataBuffer[dependsNodeIndex].reserve(depCounts)
-
-            serializeDependencyType(EAssetRegistryDependencyType.Hard, dependsNodeIndex)
-            serializeDependencyType(EAssetRegistryDependencyType.Soft, dependsNodeIndex)
-            serializeDependencyType(EAssetRegistryDependencyType.SearchableName, dependsNodeIndex)
-            serializeDependencyType(EAssetRegistryDependencyType.SoftManage, dependsNodeIndex)
-            serializeDependencyType(EAssetRegistryDependencyType.HardManage, dependsNodeIndex)
-            serializeDependencyType(EAssetRegistryDependencyType.Referencers, dependsNodeIndex)
+        } else {
+            val dependencySectionSize = Ar.readInt64()
+            val dependencySectionEnd = Ar.pos() + dependencySectionSize.toInt()
+            val localNumDependsNodes = Ar.readInt32()
+            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode() }
+            if (localNumDependsNodes > 0) {
+                loadDependencies(Ar)
+            }
+            Ar.seek(dependencySectionEnd)
         }
 
         val serializeHash = version < FAssetRegistryVersion.Type.AddedCookedMD5Hash
         preallocatedPackageDataBuffer = Ar.readTArray { FAssetPackageData(Ar, serializeHash) }
+    }
+
+    private fun loadDependencies(Ar: FArchive) {
+        fun getNodeFromSerializeIndex(index: Int): FDependsNode? {
+            if (index < 0 || preallocatedDependsNodeDataBuffer.size <= index) {
+                return null
+            }
+            return preallocatedDependsNodeDataBuffer[index]
+        }
+
+        for (dependsNode in preallocatedDependsNodeDataBuffer) {
+            dependsNode.serializeLoad(Ar, ::getNodeFromSerializeIndex)
+        }
+    }
+
+    private fun loadDependenciesBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion) {
+        for (dependsNode in preallocatedDependsNodeDataBuffer) {
+            dependsNode.serializeLoadBeforeFlags(Ar, version, preallocatedDependsNodeDataBuffer, preallocatedDependsNodeDataBuffer.size)
+        }
     }
 }

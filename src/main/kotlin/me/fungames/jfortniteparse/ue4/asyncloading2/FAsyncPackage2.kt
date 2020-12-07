@@ -104,7 +104,7 @@ class FAsyncPackage2 {
 
     /** Adds new request ID to the existing package */
     fun addRequestID(id: Int) {
-        if (id > 0) {
+        if (id >= 0) { // MOD: originally id > 0
             if (desc.requestID == INDEX_NONE) {
                 // For debug readability
                 desc.requestID = id
@@ -733,7 +733,7 @@ class FAsyncPackage2 {
         val existingPackage: Package? = null
         if (desc.canBeImported()) {
             packageRef = importStore.globalPackageStore.loadedPackageStore[desc.diskPackageId]
-            linkerRoot = packageRef!!.`package`
+            linkerRoot = packageRef?.`package`
         }
         if (linkerRoot == null) {
             if (existingPackage != null) {

@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import kotlin.math.min
 
-@ExperimentalUnsignedTypes
 class FNameTableArchive : FArchive {
     override var littleEndian: Boolean
         get() = wrappedAr.littleEndian

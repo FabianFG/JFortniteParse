@@ -6,29 +6,24 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
 class UScriptArray : UClass {
     var innerTag: FPropertyTag? = null
-    val contents: MutableList<FPropertyTagType>
-    //val data: MutableList<Any>
-    var innerType: String
+    val contents: MutableList<FProperty>
 
-    constructor(Ar: FAssetArchive, tag: FPropertyTag) {
+    constructor(Ar: FAssetArchive, typeData: FPropertyTypeData) {
         super.init(Ar)
-        this.innerType = tag.innerType.text
-        val elementCount = Ar.readUInt32()
-        if (innerType == "StructProperty" || innerType == "ArrayProperty") {
-            innerTag = if (Ar.useUnversionedPropertySerialization) tag else FPropertyTag(Ar, false)
+        val elementCount = Ar.readInt32()
+        val innerType = typeData.innerType!!
+        val type = innerType.type.text
+        if (!Ar.useUnversionedPropertySerialization && (type == "StructProperty" || type == "ArrayProperty")) {
+            innerTag = FPropertyTag(Ar, false)
         }
-        contents = mutableListOf()
-        for (i in 0u until elementCount) {
-            val content = FPropertyTagType.readFPropertyTagType(Ar, tag.innerType.text, innerTag ?: tag, FPropertyTagType.ReadType.ARRAY)
+        contents = ArrayList(elementCount)
+        for (i in 0 until elementCount) {
+            val content = FProperty.readPropertyValue(Ar, innerTag?.typeData ?: innerType, FProperty.ReadType.ARRAY)
             if (content != null)
                 contents.add(content)
             else
                 logger.warn("Failed to read array content of type $innerType at ${Ar.pos()}, index $i")
         }
-
-        //data = mutableListOf()
-        //contents.forEach { data.add(it.getTagTypeValueLegacy()) }
-
         super.complete(Ar)
     }
 
@@ -37,18 +32,15 @@ class UScriptArray : UClass {
         Ar.writeInt32(contents.size)
         innerTag?.serialize(Ar, false)
         contents.forEach {
-            FPropertyTagType.writeFPropertyTagType(Ar, it, FPropertyTagType.ReadType.ARRAY)
+            FProperty.writePropertyValue(Ar, it, FProperty.ReadType.ARRAY)
         }
         super.completeWrite(Ar)
     }
 
     override fun toString() = "UScriptArray{size=${contents.size}}"
 
-    constructor(innerTag: FPropertyTag?, contents: MutableList<FPropertyTagType>, innerType: String) {
+    constructor(innerTag: FPropertyTag?, contents: MutableList<FProperty>) {
         this.innerTag = innerTag
         this.contents = contents
-        //this.data = mutableListOf()
-        //contents.forEach { this.data.add(it.getTagTypeValueLegacy()) }
-        this.innerType = innerType
     }
 }

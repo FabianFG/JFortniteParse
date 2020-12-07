@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.*
@@ -43,12 +41,9 @@ object JsonSerializer {
         )
     }
 
-    @Suppress("EXPERIMENTAL_API_USAGE")
-    fun FPropertyTagType.toJson(context: Gson, locres: Locres? = null): JsonElement {
-        return this.getTagTypeValueLegacy().toJson(context, locres)
-    }
+    fun FProperty.toJson(context: Gson, locres: Locres? = null) =
+        getTagTypeValueLegacy().toJson(context, locres)
 
-    @Suppress("EXPERIMENTAL_API_USAGE")
     fun Any.toJson(context: Gson, locres: Locres? = null): JsonElement {
         return when (val ob = this) {
             //Basic Tag Types
