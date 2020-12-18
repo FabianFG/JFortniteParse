@@ -76,8 +76,8 @@ object JsonSerializer {
             //Structs
             is FIntPoint -> jsonObject("X" to ob.x, "Y" to ob.y)
             is FGameplayTagContainer -> ob.gameplayTags.toJson(context)
-            is FColor -> jsonObject("R" to ob.r.toShort(), "B" to ob.b.toShort(), "G" to ob.g.toShort(), "A" to ob.a)
-            is FLinearColor -> jsonObject("R" to ob.r, "B" to ob.b, "G" to ob.g, "A" to ob.a)
+            is FColor -> jsonObject("R" to ob.r.toShort(), "G" to ob.g.toShort(), "B" to ob.b.toShort(), "A" to ob.a.toShort())
+            is FLinearColor -> jsonObject("R" to ob.r, "G" to ob.g, "B" to ob.b, "A" to ob.a)
             is FStructFallback -> {
                 val jsOb = JsonObject()
                 ob.properties.forEach { jsOb[it.name.text] = it.prop!!.toJson(context) }

@@ -13,5 +13,6 @@ open class ParserException(message: String?, cause: Throwable? = null) : Excepti
 
 class InvalidAesKeyException(message: String?, cause: Throwable? = null) : ParserException(message, cause)
 class MissingSchemaException(message: String?, cause: Throwable? = null) : ParserException(message, cause)
+class NotFoundException(message: String?, cause: Throwable? = null) : ParserException(message, cause)
 class UnknownPropertyException(message: String?, cause: Throwable? = null) : ParserException(message, cause)
 class UnknownCompressionMethodException(message: String?, cause: Throwable? = null) : RuntimeException(message, cause)

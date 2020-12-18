@@ -1,17 +1,14 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
-import me.fungames.jfortniteparse.ue4.assets.ObjectTypeRegistry
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-
 class FGlobalImportStore {
     //val scriptObjects = mutableMapOf<FPackageObjectIndex, UObject?>()
-    val publicExportObjects = mutableMapOf<FPackageObjectIndex, FPublicExport>()
+    //val publicExportObjects = mutableMapOf<FPackageObjectIndex, FPublicExport>()
     //val objectIndexToPublicExport = mutableMapOf<Int, FPackageObjectIndex>()
     // Temporary initial load data
     val scriptObjectEntries = mutableListOf<FScriptObjectEntry>()
     val scriptObjectEntriesMap = mutableMapOf<FPackageObjectIndex, FScriptObjectEntry>()
 
-    fun getPublicExportObject(globalIndex: FPackageObjectIndex): UObject? {
+    /*fun getPublicExportObject(globalIndex: FPackageObjectIndex): UObject? {
         check(globalIndex.isPackageImport())
         return publicExportObjects[globalIndex]?.obj?.also {
             //check(it != null && !it.isUnreachable()) { it?.fullName ?: "null" }
@@ -43,5 +40,5 @@ class FGlobalImportStore {
         //val objectIndex = GUObjectArray.objectToIndex(obj)
         publicExportObjects[globalIndex] = FPublicExport(obj, packageId)
         //objectIndexToPublicExport[objectIndex] = globalIndex
-    }
+    }*/
 }

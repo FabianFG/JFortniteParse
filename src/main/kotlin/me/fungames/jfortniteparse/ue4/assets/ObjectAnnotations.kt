@@ -7,13 +7,13 @@ annotation class OnlyAnnotated
 
 @Target(AnnotationTarget.FIELD)
 annotation class UProperty(
-    val name: String = "",
-    val skipPrevious: Int = 0,
-    val skipNext: Int = 0,
-    val arrayDim: Int = 1,
-    val enumType: String = "",
-    val innerType: KClass<*> = Object::class,
-    val valueType: KClass<*> = Object::class
+	val name: String = "",
+	val skipPrevious: Int = 0,
+	val skipNext: Int = 0,
+	val arrayDim: Int = 1,
+	val isEnumAsByte: Boolean = true,
+	val innerType: KClass<*> = Object::class,
+	val valueType: KClass<*> = Object::class
 )
 
 @Target(AnnotationTarget.CLASS)

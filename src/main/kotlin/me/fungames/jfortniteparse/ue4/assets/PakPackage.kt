@@ -3,8 +3,6 @@ package me.fungames.jfortniteparse.ue4.assets
 import com.github.salomonbrys.kotson.jsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.fort.exports.FortItemDefinition
-import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariant
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -15,7 +13,6 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
-import me.fungames.jfortniteparse.valorant.exports.*
 import java.io.File
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -43,8 +40,8 @@ class PakPackage(uasset: ByteBuffer,
     val importMap: MutableList<FObjectImport>
     val exportMap: MutableList<FObjectExport>
 
-    override val exports: List<UExport>
-        get() = exportMap.map { it.exportObject.value }
+    override val exportsLazy: List<Lazy<UExport>>
+        get() = exportMap.map { it.exportObject }
 
     init {
         val uassetAr = FAssetArchive(uasset, provider, fileName)
@@ -121,31 +118,6 @@ class PakPackage(uasset: ByteBuffer,
                 obj
             }
         }
-        logger.info("Successfully parsed package: $fileName")
-    }
-
-    fun constructExport(exportType: String) = when (exportType) {
-        // Valorant specific classes
-        "CharacterAbilityUIData" -> CharacterAbilityUIData()
-        "BaseCharacterPrimaryDataAsset_C",
-        "CharacterDataAsset" -> CharacterDataAsset()
-        "CharacterRoleDataAsset" -> CharacterRoleDataAsset()
-        "CharacterRoleUIData" -> CharacterRoleUIData()
-        "CharacterUIData" -> CharacterUIData()
-        // Fortnite specific classes
-        "FortDailyRewardScheduleTokenDefinition" -> FortItemDefinition()
-        else -> {
-            val obj = ObjectTypeRegistry.constructClass(exportType)
-            if (obj.javaClass != UObject::class.java) {
-                obj
-            } else if (exportType.contains("ItemDefinition")) {
-                FortItemDefinition()
-            } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
-                FortCosmeticVariant()
-            } else {
-                UObject()
-            }
-        }
     }
 
     // Load object by FPackageIndex
@@ -173,6 +145,13 @@ class PakPackage(uasset: ByteBuffer,
         if (pkg != null) return pkg.findExport(import.objectName.text, import.className.text)
         else FileProvider.logger.warn { "Failed to load referenced import" }
         return null
+    }
+
+    override fun findExport(objectName: String, className: String?): UExport? {
+        val export = exportMap.firstOrNull {
+            it.objectName.text.equals(objectName, true) && (className == null || it.classIndex.getImportObject()?.objectName?.text == className)
+        }
+        return export?.exportObject?.value
     }
 
     // region FPackageIndex methods

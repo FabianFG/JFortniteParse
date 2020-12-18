@@ -1,11 +1,9 @@
-package me.fungames.jfortniteparse.ue4.asyncloading2
+package me.fungames.jfortniteparse.ue4.objects.uobject
 
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.CityHash.cityHash64
 import java.util.*
 
-// TODO move to uobject
 class FPackageId {
     companion object {
         @JvmStatic

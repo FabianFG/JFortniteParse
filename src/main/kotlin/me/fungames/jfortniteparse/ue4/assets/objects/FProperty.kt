@@ -6,9 +6,9 @@ import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
-import me.fungames.jfortniteparse.ue4.asyncloading2.FExportArchive
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FTextHistory
@@ -152,7 +152,7 @@ sealed class FProperty {
     }
 
     companion object {
-        fun readPropertyValue(Ar: FAssetArchive, typeData: FPropertyTypeData, type: ReadType) =
+        fun readPropertyValue(Ar: FAssetArchive, typeData: PropertyType, type: ReadType) =
             when (val propertyType = typeData.type.text) {
                 "BoolProperty" -> BoolProperty(when (type) {
                     ReadType.NORMAL -> if (Ar.useUnversionedPropertySerialization) Ar.readFlag() else typeData.bool
@@ -211,7 +211,7 @@ sealed class FProperty {
                     if (type == ReadType.NORMAL && typeData.enumName.isNone()) {
                         EnumProperty(FName.NAME_None, null)
                     } else if (type != ReadType.MAP && type != ReadType.ARRAY && Ar.useUnversionedPropertySerialization) {
-                        val ordinal = valueOr({ if (typeData.enumType == "IntProperty") Ar.readInt32() else Ar.read() }, { 0 }, type)
+                        val ordinal = valueOr({ if (typeData.isEnumAsByte) Ar.read() else Ar.readInt32() }, { 0 }, type)
                         val enumClass = typeData.enumClass
                         var enumValue: Enum<*>? = null
                         val fakeName = if (enumClass != null) {

@@ -31,7 +31,6 @@ class FPropertyTag : UClass {
     var structName = FName.NAME_None
     /** Enum name if FByteProperty or FEnumProperty */
     var enumName = FName.NAME_None
-    var enumType: String? = null // custom
     /** Inner type if FArrayProperty, FSetProperty, or FMapProperty */
     var innerType = FName.NAME_None
     /** Value type if UMapProperty */
@@ -46,7 +45,7 @@ class FPropertyTag : UClass {
     var hasPropertyGuid: Boolean = false
     var propertyGuid: FGuid? = null
 
-    var typeData: FPropertyTypeData? = null
+    var typeData: PropertyType? = null
 
     constructor(name: FName) {
         this.name = name
@@ -90,7 +89,7 @@ class FPropertyTag : UClass {
                     propertyGuid = FGuid(Ar)
             }
 
-            typeData = FPropertyTypeData(this)
+            typeData = PropertyType(this)
 
             if (readData) {
                 val pos = Ar.pos()

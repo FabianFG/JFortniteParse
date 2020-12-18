@@ -4,39 +4,24 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.registry.objects.FAssetBundleData
+import me.fungames.jfortniteparse.ue4.registry.objects.FAssetData
 import kotlin.math.min
 
-class FNameTableArchive : FArchive {
-    override var littleEndian: Boolean
-        get() = wrappedAr.littleEndian
-        set(value) { wrappedAr.littleEndian = value }
+class FNameTableArchiveReader : FAssetRegistryArchive {
+    val nameMap: List<FNameEntry>
 
-    private val wrappedAr : FArchive
-    val nameMap : List<FNameEntry>
-
-    constructor(wrappedArchive: FArchive) {
-        this.wrappedAr = wrappedArchive
+    constructor(wrappedArchive: FArchive) : super(wrappedArchive) {
         this.nameMap = serializeNameMap()
     }
 
-    private constructor(wrappedArchive: FArchive, nameMap : List<FNameEntry>) {
-        this.wrappedAr = wrappedArchive
+    private constructor(wrappedArchive: FArchive, nameMap: List<FNameEntry>) : super(wrappedArchive) {
         this.nameMap = nameMap
     }
 
-    override fun clone() = FNameTableArchive(wrappedAr, nameMap)
+    override fun clone() = FNameTableArchiveReader(wrappedAr, nameMap)
 
-    override fun seek(pos: Int) = wrappedAr.seek(pos)
-    override fun size() = wrappedAr.size()
-    override fun pos() = wrappedAr.pos()
-
-    override fun read(b: ByteArray, off: Int, len: Int) = wrappedAr.read(b, off, len)
-    override fun readBuffer(size: Int) = wrappedAr.readBuffer(size)
-
-    override fun skip(n: Long) = wrappedAr.skip(n)
-    override fun printError() = wrappedAr.printError()
-
-    private fun serializeNameMap() : List<FNameEntry> {
+    private fun serializeNameMap(): List<FNameEntry> {
         val nameOffset = wrappedAr.readInt64()
         if (nameOffset > wrappedAr.size())
             throw ParserException("This Name Table was corrupted. Name Offset $nameOffset > Size ${size()}")
@@ -61,7 +46,7 @@ class FNameTableArchive : FArchive {
     }
 
     // This is kinda duplicate of FAssetArchive
-    override fun readFName() : FName {
+    override fun readFName(): FName {
         val nameIndex = this.readInt32()
         val extraIndex = this.readInt32()
         if (nameIndex in nameMap.indices)
@@ -70,11 +55,10 @@ class FNameTableArchive : FArchive {
             throw ParserException("FName could not be read, requested index $nameIndex, name map size ${nameMap.size}", this)
     }
 
-    //Only overriding these to keep optimal performance with FByteArchive
-    override fun readDouble() = wrappedAr.readDouble()
-    override fun readFloat32() = wrappedAr.readFloat32()
-    override fun readInt8() = wrappedAr.readInt8()
-    override fun readInt16() = wrappedAr.readInt16()
-    override fun readInt32() = wrappedAr.readInt32()
-    override fun readInt64() = wrappedAr.readInt64()
+    override fun serializeTagsAndBundles(out: FAssetData) {
+        // This is actually a FAssetDataTagMapSharedView which just contains a FAssetDataTagMap
+        // which is just a TSortedMap<FName, FString>
+        out.tagsAndValues = readTMap { readFName() to readString() }
+        out.taggedAssetBundles = FAssetBundleData(emptyArray())
+    }
 }

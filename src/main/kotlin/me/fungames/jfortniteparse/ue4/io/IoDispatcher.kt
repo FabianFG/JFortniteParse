@@ -339,7 +339,11 @@ class FIoDispatcherImpl(val bIsMultithreaded: Boolean) : Runnable {
 
     fun initializePostSettings(): Boolean {
         fileIoStore.initialize()
-        if (bIsMultithreaded) Thread(this, "IoDispatcher").start()
+        if (bIsMultithreaded) {
+            val thread = Thread(this, "IoDispatcher")
+            thread.isDaemon = true
+            thread.start()
+        }
         return true
     }
 

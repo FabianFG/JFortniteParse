@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 
 class FAsyncPackageDesc2 {
     /** A unique request id for each external call to LoadPackage */

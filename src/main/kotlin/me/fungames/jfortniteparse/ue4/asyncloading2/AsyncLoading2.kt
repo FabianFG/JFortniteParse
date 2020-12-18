@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.get
 import org.slf4j.event.Level
@@ -14,16 +15,6 @@ typealias FCulturePackageMap = Map<String, FSourceToLocalizedPackageIdMap>
 
 // from Serialization/Archive.h
 typealias FExternalReadCallback = (remainingTime: Double) -> Boolean
-// from UObject/UObjectGlobals.h
-/** Async package loading result */
-enum class EAsyncLoadingResult {
-    /** Package failed to load */
-    Failed,
-    /** Package loaded successfully */
-    Succeeded,
-    /** Async loading was canceled */
-    Canceled
-}
 
 fun interface FCompletionCallback {
     fun onCompletion(packageName: FName, loadedPackage: Package?, exceptions: List<Throwable>)
@@ -109,7 +100,7 @@ class FMappedName {
 
     constructor(Ar: FArchive) : this(Ar.readUInt32(), Ar.readUInt32())
 
-    //fun toUnresolvedMinimalName() = FMinimalName(FNameEntryId(index), number.toInt())
+    //fun toUnresolvedMinimalName() = FMinimalName(index, number.toInt())
 
     fun isValid() = index != INVALID_INDEX && number != INVALID_INDEX
 
@@ -144,6 +135,7 @@ class FContainerHeader {
     var names: ByteArray
     var nameHashes: ByteArray
     var packageIds: Array<FPackageId>
+    //var storeEntries: Array<FPackageStoreEntry>
     var storeEntries: ByteArray
     var culturePackageMap: FCulturePackageMap
     var packageRedirects: Array<Pair<FPackageId, FPackageId>>
@@ -154,7 +146,9 @@ class FContainerHeader {
         names = Ar.read(Ar.readInt32())
         nameHashes = Ar.read(Ar.readInt32())
         packageIds = Ar.readTArray { FPackageId(Ar) }
-        storeEntries = Ar.read(Ar.readInt32())
+        val num = Ar.readInt32() // store entries buffer size
+        //storeEntries = Array(packageCount.toInt()) { FPackageStoreEntry(Ar) }
+        storeEntries = Ar.read(num)
         culturePackageMap = Ar.readTMap { Ar.readString() to Ar.readTArray { FPackageId(Ar) to FPackageId(Ar) } }
         packageRedirects = Ar.readTArray { FPackageId(Ar) to FPackageId(Ar) }
     }
@@ -215,6 +209,8 @@ class FPackageObjectIndex {
         check(isExport())
         return typeAndId.toUInt()
     }
+
+    fun type() = EType.values()[(typeAndId shr TYPE_SHIFT).toInt()] // custom
 
     fun value() = typeAndId and INDEX_MASK
 
@@ -356,7 +352,7 @@ class FExportMapEntry {
     var superIndex: FPackageObjectIndex
     var templateIndex: FPackageObjectIndex
     var globalImportIndex: FPackageObjectIndex
-    var objectFlags: UInt
+    var objectFlags: Int
     var filterFlags: UByte
     //uint8 Pad[3] = {};
 
@@ -369,7 +365,7 @@ class FExportMapEntry {
         superIndex = FPackageObjectIndex(Ar)
         templateIndex = FPackageObjectIndex(Ar)
         globalImportIndex = FPackageObjectIndex(Ar)
-        objectFlags = Ar.readUInt32()
+        objectFlags = Ar.readInt32()
         filterFlags = Ar.readUInt8()
         Ar.skip(3)
     }

@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 /**
  * A struct that contains a string reference to an object, either a top level asset or a subobject.
@@ -19,7 +20,7 @@ open class FSoftObjectPath : UClass {
     var subPathString: String
     var owner: Package? = null
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
         assetPathName = Ar.readFName()
         subPathString = Ar.readString()

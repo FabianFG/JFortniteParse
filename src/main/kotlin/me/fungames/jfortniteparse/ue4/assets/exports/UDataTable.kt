@@ -31,11 +31,13 @@ open class UDataTable : UObject {
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
         if (!::rowStructName.isInitialized) {
-            rowStructName = if (Ar.owner is IoPackage) {
-                (Ar.owner as IoPackage).run { RowStruct?.getImportObject()?.findScriptObjectEntry()?.objectName?.toName() }
+            val pkg = Ar.owner
+            val foundName = if (pkg is PakPackage) {
+                pkg.run { RowStruct?.getResource()?.objectName }
             } else {
-                (Ar.owner as PakPackage).run { RowStruct?.getResource()?.objectName }
-            } ?: FName.NAME_None
+                (pkg as IoPackage).resolveObjectIndex(pkg.getImportObject(RowStruct))?.getName()
+            }
+            rowStructName = foundName ?: FName.NAME_None
         }
         val clazz = ObjectTypeRegistry.structs[rowStructName.text]
         if (Ar.useUnversionedPropertySerialization && clazz == null) {

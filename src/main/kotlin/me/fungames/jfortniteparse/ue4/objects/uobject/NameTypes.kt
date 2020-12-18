@@ -3,7 +3,7 @@ package me.fungames.jfortniteparse.ue4.objects.uobject
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.get
 
-private const val NAME_NO_NUMBER_INTERNAL = 0
+const val NAME_NO_NUMBER_INTERNAL = 0
 
 /** Opaque id to a deduplicated name */
 class FNameEntryId(var value: UInt = 0u) {
@@ -11,11 +11,6 @@ class FNameEntryId(var value: UInt = 0u) {
 
     operator fun compareTo(rhs: FNameEntryId) = value.compareTo(rhs.value)
 }
-
-/**
- * This struct is only used during loading/saving and is not part of the runtime costs
- */
-inline class FNameEntrySerialized(val name: String)
 
 /**
  * The minimum amount of data required to reconstruct a name

@@ -9,10 +9,10 @@ import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
-import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyData
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
+import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.asyncloading2.FExportArchive
+import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
@@ -20,11 +20,11 @@ import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.indexOfFirst
 import java.util.*
 
-class FUnversionedPropertySerializer(val data: FPropertyData, val arrayIndex: Int) {
+class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int) {
     fun deserialize(Ar: FAssetArchive, type: ReadType): FPropertyTag {
         if (GExportArchiveCheckDummyName && Ar is FExportArchive) {
-            data.name?.let { Ar.checkDummyName(it) }
-            val typeInfo = data.type
+            Ar.checkDummyName(info.name)
+            val typeInfo = info.type
             setOf(
                 typeInfo.type,
                 typeInfo.structType,
@@ -33,7 +33,7 @@ class FUnversionedPropertySerializer(val data: FPropertyData, val arrayIndex: In
                 typeInfo.valueType?.type
             ).forEach { if (it != null) Ar.checkDummyName(it.text) }
         }
-        val tag = FPropertyTag(FName.dummy(data.name!!))
+        val tag = FPropertyTag(FName.dummy(info.name))
         /*if (true) {
             tag.name = FName.dummy(data.name!!)
             tag.type = data.type.type
@@ -45,11 +45,11 @@ class FUnversionedPropertySerializer(val data: FPropertyData, val arrayIndex: In
             tag.valueType = data.type.valueType?.type ?: FName.NAME_None
         }*/
         tag.arrayIndex = arrayIndex
-        tag.prop = FProperty.readPropertyValue(Ar, data.type, type)
+        tag.prop = FProperty.readPropertyValue(Ar, info.type, type)
         return tag
     }
 
-    override fun toString() = (data.field?.type?.simpleName ?: data.type.toString()) + ' ' + data.name
+    override fun toString() = (info.field?.type?.simpleName ?: info.type.toString()) + ' ' + info.name
 }
 
 /**
@@ -69,7 +69,7 @@ class FUnversionedStructSchema(struct: Class<*>) {
                     continue
                 }
                 index += ann?.skipPrevious ?: 0
-                val propertyInfo = FPropertyData(field, ann)
+                val propertyInfo = PropertyInfo(field, ann)
                 for (arrayIdx in 0 until propertyInfo.arrayDim) {
                     if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.name}")
                     serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)

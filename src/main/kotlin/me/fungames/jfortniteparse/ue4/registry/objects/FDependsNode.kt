@@ -40,8 +40,7 @@ class FDependsNode {
             val sortIndexes = mutableListOf<Int>()
             var numFlagBits = 0
 
-            val n = Ar.readInt32()
-            val inDependencies = Ar.readTArray(n) { Ar.readInt32() }
+            val inDependencies = Ar.readTArray { Ar.readInt32() }
             val numDependencies = inDependencies.size
             if (outFlagBits != null) {
                 numFlagBits = flagSetWidth * numDependencies

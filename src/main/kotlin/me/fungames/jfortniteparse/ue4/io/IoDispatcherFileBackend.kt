@@ -145,7 +145,11 @@ class FFileIoStore : Runnable {
             firstFreeCompressionContext = context
         }
 
-        if (bIsMultithreaded) Thread(this, "IoService").start()
+        if (bIsMultithreaded) {
+            val thread = Thread(this, "IoService")
+            thread.isDaemon = true
+            thread.start()
+        }
     }
 
     fun mount(environment: FIoStoreEnvironment, encryptionKeyGuid: FGuid, encryptionKey: ByteArray?): FIoContainerId {

@@ -9,7 +9,7 @@ class UScriptMap : UClass {
     var numKeysToRemove: Int
     val mapData: MutableMap<FProperty, FProperty>
 
-    constructor(Ar: FAssetArchive, typeData: FPropertyTypeData) {
+    constructor(Ar: FAssetArchive, typeData: PropertyType) {
         super.init(Ar)
         numKeysToRemove = Ar.readInt32()
         if (numKeysToRemove != 0) {

@@ -10,12 +10,13 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntryId
 import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.await
 import me.fungames.jfortniteparse.util.get
 import java.util.concurrent.CompletableFuture
 
 class FNameMap {
-    internal val nameEntries = mutableListOf<String>()
+    internal var nameEntries = emptyList<String>()
     private var nameMapType = FMappedName.EType.Global
 
     fun loadGlobal(ioDispatcher: FIoDispatcher) {
@@ -45,12 +46,12 @@ class FNameMap {
     fun size() = nameEntries.size
 
     fun load(nameBuffer: ByteArray, hashBuffer: ByteArray, nameMapType: FMappedName.EType) {
-        loadNameBatch(nameEntries, nameBuffer, hashBuffer)
+        nameEntries = loadNameBatch(FByteArchive(nameBuffer), FByteArchive(hashBuffer))
         this.nameMapType = nameMapType
     }
 
     fun load(nameBuffer: FArchive, hashBuffer: FArchive, nameMapType: FMappedName.EType) {
-        loadNameBatch(nameEntries, nameBuffer, hashBuffer)
+        nameEntries = loadNameBatch(nameBuffer, hashBuffer)
         this.nameMapType = nameMapType
     }
 

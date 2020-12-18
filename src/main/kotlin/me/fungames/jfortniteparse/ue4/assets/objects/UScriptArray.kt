@@ -8,7 +8,7 @@ class UScriptArray : UClass {
     var innerTag: FPropertyTag? = null
     val contents: MutableList<FProperty>
 
-    constructor(Ar: FAssetArchive, typeData: FPropertyTypeData) {
+    constructor(Ar: FAssetArchive, typeData: PropertyType) {
         super.init(Ar)
         val elementCount = Ar.readInt32()
         val innerType = typeData.innerType!!

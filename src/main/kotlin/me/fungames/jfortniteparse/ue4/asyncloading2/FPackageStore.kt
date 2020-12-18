@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.asyncloading2
 
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_High
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.await
 import org.slf4j.Logger
@@ -28,11 +29,11 @@ class FPackageStore(
 
     val importStore = FGlobalImportStore()
 
-    /**
-     * Packages in active loading or completely loaded packages, with desc.diskPackageName as key.
-     * Does not track temp packages with custom UPackage names, since they are never imported by other packages.
-     */
-    val loadedPackageStore = mutableMapOf<FPackageId, FLoadedPackageRef>() /*FLoadedPackageStore*/
+    ///**
+    // * Packages in active loading or completely loaded packages, with desc.diskPackageName as key.
+    // * Does not track temp packages with custom UPackage names, since they are never imported by other packages.
+    // */
+    //val loadedPackageStore = mutableMapOf<FPackageId, FLoadedPackageRef>() /*FLoadedPackageStore*/
     var scriptArcsCount = 0
 
     fun setupCulture() {
@@ -102,11 +103,12 @@ class FPackageStore(
                     loadedContainer.packageCount = containerHeader.packageCount
                     loadedContainer.storeEntries = containerHeader.storeEntries
                     synchronized(packageNameMapsCritical) {
-                        val storeEntries = FByteArchive(loadedContainer.storeEntries).readTArray(loadedContainer.packageCount.toInt()) { FPackageStoreEntry(it) }
+                        val storeEntriesAr = FByteArchive(loadedContainer.storeEntries)
+                        val storeEntries = Array(loadedContainer.packageCount.toInt()) { FPackageStoreEntry(storeEntriesAr) }
 
-                        for ((index, containerEntry) in storeEntries.withIndex()) {
+                        storeEntries.forEachIndexed { index, containerEntry ->
                             val packageId = containerHeader.packageIds[index]
-                            storeEntriesMap.getOrPut(packageId) { containerEntry }
+                            storeEntriesMap[packageId] = containerEntry
                         }
 
                         var localizedPackages: FSourceToLocalizedPackageIdMap? = null
@@ -157,11 +159,10 @@ class FPackageStore(
                 check(redirectId.isValid())
                 val redirectEntry = storeEntriesMap[redirectId]!!
                 storeEntriesMap[sourceId] = redirectEntry
-                //TODO storeEntriesMap.getOrPut(sourceId) { redirectEntry }
             }
 
             for (storeEntry in storeEntriesMap.values) {
-                for ((index, importedPackageId) in storeEntry.importedPackages.withIndex()) {
+                storeEntry.importedPackages.forEachIndexed { index, importedPackageId ->
                     redirects[importedPackageId]?.also { storeEntry.importedPackages[index] = it }
                 }
             }
@@ -196,6 +197,7 @@ class FPackageStore(
     class FLoadedContainer {
         val containerNameMap = FNameMap()
         lateinit var storeEntries: ByteArray
+        //lateinit var storeEntries: Array<FPackageStoreEntry>
         var packageCount = 0u
         var order = 0
         var bValid = false

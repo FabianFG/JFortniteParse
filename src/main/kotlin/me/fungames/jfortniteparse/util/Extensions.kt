@@ -60,6 +60,7 @@ fun BytePointer.toInt64() = FByteArchive(byteArrayOf(this[0],
 
 inline operator fun <T> List<T>.get(index: UInt) = get(index.toInt())
 inline operator fun <T> Array<T>.get(index: UInt) = get(index.toInt())
+inline operator fun ByteArray.get(index: UInt) = get(index.toInt())
 
 fun <T> Future<T>.await(): T {
     try {

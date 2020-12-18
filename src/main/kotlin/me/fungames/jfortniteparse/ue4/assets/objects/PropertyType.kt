@@ -1,11 +1,12 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
-import me.fungames.jfortniteparse.ue4.assets.UProperty
+import com.google.gson.JsonObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
@@ -13,57 +14,31 @@ import java.lang.reflect.Field
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
 
-class FPropertyData {
-    @JvmField var name: String? = null
-    @JvmField var type = FPropertyTypeData()
-    @JvmField var arrayDim = 1
-
-    var field: Field? = null
-
-    constructor()
-
-    constructor(field: Field, ann: UProperty?) {
-        this.field = field
-
-        if (ann != null) {
-            name = ann.name.takeIf { it.isNotEmpty() }
-            arrayDim = ann.arrayDim
-            type.enumType = ann.enumType.takeIf { it.isNotEmpty() }
-        }
-        if (name == null) {
-            name = field.name
-        }
-
-        type.setupWithField(field)
-    }
-}
-
 @Suppress("UNCHECKED_CAST")
-class FPropertyTypeData {
-    @JvmField var type = FName.NAME_None
-    @JvmField var structType = FName.NAME_None
+class PropertyType(
+    @JvmField var type: FName) {
+    @JvmField var structType = NAME_None
     @JvmField var bool = false
-    @JvmField var enumName = FName.NAME_None
-    @JvmField var enumType: String? = null
-    @JvmField var innerType: FPropertyTypeData? = null
-    @JvmField var valueType: FPropertyTypeData? = null
+    @JvmField var enumName = NAME_None
+    @JvmField var isEnumAsByte = true
+    @JvmField var innerType: PropertyType? = null
+    @JvmField var valueType: PropertyType? = null
     var structClass: Class<*>? = null
     var enumClass: Class<out Enum<*>>? = null
 
-    constructor()
+    constructor() : this(NAME_None)
 
-    constructor(tag: FPropertyTag) {
+    constructor(json: JsonObject) : this() {
+
+    }
+
+    constructor(tag: FPropertyTag) : this(tag.name) {
         type = tag.type
         structType = tag.structName
         bool = tag.boolVal
         enumName = tag.enumName
-        enumType = tag.enumType
-        innerType = FPropertyTypeData().apply {
-            type = tag.innerType
-        }
-        valueType = FPropertyTypeData().apply {
-            type = tag.valueType
-        }
+        innerType = PropertyType(tag.innerType)
+        valueType = PropertyType(tag.valueType)
     }
 
     fun setupWithField(field: Field) {
@@ -99,10 +74,10 @@ class FPropertyTypeData {
         val type = typeArgs[idx] as Class<*>
         val propertyType = classToPropertyType(type)
         if (applyToValue) {
-            valueType = FPropertyTypeData()
+            valueType = PropertyType()
             valueType
         } else {
-            innerType = FPropertyTypeData()
+            innerType = PropertyType()
             innerType
         }!!.apply {
             this.type = propertyType

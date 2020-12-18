@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
@@ -9,6 +10,7 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRealCurve
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurve
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurve
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
@@ -29,6 +31,7 @@ enum class ECurveTableMode {
     RichCurves
 }
 
+@OnlyAnnotated
 class UCurveTable : UObject() {
     /**
      * Map of name of row to row data structure.
@@ -56,17 +59,17 @@ class UCurveTable : UObject() {
         }
         rowMap = Ar.readTMap(numRows) {
             Ar.readFName() to when (curveTableMode) {
-                ECurveTableMode.Empty -> TODO()
-                ECurveTableMode.SimpleCurves -> FSimpleCurve().apply {
-                    val properties = mutableListOf<FPropertyTag>()
-                    if (Ar.useUnversionedPropertySerialization) {
-                        deserializeUnversionedProperties(properties, javaClass, Ar)
-                    } else {
-                        deserializeTaggedProperties(properties, Ar)
-                    }
-                    mapToClass(properties, javaClass, this)
+                ECurveTableMode.Empty -> throw ParserException("CurveTableMode == ECurveTableMode::Empty, unsupported")
+                ECurveTableMode.SimpleCurves -> FSimpleCurve()
+                ECurveTableMode.RichCurves -> FRichCurve()
+            }.apply {
+                val properties = mutableListOf<FPropertyTag>()
+                if (Ar.useUnversionedPropertySerialization) {
+                    deserializeUnversionedProperties(properties, javaClass, Ar)
+                } else {
+                    deserializeTaggedProperties(properties, Ar)
                 }
-                ECurveTableMode.RichCurves -> TODO() // RichCurve()
+                mapToClass(properties, javaClass, this)
             }
         }
         super.complete(Ar)

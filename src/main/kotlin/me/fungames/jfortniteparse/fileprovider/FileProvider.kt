@@ -1,10 +1,13 @@
 package me.fungames.jfortniteparse.fileprovider
 
+import me.fungames.jfortniteparse.exceptions.NotFoundException
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
@@ -24,10 +27,10 @@ abstract class FileProvider {
     /**
      * @return the name of the game that is loaded by the provider
      */
-    open fun getGameName() = files.keys.firstOrNull { it.substringBefore('/').endsWith("game") }?.substringBefore("game") ?: ""
+    open val gameName get() = files.keys.firstOrNull { it.substringBefore('/').endsWith("game") }?.substringBefore("game") ?: ""
 
     /**
-     * Searches for a gamefile by its path
+     * Searches for a game file by its path
      * @param filePath the path to search for
      * @return the game file or null if it wasn't found
      */
@@ -42,12 +45,21 @@ abstract class FileProvider {
     abstract fun loadGameFile(filePath: String): Package
 
     /**
-     * Loads a UE4 Package
+     * Loads a UE4 package
      * @param file the game file to load
      * @return the parsed package or null if the file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
     abstract fun loadGameFile(file: GameFile): Package
+
+    /**
+     * Loads a UE4 package from I/O Store by package ID.
+     * @param packageId the package ID to load.
+     * @return the parsed package
+     * @throws NotFoundException if the package was not found in loaded I/O store containers
+     */
+    @Throws(ParserException::class)
+    abstract fun loadGameFile(packageId: FPackageId): IoPackage
 
     // Load object by object path string
     inline fun <reified T> loadObject(objectPath: String?): T? {
@@ -67,7 +79,7 @@ abstract class FileProvider {
             objectName = packagePath.substring(dotIndex + 1)
             packagePath = packagePath.substring(0, dotIndex)
         }
-        val pkg = loadGameFile(packagePath) // TODO allow reading umaps via this route, currently fixPath() only appends .uasset
+        val pkg = loadGameFile(packagePath) // TODO allow reading umaps via this route, currently fixPath() only appends .uasset. EDIT(2020-12-15): This works with IoStore assets, but not PAK assets.
         return pkg.findExport(objectName)
     }
 
@@ -114,7 +126,7 @@ abstract class FileProvider {
 
     open fun loadLocres(ln: FnLanguage): Locres? {
         val files = files.values
-            .filter { it.path.startsWith("${getGameName()}Game/Content/Localization", ignoreCase = true) && it.path.contains("/${ln.languageCode}/", ignoreCase = true) && it.path.endsWith(".locres") }
+            .filter { it.path.startsWith("${gameName}Game/Content/Localization", ignoreCase = true) && it.path.contains("/${ln.languageCode}/", ignoreCase = true) && it.path.endsWith(".locres") }
         if (files.isEmpty()) return null
         var first: Locres? = null
         files.forEach { file ->
@@ -174,7 +186,7 @@ abstract class FileProvider {
         if (!path.endsWith('/') && !path.substringAfterLast('/').contains('.'))
             path += ".uasset"
         if (path.startsWith("game/")) {
-            val gameName = getGameName()
+            val gameName = gameName
             path = when {
                 path.startsWith("game/content/") -> path.replaceFirst("game/content/", gameName + "game/content/")
                 path.startsWith("game/config/") -> path.replaceFirst("game/config/", gameName + "game/config/")
@@ -194,6 +206,7 @@ abstract class FileProvider {
         return path.toLowerCase()
     }
 
+    // WARNING: This does convert FortniteGame/Plugins/GameFeatures/GameFeatureName/Content/Package into /GameFeatureName/Package
     fun compactFilePath(path: String): String {
         if (path[0] == '/') {
             return path
