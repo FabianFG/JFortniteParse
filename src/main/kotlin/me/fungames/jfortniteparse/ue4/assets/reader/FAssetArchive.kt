@@ -4,8 +4,10 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.nio.ByteBuffer
 
@@ -61,6 +63,8 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
         handleBadNameIndex(nameIndex)
         return FName()
     }
+
+    fun <T : UObject> readObject() = FPackageIndex(this).let { owner.findObject<T>(it) }
 
     override fun printError() = "FAssetArchive Info: pos $pos, stopper $size, package $pkgName"
 }

@@ -3,9 +3,9 @@ package me.fungames.jfortniteparse.ue4.assets
 import com.github.salomonbrys.kotson.jsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
+import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -40,10 +40,11 @@ class PakPackage(uasset: ByteBuffer,
     val importMap: MutableList<FObjectImport>
     val exportMap: MutableList<FObjectExport>
 
-    override val exportsLazy: List<Lazy<UExport>>
+    override val exportsLazy: List<Lazy<UObject>>
         get() = exportMap.map { it.exportObject }
 
     init {
+        name = provider?.compactFilePath(fileName)?.substringBeforeLast('.') ?: fileName
         val uassetAr = FAssetArchive(uasset, provider, fileName)
         val uexpAr = FAssetArchive(uexp, provider, fileName)
         val ubulkAr = if (ubulk != null) FAssetArchive(ubulk, provider, fileName) else null
@@ -102,12 +103,10 @@ class PakPackage(uasset: ByteBuffer,
                 }?.getImportObject()?.objectName ?: throw ParserException("Could not find class name for ${export.objectName}")
                 uexpAr.seekRelative(export.serialOffset.toInt())
                 val validPos = (uexpAr.pos() + export.serialSize).toInt()
-                val obj = constructExport(exportType.text)
+                val obj = constructExport(export.classIndex.load<UStruct>())
                 obj.export = export
-                obj.exportType = export.classIndex.getResource()!!.objectName.text
                 obj.name = export.objectName.text
-                obj.owner = this
-                obj.readGuid = true
+                obj.outer = export.outerIndex.load() ?: this
                 obj.deserialize(uexpAr, validPos)
                 if (validPos != uexpAr.pos()) {
                     logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
@@ -121,37 +120,40 @@ class PakPackage(uasset: ByteBuffer,
     }
 
     // Load object by FPackageIndex
-    override fun loadObjectGeneric(index: FPackageIndex?): UExport? {
-        if (index == null || index.isNull()) return null
-        val import = index.getImportObject()
-        if (import != null) return loadImport(import)
-        val export = index.getExportObject()
-        if (export != null) return export.exportObject.value
-        return null
-    }
+    override fun <T : UObject> findObject(index: FPackageIndex?) = when {
+        index == null || index.isNull() -> null
+        index.isImport() -> findImport(importMap.getOrNull(index.toImport()))
+        index.isExport() -> exportMap.getOrNull(index.toExport())?.exportObject
+        else -> null
+    } as Lazy<T>?
 
     // Load object by FObjectImport
     inline fun <reified T> loadImport(import: FObjectImport?): T? {
         if (import == null) return null
-        val loaded = loadImport(import) ?: return null
+        val loaded = findImport(import)?.value ?: return null
         return if (loaded is T) loaded else null
     }
 
-    fun loadImport(import: FObjectImport?): UExport? {
+    fun findImport(import: FObjectImport?): Lazy<UObject>? {
+        if (import == null) return null
+        if (import.classPackage.text.startsWith("/Script/")) {
+            val structName = import.objectName
+            return lazy { UScriptStruct(ObjectTypeRegistry.classes[structName.text] ?: ObjectTypeRegistry.structs[structName.text], structName) }
+        }
         //The needed export is located in another asset, try to load it
-        if (import == null || import.outerIndex.getImportObject() == null) return null
+        if (import.outerIndex.getImportObject() == null) return null
         check(provider != null) { "Loading an import requires a file provider" }
-        val pkg = provider.loadGameFile(import.outerIndex.getImportObject()!!.objectName.text)
-        if (pkg != null) return pkg.findExport(import.objectName.text, import.className.text)
+        val pkg = import.outerIndex.getImportObject()?.run { provider.loadGameFile(objectName.text) }
+        if (pkg != null) return pkg.findObjectByName(import.objectName.text, import.className.text)
         else FileProvider.logger.warn { "Failed to load referenced import" }
         return null
     }
 
-    override fun findExport(objectName: String, className: String?): UExport? {
+    override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
         val export = exportMap.firstOrNull {
             it.objectName.text.equals(objectName, true) && (className == null || it.classIndex.getImportObject()?.objectName?.text == className)
         }
-        return export?.exportObject?.value
+        return export?.exportObject
     }
 
     // region FPackageIndex methods

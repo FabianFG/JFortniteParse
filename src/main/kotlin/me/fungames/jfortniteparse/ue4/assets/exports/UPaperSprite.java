@@ -18,9 +18,9 @@ public class UPaperSprite extends UObject {
     public FPackageIndex AlternateMaterial;
     public List<FPaperSpriteSocket> Sockets;
     public ESpriteCollisionMode SpriteCollisionDomain;
-    public float PixelsPerUnrealUnit;
+    public Float PixelsPerUnrealUnit;
     public FPackageIndex BodySetup;
-    public int AlternateMaterialSplitIndex;
+    public Integer AlternateMaterialSplitIndex;
     public List<FVector4> BakedRenderData;
 
     @UStruct

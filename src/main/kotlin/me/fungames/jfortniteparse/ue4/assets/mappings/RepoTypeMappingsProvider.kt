@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.mappings
 
 import com.google.gson.JsonParser
-import jdk.nashorn.internal.runtime.ParserException
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.util.await
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream

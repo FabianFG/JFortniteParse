@@ -7,7 +7,6 @@ import com.google.gson.reflect.TypeToken
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UProperty
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
@@ -60,7 +59,8 @@ fun <T> writePropertyToField(prop: FPropertyTag, field: Field, obj: T) {
 
 private fun isContentValid(content: Any?, name: String, clazz: Class<*>): Boolean {
     if (content == null) {
-        UClass.logger.warn { "Failed to get tag type value for field $name of type ${clazz.simpleName}" }
+        if (clazz != Lazy::class.java)
+            UClass.logger.warn { "Failed to get tag type value for field $name of type ${clazz.simpleName}" }
         return false
     }
     val isValid = when {
@@ -119,7 +119,7 @@ private fun getBoundFields(type: TypeToken<*>, raw: Class<*>): Map<String, Field
     while (raw != Any::class.java) {
         val fields = raw.declaredFields
         for (field in fields) {
-            if (field.declaringClass == UClass::class.java || field.declaringClass == UExport::class.java || field.declaringClass == UObject::class.java) {
+            if (field.declaringClass == UClass::class.java || field.declaringClass == UObject::class.java || field.declaringClass == UObject::class.java) {
                 continue
             }
             ReflectionAccessor.getInstance().makeAccessible(field)

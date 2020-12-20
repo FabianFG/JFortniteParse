@@ -14,43 +14,44 @@ import java.util.List;
 public class FortMontageItemDefinitionBase extends AthenaCosmeticItemDefinition {
     public FSoftObjectPath Animation;
     public FSoftObjectPath AnimationFemaleOverride;
-    public List<FFortEmoteMapping> AnimationOverrides;
+    public List<FortEmoteMapping> AnimationOverrides;
     public Integer PreviewLoops;
     public Float PreviewLength;
+    public Boolean bIncludeAudioWithAnimDuration;
     public Float EmoteCooldownSecs;
     public Boolean bMontageContainsFacialAnimation;
     public Boolean bPlayRandomSection;
-    public List<FSectionNameAndWeight> PlayRandomSectionByName;
+    public List<SectionNameAndWeight> PlayRandomSectionByName;
     public Boolean bSwitchToHarvestingToolOnUse;
     public Boolean bHolsterWeapon;
     public Boolean bHolsterWeaponIfDualWieldPickaxe;
-    public List<FMontageItemAccessData> AccessData;
-    public List<FMontageVisibilityData> VisibilityData;
+    public List<MontageItemAccessData> AccessData;
+    public List<MontageVisibilityData> VisibilityData;
     public FGameplayTagContainer EmoteWheelExclusiveTags;
     public FSoftObjectPath RequiredEmoteParent;
     public FGameplayTagContainer TagsWhichIndicateEmoteParent;
 
     @UStruct
-    public static class FFortEmoteMapping {
+    public static class FortEmoteMapping {
         public EFortCustomBodyType BodyType;
         public EFortCustomGender Gender;
         public FSoftObjectPath EmoteMontage;
     }
 
     @UStruct
-    public static class FSectionNameAndWeight {
+    public static class SectionNameAndWeight {
         public FName SectionName;
         public Float SectionWeight;
     }
 
     @UStruct
-    public static class FMontageItemAccessData {
+    public static class MontageItemAccessData {
         public FGameplayTag AccessTag;
         public FPackageIndex /*FortItemAccessTokenType*/ AccessToken;
     }
 
     @UStruct
-    public static class FMontageVisibilityData {
+    public static class MontageVisibilityData {
         public EMontageVisibilityRule Rule;
         public FPackageIndex /*FortItemDefinition*/ Item;
     }

@@ -114,7 +114,13 @@ abstract class FArchive : Cloneable, InputStream() {
 
     fun readFloat16() = readUInt16().toFloat16()
 
-    fun readBoolean() = readInt32() != 0
+    fun readBoolean(): Boolean {
+        val int = readInt32()
+        if (int != 0 && int != 1) {
+            throw ParserException("Invalid bool value ($int)")
+        }
+        return int != 0
+    }
 
     fun readFlag() = readUInt8() != 0.toUByte()
 

@@ -1,21 +1,23 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import kotlin.Lazy;
 import me.fungames.jfortniteparse.fort.objects.FortItemQuantityPair;
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataAsset;
+import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable;
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
 import java.util.List;
 
 public class FortCollectionBookData extends UDataAsset {
-    public FPackageIndex /*DataTable*/ PageCategoryData;
-    public FPackageIndex /*DataTable*/ PageData;
-    public FPackageIndex /*DataTable*/ SectionData;
-    public FPackageIndex /*DataTable*/ SlotData;
-    public FPackageIndex /*DataTable*/ SlotSourceData;
-    public FPackageIndex /*DataTable*/ XPWeightData;
-    public FPackageIndex /*CurveFloat*/ SlotRarityFactorData;
-    public FPackageIndex /*DataTable*/ BookXPData;
+    public Lazy<UDataTable> PageCategoryData;
+    public Lazy<UDataTable> PageData;
+    public Lazy<UDataTable> SectionData;
+    public Lazy<UDataTable> SlotData;
+    public Lazy<UDataTable> SlotSourceData;
+    public Lazy<UDataTable> XPWeightData;
+    public Lazy<UCurveFloat> SlotRarityFactorData;
+    public Lazy<UDataTable> BookXPData;
     public List<FortItemQuantityPair> UnslotCost;
     public FGameplayTagContainer UnslotCatalysts;
 }

@@ -103,10 +103,7 @@ class FPackageStore(
                     loadedContainer.packageCount = containerHeader.packageCount
                     loadedContainer.storeEntries = containerHeader.storeEntries
                     synchronized(packageNameMapsCritical) {
-                        val storeEntriesAr = FByteArchive(loadedContainer.storeEntries)
-                        val storeEntries = Array(loadedContainer.packageCount.toInt()) { FPackageStoreEntry(storeEntriesAr) }
-
-                        storeEntries.forEachIndexed { index, containerEntry ->
+                        loadedContainer.storeEntries.forEachIndexed { index, containerEntry ->
                             val packageId = containerHeader.packageIds[index]
                             storeEntriesMap[packageId] = containerEntry
                         }
@@ -196,8 +193,7 @@ class FPackageStore(
 
     class FLoadedContainer {
         val containerNameMap = FNameMap()
-        lateinit var storeEntries: ByteArray
-        //lateinit var storeEntries: Array<FPackageStoreEntry>
+        lateinit var storeEntries: Array<FPackageStoreEntry>
         var packageCount = 0u
         var order = 0
         var bValid = false

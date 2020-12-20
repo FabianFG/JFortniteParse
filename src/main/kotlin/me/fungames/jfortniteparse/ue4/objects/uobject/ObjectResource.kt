@@ -3,7 +3,7 @@ package me.fungames.jfortniteparse.ue4.objects.uobject
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
@@ -71,7 +71,7 @@ class FPackageIndex : UClass {
     inline fun isNull() = index == 0
 
     /** Check that this is an import and return the index into the import map **/
-    inline fun toImport(): Int {
+    /*inline*/ fun toImport(): Int {
         check(isImport())
         return -index - 1
     }
@@ -121,9 +121,7 @@ class FPackageIndex : UClass {
         else -> "null"
     }
 
-    inline fun <reified T> load() = owner?.loadObject<T>(this)
-
-    fun load() = owner?.loadObjectGeneric(this)
+    fun <T : UObject> load() = owner?.loadObject<T>(this)
 }
 
 /**
@@ -159,7 +157,7 @@ class FObjectExport : FObjectResource {
     var createBeforeSerializationDependencies: Int
     var serializationBeforeCreateDependencies: Int
     var createBeforeCreateDependencies: Int
-    @Transient lateinit var exportObject: Lazy<UExport>
+    @Transient lateinit var exportObject: Lazy<UObject>
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)

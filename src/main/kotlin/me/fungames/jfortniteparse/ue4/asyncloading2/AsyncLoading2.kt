@@ -63,7 +63,7 @@ class FMappedName {
 
         @JvmStatic
         fun create(index: UInt, number: UInt, type: EType): FMappedName {
-            check(index <= Int.MAX_VALUE.toUInt())
+            check(index <= Int.MAX_VALUE.toUInt()) { "Bad name index" }
             return FMappedName((type.ordinal.toUInt() shl TYPE_SHIFT.toInt()) or index, number)
         }
 
@@ -135,8 +135,7 @@ class FContainerHeader {
     var names: ByteArray
     var nameHashes: ByteArray
     var packageIds: Array<FPackageId>
-    //var storeEntries: Array<FPackageStoreEntry>
-    var storeEntries: ByteArray
+    var storeEntries: Array<FPackageStoreEntry>
     var culturePackageMap: FCulturePackageMap
     var packageRedirects: Array<Pair<FPackageId, FPackageId>>
 
@@ -146,9 +145,10 @@ class FContainerHeader {
         names = Ar.read(Ar.readInt32())
         nameHashes = Ar.read(Ar.readInt32())
         packageIds = Ar.readTArray { FPackageId(Ar) }
-        val num = Ar.readInt32() // store entries buffer size
-        //storeEntries = Array(packageCount.toInt()) { FPackageStoreEntry(Ar) }
-        storeEntries = Ar.read(num)
+        val storeEntriesNum = Ar.readInt32()
+        val storeEntriesEnd = Ar.pos() + storeEntriesNum
+        storeEntries = Array(packageCount.toInt()) { FPackageStoreEntry(Ar) }
+        Ar.seek(storeEntriesEnd)
         culturePackageMap = Ar.readTMap { Ar.readString() to Ar.readTArray { FPackageId(Ar) to FPackageId(Ar) } }
         packageRedirects = Ar.readTArray { FPackageId(Ar) to FPackageId(Ar) }
     }
@@ -352,7 +352,7 @@ class FExportMapEntry {
     var superIndex: FPackageObjectIndex
     var templateIndex: FPackageObjectIndex
     var globalImportIndex: FPackageObjectIndex
-    var objectFlags: Int
+    var objectFlags: UInt
     var filterFlags: UByte
     //uint8 Pad[3] = {};
 
@@ -365,7 +365,7 @@ class FExportMapEntry {
         superIndex = FPackageObjectIndex(Ar)
         templateIndex = FPackageObjectIndex(Ar)
         globalImportIndex = FPackageObjectIndex(Ar)
-        objectFlags = Ar.readInt32()
+        objectFlags = Ar.readUInt32()
         filterFlags = Ar.readUInt8()
         Ar.skip(3)
     }

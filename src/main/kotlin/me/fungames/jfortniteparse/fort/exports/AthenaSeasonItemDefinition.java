@@ -1,12 +1,13 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import kotlin.Lazy;
 import me.fungames.jfortniteparse.fort.objects.AthenaRewardItemReference;
 import me.fungames.jfortniteparse.fort.objects.PrimaryAssetId;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
+import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -14,9 +15,9 @@ import java.util.List;
 public class AthenaSeasonItemDefinition extends FortAccountItemDefinition {
     public Boolean bXpOnlySeason;
     public Boolean bUseAccoladePunchCard;
-    public FPackageIndex /*DataTable*/ SeasonXpOnlyExtendedCurve;
-    public FPackageIndex /*FortMedalsPunchCardItemDefinition*/ DailyPunchCard;
-    public FPackageIndex /*FortRepeatableDailiesCardItemDefinition*/ RepeatableDailiesCard;
+    public Lazy<UDataTable> SeasonXpOnlyExtendedCurve;
+    public Lazy<FortMedalsPunchCardItemDefinition> DailyPunchCard;
+    public Lazy<FortRepeatableDailiesCardItemDefinition> RepeatableDailiesCard;
     public Integer RestedXpDailyGrant;
     public Integer RestedXpMaxAccrue;
     public Float RestedXpMultiplier;
@@ -27,8 +28,8 @@ public class AthenaSeasonItemDefinition extends FortAccountItemDefinition {
     public Integer NumAdditionalBookLevels;
     public EAthenaSeasonShopVisibility SeasonShopVisibility;
     public EAthenaChallengeTabVisibility ChallengesVisibility;
-    public FPackageIndex /*DataTable*/ SeasonXpCurve;
-    public FPackageIndex /*DataTable*/ BookXpCurve;
+    public Lazy<UDataTable> SeasonXpCurve;
+    public Lazy<UDataTable> BookXpCurve;
     public String SeasonStorefront;
     public String BattlePassOfferId;
     public List<String> BattlePassOfferIds;
@@ -49,11 +50,11 @@ public class AthenaSeasonItemDefinition extends FortAccountItemDefinition {
     public AthenaRewardSchedule AdditionalBookSchedule;
     public FGameplayTag BattlePassAdditionalItemContentTag;
     public AthenaSeasonBannerLevelSchedule SeasonBannerSchedule;
-    public FPackageIndex /*FortChallengeBundleItemDefinition*/ SeasonalGlyphChallengeBundle;
+    public Lazy<FortChallengeBundleItemDefinition> SeasonalGlyphChallengeBundle;
     public String GlyphTokenTemplateId;
-    public FPackageIndex /*DataTable*/ SeasonalGlyphRewards;
-    public FPackageIndex /*FortChallengeBundleScheduleDefinition*/ ChallengeSchedulePaid;
-    public List<FPackageIndex /*FortChallengeBundleScheduleDefinition*/> ChallengeSchedulesAlwaysShown;
+    public Lazy<UDataTable> SeasonalGlyphRewards;
+    public Lazy<FortChallengeBundleScheduleDefinition> ChallengeSchedulePaid;
+    public List<Lazy<FortChallengeBundleScheduleDefinition>> ChallengeSchedulesAlwaysShown;
     public AthenaRewardScheduleLevel SeasonGrantsToEveryone;
     public FGameplayTag SeasonGrantsToEveryoneItemContentTag;
     public AthenaRewardScheduleLevel SeasonFirstWinRewards;

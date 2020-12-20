@@ -31,7 +31,7 @@ class FExportArchive(data: ByteBuffer, val pkg: IoPackage) : FAssetArchive(data,
         val batchCompletedEvent = CompletableFuture<Void>()
         batch.issueAndTriggerEvent(batchCompletedEvent)
         batchCompletedEvent.await()
-        return FAssetArchive(request.result.getOrThrow(), provider, pkgName)
+        FAssetArchive(request.result.getOrThrow(), provider, pkgName)
     }
 
     override fun handleBadNameIndex(nameIndex: Int) {

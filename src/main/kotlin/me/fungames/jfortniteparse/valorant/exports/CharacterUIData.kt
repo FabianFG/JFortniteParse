@@ -4,11 +4,9 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.UScriptMap
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 
-@ExperimentalUnsignedTypes
-class CharacterUIData : UObject {
+class CharacterUIData : UObject() {
     var FullPortrait: FPackageIndex? = null
     var BustPortrait: FPackageIndex? = null
     var DisplayIconSmall: FPackageIndex? = null
@@ -17,7 +15,4 @@ class CharacterUIData : UObject {
     var WwiseStateName: FName? = null
     var DisplayName: FText? = null
     var Description: FText? = null
-
-    constructor() : super()
-    constructor(exportObject: FObjectExport) : super(exportObject)
 }

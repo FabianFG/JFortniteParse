@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import me.fungames.jfortniteparse.fort.enums.EFortTeam;
 import me.fungames.jfortniteparse.fort.objects.GameplayEffectApplicationInfo;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
@@ -46,14 +47,6 @@ public class FortGameplayModifierItemDefinition extends FortAccountItemDefinitio
         Friendly,
         Neutral,
         Hostile
-    }
-
-    public enum EFortTeam {
-        Spectator,
-        HumanCampaign,
-        Monster,
-        HumanPvP_Team1,
-        HumanPvP_Team2
     }
 
     public enum EFortDeliveryInfoBuildingActorSpecification {

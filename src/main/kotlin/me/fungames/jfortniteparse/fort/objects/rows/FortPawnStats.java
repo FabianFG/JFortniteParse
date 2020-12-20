@@ -1,9 +1,10 @@
 package me.fungames.jfortniteparse.fort.objects.rows;
 
+import kotlin.Lazy;
+import me.fungames.jfortniteparse.ue4.assets.exports.UCurveTable;
 import me.fungames.jfortniteparse.ue4.objects.FTableRowBase;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
 public class FortPawnStats extends FTableRowBase {
     public float MaximumHealth;
@@ -25,9 +26,9 @@ public class FortPawnStats extends FTableRowBase {
     public float MaxAcceleration;
     public float MaxAccelerationFlying;
     public float JumpZVelocity;
-    public FPackageIndex /*CurveTable*/ FallingDamageTable;
+    public Lazy<UCurveTable> FallingDamageTable;
     public FName FallingDamageTableRow;
-    public FPackageIndex /*CurveTable*/ VehicleEjectDamageTable;
+    public Lazy<UCurveTable> VehicleEjectDamageTable;
     public float HealthRegenRate;
     public float HealthRegenDelay;
     public float HealthRegenThreshold;

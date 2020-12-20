@@ -23,7 +23,7 @@ public class AthenaDanceItemDefinition extends FortMontageItemDefinitionBase {
     public FPackageIndex /*AthenaDanceItemDefinition*/ GroupEmoteToStartFollower;
     public FPackageIndex /*AthenaDanceItemDefinition*/ GroupEmoteToStartLeaderIfBothOwn;
     public FPackageIndex /*AthenaDanceItemDefinition*/ GroupEmoteToStartFollowerIfBothOwn;
-    public List<FVariantSwapMontageData> MotageSelectionGroups;
+    public List<VariantSwapMontageData> MotageSelectionGroups;
     public FVector GroupEmotePositionOffset;
     public Float GroupEmotePositionOffsetTolerance;
     public Boolean bLockGroupEmoteLeaderRotation;
@@ -35,7 +35,7 @@ public class AthenaDanceItemDefinition extends FortMontageItemDefinitionBase {
     public FText ChatTriggerCommandName;
 
     @UStruct
-    public static class FVariantSwapMontageData {
+    public static class VariantSwapMontageData {
         public FGameplayTag VariantMetaTagRequired;
         public FName MontageSectionName;
     }

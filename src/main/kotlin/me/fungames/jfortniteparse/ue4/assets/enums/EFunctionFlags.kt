@@ -1,26 +1,25 @@
 package me.fungames.jfortniteparse.ue4.assets.enums
 
-@ExperimentalUnsignedTypes
-enum class EFunctionFlags(val value : UInt) {
+enum class EFunctionFlags(val value: UInt) {
     // Function flags.
     FUNC_None				(0x00000000u),
 
     FUNC_Final				(0x00000001u),	// Function is final (prebindable, non-overridable function).
-    FUNC_RequiredAPI			(0x00000002u),	// Indicates this function is DLL exported/imported.
-    FUNC_BlueprintAuthorityOnly(0x00000004u),	 // Function will only run if the object has network authority
-    FUNC_BlueprintCosmetic	(0x00000008u),	 // Function is cosmetic in nature and should not be invoked on dedicated servers
+    FUNC_RequiredAPI		(0x00000002u),	// Indicates this function is DLL exported/imported.
+    FUNC_BlueprintAuthorityOnly(0x00000004u),	// Function will only run if the object has network authority
+    FUNC_BlueprintCosmetic	(0x00000008u),	// Function is cosmetic in nature and should not be invoked on dedicated servers
     // FUNC_				(0x00000010u),	 // unused.
     // FUNC_				(0x00000020u),	 // unused.
-    FUNC_Net				(0x00000040u),	 // Function is network-replicated.
-    FUNC_NetReliable		(0x00000080u),	 // Function should be sent reliably on the network.
+    FUNC_Net				(0x00000040u),	// Function is network-replicated.
+    FUNC_NetReliable		(0x00000080u),	// Function should be sent reliably on the network.
     FUNC_NetRequest			(0x00000100u),	// Function is sent to a net service
     FUNC_Exec				(0x00000200u),	// Executable from command line.
     FUNC_Native				(0x00000400u),	// Native function.
-    FUNC_Event				(0x00000800u),	 // Event function.
-    FUNC_NetResponse		(0x00001000u),	 // Function response from a net service
-    FUNC_Static				(0x00002000u),	 // Static function.
+    FUNC_Event				(0x00000800u),	// Event function.
+    FUNC_NetResponse		(0x00001000u),	// Function response from a net service
+    FUNC_Static				(0x00002000u),	// Static function.
     FUNC_NetMulticast		(0x00004000u),	// Function is networked multicast Server -> All Clients
-    FUNC_UbergraphFunction	(0x00008000u),	 // Function is used as the merge 'ubergraph' for a blueprint, only assigned when using the persistent 'ubergraph' frame
+    FUNC_UbergraphFunction	(0x00008000u),	// Function is used as the merge 'ubergraph' for a blueprint, only assigned when using the persistent 'ubergraph' frame
     FUNC_MulticastDelegate	(0x00010000u),	// Function is a multi-cast delegate signature (also requires FUNC_Delegate to be set!)
     FUNC_Public				(0x00020000u),	// Function is accessible in all classes (if overridden, parameters must remain unchanged).
     FUNC_Private			(0x00040000u),	// Function is accessible only in the class it is defined in (cannot be overridden, but function name may be reused in subclasses.  IOW: if overridden, parameters don't need to match, and Super.Func() cannot be accessed since it's private.)
@@ -39,8 +38,4 @@ enum class EFunctionFlags(val value : UInt) {
     FUNC_NetValidate		(0x80000000u),	// function must supply a _Validate implementation
 
     FUNC_AllFlags		(0xFFFFFFFFu);
-
-    companion object {
-        fun valueOfFlag(value: UInt) = values().first { it.value == value }
-    }
 }

@@ -10,12 +10,13 @@ import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
+import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.asyncloading2.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
@@ -36,7 +37,7 @@ class IoPackage : Package {
     val exportBundleEntries: Array<FExportBundleEntry>
     val graphData: Array<FImportedPackage>
     val importedPackages: Lazy<List<IoPackage>>
-    override val exportsLazy: List<Lazy<UExport>>
+    override val exportsLazy: List<Lazy<UObject>>
 
     constructor(uasset: ByteArray,
                 packageId: FPackageId,
@@ -60,6 +61,7 @@ class IoPackage : Package {
         val diskPackageName = nameMap.getName(summary.name)
         fileName = diskPackageName.text
         packageFlags = summary.packageFlags.toInt()
+        name = fileName
 
         // Import map
         Ar.seek(summary.importMapOffset)
@@ -71,7 +73,7 @@ class IoPackage : Package {
         Ar.seek(summary.exportMapOffset)
         val exportCount = storeEntry.exportCount
         exportMap = Array(exportCount) { FExportMapEntry(Ar) }
-        exportsLazy = (arrayOfNulls<Lazy<UExport>>(exportCount) as Array<Lazy<UExport>>).toMutableList()
+        exportsLazy = (arrayOfNulls<Lazy<UObject>>(exportCount) as Array<Lazy<UObject>>).toMutableList()
 
         // Export bundles
         Ar.seek(summary.exportBundlesOffset)
@@ -99,35 +101,22 @@ class IoPackage : Package {
                     exportsLazy[localExportIndex] = lazy {
                         // Create
                         val objectName = nameMap.getName(export.objectName)
-                        val index = export.classIndex
-                        if (index.isNull()) {
-                            throw ParserException("Could not find class name for $objectName")
-                        }
-                        var resolvedClassIndex = resolveObjectIndex(index)
-                        val classIndexObject = resolvedClassIndex
-                        while (resolvedClassIndex?.getSuper()?.also { resolvedClassIndex = it } != null); // TODO band aid until BlueprintGeneratedClass support is added
-                        val obj = constructExport((resolvedClassIndex?.getName() ?: NAME_None).text)
-                        obj.export2 = export
-                        obj.exportType = (classIndexObject?.getName() ?: NAME_None).text
+                        val obj = constructExport(resolveObjectIndex(export.classIndex)?.getObject()?.value as UStruct?)
                         obj.name = objectName.text
-                        obj.owner = this
-                        val sb = StringBuilder(".").append(objectName.text)
-                        var outerObject = resolveObjectIndex(export.outerIndex)
-                        while (outerObject != null) {
-                            sb.insert(0, '.').append(outerObject.getName().text)
-                            outerObject = outerObject.getOuter()
-                        }
-                        sb.insert(0, diskPackageName.text)
-                        obj.pathName = sb.toString()
-                        obj.flags = export.objectFlags
+                        obj.outer = (resolveObjectIndex(export.outerIndex) as? ResolvedExportObject)?.exportObject?.value ?: this
+                        obj.flags = export.objectFlags.toInt()
 
                         // Serialize
                         val Ar = FExportArchive(ByteBuffer.wrap(uasset), this)
                         Ar.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
                         Ar.uassetSize = summary.cookedHeaderSize.toInt() - allExportDataOffset
                         Ar.seek(localExportDataOffset)
+                        val validPos = Ar.pos() + export.cookedSerialSize.toInt()
                         try {
-                            obj.deserialize(Ar, Ar.pos() + export.cookedSerialSize.toInt())
+                            obj.deserialize(Ar, validPos)
+                            if (validPos != Ar.pos()) {
+                                logger.warn("Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining")
+                            }
                         } catch (e: Throwable) {
                             if (e is MissingSchemaException && !GSuppressMissingSchemaErrors) {
                                 LOG_STREAMING.warn(e.message)
@@ -185,6 +174,7 @@ class IoPackage : Package {
         abstract fun getName(): FName
         open fun getOuter(): ResolvedObject? = null
         open fun getSuper(): ResolvedObject? = null
+        open fun getObject(): Lazy<UObject>? = null
     }
 
     class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg) {
@@ -193,29 +183,30 @@ class IoPackage : Package {
         override fun getName() = pkg.nameMap.getName(exportMapEntry.objectName)
         override fun getOuter() = pkg.resolveObjectIndex(exportMapEntry.outerIndex)
         override fun getSuper() = pkg.resolveObjectIndex(exportMapEntry.superIndex)
+        override fun getObject() = exportObject
     }
 
     class ResolvedScriptObject(val scriptImport: FScriptObjectEntry, pkg: IoPackage) : ResolvedObject(pkg) {
         override fun getName() = scriptImport.objectName.toName()
         override fun getOuter() = pkg.resolveObjectIndex(scriptImport.outerIndex)
+        override fun getObject() = lazy {
+            val structName = getName()
+            UScriptStruct(ObjectTypeRegistry.classes[structName.text] ?: ObjectTypeRegistry.structs[structName.text], structName)
+        }
     }
 
-    override fun loadObjectGeneric(index: FPackageIndex?) = when {
+    override fun <T : UObject> findObject(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
-        index.isExport() -> exportsLazy.getOrNull(index.toExport())?.value
-        else -> importMap.getOrNull(index.toImport())?.let { (resolveObjectIndex(it, false) as? ResolvedExportObject)?.exportObject?.value }
-    }
+        index.isExport() -> exportsLazy.getOrNull(index.toExport())
+        else -> importMap.getOrNull(index.toImport())?.let { (resolveObjectIndex(it, false)) }?.getObject()
+    } as Lazy<T>?
 
-    override fun findExport(objectName: String, className: String?): UExport? {
+    override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
         val exportIndex = exportMap.indexOfFirst {
             nameMap.getName(it.objectName).text.equals(objectName, true) && (className == null || resolveObjectIndex(it.classIndex)?.getName()?.text == className)
         }
-        return if (exportIndex != -1) exportsLazy[exportIndex].value else null
+        return if (exportIndex != -1) exportsLazy[exportIndex] else null
     }
-
-    fun getImportObject(index: FPackageIndex?) = if (index != null && index.isImport()) importMap[index.toImport()] else null
-
-    fun getExportObject(index: FPackageIndex?) = if (index != null && index.isExport()) exportMap[index.toExport()] else null
 
     fun dumpHeaderToJson(): JsonObject {
         val gson = gson.newBuilder().registerTypeAdapter(jsonSerializer<FMappedName> { JsonPrimitive(nameMap.tryGetName(it.src)?.text) }).create()

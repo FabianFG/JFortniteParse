@@ -1,9 +1,12 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import me.fungames.jfortniteparse.fort.exports.*
+import me.fungames.jfortniteparse.fort.exports.actors.*
 import me.fungames.jfortniteparse.fort.exports.variants.*
 import me.fungames.jfortniteparse.fort.objects.rows.*
 import me.fungames.jfortniteparse.ue4.assets.exports.*
+import me.fungames.jfortniteparse.ue4.assets.exports.actors.AActor
+import me.fungames.jfortniteparse.ue4.assets.exports.components.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstance
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
@@ -11,6 +14,8 @@ import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.valorant.exports.*
 import java.util.concurrent.ConcurrentHashMap
 
 object ObjectTypeRegistry {
@@ -23,24 +28,40 @@ object ObjectTypeRegistry {
     }
 
     private inline fun registerEngine() {
+        // -- Export classes --
+        registerClass(UActorComponent::class.java)
+        registerClass(UBlueprintGeneratedClass::class.java)
+        registerClass("Class", UClassReal::class.java)
         registerClass(UCurveFloat::class.java)
         registerClass(UCurveTable::class.java)
         registerClass(UDataAsset::class.java)
         registerClass(UDataTable::class.java)
+        registerClass(UFunction::class.java)
         registerClass(ULevel::class.java)
         registerClass(UMaterial::class.java)
         registerClass(UMaterialInstance::class.java)
         registerClass(UMaterialInstanceConstant::class.java)
         registerClass(UMaterialInterface::class.java)
+        registerClass(UMeshComponent::class.java)
         registerClass(UPaperSprite::class.java)
         registerClass(UPrimaryDataAsset::class.java)
-        registerClass(UUserDefinedEnum::class.java)
+        registerClass(UPrimitiveComponent::class.java)
+        registerClass(USceneComponent::class.java)
         registerClass(USoundWave::class.java)
         registerClass(UStaticMesh::class.java)
+        registerClass(UStaticMeshComponent::class.java)
         registerClass(UStreamableRenderAsset::class.java)
         registerClass(UStringTable::class.java)
         registerClass(UTexture2D::class.java)
         registerClass(UTexture::class.java)
+        registerClass(UUserDefinedEnum::class.java)
+        registerClass(UUserDefinedStruct::class.java)
+
+        // -- Actors --
+        registerClass(AActor::class.java)
+
+        // -- Structs --
+        registerStruct(FPointerToUberGraphFrame::class.java)
     }
 
     private inline fun registerFortnite() {
@@ -164,6 +185,7 @@ object ObjectTypeRegistry {
         registerClass(FortProfileItemDefinition::class.java)
         registerClass(FortQuestItemDefinition::class.java)
         registerClass(FortQuotaItemDefinition::class.java)
+        registerClass(FortRarityData::class.java)
         registerClass(FortRepeatableDailiesCardItemDefinition::class.java)
         registerClass(FortResourceItemDefinition::class.java)
         registerClass(FortSchematicItemDefinition::class.java)
@@ -190,6 +212,13 @@ object ObjectTypeRegistry {
         registerClass(VariantTypeMaterials::class.java)
         registerClass(VariantTypeParticles::class.java)
         registerClass(VariantTypeSounds::class.java)
+
+        registerClass(BuildingActor::class.java)
+        registerClass(BuildingAutoNav::class.java)
+        registerClass(BuildingProp::class.java)
+        registerClass(BuildingPropWall::class.java)
+        registerClass(BuildingSMActor::class.java)
+        registerClass(BuildingTimeOfDayLights::class.java)
 
         // -- Data table row structs --
         registerStruct(AlterationGroup::class.java)
@@ -246,9 +275,17 @@ object ObjectTypeRegistry {
         registerStruct(WeaponUpgradeItemRow::class.java)
     }
 
+    private inline fun registerValorant() {
+        registerClass(CharacterAbilityUIData::class.java)
+        registerClass(CharacterDataAsset::class.java)
+        registerClass(CharacterRoleDataAsset::class.java)
+        registerClass(CharacterRoleUIData::class.java)
+        registerClass(CharacterUIData::class.java)
+    }
+
     fun registerClass(clazz: Class<out UObject>) {
         var name = clazz.simpleName
-        if (name[0] == 'U' && name[1].isUpperCase()) {
+        if ((name[0] == 'U' || name[0] == 'A') && name[1].isUpperCase()) {
             name = name.substring(1)
         }
         registerClass(name, clazz)
@@ -272,16 +309,12 @@ object ObjectTypeRegistry {
 
     fun constructClass(serializedName: String): UObject {
         if (serializedName.startsWith("/Script/") || serializedName.startsWith("Default__")) {
-            return UObject().apply { exportType = serializedName }
+            return UObject().apply { clazz = UScriptStruct(FName.dummy(serializedName)) }
         }
-        var clazz = classes[serializedName]
-        if (clazz == null) {
-            //UClass.logger.warn("Didn't find class $serializedName in registry")
-            clazz = UObject::class.java
-        }
+        val clazz = classes[serializedName]
+            ?: UObject::class.java
         return clazz.newInstance().apply {
-            readGuid = true
-            exportType = serializedName
+            this.clazz = UScriptStruct(FName.dummy(serializedName))
         }
     }
 
@@ -290,10 +323,7 @@ object ObjectTypeRegistry {
             return Object()
         }
         val clazz = structs[serializedName]
-        if (clazz == null) {
-            //UClass.logger.warn("Didn't find struct $serializedName in registry")
-            return Object()
-        }
+            ?: return Object()
         return clazz.newInstance()
     }
 }

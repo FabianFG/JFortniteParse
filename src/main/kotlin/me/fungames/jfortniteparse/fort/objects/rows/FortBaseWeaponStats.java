@@ -1,5 +1,8 @@
 package me.fungames.jfortniteparse.fort.objects.rows;
 
+import kotlin.Lazy;
+import me.fungames.jfortniteparse.ue4.assets.exports.UCurveTable;
+import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable;
 import me.fungames.jfortniteparse.ue4.objects.FTableRowBase;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
@@ -24,13 +27,13 @@ public class FortBaseWeaponStats extends FTableRowBase {
     public float RngMid;
     public float RngLong;
     public float RngMax;
-    public FPackageIndex /*CurveTable*/ DmgScaleTable;
+    public Lazy<UCurveTable> DmgScaleTable;
     public FName DmgScaleTableRow;
     public float DmgScale;
-    public FPackageIndex /*CurveTable*/ EnvDmgScaleTable;
+    public Lazy<UCurveTable> EnvDmgScaleTable;
     public FName EnvDmgScaleTableRow;
     public float EnvDmgScale;
-    public FPackageIndex /*CurveTable*/ ImpactDmgScaleTable;
+    public Lazy<UCurveTable> ImpactDmgScaleTable;
     public FName ImpactDmgScaleTableRow;
     public float ImpactDmgScale;
     public FName SurfaceRatioRowName;
@@ -44,7 +47,7 @@ public class FortBaseWeaponStats extends FTableRowBase {
     public float KnockbackZAngle;
     public float StunTime;
     public float StunScale;
-    public FPackageIndex /*DataTable*/ Durability;
+    public Lazy<UDataTable> Durability;
     public FName DurabilityRowName;
     public float DurabilityScale;
     public float DurabilityPerUse;

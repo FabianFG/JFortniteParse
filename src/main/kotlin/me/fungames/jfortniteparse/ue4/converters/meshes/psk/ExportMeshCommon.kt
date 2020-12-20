@@ -118,7 +118,7 @@ fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, ver
     matrHdr.dataSize = 88
     Ar.saveChunkHeader(matrHdr, "MATT0000")
     for (i in 0 until numSections) {
-        val tex = sections[i].material
+        val tex = sections[i].material?.value
         //!! this will not handle (UMaterialWithPolyFlags->Material==NULL) correctly - will make MaterialName=="None"
         val materialName = tex?.name ?: "material_${i}"
         if (tex != null) materialExports?.add(tex.export())

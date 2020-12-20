@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.enums.EFortResourceType;
+import me.fungames.jfortniteparse.fort.enums.EPlacementType;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -47,10 +48,4 @@ public class FortDecoItemDefinition extends FortWeaponItemDefinition {
     public List<FSoftObjectPath> AllowedPlayerBuiltShapes;
     public Boolean bReplacesDecoOnAttachment;
     public Boolean bShowPreviewOnPressHeld;
-
-    public enum EPlacementType {
-        Free,
-        Grid,
-        None
-    }
 }

@@ -1,6 +1,2 @@
 rootProject.name = 'JFortniteParse'
-includeBuild('../JOodle') {
-	dependencySubstitution {
-		substitute module('me.fungames:JOodle') with project(':')
-	}
-}
+includeBuild('../JOodle')

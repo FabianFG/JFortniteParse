@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import kotlin.Lazy;
 import kotlin.UInt;
 import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariant;
 import me.fungames.jfortniteparse.fort.objects.CosmeticVariantInfo;
@@ -38,7 +39,7 @@ public class AthenaCosmeticItemDefinition extends FortAccountItemDefinition {
     public List<AthenaCosmeticMaterialOverride> MaterialOverrides;
     public FGameplayTagContainer ObservedPlayerStats;
     public List<FPackageIndex> /*List<UFortMontageItemDefinitionBase>*/ BuiltInEmotes;
-    public List<FortCosmeticVariant> ItemVariants;
+    public List<Lazy<FortCosmeticVariant>> ItemVariants;
     public FGameplayTag VariantChannelToUseForThumbnails;
     public List<FortCosmeticVariantPreview> ItemVariantPreviews;
     public FText DirectAquisitionStyleDisclaimerOverride;

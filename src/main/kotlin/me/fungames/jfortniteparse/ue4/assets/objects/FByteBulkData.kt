@@ -20,6 +20,19 @@ class FByteBulkData : UClass {
             header.elementCount == 0L -> {
                 // Nothing to do here
             }
+            BULKDATA_Unused.check(bulkDataFlags) -> {
+                logger.warn("Bulk with no data")
+            }
+            BULKDATA_ForceInlinePayload.check(bulkDataFlags) -> {
+                logger.debug("bulk data in .uexp file (Force Inline Payload) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
+                Ar.read(data)
+            }
+            BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
+                logger.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
+                val ubulkAr = Ar.getPayload(if (BULKDATA_OptionalPayload.check(bulkDataFlags)) PayloadType.UPTNL else PayloadType.UBULK)
+                ubulkAr.seek(header.offsetInFile.toInt())
+                ubulkAr.read(data)
+            }
             BULKDATA_PayloadAtEndOfFile.check(bulkDataFlags) -> {
                 //stored in same file, but at different position
                 //save archive position
@@ -31,25 +44,6 @@ class FByteBulkData : UClass {
                     throw ParserException("Failed to read PayloadAtEndOfFile, ${header.offsetInFile} is out of range", Ar)
                 }
                 Ar.seek(savePos)
-            }
-            BULKDATA_Unused.check(bulkDataFlags) -> {
-                logger.warn("Bulk with no data")
-            }
-            BULKDATA_ForceInlinePayload.check(bulkDataFlags) -> {
-                logger.debug("bulk data in .uexp file (Force Inline Payload) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
-                Ar.read(data)
-            }
-            BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
-                logger.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
-                val ubulkAr = Ar.getPayload(PayloadType.UBULK)
-                ubulkAr.seek(header.offsetInFile.toInt())
-                ubulkAr.read(data)
-            }
-            BULKDATA_OptionalPayload.check(bulkDataFlags) -> {
-                logger.debug("bulk data in .ubulk file (Optional Payload) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
-                val ubulkAr = Ar.getPayload(PayloadType.UPTNL)
-                ubulkAr.seek(header.offsetInFile.toInt())
-                ubulkAr.read(data)
             }
         }
         super.complete(Ar)

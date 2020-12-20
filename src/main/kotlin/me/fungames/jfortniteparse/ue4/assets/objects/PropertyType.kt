@@ -1,7 +1,8 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import com.google.gson.JsonObject
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.exports.*
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
@@ -23,7 +24,7 @@ class PropertyType(
     @JvmField var isEnumAsByte = true
     @JvmField var innerType: PropertyType? = null
     @JvmField var valueType: PropertyType? = null
-    var structClass: Class<*>? = null
+    var structClass: UScriptStruct? = null
     var enumClass: Class<out Enum<*>>? = null
 
     constructor() : this(NAME_None)
@@ -41,6 +42,30 @@ class PropertyType(
         valueType = PropertyType(tag.valueType)
     }
 
+    constructor(prop: FPropertySerialized) : this(prop.name) {
+        type = FName.dummy(prop.javaClass.simpleName.unprefix())
+        when (prop) {
+            is FStructProperty -> {
+                structClass = prop.struct?.value
+                structType = structClass?.name?.let { FName.dummy(it) } ?: NAME_None
+            }
+            is FByteProperty -> {
+                //enumName = prop.enum TODO what about this
+            }
+            //is FEnumProperty -> {
+            //enumName = prop.enum
+            //}
+            is FArrayProperty -> {
+                innerType = prop.inner?.let { PropertyType(it) }
+            }
+            is FMapProperty -> {
+                innerType = prop.keyProp?.let { PropertyType(it) }
+                valueType = prop.valueProp?.let { PropertyType(it) }
+            }
+            // TODO SetProperty and MapProperty
+        }
+    }
+
     fun setupWithField(field: Field) {
         var fieldType = field.type
         if (field.type.isArray) {
@@ -55,7 +80,7 @@ class PropertyType(
             }
             "StructProperty" -> {
                 structType = FName.dummy(fieldType.simpleName.unprefix())
-                structClass = fieldType
+                structClass = UScriptStruct(fieldType)
             }
             "ArrayProperty", "SetProperty" -> applyInner(field, false)
             "MapProperty" -> {
@@ -71,8 +96,9 @@ class PropertyType(
         else
             field.genericType) as ParameterizedType).actualTypeArguments
         val idx = if (applyToValue) 1 else 0
-        val type = typeArgs[idx] as Class<*>
-        val propertyType = classToPropertyType(type)
+        val type = typeArgs[idx]
+        val clazz = (if (type is ParameterizedType) type.rawType else type) as Class<*>
+        val propertyType = classToPropertyType(clazz)
         if (applyToValue) {
             valueType = PropertyType()
             valueType
@@ -82,11 +108,11 @@ class PropertyType(
         }!!.apply {
             this.type = propertyType
             if (propertyType.text == "EnumProperty") {
-                enumName = FName.dummy(type.simpleName.unprefix())
-                enumClass = type as Class<out Enum<*>>?
+                enumName = FName.dummy(clazz.simpleName.unprefix())
+                enumClass = clazz as Class<out Enum<*>>?
             } else if (propertyType.text == "StructProperty") {
-                structType = FName.dummy(type.simpleName.unprefix())
-                structClass = type
+                structType = FName.dummy(clazz.simpleName.unprefix())
+                structClass = UScriptStruct(clazz)
             }
         }
     }
@@ -112,6 +138,7 @@ class PropertyType(
         Set::class.java.isAssignableFrom(c) -> "SetProperty"
         Map::class.java.isAssignableFrom(c) -> "MapProperty"
         c == FPackageIndex::class.java || UObject::class.java.isAssignableFrom(c) -> "ObjectProperty"
+        c == Lazy::class.java -> "ObjectProperty"
         c == FSoftObjectPath::class.java -> "SoftObjectProperty"
         c == FSoftClassPath::class.java -> "SoftClassProperty"
         c == FFieldPath::class.java -> "FieldPathProperty"

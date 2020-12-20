@@ -6,49 +6,36 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.fort.exports.FortItemDefinition
-import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariant
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
+import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
 import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageObjectIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
-import me.fungames.jfortniteparse.valorant.exports.*
 import java.math.BigInteger
 
 abstract class Package(var fileName: String,
                        val provider: FileProvider? = null,
                        val game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : UObject() {
-    abstract val exportsLazy: List<Lazy<UExport>>
-    open val exports: List<UExport>
+    abstract val exportsLazy: List<Lazy<UObject>>
+    open val exports: List<UObject>
         get() = exportsLazy.map { it.value }
     var packageFlags = 0
 
-    protected fun constructExport(exportType: String) = when (exportType) {
-        // Valorant specific classes
-        "CharacterAbilityUIData" -> CharacterAbilityUIData()
-        "BaseCharacterPrimaryDataAsset_C",
-        "CharacterDataAsset" -> CharacterDataAsset()
-        "CharacterRoleDataAsset" -> CharacterRoleDataAsset()
-        "CharacterRoleUIData" -> CharacterRoleUIData()
-        "CharacterUIData" -> CharacterUIData()
-        // Fortnite specific classes
-        "FortDailyRewardScheduleTokenDefinition" -> FortItemDefinition()
-        else -> {
-            val obj = ObjectTypeRegistry.constructClass(exportType)
-            if (obj.javaClass != UObject::class.java) {
-                obj
-            } else if (exportType.contains("ItemDefinition")) {
-                FortItemDefinition()
-            } else if (exportType.startsWith("FortCosmetic") && exportType.endsWith("Variant")) {
-                FortCosmeticVariant()
-            } else {
-                UObject()
-            }
+    protected fun constructExport(classObject: UStruct?): UObject {
+        if (classObject == null) {
+            return UObject()
         }
+        if (classObject is UScriptStruct && classObject.structClass != null) {
+            return (classObject.structClass!!.newInstance() as UObject).also { it.clazz = classObject }
+        }
+        val exportType = classObject.name
+        val obj = ObjectTypeRegistry.constructClass(exportType)
+        obj.clazz = classObject
+        return obj
     }
 
     /**
@@ -56,24 +43,21 @@ abstract class Package(var fileName: String,
      * @throws IllegalArgumentException if there is no export of the given type
      */
     @Throws(IllegalArgumentException::class)
-    inline fun <reified T : UExport> getExportOfType() = getExportsOfType<T>().first()
+    inline fun <reified T : UObject> getExportOfType() = getExportsOfType<T>().first()
 
     /**
      * @return the first export of the given type or null if there is no
      */
-    inline fun <reified T : UExport> getExportOfTypeOrNull() = getExportsOfType<T>().firstOrNull()
+    inline fun <reified T : UObject> getExportOfTypeOrNull() = getExportsOfType<T>().firstOrNull()
 
     /**
      * @return the all exports of the given type
      */
-    inline fun <reified T : UExport> getExportsOfType() = exports.filterIsInstance<T>()
+    inline fun <reified T : UObject> getExportsOfType() = exports.filterIsInstance<T>()
 
-    inline fun <reified T> loadObject(index: FPackageIndex?) = index?.let { loadObjectGeneric(it) as? T }
-
-    abstract fun loadObjectGeneric(index: FPackageIndex?): UExport?
-    abstract fun findExport(objectName: String, className: String? = null): UExport?
-
-    override fun toString() = fileName
+    abstract fun <T : UObject> findObject(index: FPackageIndex?): Lazy<T>?
+    fun <T : UObject> loadObject(index: FPackageIndex?) = findObject<T>(index)?.value
+    abstract fun findObjectByName(objectName: String, className: String? = null): Lazy<UObject>?
 
     companion object {
         val gson = GsonBuilder()

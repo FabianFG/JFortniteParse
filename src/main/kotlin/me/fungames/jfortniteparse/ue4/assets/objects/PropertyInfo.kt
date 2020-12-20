@@ -12,6 +12,12 @@ class PropertyInfo {
 
     var field: Field? = null
 
+    constructor(name: String, type: PropertyType, arrayDim: Int) {
+        this.name = name
+        this.type = type
+        this.arrayDim = arrayDim
+    }
+
     constructor(json: JsonObject) {
         index = json["index"].asInt
         name = json["name"].asString

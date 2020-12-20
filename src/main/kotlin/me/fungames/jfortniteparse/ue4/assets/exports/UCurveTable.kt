@@ -51,11 +51,12 @@ class UCurveTable : UObject() {
         // When loading, this should load our RowCurve!
         super.deserialize(Ar, validPos)
         val numRows = Ar.readInt32()
-        curveTableMode = when (Ar.readUInt8().toInt()) {
-            0 -> ECurveTableMode.Empty
-            1 -> ECurveTableMode.SimpleCurves
-            2 -> ECurveTableMode.RichCurves
-            else -> throw ParserException("Unsupported curve mode", Ar)
+        curveTableMode = ECurveTableMode.values().getOrNull(Ar.read())
+            ?: throw ParserException("Unsupported curve mode", Ar)
+        val rowStruct = when (curveTableMode) {
+            ECurveTableMode.Empty -> throw ParserException("CurveTableMode == ECurveTableMode::Empty, unsupported")
+            ECurveTableMode.SimpleCurves -> UScriptStruct(FSimpleCurve::class.java)
+            ECurveTableMode.RichCurves -> UScriptStruct(FRichCurve::class.java)
         }
         rowMap = Ar.readTMap(numRows) {
             Ar.readFName() to when (curveTableMode) {
@@ -65,9 +66,9 @@ class UCurveTable : UObject() {
             }.apply {
                 val properties = mutableListOf<FPropertyTag>()
                 if (Ar.useUnversionedPropertySerialization) {
-                    deserializeUnversionedProperties(properties, javaClass, Ar)
+                    deserializeUnversionedProperties(properties, rowStruct, Ar)
                 } else {
-                    deserializeTaggedProperties(properties, Ar)
+                    deserializeVersionedTaggedProperties(properties, Ar)
                 }
                 mapToClass(properties, javaClass, this)
             }
@@ -88,14 +89,14 @@ class UCurveTable : UObject() {
     @JvmOverloads
     fun findCurve(RowName: FName, warnIfNotFound: Boolean = true): FRealCurve? {
         if (RowName == NAME_None) {
-            if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : NAME_None is invalid row name for CurveTable '$pathName'.")
+            if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : NAME_None is invalid row name for CurveTable '${getPathName()}'.")
             return null
         }
 
         val foundCurve = rowMap[RowName]
 
         if (foundCurve == null) {
-            if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : Row '$RowName' not found in CurveTable '$pathName'.")
+            if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : Row '$RowName' not found in CurveTable '${getPathName()}'.")
             return null
         }
 

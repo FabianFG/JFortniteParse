@@ -122,7 +122,7 @@ class UMaterialInstanceConstant : UMaterialInstance() {
 
         // try to get diffuse texture when nothing found
         if (params.diffuse == null && TextureParameterValues.size == 1)
-            params.diffuse = TextureParameterValues[0].ParameterValue?.load<UUnrealMaterial>()
+            params.diffuse = TextureParameterValues[0].ParameterValue?.load()
     }
 
     override fun appendReferencedTextures(outTextures: MutableList<UUnrealMaterial>, onlyRendered: Boolean) {

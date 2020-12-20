@@ -1,16 +1,17 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import kotlin.Lazy;
 import kotlin.UInt;
 import kotlin.UShort;
 import me.fungames.jfortniteparse.fort.objects.FortHiddenRewardQuantityPair;
 import me.fungames.jfortniteparse.fort.objects.FortItemQuantityPair;
 import me.fungames.jfortniteparse.fort.objects.FortMcpQuestObjectiveInfo;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
+import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable;
 import me.fungames.jfortniteparse.ue4.objects.FDataTableRowHandle;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public Integer ObjectiveCompletionCount;
     public Integer Threshold;
     public List<FortItemQuantityPair> Rewards;
-    public FPackageIndex /*DataTable*/ RewardsTable;
+    public Lazy<UDataTable> RewardsTable;
     public String QuestPool;
     public List<FortHiddenRewardQuantityPair> HiddenRewards;
     public List<String> FeatureRewards;

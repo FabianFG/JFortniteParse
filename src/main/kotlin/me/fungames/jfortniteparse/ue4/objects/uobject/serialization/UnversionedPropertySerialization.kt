@@ -2,15 +2,19 @@ package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 
 import me.fungames.jfortniteparse.GDebugUnversionedPropertySerialization
 import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
+import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
-import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.exports.FPropertySerialized
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
+import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
+import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -18,6 +22,7 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.indexOfFirst
+import java.lang.reflect.Modifier
 import java.util.*
 
 class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int) {
@@ -55,42 +60,57 @@ class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int
 /**
  * Serialization is based on indices into this property array
  */
-class FUnversionedStructSchema(struct: Class<*>) {
+class FUnversionedStructSchema {
     val serializers = mutableMapOf<Int, FUnversionedPropertySerializer>()
 
-    init {
+    constructor(struct: UStruct) {
         var index = 0
-        var clazz: Class<*>? = struct
-        while (clazz != null && clazz != UObject::class.java && clazz != Object::class.java) {
-            val bOnlyAnnotated = clazz.isAnnotationPresent(OnlyAnnotated::class.java)
-            for (field in clazz.declaredFields) {
-                val ann = field.getAnnotation(UProperty::class.java)
-                if (bOnlyAnnotated && ann == null) {
-                    continue
+        var struct: UStruct? = struct
+        while (struct != null) {
+            if (struct.javaClass == UScriptStruct::class.java) {
+                val clazz = (struct as UScriptStruct).structClass
+                    ?: throw MissingSchemaException("Missing schema for $struct")
+                val bOnlyAnnotated = clazz.isAnnotationPresent(OnlyAnnotated::class.java)
+                for (field in clazz.declaredFields) {
+                    if (Modifier.isStatic(field.modifiers)) {
+                        continue
+                    }
+                    val ann = field.getAnnotation(UProperty::class.java)
+                    if (bOnlyAnnotated && ann == null) {
+                        continue
+                    }
+                    index += ann?.skipPrevious ?: 0
+                    val propertyInfo = PropertyInfo(field, ann)
+                    for (arrayIdx in 0 until propertyInfo.arrayDim) {
+                        if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.name}")
+                        serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
+                        ++index
+                    }
+                    index += ann?.skipNext ?: 0
                 }
-                index += ann?.skipPrevious ?: 0
-                val propertyInfo = PropertyInfo(field, ann)
-                for (arrayIdx in 0 until propertyInfo.arrayDim) {
-                    if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.name}")
-                    serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
-                    ++index
+            } else {
+                for (prop in struct.childProperties) {
+                    val propertyInfo = PropertyInfo(prop.name.text, PropertyType(prop as FPropertySerialized), prop.arrayDim)
+                    for (arrayIdx in 0 until prop.arrayDim) {
+                        if (GDebugUnversionedPropertySerialization) println("$index = ${prop.name} [SERIALIZED]")
+                        serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
+                        ++index
+                    }
                 }
-                index += ann?.skipNext ?: 0
             }
-            clazz = clazz.superclass
+            struct = struct.superStruct?.value
         }
     }
 }
 
 val schemaCache = mutableMapOf<Class<*>, FUnversionedStructSchema>()
 
-fun getOrCreateUnversionedSchema(struct: Class<*>): FUnversionedStructSchema {
-    /*val existingSchema = struct.existingSchema
-    if (existingSchema != null) {
-        return existingSchema
-    }*/
-
-    return schemaCache.getOrPut(struct) { FUnversionedStructSchema(struct) }
+fun getOrCreateUnversionedSchema(struct: UStruct): FUnversionedStructSchema {
+    return if (struct is UScriptStruct && struct.structClass != null) {
+        schemaCache.getOrPut(struct.structClass!!) { FUnversionedStructSchema(struct) }
+    } else {
+        FUnversionedStructSchema(struct)
+    }
 }
 
 /**
@@ -216,10 +236,10 @@ class FUnversionedHeader {
     }
 }
 
-fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: Class<*>, Ar: FAssetArchive) {
+fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: UStruct, Ar: FAssetArchive) {
     //check(canUseUnversionedPropertySerialization())
 
-    if (GDebugUnversionedPropertySerialization) println("Load: ${struct.simpleName}")
+    if (GDebugUnversionedPropertySerialization) println("Load: ${struct.name}")
     val header = FUnversionedHeader()
     header.load(Ar)
 
@@ -243,9 +263,9 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                     }
                 } else {
                     if (it.isNonZero()) {
-                        throw UnknownPropertyException("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, cannot proceed with serialization")
+                        throw UnknownPropertyException("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization")
                     }
-                    UClass.logger.warn("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, but it's zero so we're good")
+                    UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, but it's zero so we're good")
                 }
                 it.next()
             }
@@ -254,7 +274,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 check(!it.isNonZero())
                 it.serializer?.run { properties.add(deserialize(Ar, ReadType.ZERO)) }
-                    ?: UClass.logger.warn("Unknown property for ${struct.simpleName} with index ${it.schemaIt}, but it's zero so we're good")
+                    ?: UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, but it's zero so we're good")
                 it.next()
             }
         }

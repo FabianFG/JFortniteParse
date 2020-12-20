@@ -3,7 +3,7 @@
 package me.fungames.jfortniteparse.valorant.converters
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.converters.textures.toBufferedImage
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -38,7 +38,7 @@ class CharacterContainer(
 }
 
 fun CharacterDataAsset.createContainer(iconType: IconType): CharacterContainer {
-    val uiData = UIData?.load<UExport>()?.owner?.getExportOfType<CharacterUIData>() // uiData is a BlueprintGeneratedClass
+    val uiData = UIData?.load<UObject>()?.owner?.getExportOfType<CharacterUIData>() // uiData is a BlueprintGeneratedClass
         ?: throw ParserException("Failed to load UI Data for character")
     val icon = when (iconType) {
         IconType.BustPortrait -> uiData.BustPortrait
@@ -53,7 +53,7 @@ fun CharacterDataAsset.createContainer(iconType: IconType): CharacterContainer {
             abilities[ECharacterAbilitySlot.valueOf((slotEnumRaw.getTagTypeValueLegacy() as FName).text.substringAfter("ECharacterAbilitySlot::"))] =
                 CharacterAbilityContainer(data, data.DisplayIcon?.load<UTexture2D>()?.toBufferedImage())
         }
-    val role = Role?.load<UExport>()?.owner?.getExportOfType<CharacterRoleDataAsset>()?.createContainer() // role is a BlueprintGeneratedClass
+    val role = Role?.load<UObject>()?.owner?.getExportOfType<CharacterRoleDataAsset>()?.createContainer() // role is a BlueprintGeneratedClass
     return CharacterContainer(uiData, icon, iconType, abilities, role)
 }
 

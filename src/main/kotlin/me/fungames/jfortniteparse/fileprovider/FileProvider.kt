@@ -4,7 +4,7 @@ import me.fungames.jfortniteparse.exceptions.NotFoundException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
@@ -68,7 +68,7 @@ abstract class FileProvider {
         return if (loaded is T) loaded else null
     }
 
-    fun loadObject(objectPath: String?): UExport? {
+    fun loadObject(objectPath: String?): UObject? {
         if (objectPath == null) return null
         var packagePath = objectPath
         val objectName: String
@@ -80,7 +80,7 @@ abstract class FileProvider {
             packagePath = packagePath.substring(0, dotIndex)
         }
         val pkg = loadGameFile(packagePath) // TODO allow reading umaps via this route, currently fixPath() only appends .uasset. EDIT(2020-12-15): This works with IoStore assets, but not PAK assets.
-        return pkg.findExport(objectName)
+        return pkg.findObjectByName(objectName)?.value
     }
 
     // Load object by FSoftObjectPath

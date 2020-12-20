@@ -4,7 +4,7 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
-import me.fungames.jfortniteparse.ue4.assets.exports.UExport
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
@@ -69,10 +69,7 @@ sealed class FProperty {
                 }
                 map
             }
-            value is FPackageIndex && UExport::class.java.isAssignableFrom(clazz) -> {
-                val export = value.owner?.loadObjectGeneric(value)
-                if (export != null && clazz.isAssignableFrom(export::class.java)) export else null
-            }
+            value is FPackageIndex && Lazy::class.java.isAssignableFrom(clazz) -> value.owner?.findObject<UObject>(value)
             this is EnumProperty && clazz.isEnum ->
                 if (enumConstant != null) {
                     enumConstant // already searched by the unversioned property serializer
@@ -160,7 +157,7 @@ sealed class FProperty {
                     ReadType.ZERO -> typeData.bool
                 })
                 "StructProperty" ->
-                    if (Ar.useUnversionedPropertySerialization && typeData.structClass!!.isAnnotationPresent(UStruct::class.java)) {
+                    if (Ar.useUnversionedPropertySerialization && typeData.structClass?.structClass?.isAnnotationPresent(UStruct::class.java) == true) {
                         val properties = mutableListOf<FPropertyTag>()
                         if (type != ReadType.ZERO) {
                             deserializeUnversionedProperties(properties, typeData.structClass!!, Ar)
@@ -216,7 +213,7 @@ sealed class FProperty {
                         var enumValue: Enum<*>? = null
                         val fakeName = if (enumClass != null) {
                             enumValue = enumClass.enumConstants.getOrNull(ordinal)
-                                ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.simpleName}")
+                                ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.simpleName}", Ar)
                             (typeData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
                         } else {
                             UClass.logger.warn("Enum class not supplied")

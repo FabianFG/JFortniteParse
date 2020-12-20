@@ -18,19 +18,18 @@ import me.fungames.jfortniteparse.ue4.versions.*
 internal const val MAX_STATIC_UV_SETS_UE4 = 8
 internal const val MAX_STATIC_LODS_UE4 = 8
 
-@ExperimentalUnsignedTypes
 class UStaticMesh : UObject() {
     lateinit var stripFlags: FStripDataFlags
-    var bodySetup: UExport? = null // UBodySetup
-    var navCollision: UExport? = null// UNavCollision
+    var bodySetup: UObject? = null // UBodySetup
+    var navCollision: UObject? = null// UNavCollision
     lateinit var lightingGuid: FGuid
-    lateinit var sockets: Array<UExport?>
+    lateinit var sockets: Array<UObject?>
     var lods = emptyArray<FStaticMeshLODResources>()
     var bounds = FBoxSphereBounds(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f), 0f)
     var lodsShareStaticLighting = false
     var screenSize = Array(8) { 0f }
     var staticMaterials = emptyArray<FStaticMaterial>()
-    var materials = emptyArray<UMaterialInterface>()
+    var materials = emptyArray<Lazy<UMaterialInterface>>()
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos); if (Ar.useUnversionedPropertySerialization) throw ParserException("UStaticMesh deserialization with unversioned properties not yet supported")
