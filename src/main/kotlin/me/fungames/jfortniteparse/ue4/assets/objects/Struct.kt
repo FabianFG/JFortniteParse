@@ -17,5 +17,4 @@ class Struct(var context: TypeMappings, json: JsonObject) {
         }
         properties
     } ?: mutableMapOf()
-    var propertyCount = json["propertyCount"].asInt
 }

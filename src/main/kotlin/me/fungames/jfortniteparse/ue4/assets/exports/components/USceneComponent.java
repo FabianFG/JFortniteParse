@@ -6,11 +6,12 @@ import me.fungames.jfortniteparse.ue4.assets.enums.EDetailMode;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
 import java.util.List;
 
 public class USceneComponent extends UActorComponent {
-    //public TWeakObjectPtr<Lazy<APhysicsVolume>> PhysicsVolume;
+    public FPackageIndex /*WeakObjectProperty PhysicsVolume*/ PhysicsVolume;
     public Lazy<USceneComponent> AttachParent;
     public FName AttachSocketName;
     public List<Lazy<USceneComponent>> AttachChildren;
@@ -32,7 +33,7 @@ public class USceneComponent extends UActorComponent {
     public Boolean bBoundsChangeTriggersStreamingDataRebuild;
     public Boolean bUseAttachParentBound;
     //public EComponentMobility Mobility;
-    @UProperty(skipPrevious = 1,skipNext = 1)
+    @UProperty(skipPrevious = 1, skipNext = 1)
     public EDetailMode DetailMode;
     //public FScriptMulticastDelegate PhysicsVolumeChangedDelegate;
 }

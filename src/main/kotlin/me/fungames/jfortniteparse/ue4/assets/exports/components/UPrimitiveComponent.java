@@ -13,9 +13,9 @@ public class UPrimitiveComponent extends USceneComponent {
     public Float CachedMaxDrawDistance;
     public ESceneDepthPriorityGroup DepthPriorityGroup;
     /*public ESceneDepthPriorityGroup ViewOwnerDepthPriorityGroup;
-    public EIndirectLightingCacheQuality IndirectLightingCacheQuality;
-    public ELightmapType LightmapType;*/
-    @UProperty(skipPrevious = 3)
+    public EIndirectLightingCacheQuality IndirectLightingCacheQuality;*/
+    @UProperty(skipPrevious = 2)
+    public ELightmapType LightmapType;
     public Boolean bUseMaxLODAsImposter;
     public Boolean bBatchImpostersAsInstances;
     public Boolean bNeverDistanceCull;
@@ -108,5 +108,11 @@ public class UPrimitiveComponent extends USceneComponent {
     public enum ESceneDepthPriorityGroup {
         SDPG_World,
         SDPG_Foreground
+    }
+
+    public enum ELightmapType {
+        Default,
+        ForceSurface,
+        ForceVolumetric
     }
 }

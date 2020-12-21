@@ -1,7 +1,15 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.actors;
 
+import kotlin.Lazy;
+import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject;
+import me.fungames.jfortniteparse.ue4.assets.exports.components.UActorComponent;
+import me.fungames.jfortniteparse.ue4.assets.exports.components.USceneComponent;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
+
+import java.util.List;
 
 public class AActor extends UObject {
     public FActorTickFunction PrimaryActorTick;
@@ -34,7 +42,56 @@ public class AActor extends UObject {
     public Boolean bCanBeInCluster;
     public Boolean bAllowReceiveTickEventOnDedicatedServer;
     public Boolean bActorEnableCollision;
-    public Boolean bActorIsBeingDestroyed; // TODO continue
+    public Boolean bActorIsBeingDestroyed;
+    /*public EActorUpdateOverlapsMethod UpdateOverlapsMethodDuringLevelStreaming;
+    public EActorUpdateOverlapsMethod DefaultUpdateOverlapsMethodDuringLevelStreaming;
+    public ENetRole RemoteRole;
+    public FRepMovement ReplicatedMovement;*/
+    @UProperty(skipPrevious = 4)
+    public Float InitialLifeSpan;
+    public Float CustomTimeDilation;
+    //public FRepAttachment AttachmentReplication;
+    @UProperty(skipPrevious = 1)
+    public Lazy<AActor> Owner;
+    public FName NetDriverName;
+    /*public ENetRole Role;
+    public ENetDormancy NetDormancy;
+    public ESpawnActorCollisionHandlingMethod SpawnCollisionHandlingMethod;
+    public EAutoReceiveInput AutoReceiveInput;*/
+    @UProperty(skipPrevious = 4)
+    public Integer InputPriority;
+    public FPackageIndex /*InputComponent*/ InputComponent;
+    public Float NetCullDistanceSquared;
+    public Integer NetTag;
+    public Float NetUpdateFrequency;
+    public Float MinNetUpdateFrequency;
+    public Float NetPriority;
+    public FPackageIndex /*Pawn*/ Instigator;
+    public List<Lazy<AActor>> Children;
+    public Lazy<USceneComponent> RootComponent;
+    public List<FPackageIndex /*MatineeActor*/> ControllingMatineeActors;
+    public List<FName> Layers;
+    public FPackageIndex /*WeakObjectProperty ChildActorComponent*/ ParentComponent;
+    public List<FName> Tags;
+    /*public FScriptMulticastDelegate OnTakeAnyDamage;
+    public FScriptMulticastDelegate OnTakePointDamage;
+    public FScriptMulticastDelegate OnTakeRadialDamage;
+    public FScriptMulticastDelegate OnActorBeginOverlap;
+    public FScriptMulticastDelegate OnActorEndOverlap;
+    public FScriptMulticastDelegate OnBeginCursorOver;
+    public FScriptMulticastDelegate OnEndCursorOver;
+    public FScriptMulticastDelegate OnClicked;
+    public FScriptMulticastDelegate OnReleased;
+    public FScriptMulticastDelegate OnInputTouchBegin;
+    public FScriptMulticastDelegate OnInputTouchEnd;
+    public FScriptMulticastDelegate OnInputTouchEnter;
+    public FScriptMulticastDelegate OnInputTouchLeave;
+    public FScriptMulticastDelegate OnActorHit;
+    public FScriptMulticastDelegate OnDestroyed;
+    public FScriptMulticastDelegate OnEndPlay;*/
+    @UProperty(skipPrevious = 16)
+    public List<Lazy<UActorComponent>> InstanceComponents;
+    public List<Lazy<UActorComponent>> BlueprintCreatedComponents;
 
     @UStruct
     public static class FTickFunction {

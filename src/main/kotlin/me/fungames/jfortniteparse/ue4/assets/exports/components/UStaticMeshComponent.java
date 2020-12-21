@@ -3,7 +3,9 @@ package me.fungames.jfortniteparse.ue4.assets.exports.components;
 import kotlin.Lazy;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh;
+import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FColor;
+import org.jetbrains.annotations.NotNull;
 
 public class UStaticMeshComponent extends UMeshComponent {
     public Integer ForcedLodModel;
@@ -33,4 +35,14 @@ public class UStaticMeshComponent extends UMeshComponent {
     //public List<FStaticMeshComponentLODInfo> LODData;
     //public List<FStreamingTextureBuildInfo> StreamingTextureData;
     //public FLightmassPrimitiveSettings LightmassSettings;
+
+    @Override
+    public void deserialize(@NotNull FAssetArchive Ar, int validPos) {
+        super.deserialize(Ar, validPos);
+        int lodDataNum = Ar.readInt32();
+        if (lodDataNum > 0) {
+            Companion.getLogger().info("Skipping {} LODData entries", lodDataNum);
+            Ar.seek(validPos);
+        }
+    }
 }

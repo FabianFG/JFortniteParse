@@ -95,7 +95,7 @@ class UMaterialInstanceConstant : UMaterialInstance() {
 
         for (p in TextureParameterValues) {
             val name = p.ParameterInfo.Name.text
-            val tex = p.ParameterValue.load<UTexture>() ?: continue
+            val tex = p.ParameterValue?.value ?: continue
 
             if (name.contains("detail", true)) continue     // details normal etc
 
@@ -122,7 +122,7 @@ class UMaterialInstanceConstant : UMaterialInstance() {
 
         // try to get diffuse texture when nothing found
         if (params.diffuse == null && TextureParameterValues.size == 1)
-            params.diffuse = TextureParameterValues[0].ParameterValue?.load()
+            params.diffuse = TextureParameterValues[0].ParameterValue?.value
     }
 
     override fun appendReferencedTextures(outTextures: MutableList<UUnrealMaterial>, onlyRendered: Boolean) {
@@ -131,7 +131,7 @@ class UMaterialInstanceConstant : UMaterialInstance() {
             super.appendReferencedTextures(outTextures, onlyRendered)
         } else {
             for (value in TextureParameterValues) {
-                val tex = value.ParameterValue?.load<UTexture>()
+                val tex = value.ParameterValue?.value
                 if (tex != null && !outTextures.contains(tex))
                     outTextures.add(tex)
             }

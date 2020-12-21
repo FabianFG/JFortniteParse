@@ -1,8 +1,10 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
+import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
+@OnlyAnnotated
 open class UScriptStruct : UStruct {
     var structClass: Class<*>? = null
         set(value) {

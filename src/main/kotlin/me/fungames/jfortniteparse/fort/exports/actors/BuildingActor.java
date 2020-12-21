@@ -29,7 +29,6 @@ public class BuildingActor extends AActor {
     public Float SavedHealthPct;
     public Short OwnerPersistentID;
     public Boolean bUseMinLifeSpan;
-    public Boolean bBlockMarking;
     public FSoftObjectPath /*SoftClassPath*/ AreaClass;
     public Lazy<UClassReal> NavigationLinksClass;
     public List<FPackageIndex /*FortAthenaVehicle*/> InitialOverlappingVehicles;
@@ -135,7 +134,6 @@ public class BuildingActor extends AActor {
     public Boolean bAllowTeamDamage;
     public Boolean bIgnoreAffiliationInteractHighlight;
     public Boolean bSuppressInteractionWidget;
-    public Boolean bCanBeMarked;
     public EFortBuildingType BuildingType;
     public EFortTeam Team;
     public UByte TeamIndex;
@@ -175,9 +173,7 @@ public class BuildingActor extends AActor {
     public Float BaselineScale;
     public Float AccumulatedDeltaSinceLastVisualsTick;
     public FPackageIndex /*ProjectileMovementComponent*/ ProjectileMovementComponent;
-    public FVector MarkerPositionOffset;
     public Float LifespanAfterDeath;
-    public MarkedActorDisplayInfo MarkerDisplay;
 
     public enum EAttributeInitLevelSource {
         WorldDifficulty,

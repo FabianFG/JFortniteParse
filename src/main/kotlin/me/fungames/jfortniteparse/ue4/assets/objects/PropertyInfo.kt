@@ -37,4 +37,6 @@ class PropertyInfo {
         this.name = name ?: field.name
         type.setupWithField(field)
     }
+
+    override fun toString() = "$index = $name"
 }

@@ -14,7 +14,6 @@ import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.valorant.exports.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -215,10 +214,14 @@ object ObjectTypeRegistry {
 
         registerClass(BuildingActor::class.java)
         registerClass(BuildingAutoNav::class.java)
+        registerClass(BuildingCorner::class.java)
+        registerClass(BuildingFloor::class.java)
         registerClass(BuildingProp::class.java)
+        registerClass(BuildingPropCorner::class.java)
         registerClass(BuildingPropWall::class.java)
         registerClass(BuildingSMActor::class.java)
         registerClass(BuildingTimeOfDayLights::class.java)
+        registerClass(BuildingWall::class.java)
 
         // -- Data table row structs --
         registerStruct(AlterationGroup::class.java)
@@ -305,26 +308,6 @@ object ObjectTypeRegistry {
 
     fun registerStruct(serializedName: String, clazz: Class<*>) {
         structs[serializedName] = clazz
-    }
-
-    fun constructClass(serializedName: String): UObject {
-        if (serializedName.startsWith("/Script/") || serializedName.startsWith("Default__")) {
-            return UObject().apply { clazz = UScriptStruct(FName.dummy(serializedName)) }
-        }
-        val clazz = classes[serializedName]
-            ?: UObject::class.java
-        return clazz.newInstance().apply {
-            this.clazz = UScriptStruct(FName.dummy(serializedName))
-        }
-    }
-
-    fun constructStruct(serializedName: String): Any {
-        if (serializedName.startsWith("/Script/") || serializedName.startsWith("Default__")) {
-            return Object()
-        }
-        val clazz = structs[serializedName]
-            ?: return Object()
-        return clazz.newInstance()
     }
 }
 

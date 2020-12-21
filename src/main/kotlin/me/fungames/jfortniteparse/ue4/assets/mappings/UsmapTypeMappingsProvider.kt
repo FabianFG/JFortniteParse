@@ -3,26 +3,30 @@ package me.fungames.jfortniteparse.ue4.assets.mappings
 import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.exceptions.UnknownCompressionMethodException
+import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
+import me.fungames.jfortniteparse.ue4.assets.mappings.UsmapTypeMappingsProvider.EUsmapPropertyType.*
+import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
+import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.reader.FArchiveProxy
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.io.File
 import java.io.RandomAccessFile
 
-class UsmapTypeMappingsProvider(val path: String) : TypeMappingsProvider() {
+class UsmapTypeMappingsProvider(val file: File) : TypeMappingsProvider() {
     companion object {
         val FILE_MAGIC = 0x30C4.toShort()
     }
 
     override fun reload(): Boolean {
         val data = readCompressedUsmap()
-        parseData(FByteArchive(data))
+        parseData(FUsmapNameTableArchive(FByteArchive(data)))
         return true
     }
 
     private fun readCompressedUsmap(): ByteArray {
-        val file = File(path)
         val Ar = FPakFileArchive(RandomAccessFile(file, "r"), file)
 
         val magic = Ar.readInt16()
@@ -31,7 +35,7 @@ class UsmapTypeMappingsProvider(val path: String) : TypeMappingsProvider() {
         }
 
         val version = Ar.read()
-        if (version != Version.latest().ordinal) {
+        if (version != EUsmapVersion.latest().ordinal) {
             throw ParserException(".usmap file has invalid version $version")
         }
 
@@ -43,7 +47,7 @@ class UsmapTypeMappingsProvider(val path: String) : TypeMappingsProvider() {
         }
 
         val compData = ByteArray(compSize)
-        Ar.read(compSize)
+        Ar.read(compData)
         val data = ByteArray(decompSize)
         Compression.uncompressMemory(when (method) {
             0 -> FName.NAME_None
@@ -54,20 +58,108 @@ class UsmapTypeMappingsProvider(val path: String) : TypeMappingsProvider() {
         return data
     }
 
-    private fun parseData(Ar: FArchive) {
-        val nameLUT = Ar.readTArray { String(Ar.read(Ar.read())) }
+    private fun deserializePropData(Ar: FUsmapNameTableArchive): PropertyType {
+        val propType = values()[Ar.read()]
+        val type = PropertyType(FName.dummy(propType.name))
+        when (propType) {
+            EnumProperty -> {
+                type.innerType = deserializePropData(Ar)
+                type.enumName = Ar.readFName()
+            }
+            StructProperty -> type.structType = Ar.readFName()
+            SetProperty, ArrayProperty -> type.innerType = deserializePropData(Ar)
+            MapProperty -> {
+                type.innerType = deserializePropData(Ar)
+                type.valueType = deserializePropData(Ar)
+            }
+        }
+        return type
+    }
+
+    private fun parseData(Ar: FUsmapNameTableArchive) {
+        Ar.nameMap = Ar.readTArray { String(Ar.read(Ar.read())) }
+        var cnt = 0
         mappings.enums = Ar.readTMap {
-            val enumName = nameLUT[Ar.readInt32()]
-            val enumValues = Ar.readArray { nameLUT[Ar.readInt32()] }
+            val enumName = Ar.readFName().text
+            val enumValues = List(Ar.read()) { Ar.readFName().text }
+            ++cnt
             enumName to enumValues
+        }
+        repeat(Ar.readInt32()) {
+            val struct = UStruct()
+            struct.name = Ar.readFName().text
+            val superStructName = Ar.readFName()
+            struct.superStruct = if (!superStructName.isNone()) lazy { mappings.types[superStructName.text] as UStruct } else null
+            val propCount = Ar.readUInt16()
+            val serializablePropCount = Ar.readUInt16()
+            struct.childProperties2 = List(serializablePropCount.toInt()) {
+                val schemaIdx = Ar.readUInt16()
+                val arraySize = Ar.readUInt8()
+                val propertyName = Ar.readFName()
+                val type = deserializePropData(Ar)
+                PropertyInfo(propertyName.text, type, arraySize.toInt()).apply { index = schemaIdx.toInt() }
+            }
+            mappings.types[struct.name] = struct
         }
     }
 
-    enum class Version {
+    class FUsmapNameTableArchive(innerAr: FArchive) : FArchiveProxy(innerAr) {
+        lateinit var nameMap: Array<String>
+
+        override fun readFName(): FName {
+            val nameIndex = readInt32()
+            if (nameIndex == -1) {
+                return FName.NAME_None
+            }
+            if (!nameMap.indices.contains(nameIndex)) {
+                throw ParserException("FName could not be read, requested index $nameIndex, name map size ${nameMap.size}", this)
+            }
+            return FName.dummy(nameMap[nameIndex])
+        }
+    }
+
+    enum class EUsmapVersion {
         Initial;
 
         companion object {
             fun latest() = values().last()
         }
     }
+
+    enum class EUsmapPropertyType {
+        ByteProperty,
+        BoolProperty,
+        IntProperty,
+        FloatProperty,
+        ObjectProperty,
+        NameProperty,
+        DelegateProperty,
+        DoubleProperty,
+        ArrayProperty,
+        StructProperty,
+        StrProperty,
+        TextProperty,
+        InterfaceProperty,
+        MulticastDelegateProperty,
+        WeakObjectProperty, //
+        LazyObjectProperty, // When deserialized, these 3 properties will be SoftObjects
+        AssetObjectProperty, //
+        SoftObjectProperty,
+        UInt64Property,
+        UInt32Property,
+        UInt16Property,
+        Int64Property,
+        Int16Property,
+        Int8Property,
+        MapProperty,
+        SetProperty,
+        EnumProperty,
+        FieldPathProperty
+    }
+}
+
+fun main() {
+    val p = UsmapTypeMappingsProvider(File("D:\\Downloads\\15.10_oo.usmap"))
+    p.reload()
+    println("usmap loaded")
 }

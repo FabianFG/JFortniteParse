@@ -150,8 +150,8 @@ public class BuildingSMActor extends BuildingActor {
     public Float CurBuildProgress;
     public Float OutwardMotionMagnitude;
     public Float CurBuildingAnimStartTime;
-    public List<FPackageIndex /*MaterialInstanceDynamic*/> BlueprintMIDs;
     public List<Lazy<UMaterialInstanceConstant>> BlueprintMICs;
+    public List<FPackageIndex /*MaterialInstanceDynamic*/> BlueprintMIDs;
     public Lazy<UStaticMeshComponent> BlueprintMeshComp;
     public FPackageIndex /*FortPlayerStateZone*/ EditingPlayer;
     public FVector BuildingAttachmentPointOffset;
@@ -165,9 +165,9 @@ public class BuildingSMActor extends BuildingActor {
     public List<Lazy<BuildingActor>> BuildingActorsAttachedTo;
     /*public FScriptMulticastDelegate OnTrapPlacementChanged;
     public FScriptMulticastDelegate OnReplacementDestruction;*/
-    @UProperty(arrayDim = 2, skipPrevious = 2, skipNext = 1)
+    @UProperty(arrayDim = 2, skipPrevious = 2)
     public Lazy<BuildingActor>[] AttachmentPlacementBlockingActors;
-    //public TWeakObjectPtr<FPackageIndex /*BuildingFoundation*/> Foundation;
+    public FPackageIndex /*WeakObjectProperty BuildingFoundation*/ Foundation;
     public Lazy<BuildingSMActor> DamagerOwner;
     public FPackageIndex /*FortConstructorBASE*/ RelevantBASE;
     @UProperty(skipNext = 1)
