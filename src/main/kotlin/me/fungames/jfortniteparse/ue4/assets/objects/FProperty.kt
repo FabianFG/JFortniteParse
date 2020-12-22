@@ -16,6 +16,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct as UScriptStructObj
 
 sealed class FProperty {
     inline fun <reified T> getTagTypeValue(): T? {
@@ -108,7 +109,8 @@ sealed class FProperty {
         is EnumProperty -> this.name
         is SoftObjectProperty -> this.`object`
         is SoftClassProperty -> this.`object`
-        is DelegateProperty -> this.name
+        is DelegateProperty -> this.delegate
+        is MulticastDelegateProperty -> this.delegate
         is DoubleProperty -> this.number
         is Int8Property -> this.number
         is Int16Property -> this.number
@@ -139,7 +141,8 @@ sealed class FProperty {
             is EnumProperty -> this.name = value as FName
             is SoftObjectProperty -> this.`object` = value as FSoftObjectPath
             is SoftClassProperty -> this.`object` = value as FSoftClassPath
-            is DelegateProperty -> this.name = value as FName
+            is DelegateProperty -> this.delegate = value as FScriptDelegate
+            is MulticastDelegateProperty -> this.delegate = value as FMulticastScriptDelegate
             is DoubleProperty -> this.number = value as Double
             is Int8Property -> this.number = value as Byte
             is Int16Property -> this.number = value as Short
@@ -157,12 +160,17 @@ sealed class FProperty {
                     ReadType.ZERO -> typeData.bool
                 })
                 "StructProperty" ->
-                    if (Ar.useUnversionedPropertySerialization && typeData.structClass?.structClass?.isAnnotationPresent(UStruct::class.java) == true) {
-                        val properties = mutableListOf<FPropertyTag>()
-                        if (type != ReadType.ZERO) {
-                            deserializeUnversionedProperties(properties, typeData.structClass!!, Ar)
+                    if (Ar.useUnversionedPropertySerialization) {
+                        val structClass = typeData.structClass
+                        if (structClass != null && (structClass.javaClass != UScriptStructObj::class.java || structClass.structClass?.isAnnotationPresent(UStruct::class.java) == true)) {
+                            val properties = mutableListOf<FPropertyTag>()
+                            if (type != ReadType.ZERO) {
+                                deserializeUnversionedProperties(properties, structClass, Ar)
+                            }
+                            StructProperty(UScriptStruct(typeData.structType, FStructFallback(properties)))
+                        } else {
+                            StructProperty(UScriptStruct(Ar, typeData.structType, type))
                         }
-                        StructProperty(UScriptStruct(typeData.structType, FStructFallback(properties)))
                     } else {
                         StructProperty(UScriptStruct(Ar, typeData.structType, type))
                     }
@@ -225,14 +233,14 @@ sealed class FProperty {
                     }
                 "SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type).apply { owner = Ar.owner })
                 "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type).apply { owner = Ar.owner })
-                "DelegateProperty" -> DelegateProperty(valueOr({ Ar.readInt32() }, { 0 }, type), valueOr({ Ar.readFName() }, { FName() }, type))
+                "DelegateProperty" -> DelegateProperty(valueOr({ FScriptDelegate(Ar) }, { FScriptDelegate(FPackageIndex(), FName.NAME_None) }, type))
+                "MulticastDelegateProperty" -> MulticastDelegateProperty(valueOr({ FMulticastScriptDelegate(Ar) }, { FMulticastScriptDelegate(mutableListOf()) }, type))
                 "DoubleProperty" -> DoubleProperty(valueOr({ Ar.readDouble() }, { 0.0 }, type))
                 "Int8Property" -> Int8Property(valueOr({ Ar.readInt8() }, { 0 }, type))
                 "Int16Property" -> Int16Property(valueOr({ Ar.readInt16() }, { 0 }, type))
                 "Int64Property" -> Int64Property(valueOr({ Ar.readInt64() }, { 0 }, type))
                 "FieldPathProperty" -> FieldPathProperty(valueOr({ FFieldPath(Ar) }, { FFieldPath() }, type))
-                /*"MulticastDelegateProperty" -> throw ParserException("MulticastDelegateProperty not implemented yet")
-                "LazyObjectProperty" -> throw ParserException("LazyObjectProperty not implemented yet")*/
+                //"LazyObjectProperty" -> throw ParserException("LazyObjectProperty not implemented yet")
 
                 else -> {
                     UClass.logger.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
@@ -273,10 +281,8 @@ sealed class FProperty {
                     if (type == ReadType.MAP)
                         Ar.writeInt32(0)
                 }
-                is DelegateProperty -> {
-                    Ar.writeInt32(tag.`object`)
-                    Ar.writeFName(tag.name)
-                }
+                is DelegateProperty -> tag.delegate.serialize(Ar)
+                is MulticastDelegateProperty -> tag.delegate.serialize(Ar)
                 is DoubleProperty -> Ar.writeDouble(tag.number)
                 is Int8Property -> Ar.writeInt8(tag.number)
                 is Int16Property -> Ar.writeInt16(tag.number)
@@ -310,7 +316,8 @@ sealed class FProperty {
     class EnumProperty(var name: FName, var enumConstant: Enum<*>?) : FProperty()
     class SoftObjectProperty(var `object`: FSoftObjectPath) : FProperty()
     class SoftClassProperty(var `object`: FSoftClassPath) : FProperty()
-    class DelegateProperty(var `object`: Int, var name: FName) : FProperty()
+    class DelegateProperty(var delegate: FScriptDelegate) : FProperty()
+    class MulticastDelegateProperty(var delegate: FMulticastScriptDelegate) : FProperty()
     class DoubleProperty(var number: Double) : FProperty()
     class Int8Property(var number: Byte) : FProperty()
     class Int16Property(var number: Short) : FProperty()

@@ -11,6 +11,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.mats.FMaterialCachedParamet
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor;
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid;
 import me.fungames.jfortniteparse.ue4.objects.engine.FColorMaterialInput;
+import me.fungames.jfortniteparse.ue4.objects.engine.FMaterialAttributesInput;
 import me.fungames.jfortniteparse.ue4.objects.engine.FScalarMaterialInput;
 import me.fungames.jfortniteparse.ue4.objects.engine.FVectorMaterialInput;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
@@ -40,8 +41,7 @@ public class UMaterial_Properties extends UMaterialInterface {
     public Float OpacityMaskClipValue;
     public FVectorMaterialInput WorldPositionOffset;
     public FScalarMaterialInput Refraction;
-    //public FMaterialAttributesInput MaterialAttributes;
-    @UProperty(skipPrevious = 1)
+    public FMaterialAttributesInput MaterialAttributes;
     public FScalarMaterialInput PixelDepthOffset;
     //public FShadingModelMaterialInput ShadingModelFromMaterialExpression;
     @UProperty(skipPrevious = 1)

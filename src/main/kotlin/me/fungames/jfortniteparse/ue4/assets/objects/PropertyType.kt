@@ -6,11 +6,8 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
-import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import java.lang.reflect.Field
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
@@ -142,6 +139,8 @@ class PropertyType(
         c == FSoftObjectPath::class.java -> "SoftObjectProperty"
         c == FSoftClassPath::class.java -> "SoftClassProperty"
         c == FFieldPath::class.java -> "FieldPathProperty"
+        c == FScriptDelegate::class.java -> "DelegateProperty"
+        c == FMulticastScriptDelegate::class.java -> "MulticastDelegateProperty"
         else -> "StructProperty"
     })
 }

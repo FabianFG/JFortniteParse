@@ -159,22 +159,18 @@ abstract class FArchive : Cloneable, InputStream() {
 
     inline fun <reified K, reified V> readTMap(init: (FArchive) -> Pair<K, V>) = readTMap(readInt32(), init)
 
-    inline fun <reified T> readTArray(length: Int, init: (FArchive) -> T) = Array(length) { init(this) }
-
-    inline fun <reified T> readTArray(init: (FArchive) -> T) = readTArray(readInt32(), init)
+    inline fun <reified T> readTArray(init: (Int) -> T) = Array(readInt32()) { init(it) }
 
     inline fun <reified T> readBulkTArray(init: (FArchive) -> T): Array<T> {
         val elementSize = readInt32()
         val savePos = pos()
-        val array = readTArray(readInt32(), init)
+        val array = Array(readInt32()) { init(this) }
         if (pos() != savePos + 4 + array.size * elementSize)
             throw ParserException("RawArray item size mismatch: expected %d, serialized %d".format(elementSize, (pos() - savePos) / array.size))
         return array
     }
 
-    inline fun <reified T> readArray(length: Int, init: (FArchive) -> T) = MutableList(length) { init(this) }
-
-    inline fun <reified T> readArray(init: (FArchive) -> T) = readArray(readInt32(), init)
+    inline fun <reified T> readArray(init: (FArchive) -> T) = MutableList(readInt32()) { init(this) }
 
     open fun readFName() = FName.NAME_None
 }

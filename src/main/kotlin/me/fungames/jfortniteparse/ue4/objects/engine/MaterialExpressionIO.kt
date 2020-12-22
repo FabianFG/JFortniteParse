@@ -179,4 +179,17 @@ class FVector2MaterialInput : FMaterialInput<FVector2D> {
     override fun serialize(Ar: FAssetArchiveWriter) = super.serialize(Ar) { it.serialize(Ar) }
 }
 
-// class FMaterialAttributesInput : FExpressionInput
+class FMaterialAttributesInput : FExpressionInput {
+    constructor(Ar: FAssetArchive) : super(Ar)
+
+    constructor(
+        outputIndex: Int,
+        inputName: FName,
+        mask: Int,
+        maskR: Int,
+        maskG: Int,
+        maskB: Int,
+        maskA: Int,
+        expressionName: FName
+    ) : super(outputIndex, inputName, mask, maskR, maskG, maskB, maskA, expressionName)
+}

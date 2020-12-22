@@ -5,7 +5,6 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.enums.EMobileSpecularMask
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextureChannel
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
-import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UUnrealMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.converters.textures.toBufferedImage
@@ -169,7 +168,7 @@ fun UUnrealMaterial.export() : MaterialExport {
     }
 
     val parentExport = if (this is UMaterialInstanceConstant) {
-        Parent?.load<UMaterialInterface>()?.export()
+        Parent?.value?.export()
     } else null
     //TODO TextureCube3 ???
 

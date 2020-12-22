@@ -13,6 +13,8 @@ import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConst
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
+import me.fungames.jfortniteparse.ue4.objects.FScalableFloat
+import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat
 import me.fungames.jfortniteparse.valorant.exports.*
 import java.util.concurrent.ConcurrentHashMap
@@ -51,16 +53,18 @@ object ObjectTypeRegistry {
         registerClass(UStaticMeshComponent::class.java)
         registerClass(UStreamableRenderAsset::class.java)
         registerClass(UStringTable::class.java)
+        registerClass(UTextRenderComponent::class.java)
         registerClass(UTexture2D::class.java)
         registerClass(UTexture::class.java)
         registerClass(UUserDefinedEnum::class.java)
         registerClass(UUserDefinedStruct::class.java)
 
-        // -- Actors --
         registerClass(AActor::class.java)
 
         // -- Structs --
         registerStruct(FPointerToUberGraphFrame::class.java)
+        registerStruct(FScalableFloat::class.java)
+        registerStruct(FTransform::class.java)
     }
 
     private inline fun registerFortnite() {
@@ -214,11 +218,15 @@ object ObjectTypeRegistry {
 
         registerClass(BuildingActor::class.java)
         registerClass(BuildingAutoNav::class.java)
+        registerClass(BuildingContainer::class.java)
         registerClass(BuildingCorner::class.java)
         registerClass(BuildingFloor::class.java)
         registerClass(BuildingProp::class.java)
         registerClass(BuildingPropCorner::class.java)
+        registerClass(BuildingPropSimpleInteract::class.java)
         registerClass(BuildingPropWall::class.java)
+        registerClass(BuildingRoof::class.java)
+        registerClass(BuildingStairs::class.java)
         registerClass(BuildingSMActor::class.java)
         registerClass(BuildingTimeOfDayLights::class.java)
         registerClass(BuildingWall::class.java)

@@ -30,6 +30,15 @@ class FByteBulkData : UClass {
             BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
                 logger.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
                 val ubulkAr = Ar.getPayload(if (BULKDATA_OptionalPayload.check(bulkDataFlags)) PayloadType.UPTNL else PayloadType.UBULK)
+                /*val ubulkAr = if (BULKDATA_OptionalPayload.check(bulkDataFlags)) {
+                    try {
+                        Ar.getPayload(PayloadType.UPTNL)
+                    } catch (ignored: Exception) {
+                        Ar.getPayload(PayloadType.UBULK)
+                    }
+                } else {
+                    Ar.getPayload(PayloadType.UBULK)
+                }*/
                 ubulkAr.seek(header.offsetInFile.toInt())
                 ubulkAr.read(data)
             }

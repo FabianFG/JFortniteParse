@@ -67,7 +67,7 @@ publishing {
 }
 
 dependencies {
-    implementation 'androidx.collection:collection:1.1.0'
+    implementation 'androidx.collection:collection-ktx:1.1.0'
     implementation 'me.fungames:JOodle:1.2'
     implementation 'me.fungames:KotlinASTC:1.1'
     implementation 'me.fungames:KotlinPointers:1.1'

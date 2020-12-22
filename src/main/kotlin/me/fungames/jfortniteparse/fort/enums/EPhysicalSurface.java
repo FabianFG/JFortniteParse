@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.fort.enums;
 
-public enum EPhysicalSurface {
+public enum EPhysicalSurface { // PhysicsCore
     SurfaceType_Default,
     SurfaceType1,
     SurfaceType2,

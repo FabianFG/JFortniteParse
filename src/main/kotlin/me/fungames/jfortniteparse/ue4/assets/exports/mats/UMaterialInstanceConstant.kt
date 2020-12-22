@@ -10,7 +10,7 @@ class UMaterialInstanceConstant : UMaterialInstance() {
 
     override fun getParams(params: CMaterialParams) {
         // get params from linked UMaterial3
-        val parent = Parent?.load<UMaterialInterface>()
+        val parent = Parent?.value
         if (parent != null && parent != this)
             parent.getParams(params)
 
@@ -135,7 +135,7 @@ class UMaterialInstanceConstant : UMaterialInstance() {
                 if (tex != null && !outTextures.contains(tex))
                     outTextures.add(tex)
             }
-            val parent = Parent?.load<UMaterialInterface>()
+            val parent = Parent?.value
             if (parent != null && parent != this) parent.appendReferencedTextures(outTextures, onlyRendered)
         }
     }

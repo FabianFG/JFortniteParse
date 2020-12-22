@@ -11,6 +11,7 @@ import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.enums.EDetailMode;
 import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle;
+import me.fungames.jfortniteparse.ue4.assets.exports.USoundBase;
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh;
 import me.fungames.jfortniteparse.ue4.assets.exports.components.UStaticMeshComponent;
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant;
@@ -19,6 +20,8 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FBox;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D;
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FMulticastScriptDelegate;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
@@ -31,8 +34,7 @@ public class BuildingSMActor extends BuildingActor {
     @UProperty(arrayDim = 4)
     public Lazy<BuildingTextureData>[] TextureData;
     public Lazy<UStaticMesh> StaticMesh;
-    //public List<FTierMeshSets> AlternateMeshes;
-    @UProperty(skipPrevious = 1)
+    public List<TierMeshSets> AlternateMeshes;
     public Boolean bForceReplicateSubObjects;
     public Boolean bNoPhysicsCollision;
     public Boolean bNoCameraCollision;
@@ -108,9 +110,8 @@ public class BuildingSMActor extends BuildingActor {
     public FVector /*FVector_NetQuantize100*/ ReplicatedDrawScale3D;
     public EditorOnlyBuildingInstanceMaterialParameters EditorOnlyInstanceMaterialParameters;
     public Lazy<UStaticMeshComponent> StaticMeshComponent;
-    public FPackageIndex /*MaterialInterface*/ BaseMaterial;
-    //public FScriptMulticastDelegate OnConstructionComplete;
-    @UProperty(skipPrevious = 1)
+    public Lazy<UMaterialInterface> BaseMaterial;
+    public FMulticastScriptDelegate OnConstructionComplete;
     public BuildingActorMinimalReplicationProxy MinimalReplicationProxy;
     public ChosenQuotaInfo DestructionLootTierChosenQuotaInfo;
     public FName DestructionLootTierKey;
@@ -131,9 +132,8 @@ public class BuildingSMActor extends BuildingActor {
     public Float LastDamageAmount;
     public FVector LastDamageHitImpulseDir;
     public List<Lazy<UStaticMeshComponent>> CachedAnimatingStaticMeshes;
-    /*public FScriptMulticastDelegate OnRepairBuildingStarted;
-    public FScriptMulticastDelegate OnRepairBuildingFinished;*/
-    @UProperty(skipPrevious = 2)
+    public FMulticastScriptDelegate OnRepairBuildingStarted;
+    public FMulticastScriptDelegate OnRepairBuildingFinished;
     public FPackageIndex /*BuildingEditModeMetadata*/ EditModePatternData;
     public Integer UndermineGroup;
     public Integer LogicalBuildingIdx;
@@ -163,9 +163,9 @@ public class BuildingSMActor extends BuildingActor {
     public Lazy<BuildingSMActor> ParentActorToAttachTo;
     public List<Lazy<BuildingActor>> AttachedBuildingActors;
     public List<Lazy<BuildingActor>> BuildingActorsAttachedTo;
-    /*public FScriptMulticastDelegate OnTrapPlacementChanged;
-    public FScriptMulticastDelegate OnReplacementDestruction;*/
-    @UProperty(arrayDim = 2, skipPrevious = 2)
+    public FMulticastScriptDelegate OnTrapPlacementChanged;
+    public FMulticastScriptDelegate OnReplacementDestruction;
+    @UProperty(arrayDim = 2)
     public Lazy<BuildingActor>[] AttachmentPlacementBlockingActors;
     public FPackageIndex /*WeakObjectProperty BuildingFoundation*/ Foundation;
     public Lazy<BuildingSMActor> DamagerOwner;
@@ -173,6 +173,73 @@ public class BuildingSMActor extends BuildingActor {
     @UProperty(skipNext = 1)
     public FPackageIndex /*FortConstructorBASE*/ LastRelevantBASE;
     //public ProxyGameplayCueDamage ProxyGameplayCueDamage;
+
+    @UStruct
+    public static class TierMeshSets {
+        public Integer Tier;
+        public List<MeshSet> MeshSets;
+    }
+
+    @UStruct
+    public static class MeshSet {
+        public Float Weight;
+        public EFortResourceType ResourceType;
+        public Boolean bDoNotBlockBuildings;
+        public Boolean bDestroyOnPlayerBuildingPlacement;
+        public Boolean bNeedsDamageOverlay;
+        public Lazy<UStaticMesh> BaseMesh;
+        public FPackageIndex /*ParticleSystem*/ BreakEffect;
+        public FPackageIndex /*ParticleSystem*/ DeathParticles;
+        public FName DeathParticleSocketName;
+        public Lazy<USoundBase> DeathSound;
+        public FPackageIndex /*ParticleSystem*/ ConstructedEffect;
+        public List<TaggedParticleSubstitution> SwapInParticles;
+        public List<TaggedSoundSubstitution> SwapInSounds;
+        public List<TaggedStaticMeshSubstitution> SwapInMeshes;
+        public List<TaggedInLightProperties> SwapInLightProperties;
+        public AddOrRemoveGameplayTags BuildingOwnedTagDelta;
+        public Lazy<UStaticMesh> SearchedMesh;
+        public FCurveTableRowHandle SearchSpeed;
+        public Float LootNoiseRange;
+        public FVector LootSpawnLocation;
+    }
+
+    @UStruct
+    public static class TaggedParticleSubstitution {
+        public FName Tag;
+        public FPackageIndex /*ParticleSystem*/ Substitute;
+    }
+
+    @UStruct
+    public static class TaggedSoundSubstitution {
+        public FName Tag;
+        public Lazy<USoundBase> Substitute;
+    }
+
+    @UStruct
+    public static class TaggedStaticMeshSubstitution {
+        public FName Tag;
+        public Lazy<UStaticMesh> Substitute;
+    }
+
+    @UStruct
+    public static class TaggedInLightProperties {
+        public FName Tag;
+        public LightProperty_Color Substitute;
+    }
+
+    @UStruct
+    public static class LightProperty_Color {
+        public Boolean bEnabled;
+        public FLinearColor Color;
+        public Boolean bUsingSRGB;
+    }
+
+    @UStruct
+    public static class AddOrRemoveGameplayTags {
+        public FGameplayTagContainer Added;
+        public FGameplayTagContainer Removed;
+    }
 
     public enum ESavedSupportStatus {
         UnknownState,

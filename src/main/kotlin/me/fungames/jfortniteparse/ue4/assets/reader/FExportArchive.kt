@@ -17,6 +17,8 @@ import java.util.concurrent.CompletableFuture
 
 class FExportArchive(data: ByteBuffer, val pkg: IoPackage) : FAssetArchive(data, null, pkg.fileName) {
     init {
+        game = pkg.game.game
+        ver = pkg.game.version
         owner = pkg
     }
 

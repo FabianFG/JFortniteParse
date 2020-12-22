@@ -91,7 +91,7 @@ class TEvaluationTreeEntryContainer<ElementType> : UClass {
 
     constructor(Ar: FArchive, init: () -> Array<ElementType>) {
         super.init(Ar)
-        entries = Ar.readTArray { FEntry(it) }
+        entries = Ar.readTArray { FEntry(Ar) }
         items = init()
         super.complete(Ar)
     }

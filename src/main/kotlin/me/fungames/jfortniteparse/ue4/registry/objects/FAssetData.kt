@@ -26,7 +26,7 @@ class FAssetData {
 
         Ar.serializeTagsAndBundles(this)
 
-        this.chunkIDs = Ar.readTArray { it.readInt32() }
+        this.chunkIDs = Ar.readTArray { Ar.readInt32() }
         this.packageFlags = Ar.readUInt32()
     }
 }

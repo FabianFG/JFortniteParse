@@ -1,5 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 
+import androidx.collection.SparseArrayCompat
+import androidx.collection.set
 import me.fungames.jfortniteparse.GDebugUnversionedPropertySerialization
 import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
@@ -61,7 +63,7 @@ class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int
  * Serialization is based on indices into this property array
  */
 class FUnversionedStructSchema {
-    val serializers = mutableMapOf<Int, FUnversionedPropertySerializer>()
+    val serializers = SparseArrayCompat<FUnversionedPropertySerializer>()
 
     constructor(struct: UStruct) {
         var index = 0
@@ -71,7 +73,7 @@ class FUnversionedStructSchema {
                 val clazz = (struct as UScriptStruct).structClass
                     ?: throw MissingSchemaException("Missing schema for $struct")
                 val bOnlyAnnotated = clazz.isAnnotationPresent(OnlyAnnotated::class.java)
-                for (field in clazz.declaredFields) {
+                for (field in clazz.declaredFields) { // Reflection
                     if (Modifier.isStatic(field.modifiers)) {
                         continue
                     }
@@ -83,18 +85,22 @@ class FUnversionedStructSchema {
                     val propertyInfo = PropertyInfo(field, ann)
                     for (arrayIdx in 0 until propertyInfo.arrayDim) {
                         if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.name}")
-                        serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
-                        ++index
+                        serializers[index++] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                     }
                     index += ann?.skipNext ?: 0
                 }
             } else {
-                for (prop in struct.childProperties) {
+                for (prop in struct.childProperties) { // Serialized in packages
                     val propertyInfo = PropertyInfo(prop.name.text, PropertyType(prop as FPropertySerialized), prop.arrayDim)
                     for (arrayIdx in 0 until prop.arrayDim) {
                         if (GDebugUnversionedPropertySerialization) println("$index = ${prop.name} [SERIALIZED]")
-                        serializers[index] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
-                        ++index
+                        serializers[index++] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
+                    }
+                }
+                for (prop in struct.childProperties2) { // Provided by TypeMappingsProvider
+                    for (arrayIdx in 0 until prop.arrayDim) {
+                        if (GDebugUnversionedPropertySerialization) println("$index = ${prop.name}")
+                        serializers[index++] = FUnversionedPropertySerializer(prop, arrayIdx)
                     }
                 }
             }
@@ -106,7 +112,7 @@ class FUnversionedStructSchema {
 val schemaCache = mutableMapOf<Class<*>, FUnversionedStructSchema>()
 
 fun getOrCreateUnversionedSchema(struct: UStruct): FUnversionedStructSchema {
-    return if (struct is UScriptStruct && struct.structClass != null) {
+    return if (struct.javaClass == UScriptStruct::class.java && (struct as UScriptStruct).structClass != null) {
         schemaCache.getOrPut(struct.structClass!!) { FUnversionedStructSchema(struct) }
     } else {
         FUnversionedStructSchema(struct)
@@ -186,7 +192,7 @@ class FUnversionedHeader {
         }
     }
 
-    class FIterator(header: FUnversionedHeader, private val schemas: Map<Int, FUnversionedPropertySerializer>) {
+    class FIterator(header: FUnversionedHeader, private val schemas: SparseArrayCompat<FUnversionedPropertySerializer>) {
         /*private*/ internal var schemaIt = 0
         private val zeroMask = header.zeroMask
         private val fragments = header.fragments

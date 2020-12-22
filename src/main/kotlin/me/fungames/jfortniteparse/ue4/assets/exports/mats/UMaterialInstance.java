@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.enums.EBlendMode;
 import me.fungames.jfortniteparse.ue4.assets.enums.EMaterialShadingModel;
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject;
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture;
 import me.fungames.jfortniteparse.ue4.assets.objects.mats.FMaterialCachedParameters;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor;
@@ -18,7 +19,7 @@ public class UMaterialInstance extends UMaterialInterface {
     public FPackageIndex /*PhysicalMaterial*/ PhysMaterial;
     @UProperty(arrayDim = 8)
     public FPackageIndex[] /*PhysicalMaterial[]*/ PhysicalMaterialMap;
-    public FPackageIndex /*MaterialInterface*/ Parent;
+    public Lazy<UMaterialInterface> Parent;
     public Boolean bHasStaticPermutationResource;
     public Boolean bOverrideSubsurfaceProfile;
     public List<FScalarParameterValue> ScalarParameterValues;
@@ -29,7 +30,7 @@ public class UMaterialInstance extends UMaterialInterface {
     public FMaterialInstanceBasePropertyOverrides BasePropertyOverrides;
     public FStaticParameterSet StaticParameters;
     public FMaterialCachedParameters CachedLayerParameters;
-    public List<FPackageIndex /*Object*/> CachedReferencedTextures;
+    public List<Lazy<UObject>> CachedReferencedTextures;
 
     @UStruct
     public static class FMaterialParameterInfo {

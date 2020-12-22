@@ -563,7 +563,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             readerHasFullDirectoryIndex = readerHasFullDirectoryIndex && fullDirectoryIndexOffset != INDEX_NONE.toLong()
         }
 
-        val encodedPakEntries = primaryIndexAr.readTArray { it.readInt8() }.toByteArray()
+        val encodedPakEntries = primaryIndexAr.readTArray { Ar.readInt8() }.toByteArray()
 
         val filesNum = primaryIndexAr.readInt32()
         if (filesNum < 0) {

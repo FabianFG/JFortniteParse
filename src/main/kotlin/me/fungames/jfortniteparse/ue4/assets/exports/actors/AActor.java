@@ -6,6 +6,7 @@ import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject;
 import me.fungames.jfortniteparse.ue4.assets.exports.components.UActorComponent;
 import me.fungames.jfortniteparse.ue4.assets.exports.components.USceneComponent;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FMulticastScriptDelegate;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
@@ -73,23 +74,22 @@ public class AActor extends UObject {
     public List<FName> Layers;
     public FPackageIndex /*WeakObjectProperty ChildActorComponent*/ ParentComponent;
     public List<FName> Tags;
-    /*public FScriptMulticastDelegate OnTakeAnyDamage;
-    public FScriptMulticastDelegate OnTakePointDamage;
-    public FScriptMulticastDelegate OnTakeRadialDamage;
-    public FScriptMulticastDelegate OnActorBeginOverlap;
-    public FScriptMulticastDelegate OnActorEndOverlap;
-    public FScriptMulticastDelegate OnBeginCursorOver;
-    public FScriptMulticastDelegate OnEndCursorOver;
-    public FScriptMulticastDelegate OnClicked;
-    public FScriptMulticastDelegate OnReleased;
-    public FScriptMulticastDelegate OnInputTouchBegin;
-    public FScriptMulticastDelegate OnInputTouchEnd;
-    public FScriptMulticastDelegate OnInputTouchEnter;
-    public FScriptMulticastDelegate OnInputTouchLeave;
-    public FScriptMulticastDelegate OnActorHit;
-    public FScriptMulticastDelegate OnDestroyed;
-    public FScriptMulticastDelegate OnEndPlay;*/
-    @UProperty(skipPrevious = 16)
+    public FMulticastScriptDelegate OnTakeAnyDamage;
+    public FMulticastScriptDelegate OnTakePointDamage;
+    public FMulticastScriptDelegate OnTakeRadialDamage;
+    public FMulticastScriptDelegate OnActorBeginOverlap;
+    public FMulticastScriptDelegate OnActorEndOverlap;
+    public FMulticastScriptDelegate OnBeginCursorOver;
+    public FMulticastScriptDelegate OnEndCursorOver;
+    public FMulticastScriptDelegate OnClicked;
+    public FMulticastScriptDelegate OnReleased;
+    public FMulticastScriptDelegate OnInputTouchBegin;
+    public FMulticastScriptDelegate OnInputTouchEnd;
+    public FMulticastScriptDelegate OnInputTouchEnter;
+    public FMulticastScriptDelegate OnInputTouchLeave;
+    public FMulticastScriptDelegate OnActorHit;
+    public FMulticastScriptDelegate OnDestroyed;
+    public FMulticastScriptDelegate OnEndPlay;
     public List<Lazy<UActorComponent>> InstanceComponents;
     public List<Lazy<UActorComponent>> BlueprintCreatedComponents;
 

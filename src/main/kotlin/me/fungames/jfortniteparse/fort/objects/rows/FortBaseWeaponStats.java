@@ -4,8 +4,8 @@ import kotlin.Lazy;
 import me.fungames.jfortniteparse.ue4.assets.exports.UCurveTable;
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable;
 import me.fungames.jfortniteparse.ue4.objects.FTableRowBase;
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
 public class FortBaseWeaponStats extends FTableRowBase {
     public int BaseLevel;
@@ -73,7 +73,7 @@ public class FortBaseWeaponStats extends FTableRowBase {
     public float MaxChargeTimeUntilDischarge;
     public float MinChargeDamageMultiplier;
     public float MaxChargeDamageMultiplier;
-    public FPackageIndex /*CurveFloat*/ ChargeDamageMultiplierCurve;
+    public Lazy<UCurveFloat> ChargeDamageMultiplierCurve;
     public float EquipAnimRate;
     public float QuickBarSlotCooldownDuration;
 

@@ -30,7 +30,7 @@ class FManifestMeta : UClass {
         buildVersion = Ar.readString()
         launchExe = Ar.readString()
         launchCommand = Ar.readString()
-        prereqIds = Ar.readTArray { it.readString() }
+        prereqIds = Ar.readTArray { Ar.readString() }
         prereqName = Ar.readString()
         prereqPath = Ar.readString()
         prereqArgs = Ar.readString()

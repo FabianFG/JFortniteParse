@@ -36,7 +36,7 @@ open class UStruct : UObject() {
             val propertyTypeName = Ar.readFName()
             val prop = FField.construct(propertyTypeName)
             prop.deserialize(Ar)
-            //println("$propertyTypeName ${prop.name}")
+            println("$it = $propertyTypeName ${prop.name}")
             prop
         }
     }
@@ -68,6 +68,7 @@ open class FField {
             "ObjectProperty" -> FObjectProperty()
             "StrProperty" -> FStrProperty()
             "StructProperty" -> FStructProperty()
+            "TextProperty" -> FTextProperty()
             else -> throw ParserException("Unsupported serialized property type $fieldTypeName")
         }
     }
@@ -129,7 +130,7 @@ class FByteProperty : FPropertySerialized() {
     }
 }
 
-class FClassProperty : FPropertySerialized() {
+class FClassProperty : FObjectProperty() {
     var metaClass: Lazy<UClassReal>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
@@ -182,7 +183,7 @@ class FMulticastInlineDelegateProperty : FPropertySerialized() {
 
 class FNameProperty : FPropertySerialized()
 
-class FObjectProperty : FPropertySerialized() {
+open class FObjectProperty : FPropertySerialized() {
     var propertyClass: Lazy<UClassReal>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
@@ -201,6 +202,8 @@ class FStructProperty : FPropertySerialized() {
         struct = Ar.readObject()
     }
 }
+
+class FTextProperty : FPropertySerialized()
 
 fun serializeSingleField(Ar: FAssetArchive): FField? {
     val propertyTypeName = Ar.readFName()

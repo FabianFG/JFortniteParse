@@ -1,19 +1,23 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.UProperty
+import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 internal const val TEXSTREAM_MAX_NUM_UVCHANNELS = 4
 
-@ExperimentalUnsignedTypes
+@UStruct
 class FMeshUVChannelInfo : UClass {
+    @JvmField @UProperty("bInitialized")
+    var initialized: Boolean
+    @JvmField @UProperty("bOverrideDensities")
+    var overrideDensities: Boolean
+    @JvmField @UProperty("LocalUVDensities", arrayDim = TEXSTREAM_MAX_NUM_UVCHANNELS)
+    var localUVDensities: Array<Float>
 
-    var initialized : Boolean
-    var overrideDensities : Boolean
-    var localUVDensities : Array<Float>
-
-    constructor(Ar : FArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
         initialized = Ar.readBoolean()
         overrideDensities = Ar.readBoolean()
@@ -35,5 +39,5 @@ class FMeshUVChannelInfo : UClass {
         this.localUVDensities = localUVDensities
     }
 
-
+    constructor() : this(false, false, emptyArray())
 }

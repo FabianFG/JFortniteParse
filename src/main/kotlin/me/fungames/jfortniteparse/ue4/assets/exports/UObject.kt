@@ -136,7 +136,7 @@ open class UObject : UClass, IPropertyHolder {
                 objOuter.getPathName(stopOuter, resultString)
 
                 // SUBOBJECT_DELIMITER_CHAR is used to indicate that this object's outer is not a UPackage
-                if (objOuter !is Package && objOuter.outer !is Package) {
+                if (objOuter.outer is Package) {
                     resultString.append(':')
                 } else {
                     resultString.append('.')

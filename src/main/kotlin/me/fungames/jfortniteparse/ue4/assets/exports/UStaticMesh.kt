@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMaterial
 import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FStaticMeshLODResources
@@ -12,18 +13,18 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.*
 
 internal const val MAX_STATIC_UV_SETS_UE4 = 8
 internal const val MAX_STATIC_LODS_UE4 = 8
 
-class UStaticMesh : UObject() {
+@OnlyAnnotated
+class UStaticMesh : UStaticMesh_Properties() {
     lateinit var stripFlags: FStripDataFlags
-    var bodySetup: UObject? = null // UBodySetup
-    var navCollision: UObject? = null// UNavCollision
+    var bodySetup: Lazy<UObject>? = null // UBodySetup
+    var navCollision: Lazy<UObject>? = null // UNavCollision
     lateinit var lightingGuid: FGuid
-    lateinit var sockets: Array<UObject?>
+    lateinit var sockets: Array<Lazy<UObject>?>
     var lods = emptyArray<FStaticMeshLODResources>()
     var bounds = FBoxSphereBounds(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f), 0f)
     var lodsShareStaticLighting = false
@@ -32,14 +33,11 @@ class UStaticMesh : UObject() {
     var materials = emptyArray<Lazy<UMaterialInterface>>()
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
-        super.deserialize(Ar, validPos); if (Ar.useUnversionedPropertySerialization) throw ParserException("UStaticMesh deserialization with unversioned properties not yet supported")
+        super.deserialize(Ar, validPos)
         stripFlags = FStripDataFlags(Ar)
         val cooked = Ar.readBoolean()
-        bodySetup = FPackageIndex(Ar).run { Ar.owner.loadObject(this) }
-        navCollision = (if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION)
-            FPackageIndex(Ar)
-        else
-            FPackageIndex(0, Ar.owner)).run { Ar.owner.loadObject(this) }
+        bodySetup = Ar.readObject()
+        navCollision = if (Ar.ver >= VER_UE4_STATIC_MESH_STORE_NAV_COLLISION) Ar.readObject() else null
 
         if (!stripFlags.isEditorDataStripped()) {
             if (Ar.ver < VER_UE4_DEPRECATED_STATIC_MESH_THUMBNAIL_PROPERTIES_REMOVED) {
@@ -50,7 +48,7 @@ class UStaticMesh : UObject() {
             Ar.readUInt32() // highResSourceMeshCRC
         }
         lightingGuid = FGuid(Ar)
-        sockets = Ar.readTArray { FPackageIndex(Ar).run { Ar.owner.loadObject(this) } }
+        sockets = Ar.readTArray { Ar.readObject() }
         if (!stripFlags.isEditorDataStripped()) {
             //TODO https://github.com/gildor2/UEViewer/blob/master/Unreal/UnMesh4.cpp#L2382
             throw ParserException("Static Mesh with Editor Data not implemented yet")
@@ -59,14 +57,15 @@ class UStaticMesh : UObject() {
         // serialize FStaticMeshRenderData
         if (cooked) {
             if (!cooked) {
-                Ar.readTArray { it.readInt32() } // WedgeMap
-                Ar.readTArray { it.readInt32() } // MaterialIndexToImportIndex
+                Ar.readTArray { Ar.readInt32() } // WedgeMap
+                Ar.readTArray { Ar.readInt32() } // MaterialIndexToImportIndex
             }
 
+            if (Ar.useUnversionedPropertySerialization) Ar.skip(4) // TODO what is this
             lods = Ar.readTArray { FStaticMeshLODResources(Ar) }
 
             if (Ar.game >= GAME_UE4(23))
-                Ar.readUInt8() // NumInlinedLods
+                Ar.readUInt8() // NumInlinedLODs
 
             if (cooked) {
                 if (Ar.ver >= VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN) {
@@ -151,8 +150,6 @@ class UStaticMesh : UObject() {
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
-        super.serialize(Ar)
-        super.completeWrite(Ar)
         throw ParserException("Serializing UStaticMesh not supported")
     }
 }

@@ -25,12 +25,16 @@ abstract class Package(var fileName: String,
         get() = exportsLazy.map { it.value }
     var packageFlags = 0
 
-    protected fun constructExport(classObject: UStruct?) =
-        if (classObject is UScriptStruct && classObject.structClass != null) {
-            (classObject.structClass!!.newInstance() as UObject)
-        } else {
-            UObject()
-        }.also { it.clazz = classObject }
+    protected fun constructExport(struct: UStruct?): UObject {
+        var current = struct
+        while (current != null) {
+            (current as? UScriptStruct)?.structClass?.let {
+                return (it.newInstance() as UObject).apply { clazz = struct }
+            }
+            current = current.superStruct?.value
+        }
+        return UObject().apply { clazz = struct }
+    }
 
     /**
      * @return the first export of the given type

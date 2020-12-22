@@ -1,13 +1,18 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.UProperty
+import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
+@UStruct
 class FBoxSphereBounds : UClass {
+    @JvmField @UProperty("Origin")
     var origin: FVector
+    @JvmField @UProperty("BoxExtent")
     var boxExtent: FVector
+    @JvmField @UProperty("SphereRadius")
     var sphereRadius: Float
 
     constructor(Ar: FArchive) {

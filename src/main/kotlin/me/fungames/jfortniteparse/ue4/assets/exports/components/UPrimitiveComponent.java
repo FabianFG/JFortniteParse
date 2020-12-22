@@ -2,7 +2,10 @@ package me.fungames.jfortniteparse.ue4.assets.exports.components;
 
 import kotlin.Lazy;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
+import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.actors.AActor;
+import me.fungames.jfortniteparse.ue4.assets.objects.FBodyInstance;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FMulticastScriptDelegate;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
 import java.util.List;
@@ -67,11 +70,10 @@ public class UPrimitiveComponent extends USceneComponent {
     public Boolean AlwaysLoadOnServer;
     public Boolean bUseEditorCompositing;
     public Boolean bRenderCustomDepth;
-    /*public EHasCustomNavigableGeometry bHasCustomNavigableGeometry;
+    public EHasCustomNavigableGeometry bHasCustomNavigableGeometry;
     public ECanBeCharacterBase CanCharacterStepUpOn;
     public FLightingChannels LightingChannels;
-    public ERendererStencilMask CustomDepthStencilWriteMask;*/
-    @UProperty(skipPrevious = 4)
+    public ERendererStencilMask CustomDepthStencilWriteMask;
     public Integer CustomDepthStencilValue;
     /*public FCustomPrimitiveData CustomPrimitiveData;
     public FCustomPrimitiveData CustomPrimitiveDataInternal;*/
@@ -88,21 +90,20 @@ public class UPrimitiveComponent extends USceneComponent {
     public Float BoundsScale;
     public List<Lazy<AActor>> MoveIgnoreActors;
     public List<FPackageIndex /*PrimitiveComponent*/> MoveIgnoreComponents;
-    /*public FBodyInstance BodyInstance;
-    public FScriptMulticastDelegate OnComponentHit;
-    public FScriptMulticastDelegate OnComponentBeginOverlap;
-    public FScriptMulticastDelegate OnComponentEndOverlap;
-    public FScriptMulticastDelegate OnComponentWake;
-    public FScriptMulticastDelegate OnComponentSleep;
-    public FScriptMulticastDelegate OnBeginCursorOver;
-    public FScriptMulticastDelegate OnEndCursorOver;
-    public FScriptMulticastDelegate OnClicked;
-    public FScriptMulticastDelegate OnReleased;
-    public FScriptMulticastDelegate OnInputTouchBegin;
-    public FScriptMulticastDelegate OnInputTouchEnd;
-    public FScriptMulticastDelegate OnInputTouchEnter;
-    public FScriptMulticastDelegate OnInputTouchLeave;*/
-    @UProperty(skipPrevious = 14)
+    public FBodyInstance BodyInstance;
+    public FMulticastScriptDelegate OnComponentHit;
+    public FMulticastScriptDelegate OnComponentBeginOverlap;
+    public FMulticastScriptDelegate OnComponentEndOverlap;
+    public FMulticastScriptDelegate OnComponentWake;
+    public FMulticastScriptDelegate OnComponentSleep;
+    public FMulticastScriptDelegate OnBeginCursorOver;
+    public FMulticastScriptDelegate OnEndCursorOver;
+    public FMulticastScriptDelegate OnClicked;
+    public FMulticastScriptDelegate OnReleased;
+    public FMulticastScriptDelegate OnInputTouchBegin;
+    public FMulticastScriptDelegate OnInputTouchEnd;
+    public FMulticastScriptDelegate OnInputTouchEnter;
+    public FMulticastScriptDelegate OnInputTouchLeave;
     public Lazy<UPrimitiveComponent> LODParentPrimitive;
 
     public enum ESceneDepthPriorityGroup {
@@ -114,5 +115,38 @@ public class UPrimitiveComponent extends USceneComponent {
         Default,
         ForceSurface,
         ForceVolumetric
+    }
+
+    public enum EHasCustomNavigableGeometry {
+        No,
+        Yes,
+        EvenIfNotCollidable,
+        DontExport
+    }
+
+    public enum ECanBeCharacterBase {
+        ECB_No,
+        ECB_Yes,
+        ECB_Owner
+    }
+
+    @UStruct
+    public static class FLightingChannels {
+        public Boolean bChannel0;
+        public Boolean bChannel1;
+        public Boolean bChannel2;
+    }
+
+    public enum ERendererStencilMask {
+        ERSM_Default,
+        ERSM_255,
+        ERSM_1,
+        ERSM_2,
+        ERSM_4,
+        ERSM_8,
+        ERSM_16,
+        ERSM_32,
+        ERSM_64,
+        ERSM_128
     }
 }

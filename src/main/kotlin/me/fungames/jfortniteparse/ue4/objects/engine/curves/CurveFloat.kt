@@ -2,14 +2,13 @@ package me.fungames.jfortniteparse.ue4.objects.engine.curves
 
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 
 @UStruct
 class FRuntimeFloatCurve {
     @JvmField
     var EditorCurveData: FRichCurve? = null
     @JvmField
-    var ExternalCurve: FPackageIndex? = null /*CurveFloat*/
+    var ExternalCurve: Lazy<UCurveFloat>? = null
 }
 
 class UCurveFloat : UObject/*UCurveBase*/() {

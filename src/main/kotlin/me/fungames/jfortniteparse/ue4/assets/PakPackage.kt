@@ -17,12 +17,14 @@ import java.io.File
 import java.io.OutputStream
 import java.nio.ByteBuffer
 
-class PakPackage(uasset: ByteBuffer,
-                 uexp: ByteBuffer,
-                 ubulk: ByteBuffer? = null,
-                 fileName: String,
-                 provider: FileProvider? = null,
-                 game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : Package(fileName, provider, game) {
+class PakPackage(
+    uasset: ByteBuffer,
+    uexp: ByteBuffer,
+    ubulk: ByteBuffer? = null,
+    fileName: String,
+    provider: FileProvider? = null,
+    game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST,
+) : Package(fileName, provider, game) {
     companion object {
         val packageMagic = 0x9E2A83C1u
     }
@@ -47,47 +49,48 @@ class PakPackage(uasset: ByteBuffer,
         name = provider?.compactFilePath(fileName)?.substringBeforeLast('.') ?: fileName
         val uassetAr = FAssetArchive(uasset, provider, fileName)
         val uexpAr = FAssetArchive(uexp, provider, fileName)
-        val ubulkAr = if (ubulk != null) FAssetArchive(ubulk, provider, fileName) else null
+        val ubulkAr = ubulk?.let { FAssetArchive(it, provider, fileName) }
         uassetAr.game = game.game
         uassetAr.ver = game.version
+        uassetAr.owner = this
         uexpAr.game = game.game
         uexpAr.ver = game.version
+        uexpAr.owner = this
         ubulkAr?.game = game.game
         ubulkAr?.ver = game.version
+        ubulkAr?.owner = this
 
         nameMap = mutableListOf()
         importMap = mutableListOf()
         exportMap = mutableListOf()
-        uassetAr.owner = this
 
         info = FPackageFileSummary(uassetAr)
         if (info.tag != packageMagic)
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
 
+        packageFlags = info.packageFlags.toInt()
 
-        uassetAr.seek(this.info.nameOffset)
+        uassetAr.seek(info.nameOffset)
         for (i in 0 until info.nameCount)
             nameMap.add(FNameEntry(uassetAr))
 
-
-        uassetAr.seek(this.info.importOffset)
+        uassetAr.seek(info.importOffset)
         for (i in 0 until info.importCount)
             importMap.add(FObjectImport(uassetAr))
 
-        uassetAr.seek(this.info.exportOffset)
+        uassetAr.seek(info.exportOffset)
         for (i in 0 until info.exportCount)
             exportMap.add(FObjectExport(uassetAr))
 
         //Setup uexp reader
-        uexpAr.owner = this
         uexpAr.uassetSize = info.totalHeaderSize
         uexpAr.bulkDataStartOffset = info.bulkDataStartOffset
+        uexpAr.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
 
         //If attached also setup the ubulk reader
         if (ubulkAr != null) {
             ubulkAr.uassetSize = info.totalHeaderSize
             ubulkAr.uexpSize = exportMap.sumBy { it.serialSize.toInt() }
-            ubulkAr.owner = this
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 

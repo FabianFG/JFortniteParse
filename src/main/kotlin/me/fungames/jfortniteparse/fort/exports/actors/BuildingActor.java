@@ -11,6 +11,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle;
 import me.fungames.jfortniteparse.ue4.assets.exports.UClassReal;
 import me.fungames.jfortniteparse.ue4.assets.exports.USoundBase;
 import me.fungames.jfortniteparse.ue4.assets.exports.actors.AActor;
+import me.fungames.jfortniteparse.ue4.assets.exports.components.UPrimitiveComponent;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
@@ -18,6 +19,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagQuery;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FMulticastScriptDelegate;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
@@ -141,17 +143,15 @@ public class BuildingActor extends AActor {
     public FGameplayTagContainer StaticGameplayTags;
     public FText InteractionText;
     public FGameplayTag CanInteractPerformNativeActionTag;
-    /*public FScriptMulticastDelegate OnDied;
-    public FScriptMulticastDelegate OnDamaged;*/
-    @UProperty(skipPrevious = 2)
+    public FMulticastScriptDelegate OnDied;
+    public FMulticastScriptDelegate OnDamaged;
     public FPackageIndex /*FortMission*/ AssociatedMissionParam;
     public FPackageIndex /*FortPlacementActor*/ OriginatingPlacementActor;
     public Float BRMinDrawDistance;
     public Float BRMaxDrawDistance;
     public Float StWMinDrawDistance;
     public Float StWMaxDrawDistance;
-    //public FScriptMulticastDelegate OnInteract;
-    @UProperty(skipPrevious = 1)
+    public FMulticastScriptDelegate OnInteract;
     public FCurveTableRowHandle InteractionSpeed;
     public Integer DataVersion;
     public Float LastTakeHitTimeTimeout;
@@ -164,11 +164,10 @@ public class BuildingActor extends AActor {
     public FVector BaseLocToPivotOffset;
     public String CustomState;
     public List<Lazy<UClassReal>> ComponentTypesWhitelistedForReplication;
-    public List<FPackageIndex /*PrimitiveComponent*/> OverridePrimitivesToExcludeFoliage;
+    public List<Lazy<UPrimitiveComponent>> OverridePrimitivesToExcludeFoliage;
     public FPackageIndex /*BuildingActorHotSpotConfig*/ HotSpotConfig;
-    /*public FScriptMulticastDelegate OnBuildingHealthChanged;
-    public FScriptMulticastDelegate OnActorHealthChanged;*/
-    @UProperty(skipPrevious = 2)
+    public FMulticastScriptDelegate OnBuildingHealthChanged;
+    public FMulticastScriptDelegate OnActorHealthChanged;
     public FGuid SavedActorGuid;
     public Float BaselineScale;
     public Float AccumulatedDeltaSinceLastVisualsTick;
