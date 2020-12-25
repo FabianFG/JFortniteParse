@@ -1,9 +1,7 @@
 package me.fungames.jfortniteparse.fileprovider
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.io.FIoDispatcher
-import me.fungames.jfortniteparse.ue4.io.FIoStatusException
-import me.fungames.jfortniteparse.ue4.io.FIoStoreEnvironment
+import me.fungames.jfortniteparse.ue4.io.FIoStoreReaderImpl
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
@@ -21,6 +19,7 @@ open class DefaultFileProvider : PakFileProvider {
     override val requiredKeys = CopyOnWriteArrayList<FGuid>()
     override val keys = ConcurrentHashMap<FGuid, ByteArray>()
     override val mountedPaks = CopyOnWriteArrayList<PakFileReader>()
+    override val mountedIoStoreReaders = CopyOnWriteArrayList<FIoStoreReaderImpl>()
 
     @JvmOverloads
     constructor(folder: File, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
@@ -30,22 +29,10 @@ open class DefaultFileProvider : PakFileProvider {
     }
 
     private fun scanFiles(folder: File) {
-        if (!FIoDispatcher.isInitialized() && folder.name == "Paks") {
+        if (!globalDataLoaded && folder.name == "Paks") {
             val globalTocFile = File(folder, "global.utoc")
             if (globalTocFile.exists()) {
-                try {
-                    FIoDispatcher.initialize()
-                    val ioDispatcher = FIoDispatcher.get()
-                    try {
-                        ioDispatcher.mount(FIoStoreEnvironment(globalTocFile.path.substringBeforeLast('.')), FGuid.mainGuid, null)
-                        FIoDispatcher.initializePostSettings()
-                        PakFileReader.logger.info("Initialized I/O dispatcher")
-                    } catch (e: FIoStatusException) {
-                        PakFileReader.logger.error("Failed to mount I/O dispatcher global environment: '{}'", e.message)
-                    }
-                } catch (e: FIoStatusException) {
-                    PakFileReader.logger.error("Failed to initialize I/O dispatcher: '{}'", e.message)
-                }
+                loadGlobalData(globalTocFile)
             }
         }
         for (file in folder.listFiles() ?: emptyArray()) {

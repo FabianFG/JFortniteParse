@@ -7,15 +7,11 @@ import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.asyncloading2.FMappedName
 import me.fungames.jfortniteparse.ue4.io.EIoChunkType
-import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_High
 import me.fungames.jfortniteparse.ue4.io.FIoChunkId
-import me.fungames.jfortniteparse.ue4.io.FIoReadOptions
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.util.await
 import java.nio.ByteBuffer
-import java.util.concurrent.CompletableFuture
 
-class FExportArchive(data: ByteBuffer, val pkg: IoPackage) : FAssetArchive(data, null, pkg.fileName) {
+class FExportArchive(data: ByteBuffer, val pkg: IoPackage) : FAssetArchive(data, pkg.provider, pkg.fileName) {
     init {
         game = pkg.game.game
         ver = pkg.game.version
@@ -23,17 +19,10 @@ class FExportArchive(data: ByteBuffer, val pkg: IoPackage) : FAssetArchive(data,
     }
 
     override fun getPayload(type: PayloadType) = payloads.getOrPut(type) {
-        val batch = pkg.globalPackageStore.ioDispatcher.newBatch()
-        val request = batch.read(
-            FIoChunkId(pkg.packageId.value(), 0u, if (type == PayloadType.UBULK) EIoChunkType.BulkData else EIoChunkType.OptionalBulkData),
-            FIoReadOptions(),
-            IoDispatcherPriority_High.value
-        )
-
-        val batchCompletedEvent = CompletableFuture<Void>()
-        batch.issueAndTriggerEvent(batchCompletedEvent)
-        batchCompletedEvent.await()
-        FAssetArchive(request.result.getOrThrow(), provider, pkgName)
+        if (provider == null)
+            throw ParserException("Lazy loading a $type requires a file provider")
+        val payloadChunkId = FIoChunkId(pkg.packageId.value(), 0u, if (type == PayloadType.UBULK) EIoChunkType.BulkData else EIoChunkType.OptionalBulkData)
+        FAssetArchive(provider.saveChunk(payloadChunkId), provider, pkgName)
     }
 
     override fun handleBadNameIndex(nameIndex: Int) {

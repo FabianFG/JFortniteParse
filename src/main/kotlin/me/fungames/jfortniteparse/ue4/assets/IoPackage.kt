@@ -5,13 +5,10 @@ import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import me.fungames.jfortniteparse.GSuppressMissingSchemaErrors
-import me.fungames.jfortniteparse.GSuppressUnknownPropertyExceptionClasses
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
@@ -120,8 +117,6 @@ class IoPackage : Package {
                         } catch (e: Throwable) {
                             if (e is MissingSchemaException && !GSuppressMissingSchemaErrors) {
                                 LOG_STREAMING.warn(e.message)
-                            } else if (e is UnknownPropertyException && obj.javaClass.simpleName.unprefix() in GSuppressUnknownPropertyExceptionClasses) {
-                                LOG_STREAMING.warn(e.message)
                             } else {
                                 throw e
                             }
@@ -189,10 +184,7 @@ class IoPackage : Package {
     class ResolvedScriptObject(val scriptImport: FScriptObjectEntry, pkg: IoPackage) : ResolvedObject(pkg) {
         override fun getName() = scriptImport.objectName.toName()
         override fun getOuter() = pkg.resolveObjectIndex(scriptImport.outerIndex)
-        override fun getObject() = lazy {
-            val structName = getName()
-            UScriptStruct(ObjectTypeRegistry.classes[structName.text] ?: ObjectTypeRegistry.structs[structName.text], structName)
-        }
+        override fun getObject() = lazy { pkg.provider!!.mappingsProvider.getStruct(getName()) }
     }
 
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {

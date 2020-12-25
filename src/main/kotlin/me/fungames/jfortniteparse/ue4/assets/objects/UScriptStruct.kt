@@ -25,14 +25,15 @@ import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEval
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
 class UScriptStruct : UClass {
     val structName: FName
     var structType: Any
 
-    constructor(Ar: FAssetArchive, structName: FName, type: ReadType = ReadType.NORMAL) {
+    constructor(Ar: FAssetArchive, typeData: PropertyType, type: ReadType = ReadType.NORMAL) {
         super.init(Ar)
-        this.structName = structName
+        structName = typeData.structType
         structType = when (structName.text) { // TODO please complete the zero constructors
             "Box" -> valueOr({ FBox(Ar) }, { FBox() }, type)
             "Box2D" -> valueOr({ FBox2D(Ar) }, { FBox2D() }, type)
@@ -77,13 +78,20 @@ class UScriptStruct : UClass {
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)
 
             else -> {
-                if (Ar.useUnversionedPropertySerialization) {
-                    throw ParserException("Unknown struct type $structName, can't proceed with serialization", Ar)
-                }
                 logger.debug("Using FStructFallback for struct $structName")
                 //TODO this should in theory map the struct fallbacks directly to their target, not implemented yet
                 //For now it will be done with the getTagTypeValue method, not optimal though
-                FStructFallback(Ar)
+                if (Ar.useUnversionedPropertySerialization) {
+                    val properties = mutableListOf<FPropertyTag>()
+                    if (type != ReadType.ZERO) {
+                        val structClass = typeData.structClass
+                            ?: throw ParserException("Unknown struct type $structName, can't proceed with serialization", Ar)
+                        deserializeUnversionedProperties(properties, structClass.value, Ar)
+                    }
+                    FStructFallback(properties)
+                } else {
+                    FStructFallback(Ar)
+                }
             }
         }
         super.complete(Ar)

@@ -52,14 +52,15 @@ class FIoStatus(val errorCode: EIoErrorCode, val errorMessage: String = "") {
     inline fun toException() = FIoStatusException(this)
 }
 
-class FIoStatusException : IOException {
-    val status: FIoStatus
-
-    constructor(status: FIoStatus, cause: Throwable? = null) : super(status.toString(), cause) {
-        this.status = status
-    }
-
+class FIoStatusException(val status: FIoStatus, cause: Throwable? = null) : IOException(status.toString(), cause) {
     constructor(errorCode: EIoErrorCode, errorMessage: String = "", cause: Throwable? = null) : this(FIoStatus(errorCode, errorMessage), cause)
+
+    @Suppress("UNNECESSARY_SAFE_CALL")
+    override fun fillInStackTrace(): Throwable = if (status?.errorCode != EIoErrorCode.NotFound) {
+        super.fillInStackTrace()
+    } else {
+        this
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////

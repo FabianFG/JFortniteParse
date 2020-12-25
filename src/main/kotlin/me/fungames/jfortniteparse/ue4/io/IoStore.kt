@@ -210,11 +210,8 @@ class FIoStoreToc {
     }
 
     val tocResource get() = toc
-
     fun getTocEntryIndex(chunkId: FIoChunkId) = chunkIdToIndex[chunkId]
-
-    fun getOffsetAndLength(chunkId: FIoChunkId) =
-        chunkIdToIndex[chunkId]?.run { toc.chunkOffsetLengths[this] }
+    fun getOffsetAndLength(chunkId: FIoChunkId) = chunkIdToIndex[chunkId]?.let { toc.chunkOffsetLengths[it] }
 }
 
 // class FIoStoreWriterImpl
@@ -228,8 +225,10 @@ class FIoStoreReaderImpl {
     private val threadBuffers = object : ThreadLocal<FThreadBuffers>() {
         override fun initialValue() = FThreadBuffers()
     }
+    lateinit var environment: FIoStoreEnvironment //custom, original code does not retain this
 
     fun initialize(environment: FIoStoreEnvironment, decryptionKeys: Map<FGuid, ByteArray>) {
+        this.environment = environment
         val containerFile = File(environment.path + ".ucas")
         try {
             containerFileHandle = RandomAccessFile(containerFile, "r")
@@ -285,7 +284,7 @@ class FIoStoreReaderImpl {
         }
     }
 
-    fun read(chunkId: FIoChunkId, options: FIoReadOptions = FIoReadOptions()): ByteArray {
+    fun read(chunkId: FIoChunkId/*, options: FIoReadOptions = FIoReadOptions()*/): ByteArray {
         val offsetAndLength = toc.getOffsetAndLength(chunkId)
             ?: throw FIoStatusException(EIoErrorCode.NotFound, "Unknown chunk ID")
 

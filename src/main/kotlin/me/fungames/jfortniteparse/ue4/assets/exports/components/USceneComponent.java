@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.enums.EDetailMode;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FMulticastScriptDelegate;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
@@ -33,7 +34,7 @@ public class USceneComponent extends UActorComponent {
     public Boolean bBoundsChangeTriggersStreamingDataRebuild;
     public Boolean bUseAttachParentBound;
     //public EComponentMobility Mobility;
-    @UProperty(skipPrevious = 1, skipNext = 1)
+    @UProperty(skipPrevious = 1)
     public EDetailMode DetailMode;
-    //public FScriptMulticastDelegate PhysicsVolumeChangedDelegate;
+    public FMulticastScriptDelegate PhysicsVolumeChangedDelegate;
 }

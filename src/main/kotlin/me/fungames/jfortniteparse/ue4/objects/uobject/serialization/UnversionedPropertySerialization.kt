@@ -2,7 +2,7 @@ package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 
 import androidx.collection.SparseArrayCompat
 import androidx.collection.set
-import me.fungames.jfortniteparse.GDebugUnversionedPropertySerialization
+import me.fungames.jfortniteparse.GDebugProperties
 import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
@@ -69,8 +69,8 @@ class FUnversionedStructSchema {
         var index = 0
         var struct: UStruct? = struct
         while (struct != null) {
-            if (struct.javaClass == UScriptStruct::class.java) {
-                val clazz = (struct as UScriptStruct).structClass
+            if (struct is UScriptStruct && struct.useClassProperties) {
+                val clazz = struct.structClass
                     ?: throw MissingSchemaException("Missing schema for $struct")
                 val bOnlyAnnotated = clazz.isAnnotationPresent(OnlyAnnotated::class.java)
                 for (field in clazz.declaredFields) { // Reflection
@@ -84,25 +84,29 @@ class FUnversionedStructSchema {
                     index += ann?.skipPrevious ?: 0
                     val propertyInfo = PropertyInfo(field, ann)
                     for (arrayIdx in 0 until propertyInfo.arrayDim) {
-                        if (GDebugUnversionedPropertySerialization) println("$index = ${propertyInfo.name}")
+                        if (GDebugProperties) println("$index = ${propertyInfo.name}")
                         serializers[index++] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                     }
                     index += ann?.skipNext ?: 0
                 }
-            } else {
+            } else if (struct.childProperties.isNotEmpty()) {
                 for (prop in struct.childProperties) { // Serialized in packages
                     val propertyInfo = PropertyInfo(prop.name.text, PropertyType(prop as FPropertySerialized), prop.arrayDim)
                     for (arrayIdx in 0 until prop.arrayDim) {
-                        if (GDebugUnversionedPropertySerialization) println("$index = ${prop.name} [SERIALIZED]")
+                        if (GDebugProperties) println("$index = ${prop.name} [SERIALIZED]")
                         serializers[index++] = FUnversionedPropertySerializer(propertyInfo, arrayIdx)
                     }
                 }
+            } else if (struct.childProperties2.isNotEmpty()) {
+                val startIndex = index
                 for (prop in struct.childProperties2) { // Provided by TypeMappingsProvider
+                    index = startIndex + prop.index
                     for (arrayIdx in 0 until prop.arrayDim) {
-                        if (GDebugUnversionedPropertySerialization) println("$index = ${prop.name}")
+                        if (GDebugProperties) println("$index = ${prop.name}")
                         serializers[index++] = FUnversionedPropertySerializer(prop, arrayIdx)
                     }
                 }
+                index = startIndex + struct.propertyCount
             }
             struct = struct.superStruct?.value
         }
@@ -112,7 +116,7 @@ class FUnversionedStructSchema {
 val schemaCache = mutableMapOf<Class<*>, FUnversionedStructSchema>()
 
 fun getOrCreateUnversionedSchema(struct: UStruct): FUnversionedStructSchema {
-    return if (struct.javaClass == UScriptStruct::class.java && (struct as UScriptStruct).structClass != null) {
+    return if (struct is UScriptStruct && struct.useClassProperties && struct.structClass != null) {
         schemaCache.getOrPut(struct.structClass!!) { FUnversionedStructSchema(struct) }
     } else {
         FUnversionedStructSchema(struct)
@@ -245,7 +249,7 @@ class FUnversionedHeader {
 fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: UStruct, Ar: FAssetArchive) {
     //check(canUseUnversionedPropertySerialization())
 
-    if (GDebugUnversionedPropertySerialization) println("Load: ${struct.name}")
+    if (GDebugProperties) println("Load: ${struct.name}")
     val header = FUnversionedHeader()
     header.load(Ar)
 
@@ -259,17 +263,17 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 val serializer = it.serializer
                 if (serializer != null) {
-                    if (GDebugUnversionedPropertySerialization) println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
+                    if (GDebugProperties) println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
                     if (it.isNonZero()) {
                         val element = serializer.deserialize(Ar, ReadType.NORMAL)
                         properties.add(element)
-                        if (GDebugUnversionedPropertySerialization) println(element.toString())
+                        if (GDebugProperties) println(element.toString())
                     } else {
                         properties.add(serializer.deserialize(Ar, ReadType.ZERO))
                     }
                 } else {
                     if (it.isNonZero()) {
-                        throw UnknownPropertyException("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization")
+                        throw UnknownPropertyException("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization", Ar)
                     }
                     UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, but it's zero so we're good")
                 }

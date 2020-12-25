@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject;
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid;
+import me.fungames.jfortniteparse.ue4.objects.uobject.FMulticastScriptDelegate;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
@@ -24,9 +25,8 @@ public class UActorComponent extends UObject {
     public Boolean bCanEverAffectNavigation;
     public Boolean bIsEditorOnly;
     public EComponentCreationMethod CreationMethod;
-    /*public FScriptMulticastDelegate OnComponentActivated;
-    public FScriptMulticastDelegate OnComponentDeactivated;*/
-    @UProperty(skipPrevious = 2)
+    public FMulticastScriptDelegate OnComponentActivated;
+    public FMulticastScriptDelegate OnComponentDeactivated;
     public List<FSimpleMemberReference> UCSModifiedProperties;
 
     public enum EComponentCreationMethod {

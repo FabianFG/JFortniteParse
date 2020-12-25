@@ -5,6 +5,9 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.mappings.ReflectionTypeMappingsProvider
+import me.fungames.jfortniteparse.ue4.assets.mappings.TypeMappingsProvider
+import me.fungames.jfortniteparse.ue4.io.FIoChunkId
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
@@ -20,6 +23,7 @@ abstract class FileProvider {
     }
 
     abstract var game: Ue4Version
+    var mappingsProvider: TypeMappingsProvider = ReflectionTypeMappingsProvider()
     protected abstract val files: MutableMap<String, GameFile>
 
     open fun files(): Map<String, GameFile> = files
@@ -169,6 +173,13 @@ abstract class FileProvider {
      * @return the files data
      */
     abstract fun saveGameFile(file: GameFile): ByteArray
+
+    /**
+     * Saves a I/O Store chunk by its ID
+     * @param chunkId the chunk ID
+     * @return the chunk data
+     */
+    abstract fun saveChunk(chunkId: FIoChunkId): ByteArray
 
     /**
      * @param filePath the file path to be fixed

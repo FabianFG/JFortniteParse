@@ -1,11 +1,12 @@
 package me.fungames.jfortniteparse.ue4.objects.slatecore.styling;
 
+import kotlin.Lazy;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FBox2D;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D;
 import me.fungames.jfortniteparse.ue4.objects.slatecore.layout.FMargin;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
 /**
  * An brush which contains information about how to draw a Slate element
@@ -15,7 +16,7 @@ public class FSlateBrush {
     public FVector2D ImageSize;
     public FMargin Margin;
     public FSlateColor TintColor;
-    public FPackageIndex /*UObject*/ ResourceObject;
+    public Lazy<UObject> ResourceObject;
     public FName ResourceName;
     public FBox2D UVRegion;
     public ESlateBrushDrawType DrawAs;

@@ -3,7 +3,7 @@ package me.fungames.jfortniteparse.ue4.assets.mappings
 import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.exceptions.UnknownCompressionMethodException
-import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.mappings.UsmapTypeMappingsProvider.EUsmapPropertyType.*
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
@@ -73,6 +73,9 @@ class UsmapTypeMappingsProvider(val file: File) : TypeMappingsProvider() {
                 type.valueType = deserializePropData(Ar)
             }
         }
+        if (!type.structType.isNone()) {
+            type.structClass = lazy { mappings.types[type.structType.text]!! }
+        }
         return type
     }
 
@@ -86,11 +89,11 @@ class UsmapTypeMappingsProvider(val file: File) : TypeMappingsProvider() {
             enumName to enumValues
         }
         repeat(Ar.readInt32()) {
-            val struct = UStruct()
+            val struct = UScriptStruct()
             struct.name = Ar.readFName().text
             val superStructName = Ar.readFName()
-            struct.superStruct = if (!superStructName.isNone()) lazy { mappings.types[superStructName.text] as UStruct } else null
-            val propCount = Ar.readUInt16()
+            struct.superStruct = if (!superStructName.isNone()) lazy { mappings.types[superStructName.text]!! } else null
+            struct.propertyCount = Ar.readUInt16().toInt()
             val serializablePropCount = Ar.readUInt16()
             struct.childProperties2 = List(serializablePropCount.toInt()) {
                 val schemaIdx = Ar.readUInt16()
@@ -156,10 +159,4 @@ class UsmapTypeMappingsProvider(val file: File) : TypeMappingsProvider() {
         EnumProperty,
         FieldPathProperty
     }
-}
-
-fun main() {
-    val p = UsmapTypeMappingsProvider(File("D:\\Downloads\\15.10_oo.usmap"))
-    p.reload()
-    println("usmap loaded")
 }

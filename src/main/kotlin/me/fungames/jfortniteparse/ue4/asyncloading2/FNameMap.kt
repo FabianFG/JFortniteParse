@@ -1,44 +1,28 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.io.EIoChunkType
-import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_High
 import me.fungames.jfortniteparse.ue4.io.FIoChunkId
-import me.fungames.jfortniteparse.ue4.io.FIoDispatcher
-import me.fungames.jfortniteparse.ue4.io.FIoReadOptions
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntryId
 import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
-import me.fungames.jfortniteparse.util.await
 import me.fungames.jfortniteparse.util.get
-import java.util.concurrent.CompletableFuture
 
 class FNameMap {
     internal var nameEntries = emptyList<String>()
     private var nameMapType = FMappedName.EType.Global
 
-    fun loadGlobal(ioDispatcher: FIoDispatcher) {
+    fun loadGlobal(provider: FileProvider) {
         check(nameEntries.isEmpty())
 
         val namesId = FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNames)
         val hashesId = FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNameHashes)
 
-        val batch = ioDispatcher.newBatch()
-        val nameRequest = batch.read(namesId, FIoReadOptions(), IoDispatcherPriority_High.value)
-        val hashRequest = batch.read(hashesId, FIoReadOptions(), IoDispatcherPriority_High.value)
-        val batchCompletedEvent = CompletableFuture<Void>()
-        batch.issueAndTriggerEvent(batchCompletedEvent)
-
-        /*reserveNameBatch(
-            ioDispatcher.getSizeForChunk(namesId),
-            ioDispatcher.getSizeForChunk(hashesId))*/
-
-        batchCompletedEvent.await()
-
-        val nameBuffer = nameRequest.result.getOrThrow()
-        val hashBuffer = hashRequest.result.getOrThrow()
+        val nameBuffer = provider.saveChunk(namesId)
+        val hashBuffer = provider.saveChunk(hashesId)
 
         load(nameBuffer, hashBuffer, FMappedName.EType.Global)
     }

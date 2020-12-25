@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
+import me.fungames.jfortniteparse.GDebugProperties
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
@@ -13,8 +14,9 @@ open class UStruct : UObject() {
     /** Struct this inherits from, may be null */
     var superStruct: Lazy<UStruct>? = null
     lateinit var children: Array<FPackageIndex> // UField
-    lateinit var childProperties: Array<FField>
+    var childProperties = emptyArray<FField>()
     var childProperties2 = emptyList<PropertyInfo>()
+    var propertyCount = 0
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
@@ -36,7 +38,7 @@ open class UStruct : UObject() {
             val propertyTypeName = Ar.readFName()
             val prop = FField.construct(propertyTypeName)
             prop.deserialize(Ar)
-            println("$it = $propertyTypeName ${prop.name}")
+            if (GDebugProperties) println("$it = $propertyTypeName ${prop.name}")
             prop
         }
     }

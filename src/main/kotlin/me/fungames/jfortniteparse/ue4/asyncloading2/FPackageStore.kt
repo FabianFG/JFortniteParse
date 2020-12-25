@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.io.*
-import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_High
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.await
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 val LOG_STREAMING: Logger = LoggerFactory.getLogger("Streaming")
 
 class FPackageStore(
-    val ioDispatcher: FIoDispatcher,
+    val provider: FileProvider,
     val globalNameMap: FNameMap) : FOnContainerMountedListener {
     val loadedContainers = mutableMapOf<FIoContainerId, FLoadedContainer>()
 
@@ -42,14 +42,8 @@ class FPackageStore(
     }
 
     fun setupInitialLoadData() {
-        val initialLoadEvent = CompletableFuture<Void>()
-
-        val ioBatch = ioDispatcher.newBatch()
-        val ioRequest = ioBatch.read(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta), FIoReadOptions(), IoDispatcherPriority_High.value)
-        ioBatch.issueAndTriggerEvent(initialLoadEvent)
-
-        initialLoadEvent.await()
-        val initialLoadArchive = FByteArchive(ByteBuffer.wrap(ioRequest.result.getOrThrow()))
+        val initialLoadIoBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta))
+        val initialLoadArchive = FByteArchive(ByteBuffer.wrap(initialLoadIoBuffer))
 
         for (i in 0 until initialLoadArchive.readInt32()) {
             importStore.scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries).also {
@@ -71,7 +65,6 @@ class FPackageStore(
 
         val remaining = AtomicInteger(containersToLoad.size)
         val event = CompletableFuture<Void>()
-        val ioBatch = ioDispatcher.newBatch()
 
         for (container in containersToLoad) {
             val containerId = container.containerId
@@ -89,54 +82,51 @@ class FPackageStore(
             loadedContainer.order = container.environment.order
 
             val headerChunkId = FIoChunkId(containerId.value(), 0u, EIoChunkType.ContainerHeader)
-            ioBatch.readWithCallback(headerChunkId, FIoReadOptions(), IoDispatcherPriority_High.value) { result ->
-                val ioBuffer = result.getOrThrow()
+            val ioBuffer = provider.saveChunk(headerChunkId)
 
-                Thread {
-                    val containerHeader = FContainerHeader(FByteArchive(ioBuffer))
+            Thread {
+                val containerHeader = FContainerHeader(FByteArchive(ioBuffer))
 
-                    val bHasContainerLocalNameMap = containerHeader.names.isNotEmpty()
-                    if (bHasContainerLocalNameMap) {
-                        loadedContainer.containerNameMap.load(containerHeader.names, containerHeader.nameHashes, FMappedName.EType.Container)
+                val bHasContainerLocalNameMap = containerHeader.names.isNotEmpty()
+                if (bHasContainerLocalNameMap) {
+                    loadedContainer.containerNameMap.load(containerHeader.names, containerHeader.nameHashes, FMappedName.EType.Container)
+                }
+
+                loadedContainer.packageCount = containerHeader.packageCount
+                loadedContainer.storeEntries = containerHeader.storeEntries
+                synchronized(packageNameMapsCritical) {
+                    loadedContainer.storeEntries.forEachIndexed { index, containerEntry ->
+                        val packageId = containerHeader.packageIds[index]
+                        storeEntriesMap[packageId] = containerEntry
                     }
 
-                    loadedContainer.packageCount = containerHeader.packageCount
-                    loadedContainer.storeEntries = containerHeader.storeEntries
-                    synchronized(packageNameMapsCritical) {
-                        loadedContainer.storeEntries.forEachIndexed { index, containerEntry ->
-                            val packageId = containerHeader.packageIds[index]
-                            storeEntriesMap[packageId] = containerEntry
-                        }
-
-                        var localizedPackages: FSourceToLocalizedPackageIdMap? = null
-                        for (cultureName in currentCultureNames) {
-                            localizedPackages = containerHeader.culturePackageMap[cultureName]
-                            if (localizedPackages != null) {
-                                break
-                            }
-                        }
-
+                    var localizedPackages: FSourceToLocalizedPackageIdMap? = null
+                    for (cultureName in currentCultureNames) {
+                        localizedPackages = containerHeader.culturePackageMap[cultureName]
                         if (localizedPackages != null) {
-                            for (pair in localizedPackages) {
-                                val sourceId = pair.first
-                                val localizedId = pair.second
-                                redirectsPackageMap[sourceId] = localizedId
-                            }
-                        }
-
-                        for (redirect in containerHeader.packageRedirects) {
-                            redirectsPackageMap[redirect.first] = redirect.second
+                            break
                         }
                     }
 
-                    if (remaining.decrementAndGet() == 0) {
-                        event.complete(null)
+                    if (localizedPackages != null) {
+                        for (pair in localizedPackages) {
+                            val sourceId = pair.first
+                            val localizedId = pair.second
+                            redirectsPackageMap[sourceId] = localizedId
+                        }
                     }
-                }.start()
-            }
+
+                    for (redirect in containerHeader.packageRedirects) {
+                        redirectsPackageMap[redirect.first] = redirect.second
+                    }
+                }
+
+                if (remaining.decrementAndGet() == 0) {
+                    event.complete(null)
+                }
+            }.start()
         }
 
-        ioBatch.issue()
         event.await()
 
         applyRedirects(redirectsPackageMap)

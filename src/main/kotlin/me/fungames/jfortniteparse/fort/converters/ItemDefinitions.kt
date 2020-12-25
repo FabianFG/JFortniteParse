@@ -8,11 +8,11 @@ import me.fungames.jfortniteparse.fort.exports.FortMtxOfferData.EFortMtxOfferDis
 import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariantBackedByArray
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.converters.textures.toBufferedImage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.util.cut
 import me.fungames.jfortniteparse.util.drawCenteredString
 import me.fungames.jfortniteparse.util.scale
@@ -62,25 +62,25 @@ object ItemDefinitionInfo {
     private fun loadUserFacingFlags(fileProvider: FileProvider): Boolean {
         val itemCategory = fileProvider.loadObject<FortItemCategory>(itemCategoriesObjectPath) ?: return false
         return try {
-            val userFacingFlags = mutableMapOf<String, Pair<FText, FPackageIndex>>()
+            val userFacingFlags = mutableMapOf<String, Pair<FText, Lazy<UObject>>>()
             for (category in itemCategory.TertiaryCategories!!) {
                 val tags = category.TagContainer?.gameplayTags
                 if (tags != null && tags.any { it.text.startsWith("Cosmetics.UserFacingFlags") }) {
                     val name = category.CategoryName
                     val brush = category.CategoryBrush
                     val slateBrush = brush?.run { Brush_XL ?: Brush_L ?: Brush_M ?: Brush_S ?: Brush_XS ?: Brush_XXS } ?: continue
-                    val pair: Pair<FText, FPackageIndex> = name!! to slateBrush.ResourceObject!!
+                    val pair = name!! to slateBrush.ResourceObject!!
                     tags.forEach {
-                        val flag: String = it.text
+                        val flag = it.text
                         if (flag.startsWith("Cosmetics.UserFacingFlags"))
                             userFacingFlags[flag] = pair
                     }
                 }
             }
-            val requiredImgs = mutableMapOf<FPackageIndex, BufferedImage>()
+            val requiredImgs = mutableMapOf<Lazy<UObject>, BufferedImage>()
             userFacingFlags.forEach { _, (_, index) ->
                 if (!requiredImgs.containsKey(index)) {
-                    index.load<UTexture2D>()?.apply { requiredImgs[index] = toBufferedImage() }
+                    (index.value as? UTexture2D)?.apply { requiredImgs[index] = toBufferedImage() }
                 }
             }
             userFacingFlags.forEach { flag, (_, index) ->
@@ -496,20 +496,19 @@ private fun printPrice(price: Int, locres: Locres?) = NumberFormat.getNumberInst
 fun loadFeaturedIcon(itemDefinition: FortItemDefinition): BufferedImage? =
     itemDefinition.DisplayAssetPath?.load<FortMtxOfferData>()?.run {
         val resource = DetailsImage?.ResourceObject
-        if (resource == null || resource.isNull())
-            return null
+            ?: return null
         /*resource.outerImportObject?.objectName?.text?.apply {
             if (contains("Athena/Prototype/Textures") || contains("Placeholder"))
                 return null
         }*/
         // Some display assets use MaterialInstanceConstant for DetailsImage, so we only load it if it's Texture2D
-        return resource.load<UTexture2D>()?.toBufferedImage()
+        return (resource.value as? UTexture2D)?.toBufferedImage()
     }
 
 fun loadNormalIcon(itemDefinition: FortItemDefinition): BufferedImage? {
     (itemDefinition.LargePreviewImage ?: (itemDefinition as? AthenaEmojiItemDefinition)?.SpriteSheet)?.load<UTexture2D>()?.apply { return toBufferedImage() }
-    (itemDefinition as? AthenaCharacterItemDefinition)?.HeroDefinition?.load<FortItemDefinition>()?.LargePreviewImage?.load<UTexture2D>()?.apply { return toBufferedImage() }
-    (itemDefinition as? AthenaPickaxeItemDefinition)?.WeaponDefinition?.load<FortItemDefinition>()?.LargePreviewImage?.load<UTexture2D>()?.apply { return toBufferedImage() }
+    (itemDefinition as? AthenaCharacterItemDefinition)?.HeroDefinition?.value?.LargePreviewImage?.load<UTexture2D>()?.apply { return toBufferedImage() }
+    (itemDefinition as? AthenaPickaxeItemDefinition)?.WeaponDefinition?.value?.LargePreviewImage?.load<UTexture2D>()?.apply { return toBufferedImage() }
     return null
 }
 

@@ -9,11 +9,15 @@ open class UScriptStruct : UStruct {
     var structClass: Class<*>? = null
         set(value) {
             field = value
+            if (superStruct != null) {
+                return
+            }
             val superclass = value?.superclass
             if (superclass != null && superclass != UObject::class.java && superclass != UObject::class.java) {
                 superStruct = lazy { UScriptStruct(superclass) }
             }
         }
+    var useClassProperties = false
 
     @JvmOverloads
     constructor(name: FName = FName.NAME_None) : super() {
@@ -23,5 +27,6 @@ open class UScriptStruct : UStruct {
     @JvmOverloads
     constructor(clazz: Class<*>?, name: FName = clazz?.let { FName.dummy(it.simpleName.unprefix()) } ?: FName.NAME_None) : this(name) {
         structClass = clazz
+        useClassProperties = true
     }
 }

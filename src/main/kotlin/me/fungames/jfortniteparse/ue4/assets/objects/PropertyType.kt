@@ -21,7 +21,7 @@ class PropertyType(
     @JvmField var isEnumAsByte = true
     @JvmField var innerType: PropertyType? = null
     @JvmField var valueType: PropertyType? = null
-    var structClass: UScriptStruct? = null
+    var structClass: Lazy<UScriptStruct>? = null
     var enumClass: Class<out Enum<*>>? = null
 
     constructor() : this(NAME_None)
@@ -43,8 +43,8 @@ class PropertyType(
         type = FName.dummy(prop.javaClass.simpleName.unprefix())
         when (prop) {
             is FStructProperty -> {
-                structClass = prop.struct?.value
-                structType = structClass?.name?.let { FName.dummy(it) } ?: NAME_None
+                structClass = prop.struct
+                structType = structClass?.value?.name?.let { FName.dummy(it) } ?: NAME_None
             }
             is FByteProperty -> {
                 //enumName = prop.enum TODO what about this
@@ -77,7 +77,7 @@ class PropertyType(
             }
             "StructProperty" -> {
                 structType = FName.dummy(fieldType.simpleName.unprefix())
-                structClass = UScriptStruct(fieldType)
+                structClass = lazy { UScriptStruct(fieldType) }
             }
             "ArrayProperty", "SetProperty" -> applyInner(field, false)
             "MapProperty" -> {
@@ -109,7 +109,7 @@ class PropertyType(
                 enumClass = clazz as Class<out Enum<*>>?
             } else if (propertyType.text == "StructProperty") {
                 structType = FName.dummy(clazz.simpleName.unprefix())
-                structClass = UScriptStruct(clazz)
+                structClass = lazy { UScriptStruct(clazz) }
             }
         }
     }

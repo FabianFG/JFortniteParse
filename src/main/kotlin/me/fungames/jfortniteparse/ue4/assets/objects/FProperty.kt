@@ -13,10 +13,8 @@ import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FTextHistory
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
-import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct as UScriptStructObj
 
 sealed class FProperty {
     inline fun <reified T> getTagTypeValue(): T? {
@@ -159,21 +157,7 @@ sealed class FProperty {
                     ReadType.MAP, ReadType.ARRAY -> Ar.readFlag()
                     ReadType.ZERO -> typeData.bool
                 })
-                "StructProperty" ->
-                    if (Ar.useUnversionedPropertySerialization) {
-                        val structClass = typeData.structClass
-                        if (structClass != null && (structClass.javaClass != UScriptStructObj::class.java || structClass.structClass?.isAnnotationPresent(UStruct::class.java) == true)) {
-                            val properties = mutableListOf<FPropertyTag>()
-                            if (type != ReadType.ZERO) {
-                                deserializeUnversionedProperties(properties, structClass, Ar)
-                            }
-                            StructProperty(UScriptStruct(typeData.structType, FStructFallback(properties)))
-                        } else {
-                            StructProperty(UScriptStruct(Ar, typeData.structType, type))
-                        }
-                    } else {
-                        StructProperty(UScriptStruct(Ar, typeData.structType, type))
-                    }
+                "StructProperty" -> StructProperty(UScriptStruct(Ar, typeData, type))
                 "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type))
                 "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type))
@@ -218,16 +202,17 @@ sealed class FProperty {
                     } else if (type != ReadType.MAP && type != ReadType.ARRAY && Ar.useUnversionedPropertySerialization) {
                         val ordinal = valueOr({ if (typeData.isEnumAsByte) Ar.read() else Ar.readInt32() }, { 0 }, type)
                         val enumClass = typeData.enumClass
-                        var enumValue: Enum<*>? = null
-                        val fakeName = if (enumClass != null) {
-                            enumValue = enumClass.enumConstants.getOrNull(ordinal)
+                        if (enumClass != null) { // reflection
+                            val enumValue = enumClass.enumConstants.getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.simpleName}", Ar)
-                            (typeData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
-                        } else {
-                            UClass.logger.warn("Enum class not supplied")
-                            typeData.enumName.text + "::" + ordinal
+                            val fakeName = (typeData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
+                            EnumProperty(FName.dummy(fakeName), enumValue)
+                        } else { // loaded from mappings provider
+                            val enumValue = Ar.provider!!.mappingsProvider.getEnum(typeData.enumName).getOrNull(ordinal)
+                                ?: throw ParserException("Failed to get enum index $ordinal for enum ${typeData.enumName}", Ar)
+                            val fakeName = (typeData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
+                            EnumProperty(FName.dummy(fakeName), null)
                         }
-                        EnumProperty(FName.dummy(fakeName), enumValue)
                     } else {
                         EnumProperty(Ar.readFName(), null)
                     }

@@ -4,7 +4,6 @@ import com.github.salomonbrys.kotson.jsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
@@ -140,8 +139,7 @@ class PakPackage(
     fun findImport(import: FObjectImport?): Lazy<UObject>? {
         if (import == null) return null
         if (import.classPackage.text.startsWith("/Script/")) {
-            val structName = import.objectName
-            return lazy { UScriptStruct(ObjectTypeRegistry.classes[structName.text] ?: ObjectTypeRegistry.structs[structName.text], structName) }
+            return lazy { provider!!.mappingsProvider.getStruct(import.objectName) }
         }
         //The needed export is located in another asset, try to load it
         if (import.outerIndex.getImportObject() == null) return null

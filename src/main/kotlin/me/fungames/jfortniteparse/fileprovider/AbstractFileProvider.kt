@@ -2,35 +2,16 @@ package me.fungames.jfortniteparse.fileprovider
 
 import me.fungames.jfortniteparse.exceptions.NotFoundException
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
-import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
-import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageStore
-import me.fungames.jfortniteparse.ue4.io.EIoChunkType
-import me.fungames.jfortniteparse.ue4.io.FIoChunkId
-import me.fungames.jfortniteparse.ue4.io.FIoDispatcher
-import me.fungames.jfortniteparse.ue4.io.FIoReadOptions
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
-import me.fungames.jfortniteparse.util.await
-import java.util.concurrent.CompletableFuture
 
 abstract class AbstractFileProvider : FileProvider() {
-    val globalNameMap = FNameMap()
-    val globalPackageStore by lazy {
-        val ioDispatcher = FIoDispatcher.get()
-        val globalPackageStore = FPackageStore(ioDispatcher, globalNameMap)
-        globalNameMap.loadGlobal(ioDispatcher)
-        globalPackageStore.setupInitialLoadData()
-        globalPackageStore.setupCulture()
-        globalPackageStore.loadContainers(ioDispatcher.mountedContainers)
-        ioDispatcher.addOnContainerMountedListener(globalPackageStore)
-        globalPackageStore
-    }
+    protected var globalDataLoaded = false
 
     override fun loadGameFile(file: GameFile): Package {
         if (!file.isUE4Package() || !file.hasUexp())
@@ -53,7 +34,7 @@ abstract class AbstractFileProvider : FileProvider() {
         if (gameFile != null)
             return loadGameFile(gameFile)
         // try load from IoStore
-        if (FIoDispatcher.isInitialized()) {
+        if (globalDataLoaded) {
             val name = compactFilePath(filePath)
             val packageId = FPackageId.fromName(FName.dummy(name))
             try {
@@ -70,17 +51,6 @@ abstract class AbstractFileProvider : FileProvider() {
             ?: throw NotFoundException("uexp not found")
         val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
         return PakPackage(uasset, uexp, ubulk, path, this, game)
-    }
-
-    override fun loadGameFile(packageId: FPackageId): IoPackage {
-        val storeEntry = globalPackageStore.findStoreEntry(packageId)
-            ?: throw NotFoundException("The package to load does not exist on disk or in the loader")
-        val batch = globalPackageStore.ioDispatcher.newBatch()
-        val request = batch.read(FIoChunkId(packageId.value(), 0u, EIoChunkType.ExportBundleData), FIoReadOptions(), 0)
-        val batchCompletedEvent = CompletableFuture<Void>()
-        batch.issueAndTriggerEvent(batchCompletedEvent)
-        batchCompletedEvent.await()
-        return IoPackage(request.result.getOrThrow(), packageId, storeEntry, globalPackageStore, this, game)
     }
 
     override fun loadLocres(filePath: String): Locres? {
