@@ -45,13 +45,14 @@ class FGenericFileIoStoreImpl(
     }
 
     fun startRequests(requestQueue: FFileIoStoreRequestQueue): Boolean {
-        val nextRequest = requestQueue.peek() ?: return false
+        val nextRequest = requestQueue.pop() ?: return false
 
         val dest: ByteArray
         val destOff: Int
         if (nextRequest.immediateScatter.request == null) {
             nextRequest.buffer = bufferAllocator.allocBuffer()
             if (nextRequest.buffer == null) {
+                requestQueue.push(nextRequest)
                 return false
             }
             dest = nextRequest.buffer!!.memory!!.asArray()
@@ -60,8 +61,6 @@ class FGenericFileIoStoreImpl(
             dest = nextRequest.immediateScatter.request!!.ioBuffer
             destOff = nextRequest.immediateScatter.request!!.ioBufferOff + nextRequest.immediateScatter.dstOffset.toInt()
         }
-
-        requestQueue.pop(nextRequest)
 
         //if (!blockCache.read(nextRequest)) { TODO block caching
         val fileHandle = nextRequest.fileHandle

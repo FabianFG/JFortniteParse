@@ -1,10 +1,10 @@
 package me.fungames.jfortniteparse.ue4.io
 
-import me.fungames.jfortniteparse.ue4.io.EIoDispatcherPriority.IoDispatcherPriority_Count
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.kotlinPointers.BytePointer
 import java.io.RandomAccessFile
+import java.util.*
 
 class FFileIoStoreContainerFile {
     lateinit var fileHandle: RandomAccessFile
@@ -24,13 +24,11 @@ class FFileIoStoreContainerFile {
 class FFileIoStoreBuffer {
     var next: FFileIoStoreBuffer? = null
     var memory: BytePointer? = null
-    var priority = IoDispatcherPriority_Count
 }
 
 class FFileIoStoreBlockKey {
     var fileIndex = 0u
     var blockIndex = 0u
-    var hash = 0uL
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -38,12 +36,17 @@ class FFileIoStoreBlockKey {
 
         other as FFileIoStoreBlockKey
 
-        if (hash != other.hash) return false
+        if (fileIndex != other.fileIndex) return false
+        if (blockIndex != other.blockIndex) return false
 
         return true
     }
 
-    override fun hashCode() = hash.hashCode()
+    override fun hashCode(): Int {
+        var result = fileIndex.hashCode()
+        result = 31 * result + blockIndex.hashCode()
+        return result
+    }
 }
 
 class FFileIoStoreBlockScatter {
@@ -61,9 +64,8 @@ class FFileIoStoreCompressedBlock {
     var uncompressedSize = 0u
     var compressedSize = 0u
     var rawSize = 0u
-    var rawBlocksCount = 0u
     var unfinishedRawBlocksCount = 0u
-    lateinit var singleRawBlock: FFileIoStoreReadRequest
+    val rawBlocks = mutableListOf<FFileIoStoreReadRequest>()
     val scatterList = mutableListOf<FFileIoStoreBlockScatter>()
     var compressionContext: FFileIoStoreCompressionContext? = null
     var compressedDataBuffer: ByteArray? = null
@@ -81,33 +83,42 @@ class FFileIoStoreReadRequest {
     var buffer: FFileIoStoreBuffer? = null
     val compressedBlocks = mutableListOf<FFileIoStoreCompressedBlock>()
     var compressedBlocksRefCount = 0u
+    var sequence = 0u
+    var priority = 0
     val immediateScatter = FFileIoStoreBlockScatter()
-    var priority = IoDispatcherPriority_Count
     var bIsCacheable = false
     var bFailed = false
+
+    companion object {
+        @JvmStatic var nextSequence = 0u
+    }
+
+    init {
+        sequence = nextSequence++
+    }
 }
 
 class FFileIoStoreReadRequestList {
     fun isEmpty() = head == null
 
-    fun add(Request: FFileIoStoreReadRequest) {
+    fun add(request: FFileIoStoreReadRequest) {
         if (tail != null) {
-            tail!!.next = Request
+            tail!!.next = request
         } else {
-            head = Request
+            head = request
         }
-        tail = Request
-        Request.next = null
+        tail = request
+        request.next = null
     }
 
-    fun append(ListHead: FFileIoStoreReadRequest, ListTail: FFileIoStoreReadRequest) {
-        check(ListTail.next == null)
+    fun append(listHead: FFileIoStoreReadRequest, listTail: FFileIoStoreReadRequest) {
+        check(listTail.next == null)
         if (tail != null) {
-            tail!!.next = ListHead
+            tail!!.next = listHead
         } else {
-            head = ListHead
+            head = listHead
         }
-        tail = ListTail
+        tail = listTail
     }
 
     fun append(list: FFileIoStoreReadRequestList) {
@@ -151,12 +162,14 @@ class FFileIoStoreBufferAllocator {
     }
 
     fun allocBuffer(): FFileIoStoreBuffer? {
-        val buffer = firstFreeBuffer
-        if (buffer != null) {
-            firstFreeBuffer = buffer.next
-            return buffer
+        synchronized(buffersCritical) {
+            val buffer = firstFreeBuffer
+            if (buffer != null) {
+                firstFreeBuffer = buffer.next
+                return buffer
+            }
+            return null
         }
-        return null
     }
 
     fun freeBuffer(buffer: FFileIoStoreBuffer) {
@@ -168,44 +181,52 @@ class FFileIoStoreBufferAllocator {
 }
 
 class FFileIoStoreRequestQueue {
-    private val byPriority = Array(IoDispatcherPriority_Count.ordinal) { FByPriority() }
+    private var heap = PriorityQueue<FFileIoStoreReadRequest> { a, b ->
+        if (a.priority == b.priority) {
+            a.sequence.compareTo(b.sequence)
+        } else {
+            b.priority - a.priority
+        }
+    }
+    private val criticalSection = Object()
 
     fun peek(): FFileIoStoreReadRequest? {
-        for (priority in IoDispatcherPriority_Count.ordinal - 1 downTo 0) {
-            val queue = byPriority[priority]
-            if (queue.head != null) {
-                return queue.head
+        synchronized(criticalSection) {
+            if (heap.isEmpty()) {
+                return null
             }
+            return heap.peek()
         }
-        return null
     }
 
-    fun pop(request: FFileIoStoreReadRequest) {
-        check(request.priority < IoDispatcherPriority_Count)
-        val queue = byPriority[request.priority.ordinal]
-        check(queue.head == request)
-        queue.head = queue.head!!.next
-        if (queue.head == null) {
-            queue.tail = null
+    fun pop(): FFileIoStoreReadRequest? {
+        synchronized(criticalSection) {
+            if (heap.isEmpty()) {
+                return null
+            }
+            return heap.remove()
         }
-        request.next = null
     }
 
     fun push(request: FFileIoStoreReadRequest) {
-        check(request.priority < IoDispatcherPriority_Count)
-        val queue = byPriority[request.priority.ordinal]
-        if (queue.tail != null) {
-            queue.tail!!.next = request
-            queue.tail = request
-        } else {
-            queue.head = request
-            queue.tail = request
+        synchronized(criticalSection) {
+            heap.add(request)
         }
-        request.next = null
     }
 
-    private class FByPriority {
-        var head: FFileIoStoreReadRequest? = null
-        var tail: FFileIoStoreReadRequest? = null
+    fun push(requests: FFileIoStoreReadRequestList) {
+        synchronized(criticalSection) {
+            var request = requests.head
+            while (request != null) {
+                heap.add(request)
+                request = request.next
+            }
+        }
+    }
+
+    fun updateOrder() {
+        synchronized(criticalSection) {
+            heap = PriorityQueue(heap)
+        }
     }
 }

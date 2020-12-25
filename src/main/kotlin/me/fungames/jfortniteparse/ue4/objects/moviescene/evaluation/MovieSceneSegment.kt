@@ -1,9 +1,9 @@
 package me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.objects.FStructFallback
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.util.StructFallbackClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.TRange
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
@@ -23,7 +23,7 @@ enum class ESectionEvaluationFlags(val value: UByte) {
  * Evaluation data that specifies information about what to evaluate for a given template
  */
 @ExperimentalUnsignedTypes
-@StructFallbackClass
+@UStruct
 class FSectionEvaluationData(
     /** The implementation index we should evaluate (index into FMovieSceneEvaluationTrack::ChildTemplates) */
     val ImplIndex: Int,

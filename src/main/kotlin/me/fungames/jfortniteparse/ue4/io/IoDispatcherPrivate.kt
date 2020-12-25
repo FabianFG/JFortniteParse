@@ -1,6 +1,8 @@
 package me.fungames.jfortniteparse.ue4.io
 
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 typealias FIoDispatcherEventQueue = FGenericIoDispatcherEventQueue
 typealias FFileIoStoreImpl = FGenericFileIoStoreImpl
@@ -11,32 +13,41 @@ enum class EIoStoreResolveResult {
 }
 
 class FIoBatchImpl {
-    var headRequest: FIoRequestImpl? = null
-    var tailRequest: FIoRequestImpl? = null
-
-    // Used for contiguous reads
-    lateinit var ioBuffer: ByteArray
-    var callback: FIoReadCallback? = null
+    var callback: (() -> Unit)? = null
+    var event: CompletableFuture<*>? = null
+    //var graphEvent: FGraphEventRef? = null
     val unfinishedRequestsCount = AtomicInteger()
 }
 
 class FIoRequestImpl : FIoRequest {
+    val dispatcher: FIoDispatcherImpl
     var batch: FIoBatchImpl? = null
     var nextRequest: FIoRequestImpl? = null
-    var batchNextRequest: FIoRequestImpl? = null
-    override lateinit var status: FIoStatus
-    override lateinit var chunkId: FIoChunkId
-    lateinit var options: FIoReadOptions
+    var chunkId: FIoChunkId
+    var options: FIoReadOptions
     lateinit var ioBuffer: ByteArray
     var ioBufferOff = 0
     var callback: FIoReadCallback? = null
     var unfinishedReadsCount = 0
-    lateinit var priority: EIoDispatcherPriority
+    var priority = 0
+    val errorCode = AtomicReference(EIoErrorCode.Unknown)
     var bFailed = false
 
-    override val isOk: Boolean
-        get() = status.isOk
+    constructor(dispatcher: FIoDispatcherImpl, chunkId: FIoChunkId, options: FIoReadOptions) {
+        this.dispatcher = dispatcher
+        this.chunkId = chunkId
+        this.options = options
+    }
 
-    override fun getResultOrThrow() =
-        if (status.isOk) ioBuffer else throw FIoStatusException(status)
+    override val status get() = FIoStatus(errorCode.get())
+
+    override val result get(): Result<ByteArray> {
+        val status = FIoStatus(errorCode.get())
+        check(status.isCompleted)
+        return if (status.isOk) {
+            Result.success(ioBuffer)
+        } else {
+            Result.failure(status.toException())
+        }
+    }
 }

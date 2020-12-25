@@ -11,17 +11,17 @@ import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 enum class EFormatArgumentType { Int, UInt, Float, Double, Text, Gender }
 
-@ExperimentalUnsignedTypes
 class FText : UClass {
     var flags: UInt
     var historyType: ETextHistoryType
     var textHistory: FTextHistory
     var text: String
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
         flags = Ar.readUInt32()
         historyType = ETextHistoryType.valueOfByte(Ar.readInt8())
@@ -47,7 +47,7 @@ class FText : UClass {
 
     fun copy() = FText(flags, historyType, textHistory)
 
-    fun serialize(Ar: FAssetArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeUInt32(flags)
         Ar.writeInt8(historyType.value)
@@ -79,22 +79,32 @@ class FText : UClass {
     }
 }
 
-@ExperimentalUnsignedTypes
 sealed class FTextHistory : UClass() {
     class None : FTextHistory {
-        private var unk: Int
-        override val text = ""
+        var cultureInvariantString: String? = null
+        override val text: String
+            get() = cultureInvariantString ?: ""
+
+        constructor()
 
         constructor(Ar: FArchive) {
             super.init(Ar)
-            unk = Ar.readInt32() // TODO is this bHasCultureInvariantString?
+            val bHasCultureInvariantString = Ar.readBoolean()
+            if (bHasCultureInvariantString) {
+                cultureInvariantString = Ar.readString()
+            }
             super.complete(Ar)
         }
 
-        override fun serialize(Ar: FAssetArchiveWriter) {
+        override fun serialize(Ar: FArchiveWriter) {
             super.initWrite(Ar)
-            Ar.writeInt32(unk)
-            super.completeWrite(Ar)}
+            val bHasCultureInvariantString = cultureInvariantString.isNullOrEmpty()
+            Ar.writeBoolean(bHasCultureInvariantString)
+            if (bHasCultureInvariantString) {
+                Ar.writeString(cultureInvariantString!!)
+            }
+            super.completeWrite(Ar)
+        }
     }
 
     class Base : FTextHistory {
@@ -118,7 +128,7 @@ sealed class FTextHistory : UClass() {
             this.sourceString = sourceString
         }
 
-        override fun serialize(Ar: FAssetArchiveWriter) {
+        override fun serialize(Ar: FArchiveWriter) {
             super.initWrite(Ar)
             Ar.writeString(namespace)
             Ar.writeString(key)
@@ -160,7 +170,7 @@ sealed class FTextHistory : UClass() {
             this.targetCulture = targetCulture
         }
 
-        override fun serialize(Ar: FAssetArchiveWriter) {
+        override fun serialize(Ar: FArchiveWriter) {
             super.initWrite(Ar)
             sourceDateTime.serialize(Ar)
             Ar.writeInt8(dateStyle.ordinal.toByte())
@@ -178,7 +188,7 @@ sealed class FTextHistory : UClass() {
         override val text: String
             get() = sourceFmt.text //TODO
 
-        constructor(Ar: FAssetArchive) {
+        constructor(Ar: FArchive) {
             super.init(Ar)
             this.sourceFmt = FText(Ar)
             this.arguments = Ar.readTArray { FFormatArgumentValue(Ar) }
@@ -190,7 +200,7 @@ sealed class FTextHistory : UClass() {
             this.arguments = arguments
         }
 
-        override fun serialize(Ar: FAssetArchiveWriter) {
+        override fun serialize(Ar: FArchiveWriter) {
             super.initWrite(Ar)
             sourceFmt.serialize(Ar)
             Ar.writeTArray(arguments) { it.serialize(Ar) }
@@ -208,7 +218,7 @@ sealed class FTextHistory : UClass() {
         override val text: String
             get() = sourceValue.toString()
 
-        constructor(Ar: FAssetArchive) {
+        constructor(Ar: FArchive) {
             super.init(Ar)
             this.sourceValue = FFormatArgumentValue(Ar)
             this.timeZone = Ar.readString()
@@ -222,7 +232,7 @@ sealed class FTextHistory : UClass() {
             this.targetCulture = targetCulture
         }
 
-        override fun serialize(Ar: FAssetArchiveWriter) {
+        override fun serialize(Ar: FArchiveWriter) {
             super.initWrite(Ar)
             sourceValue.serialize(Ar)
             Ar.writeString(timeZone)
@@ -239,7 +249,10 @@ sealed class FTextHistory : UClass() {
 
         override val text: String
 
-        constructor(Ar: FAssetArchive) {
+        constructor(Ar: FArchive) {
+            if (Ar !is FAssetArchive) {
+                throw ParserException("Tried to load a string table entry with wrong archive type")
+            }
             super.init(Ar)
             this.tableId = Ar.readFName()
             this.key = Ar.readString()
@@ -254,7 +267,10 @@ sealed class FTextHistory : UClass() {
             this.text = text
         }
 
-        override fun serialize(Ar: FAssetArchiveWriter) {
+        override fun serialize(Ar: FArchiveWriter) {
+            if (Ar !is FAssetArchiveWriter) {
+                throw ParserException("Tried to save a string table entry with wrong archive type")
+            }
             super.initWrite(Ar)
             Ar.writeFName(tableId)
             Ar.writeString(key)
@@ -262,16 +278,15 @@ sealed class FTextHistory : UClass() {
         }
     }
 
-    abstract fun serialize(Ar: FAssetArchiveWriter)
+    abstract fun serialize(Ar: FArchiveWriter)
     abstract val text: String
 }
 
-@ExperimentalUnsignedTypes
 class FFormatArgumentValue : UClass {
     var type: EFormatArgumentType
     var value: Any
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
         type = EFormatArgumentType.values()[Ar.readInt8().toInt()]
         value = when (type) {
@@ -290,7 +305,7 @@ class FFormatArgumentValue : UClass {
         this.value = value
     }
 
-    fun serialize(Ar: FAssetArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeInt8(type.ordinal.toByte())
         when (type) {

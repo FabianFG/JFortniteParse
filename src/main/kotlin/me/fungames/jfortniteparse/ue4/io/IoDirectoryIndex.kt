@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.ue4.io
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.util.div
 
 class FIoDirectoryIndexEntry {
     var name = 0u.inv()
@@ -44,14 +45,15 @@ class FIoDirectoryIndexResource {
     }
 }
 
-class FIoDirectoryIndexReaderImpl(buffer: ByteArray, decryptionKey: ByteArray) : FIoDirectoryIndexReader {
-    var directoryIndex = buffer.run {
-        if (buffer.isEmpty()) {
+class FIoDirectoryIndexReaderImpl(buffer: ByteArray, decryptionKey: ByteArray?) : FIoDirectoryIndexReader {
+    var directoryIndex = buffer.let {
+        if (it.isEmpty()) {
             throw FIoStatus.INVALID.toException()
         }
-        FIoDirectoryIndexResource(FByteArchive(if (decryptionKey.size == 32) {
-            Aes.decrypt(buffer, decryptionKey)
-        } else this))
+        if (decryptionKey != null) {
+            Aes.decryptData(it, decryptionKey)
+        }
+        FIoDirectoryIndexResource(FByteArchive(it))
     }
 
     override fun getMountPoint() = directoryIndex.mountPoint
@@ -106,6 +108,35 @@ class FIoDirectoryIndexReaderImpl(buffer: ByteArray, decryptionKey: ByteArray) :
         } else {
             0u.inv()
         }
+
+    override fun iterateDirectoryIndex(directoryIndexHandle: FIoDirectoryIndexHandle, path: String, visit: FDirectoryIndexVisitorFunction): Boolean {
+        var file = getFile(directoryIndexHandle)
+        while (file.isValid()) {
+            val tocEntryIndex = getFileData(file)
+            val fileName = getFileName(file)
+            val filePath = getMountPoint() / path / fileName
+
+            if (!visit(filePath, tocEntryIndex)) {
+                return false
+            }
+
+            file = getNextFile(file)
+        }
+
+        var childDirectory = getChildDirectory(directoryIndexHandle)
+        while (childDirectory.isValid()) {
+            val directoryName = getDirectoryName(childDirectory)
+            val childDirectoryPath = path / directoryName
+
+            if (!iterateDirectoryIndex(childDirectory, childDirectoryPath, visit)) {
+                return false
+            }
+
+            childDirectory = getNextDirectory(childDirectory)
+        }
+
+        return true
+    }
 
     private fun getDirectoryEntry(directory: FIoDirectoryIndexHandle) = directoryIndex.directoryEntries[directory.toIndex().toInt()]
 

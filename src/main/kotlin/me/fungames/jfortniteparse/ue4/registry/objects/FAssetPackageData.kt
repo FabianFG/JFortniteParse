@@ -1,11 +1,9 @@
 package me.fungames.jfortniteparse.ue4.registry.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.registry.reader.FNameTableArchive
+import me.fungames.jfortniteparse.ue4.reader.FArchive
 
-@ExperimentalUnsignedTypes
-class FAssetPackageData(Ar: FNameTableArchive, serializeHash: Boolean) : UClass() {
+class FAssetPackageData(Ar: FArchive, serializeHash: Boolean) {
     val packageName = Ar.readFName()
     val diskSize = Ar.readInt64()
     val packageGuid = FGuid(Ar)

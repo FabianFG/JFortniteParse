@@ -4,16 +4,14 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.min
 
-@ExperimentalUnsignedTypes
-open class FByteArchive(val data : ByteBuffer) : FArchive() {
-
+open class FByteArchive(val data: ByteBuffer) : FArchive() {
     init {
         data.order(ByteOrder.LITTLE_ENDIAN)
     }
 
-    constructor(data : ByteArray) : this(ByteBuffer.wrap(data))
+    constructor(data: ByteArray) : this(ByteBuffer.wrap(data))
 
-    override var littleEndian : Boolean
+    override var littleEndian: Boolean
         get() = data.order() == ByteOrder.LITTLE_ENDIAN
         set(value) {
             if (value)
@@ -22,9 +20,11 @@ open class FByteArchive(val data : ByteBuffer) : FArchive() {
                 data.order(ByteOrder.BIG_ENDIAN)
         }
 
-    protected var pos : Int
+    protected var pos: Int
         get() = data.position()
-        set(value) { data.position(value) }
+        set(value) {
+            data.position(value)
+        }
     protected val size = data.limit()
 
     override fun clone(): FByteArchive {

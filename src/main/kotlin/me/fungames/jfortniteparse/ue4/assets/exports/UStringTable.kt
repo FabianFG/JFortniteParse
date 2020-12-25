@@ -3,12 +3,11 @@ package me.fungames.jfortniteparse.ue4.assets.exports
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 
 typealias FMetaDataMap = MutableMap<FName, String>
 
 @ExperimentalUnsignedTypes
-class UStringTable(exportObject: FObjectExport) : UObject(exportObject) {
+class UStringTable : UObject() {
     lateinit var tableNamespace: String
     lateinit var entries: MutableMap<String, String>
     lateinit var keysToMetadata: MutableMap<String, FMetaDataMap>

@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.converters
 
 import kotlinx.coroutines.*
@@ -134,7 +132,7 @@ fun UUnrealMaterial.export() : MaterialExport {
     val sb = StringBuilder()
     fun proc(name : String, arg : UUnrealMaterial?) {
         if (arg != null) {
-            sb.appendln("$name=${arg.name}")
+            sb.appendln("$name=${arg.name()}")
             toExport.add(arg)
         }
     }
@@ -170,12 +168,12 @@ fun UUnrealMaterial.export() : MaterialExport {
     }
 
     val parentExport = if (this is UMaterialInstanceConstant) {
-        Parent?.export()
+        Parent?.value?.export()
     } else null
     //TODO TextureCube3 ???
 
     // Wait for all texture exporters to finish
     runBlocking { exportJobs.awaitAll() }
 
-    return MaterialExport("$name.mat", matFile, textures, parentExport)
+    return MaterialExport("${name()}.mat", matFile, textures, parentExport)
 }

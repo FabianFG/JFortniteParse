@@ -1,9 +1,10 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.*
-import com.google.gson.*
+import com.google.gson.Gson
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonPrimitive
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.*
@@ -40,12 +41,9 @@ object JsonSerializer {
         )
     }
 
-    @Suppress("EXPERIMENTAL_API_USAGE")
-    fun FPropertyTagType.toJson(context: Gson, locres: Locres? = null): JsonElement {
-        return this.getTagTypeValueLegacy().toJson(context, locres)
-    }
+    fun FProperty.toJson(context: Gson, locres: Locres? = null) =
+        getTagTypeValueLegacy().toJson(context, locres)
 
-    @Suppress("EXPERIMENTAL_API_USAGE")
     fun Any.toJson(context: Gson, locres: Locres? = null): JsonElement {
         return when (val ob = this) {
             //Basic Tag Types
@@ -76,13 +74,13 @@ object JsonSerializer {
             is Long -> JsonPrimitive(ob)
 
             //Structs
-            is FIntPoint -> jsonObject("X" to ob.x.toLong(), "Y" to ob.y.toLong())
+            is FIntPoint -> jsonObject("X" to ob.x, "Y" to ob.y)
             is FGameplayTagContainer -> ob.gameplayTags.toJson(context)
-            is FColor -> jsonObject("R" to ob.r.toShort(), "B" to ob.b.toShort(), "G" to ob.g.toShort(), "A" to ob.a)
-            is FLinearColor -> jsonObject("R" to ob.r, "B" to ob.b, "G" to ob.g, "A" to ob.a)
+            is FColor -> jsonObject("R" to ob.r.toShort(), "G" to ob.g.toShort(), "B" to ob.b.toShort(), "A" to ob.a.toShort())
+            is FLinearColor -> jsonObject("R" to ob.r, "G" to ob.g, "B" to ob.b, "A" to ob.a)
             is FStructFallback -> {
                 val jsOb = JsonObject()
-                ob.properties.forEach { jsOb[it.name.text] = it.tag!!.toJson(context) }
+                ob.properties.forEach { jsOb[it.name.text] = it.prop!!.toJson(context) }
                 jsOb
             }
             is FVector2D -> jsonObject("X" to ob.x, "Y" to ob.y)

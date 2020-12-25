@@ -1,26 +1,25 @@
 package me.fungames.jfortniteparse.fileprovider
 
+import me.fungames.jfortniteparse.exceptions.NotFoundException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 
-@Suppress("EXPERIMENTAL_API_USAGE")
 abstract class AbstractFileProvider : FileProvider() {
+    protected var globalDataLoaded = false
 
-    override fun loadGameFile(file: GameFile): Package? {
+    override fun loadGameFile(file: GameFile): Package {
         if (!file.isUE4Package() || !file.hasUexp())
-            return null
+            throw IllegalArgumentException("The provided file is not a package file")
         val uasset = saveGameFile(file)
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
-        return try {
-            Package(uasset, uexp, ubulk, file.path, this, game)
-        } catch (e : Exception) {
-            logger.error("Failed to load package ${file.path}", e)
-            null
-        }
+        return PakPackage(uasset, uexp, ubulk, file.path, this, game)
     }
 
     override fun findGameFile(filePath: String): GameFile? {
@@ -28,22 +27,30 @@ abstract class AbstractFileProvider : FileProvider() {
         return files[path]
     }
 
-    override fun loadGameFile(filePath: String): Package? {
+    override fun loadGameFile(filePath: String): Package {
         val path = fixPath(filePath)
+        // try load from PAKs
         val gameFile = findGameFile(path)
         if (gameFile != null)
             return loadGameFile(gameFile)
-        if (!path.endsWith(".uasset") && !path.endsWith(".umap"))
-            return null
-        val uasset = saveGameFile(path) ?: return null
-        val uexp = saveGameFile(path.substringBeforeLast(".") + ".uexp") ?: return null
-        val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
-        return try {
-            Package(uasset, uexp, ubulk, path, this, game)
-        } catch (e : ParserException) {
-            logger.error("Failed to load package $path", e)
-            null
+        // try load from IoStore
+        if (globalDataLoaded) {
+            val name = compactFilePath(filePath)
+            val packageId = FPackageId.fromName(FName.dummy(name))
+            try {
+                return loadGameFile(packageId)
+            } catch (ignored: NotFoundException) {
+            }
         }
+        // try load from file system
+        if (!path.endsWith(".uasset") && !path.endsWith(".umap"))
+            throw NotFoundException("Path does not end with .uasset or .umap, or the package was not found")
+        val uasset = saveGameFile(path)
+            ?: throw NotFoundException("uasset/umap not found")
+        val uexp = saveGameFile(path.substringBeforeLast(".") + ".uexp")
+            ?: throw NotFoundException("uexp not found")
+        val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
+        return PakPackage(uasset, uexp, ubulk, path, this, game)
     }
 
     override fun loadLocres(filePath: String): Locres? {
@@ -56,7 +63,7 @@ abstract class AbstractFileProvider : FileProvider() {
         val locres = saveGameFile(path) ?: return null
         return try {
             Locres(locres, path, getLocresLanguageByPath(filePath))
-        } catch (e : ParserException) {
+        } catch (e: ParserException) {
             logger.error("Failed to load locres $path", e)
             null
         }
@@ -68,7 +75,7 @@ abstract class AbstractFileProvider : FileProvider() {
         val locres = saveGameFile(file)
         return try {
             Locres(locres, file.path, getLocresLanguageByPath(file.path))
-        } catch (e : Exception) {
+        } catch (e: Exception) {
             logger.error("Failed to load locres ${file.path}", e)
             null
         }
@@ -84,7 +91,7 @@ abstract class AbstractFileProvider : FileProvider() {
         val locres = saveGameFile(path) ?: return null
         return try {
             AssetRegistry(locres, path)
-        } catch (e : ParserException) {
+        } catch (e: ParserException) {
             logger.error("Failed to load asset registry $path", e)
             null
         }
@@ -96,7 +103,7 @@ abstract class AbstractFileProvider : FileProvider() {
         val locres = saveGameFile(file)
         return try {
             AssetRegistry(locres, file.path)
-        } catch (e : Exception) {
+        } catch (e: Exception) {
             logger.error("Failed to load asset registry ${file.path}", e)
             null
         }

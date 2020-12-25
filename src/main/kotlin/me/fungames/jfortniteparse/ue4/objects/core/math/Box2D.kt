@@ -7,7 +7,6 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 /**
  * Implements a rectangular 2D Box.
  */
-@ExperimentalUnsignedTypes
 class FBox2D : UClass {
     /** Holds the box's minimum point. */
     var min: FVector2D
@@ -32,6 +31,15 @@ class FBox2D : UClass {
         max.serialize(Ar)
         Ar.writeFlag(isValid)
         super.completeWrite(Ar)
+    }
+
+    /**
+     * Creates and initializes a new box.
+     *
+     * The box extents are initialized to zero and the box is marked as invalid.
+     */
+    constructor() : this(FVector2D(0f, 0f), FVector2D(0f, 0f)) {
+        isValid = false
     }
 
     /**

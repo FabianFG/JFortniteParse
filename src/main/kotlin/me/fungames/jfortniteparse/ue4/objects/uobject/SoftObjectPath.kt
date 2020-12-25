@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 /**
  * A struct that contains a string reference to an object, either a top level asset or a subobject.
@@ -11,8 +12,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
  * This is stored internally as an FName pointing to the top level asset (/package/path.assetname) and an option a string subobject path.
  * If the MetaClass metadata is applied to a FProperty with this the UI will restrict to that type of asset.
  */
-@ExperimentalUnsignedTypes
-class FSoftObjectPath : UClass {
+open class FSoftObjectPath : UClass {
     /** Asset path, patch to a top level object in a package. This is /package/path.assetname */
     var assetPathName: FName
 
@@ -20,12 +20,11 @@ class FSoftObjectPath : UClass {
     var subPathString: String
     var owner: Package? = null
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
         assetPathName = Ar.readFName()
         subPathString = Ar.readString()
         super.complete(Ar)
-        owner = Ar.owner
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
@@ -35,6 +34,9 @@ class FSoftObjectPath : UClass {
         super.completeWrite(Ar)
     }
 
+    constructor() : this(FName.NAME_None, "")
+
+    /** Construct from an asset FName and subobject pair */
     constructor(assetPathName: FName, subPathString: String) {
         this.assetPathName = assetPathName
         this.subPathString = subPathString
@@ -44,10 +46,19 @@ class FSoftObjectPath : UClass {
     override fun toString() =
         // Most of the time there is no sub path so we can do a single string allocation
         if (subPathString.isEmpty()) {
-            if (assetPathName == FName.NAME_None) "" else assetPathName.toString()
+            if (assetPathName.isNone()) "" else assetPathName.toString()
         } else {
             "$assetPathName:$subPathString"
         }
 
     inline fun <reified T> load() = owner?.provider?.loadObject<T>(this)
+}
+
+/**
+ * A struct that contains a string reference to a class, can be used to make soft references to classes
+ */
+class FSoftClassPath : FSoftObjectPath {
+    constructor(Ar: FAssetArchive) : super(Ar)
+    constructor() : super()
+    constructor(assetPathName: FName, subPathString: String) : super(assetPathName, subPathString)
 }

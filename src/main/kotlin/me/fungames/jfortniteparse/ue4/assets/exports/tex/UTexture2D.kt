@@ -2,16 +2,24 @@ package me.fungames.jfortniteparse.ue4.assets.exports.tex
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
+import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.core.math.FIntPoint
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 
-@ExperimentalUnsignedTypes
-class UTexture2D(exportObject: FObjectExport) : UTexture(exportObject) {
+@OnlyAnnotated
+class UTexture2D : UTexture() {
+    @JvmField @UProperty var LevelIndex: Int? = null
+    @JvmField @UProperty var FirstResourceMemMip: Int? = null
+    @JvmField @UProperty var bTemporarilyDisableStreaming: Boolean? = null
+    @JvmField @UProperty var AddressX: ETextureAddress? = null
+    @JvmField @UProperty var AddressY: ETextureAddress? = null
+    @JvmField @UProperty var ImportedSize: FIntPoint? = null
     lateinit var flag1: FStripDataFlags
     lateinit var flag2: FStripDataFlags
     var cooked: Boolean = true
@@ -25,7 +33,7 @@ class UTexture2D(exportObject: FObjectExport) : UTexture(exportObject) {
         textures = mutableMapOf()
         if (cooked) {
             var pixelFormat = Ar.readFName()
-            while (pixelFormat.text != "None") {
+            while (!pixelFormat.isNone()) {
                 val skipOffset = Ar.readInt64()
                 textures[FTexturePlatformData(Ar)] = pixelFormat
                 if (Ar.relativePos().toLong() != skipOffset) {
@@ -59,7 +67,12 @@ class UTexture2D(exportObject: FObjectExport) : UTexture(exportObject) {
     }
 }
 
-@ExperimentalUnsignedTypes
+enum class ETextureAddress {
+    TA_Wrap,
+    TA_Clamp,
+    TA_Mirror
+}
+
 class FTexturePlatformData : UClass {
     var sizeX: Int
     var sizeY: Int
@@ -126,7 +139,6 @@ class FTexturePlatformData : UClass {
     }
 }
 
-@ExperimentalUnsignedTypes
 class FTexture2DMipMap : UClass {
     var cooked: Boolean
     var data: FByteBulkData

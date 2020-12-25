@@ -1,24 +1,16 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.mats
 
-import me.fungames.jfortniteparse.ue4.assets.enums.EBlendMode
+import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
+import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.converters.CMaterialParams
-import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_BASE
 
-@ExperimentalUnsignedTypes
-class UMaterial : UMaterialInterface {
-    val TwoSided = false
-    val bDisableDepthTest = false
-    val bIsMasked = false
-    val BlendMode = EBlendMode.BLEND_Opaque
-    val OpacityMaskClipValue = 0.333f
+@OnlyAnnotated
+class UMaterial : UMaterial_Properties() {
     val ReferencedTextures = emptyArray<UTexture>()
     var referencedTextures = mutableListOf<UTexture>()
-
-    constructor() : super()
-    constructor(exportObject: FObjectExport) : super(exportObject)
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
@@ -28,16 +20,17 @@ class UMaterial : UMaterialInterface {
             // UE4 has complex FMaterialResource format, so avoid reading anything here, but
             // scan package's imports for UTexture objects instead
             scanForTextures(Ar)
-            Ar.seek(validPos)
+            if (validPos > 0) Ar.seek(validPos)
         }
     }
 
     fun scanForTextures(Ar: FAssetArchive) {
         //!! NOTE: this code will not work when textures are located in the same package - they don't present in import table
         //!! but could be found in export table. That's true for Simplygon-generated materials.
-        for (imp in Ar.owner.importMap) {
+        val owner = (Ar.owner as? PakPackage) ?: return
+        for (imp in owner.importMap) {
             if (imp.className.text.startsWith("Texture", true))
-                Ar.provider?.loadImport<UTexture>(imp)?.let { referencedTextures.add(it) }
+                owner.loadImport<UTexture>(imp)?.let { referencedTextures.add(it) }
         }
     }
 

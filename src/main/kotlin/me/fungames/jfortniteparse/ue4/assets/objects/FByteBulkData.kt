@@ -2,42 +2,47 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.enums.EBulkData
+import me.fungames.jfortniteparse.ue4.assets.enums.EBulkDataFlags.*
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
-@ExperimentalUnsignedTypes
 class FByteBulkData : UClass {
-    var header : FByteBulkDataHeader
-    var data : ByteArray
+    var header: FByteBulkDataHeader
+    var data: ByteArray
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
         header = FByteBulkDataHeader(Ar)
         val bulkDataFlags = header.bulkDataFlags
-        data = ByteArray(header.elementCount)
+        data = ByteArray(header.elementCount.toInt())
         when {
-            header.elementCount == 0 -> {
+            header.elementCount == 0L -> {
                 // Nothing to do here
             }
-            EBulkData.BULKDATA_Unused.check(bulkDataFlags) -> {
+            BULKDATA_Unused.check(bulkDataFlags) -> {
                 logger.warn("Bulk with no data")
             }
-            EBulkData.BULKDATA_ForceInlinePayload.check(bulkDataFlags) -> {
+            BULKDATA_ForceInlinePayload.check(bulkDataFlags) -> {
                 logger.debug("bulk data in .uexp file (Force Inline Payload) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
                 Ar.read(data)
             }
-            EBulkData.BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
+            BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
                 logger.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
-                val ubulkAr = Ar.getPayload(PayloadType.UBULK)
+                val ubulkAr = Ar.getPayload(if (BULKDATA_OptionalPayload.check(bulkDataFlags)) PayloadType.UPTNL else PayloadType.UBULK)
+                /*val ubulkAr = if (BULKDATA_OptionalPayload.check(bulkDataFlags)) {
+                    try {
+                        Ar.getPayload(PayloadType.UPTNL)
+                    } catch (ignored: Exception) {
+                        Ar.getPayload(PayloadType.UBULK)
+                    }
+                } else {
+                    Ar.getPayload(PayloadType.UBULK)
+                }*/
                 ubulkAr.seek(header.offsetInFile.toInt())
                 ubulkAr.read(data)
             }
-            EBulkData.BULKDATA_OptionalPayload.check(bulkDataFlags) -> {
-                throw ParserException("TODO: Uptnl", Ar)
-            }
-            EBulkData.BULKDATA_PayloadAtEndOfFile.check(bulkDataFlags) -> {
+            BULKDATA_PayloadAtEndOfFile.check(bulkDataFlags) -> {
                 //stored in same file, but at different position
                 //save archive position
                 val savePos = Ar.pos()
@@ -57,33 +62,38 @@ class FByteBulkData : UClass {
         super.initWrite(Ar)
         val bulkDataFlags = header.bulkDataFlags
         when {
-            EBulkData.BULKDATA_Unused.check(bulkDataFlags) -> {
+            BULKDATA_Unused.check(bulkDataFlags) -> {
                 header.serialize(Ar)
             }
-            EBulkData.BULKDATA_ForceInlinePayload.check(bulkDataFlags) -> {
+            BULKDATA_ForceInlinePayload.check(bulkDataFlags) -> {
                 header.offsetInFile = (Ar.relativePos() + 28).toLong()
-                header.elementCount = data.size
-                header.sizeOnDisk = data.size
+                header.elementCount = data.size.toLong()
+                header.sizeOnDisk = data.size.toLong()
                 header.serialize(Ar)
                 Ar.write(data)
             }
-            EBulkData.BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
+            BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
                 val ubulkAr = Ar.getPayload(PayloadType.UBULK)
                 header.offsetInFile = ubulkAr.relativePos().toLong()
-                header.elementCount = data.size
-                header.sizeOnDisk = data.size
+                header.elementCount = data.size.toLong()
+                header.sizeOnDisk = data.size.toLong()
                 header.serialize(Ar)
                 ubulkAr.write(data)
             }
-            EBulkData.BULKDATA_OptionalPayload.check(bulkDataFlags) -> {
-                throw ParserException("TODO: Uptnl")
+            BULKDATA_OptionalPayload.check(bulkDataFlags) -> {
+                val ubulkAr = Ar.getPayload(PayloadType.UPTNL)
+                header.offsetInFile = ubulkAr.relativePos().toLong()
+                header.elementCount = data.size.toLong()
+                header.sizeOnDisk = data.size.toLong()
+                header.serialize(Ar)
+                ubulkAr.write(data)
             }
             else -> throw ParserException("Unsupported BulkData type $bulkDataFlags")
         }
         super.completeWrite(Ar)
     }
 
-    constructor(header : FByteBulkDataHeader, data : ByteArray) {
+    constructor(header: FByteBulkDataHeader, data: ByteArray) {
         this.header = header
         this.data = data
     }

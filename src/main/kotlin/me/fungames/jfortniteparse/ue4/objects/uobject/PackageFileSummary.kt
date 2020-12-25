@@ -92,7 +92,7 @@ class FPackageFileSummary : UClass {
         legacyUE3Version = Ar.readInt32()
         fileVersionUE4 = Ar.readInt32()
         fileVersionLicenseUE4 = Ar.readInt32()
-        customVersionContainer = Ar.readTArray { FCustomVersion(it) }
+        customVersionContainer = Ar.readTArray { FCustomVersion(Ar) }
         totalHeaderSize = Ar.readInt32()
         folderName = Ar.readString()
         packageFlags = Ar.readUInt32()
@@ -110,17 +110,17 @@ class FPackageFileSummary : UClass {
         searchableNamesOffset = Ar.readInt32()
         thumbnailTableOffset = Ar.readInt32()
         guid = FGuid(Ar)
-        generations = Ar.readTArray { FGenerationInfo(it) }
+        generations = Ar.readTArray { FGenerationInfo(Ar) }
         savedByEngineVersion = FEngineVersion(Ar)
         compatibleWithEngineVersion = FEngineVersion(Ar)
         compressionFlags = Ar.readUInt32()
-        compressedChunks = Ar.readTArray { FCompressedChunk(it) }
+        compressedChunks = Ar.readTArray { FCompressedChunk(Ar) }
         packageSource = Ar.readUInt32()
-        additionalPackagesToCook = Ar.readTArray { it.readString() }
+        additionalPackagesToCook = Ar.readTArray { Ar.readString() }
         assetRegistryDataOffset = Ar.readInt32()
         bulkDataStartOffset = Ar.readInt32()
         worldTileInfoDataOffset = Ar.readInt32()
-        chunkIds = Ar.readTArray { it.readInt32() }
+        chunkIds = Ar.readTArray { Ar.readInt32() }
         preloadDependencyCount = Ar.readInt32()
         preloadDependencyOffset = Ar.readInt32()
         super.complete(Ar)

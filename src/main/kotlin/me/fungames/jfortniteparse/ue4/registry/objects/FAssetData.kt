@@ -1,22 +1,32 @@
 package me.fungames.jfortniteparse.ue4.registry.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.registry.reader.FNameTableArchive
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryArchive
 
-@ExperimentalUnsignedTypes
-class FAssetData(Ar: FNameTableArchive) : UClass() {
-    // Serialize out the asset info
-    val objectPath = Ar.readFName()
-    val packagePath = Ar.readFName()
-    val assetClass = Ar.readFName()
+class FAssetData {
+    val objectPath: FName
+    val packagePath: FName
+    val assetClass: FName
+    val packageName: FName
+    val assetName: FName
+    lateinit var tagsAndValues: Map<FName, String>
+    lateinit var taggedAssetBundles: FAssetBundleData
+    val chunkIDs: Array<Int>
+    val packageFlags: UInt
 
-    // These are derived from ObjectPath, we manually serialize them because they get pooled
-    val packageName = Ar.readFName()
-    val assetName = Ar.readFName()
+    constructor(Ar: FAssetRegistryArchive) {
+        // Serialize out the asset info
+        this.objectPath = Ar.readFName()
+        this.packagePath = Ar.readFName()
+        this.assetClass = Ar.readFName()
 
-    // This is actually a FAssetDataTagMapSharedView which just contains a FAssetDataTagMap
-    // which is just a TSortedMap<FName, FString>
-    val tagsAndValues = Ar.readTMap { Ar.readFName() to Ar.readString() }
-    val chunkIDs = Ar.readTArray { it.readInt32() }
-    val packageFlags = Ar.readUInt32()
+        // These are derived from ObjectPath, we manually serialize them because they get pooled
+        this.packageName = Ar.readFName()
+        this.assetName = Ar.readFName()
+
+        Ar.serializeTagsAndBundles(this)
+
+        this.chunkIDs = Ar.readTArray { Ar.readInt32() }
+        this.packageFlags = Ar.readUInt32()
+    }
 }

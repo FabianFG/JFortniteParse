@@ -19,7 +19,7 @@ class FFileManifestList : UClass {
         for (fileManifest in fileList) fileManifest.symlinkTarget = Ar.readString()
         for (fileManifest in fileList) fileManifest.fileHash = Ar.read(20)
         for (fileManifest in fileList) fileManifest.fileMetaFlags = Ar.readUInt8()
-        for (fileManifest in fileList) fileManifest.installTags = Ar.readTArray { it.readString() }
+        for (fileManifest in fileList) fileManifest.installTags = Ar.readTArray { Ar.readString() }
         for (fileManifest in fileList) fileManifest.chunkParts = Ar.readTArray { FChunkPart(Ar) }
         Ar.seek(startPos + dataSize.toInt())
         super.complete(Ar)

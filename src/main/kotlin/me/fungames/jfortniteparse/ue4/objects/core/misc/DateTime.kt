@@ -3,10 +3,10 @@ package me.fungames.jfortniteparse.ue4.objects.core.misc
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
+import java.util.*
 
-@ExperimentalUnsignedTypes
 class FDateTime : UClass {
-    var date : Long
+    var date: Long
 
     constructor(Ar: FArchive) {
         super.init(Ar)
@@ -20,7 +20,11 @@ class FDateTime : UClass {
         super.completeWrite(Ar)
     }
 
+    constructor() : this(0)
+
     constructor(date: Long) {
         this.date = date
     }
+
+    inline fun toDate() = Date(date)
 }

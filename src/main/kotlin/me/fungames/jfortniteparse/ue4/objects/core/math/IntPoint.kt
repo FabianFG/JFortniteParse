@@ -4,27 +4,34 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
+/**
+ * Structure for integer points in 2-d space.
+ */
 class FIntPoint : UClass {
-    var x: UInt
-    var y: UInt
+    /** Holds the point's x-coordinate. */
+    var x: Int
+
+    /** Holds the point's y-coordinate. */
+    var y: Int
 
     constructor(Ar: FArchive) {
         super.init(Ar)
-        x = Ar.readUInt32()
-        y = Ar.readUInt32()
+        x = Ar.readInt32()
+        y = Ar.readInt32()
         super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
-        Ar.writeUInt32(x)
-        Ar.writeUInt32(y)
+        Ar.writeInt32(x)
+        Ar.writeInt32(y)
         super.completeWrite(Ar)
     }
 
-    constructor(x: UInt, y: UInt) {
+    constructor(x: Int, y: Int) {
         this.x = x
         this.y = y
     }
+
+    override fun toString() = "X=%d Y=%d".format(x, y)
 }

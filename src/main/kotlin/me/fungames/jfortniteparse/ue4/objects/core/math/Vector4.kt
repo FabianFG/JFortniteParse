@@ -7,7 +7,6 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 /**
  * A 4D homogeneous vector, 4x1 FLOATs.
  */
-@ExperimentalUnsignedTypes
 class FVector4 : UClass {
     /** The vector's X-component. */
     var x: Float
@@ -45,7 +44,7 @@ class FVector4 : UClass {
      * @param vector 3D Vector to set first three components.
      * @param w W Coordinate.
      */
-    constructor(vector: FVector, w: Float = 1f) : this(vector.x, vector.y, vector.z, w)
+    constructor(vector: FVector, w: Float = 1.0f) : this(vector.x, vector.y, vector.z, w)
 
     /**
      * Creates and initializes a new vector from a color value.
@@ -62,9 +61,19 @@ class FVector4 : UClass {
      * @param z Z Coordinate.
      * @param w W Coordinate.
      */
-    constructor(x: Float = 0f, y: Float = 0f, z: Float = 0f, w: Float = 0f) {
+    constructor(x: Float = 0.0f, y: Float = 0.0f, z: Float = 0.0f, w: Float = 0.0f) {
         this.x = x; this.y = y; this.z = z; this.w = w
     }
+
+    /**
+     * Creates and initializes a new vector from the specified 2D vectors.
+     *
+     * @param xy A 2D vector holding the X- and Y-components.
+     * @param zw A 2D vector holding the Z- and W-components.
+     */
+    constructor(xy: FVector2D, zw: FVector2D) : this(xy.x, xy.y, zw.x, zw.y)
+
+    //constructor(vector: FIntVector4)
 
     /**
      * Get a textual representation of the vector.

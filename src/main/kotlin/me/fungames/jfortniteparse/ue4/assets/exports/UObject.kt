@@ -5,38 +5,45 @@ import com.github.salomonbrys.kotson.set
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
+import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.unprefix
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
-@ExperimentalUnsignedTypes
-open class UObject : UExport {
-    lateinit var properties: MutableList<FPropertyTag>
+open class UObject : UClass, IPropertyHolder {
+    var name = ""
+    var outer: UObject? = null
+    var clazz: UStruct? = null
+    final override var properties: MutableList<FPropertyTag>
     var objectGuid: FGuid? = null
-    var readGuid = false
+    var flags = 0
+
+    var export: FObjectExport? = null
+    val owner: Package?
+        get() {
+            var current = outer
+            var next = current?.outer
+            while (next != null) {
+                current = next
+                next = current.outer
+            }
+            return current as? Package
+        }
+    val exportType get() = clazz?.name ?: javaClass.simpleName.unprefix()
 
     @JvmOverloads
-    constructor(exportObject: FObjectExport, readGuid: Boolean = true) : super(exportObject) {
-        this.readGuid = readGuid
-    }
-
-    /** Arbitrary UObject construction */
-    constructor() : this(mutableListOf(), null, "") {
-        exportType = javaClass.simpleName
-        name = javaClass.simpleName
-    }
-
-    /** For use in UDataTable and UCurveTable */
-    constructor(properties: MutableList<FPropertyTag>, objectGuid: FGuid?, exportType: String) : super(exportType) {
+    constructor(properties: MutableList<FPropertyTag> = mutableListOf()) {
         this.properties = properties
-        this.objectGuid = objectGuid
     }
 
     inline fun <reified T> set(name: String, value: T) {
@@ -55,49 +62,105 @@ open class UObject : UExport {
 
     inline fun <reified T> get(name: String): T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
 
-    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+    open fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.init(Ar)
-        properties = deserializeProperties(Ar)
-        if (readGuid && Ar.readBoolean() && Ar.pos() + 16 <= Ar.size())
+        properties = mutableListOf()
+        if (javaClass != UClassReal::class.java) {
+            if (Ar.useUnversionedPropertySerialization) {
+                deserializeUnversionedProperties(properties, clazz!!, Ar)
+            } else {
+                deserializeVersionedTaggedProperties(properties, Ar)
+            }
+        }
+        //FLazyObjectPtr::PossiblySerializeObjectGuid
+        if (Ar.pos() + 4 <= validPos && Ar.readBoolean() && Ar.pos() + 16 <= validPos)
             objectGuid = FGuid(Ar)
         super.complete(Ar)
         mapToClass(properties, javaClass, this)
     }
 
-    override fun serialize(Ar: FAssetArchiveWriter) {
+    open fun serialize(Ar: FAssetArchiveWriter) {
         super.initWrite(Ar)
         serializeProperties(Ar, properties)
-        if (readGuid) {
-            Ar.writeBoolean(objectGuid != null)
-            if (objectGuid != null) objectGuid?.serialize(Ar)
-        }
+        Ar.writeBoolean(objectGuid != null)
+        objectGuid?.serialize(Ar)
         super.completeWrite(Ar)
     }
 
-    fun toJson(context: Gson = Package.gson, locres: Locres? = null) : JsonObject {
+    fun toJson(context: Gson = Package.gson, locres: Locres? = null): JsonObject {
         val ob = jsonObject("exportType" to exportType)
         properties.forEach { pTag ->
-            val tagValue = pTag.tag ?: return@forEach
+            val tagValue = pTag.prop ?: return@forEach
             ob[pTag.name.text] = tagValue.toJson(context, locres)
         }
         return ob
     }
 
-    companion object {
-        fun deserializeProperties(Ar: FAssetArchive): MutableList<FPropertyTag> {
-            val properties = mutableListOf<FPropertyTag>()
-            while (true) {
-                val tag = FPropertyTag(Ar, true)
-                if (tag.name.text == "None")
-                    break
-                properties.add(tag)
-            }
-            return properties
-        }
+    fun clearFlags(newFlags: Int) {
+        flags = flags and newFlags.inv()
+    }
 
-        fun serializeProperties(Ar: FAssetArchiveWriter, properties: List<FPropertyTag>) {
-            properties.forEach { it.serialize(Ar, true) }
-            Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
+    /**
+     * Used to safely check whether any of the passed in flags are set.
+     *
+     * @param flagsToCheck    Object flags to check for.
+     * @return                true if any of the passed in flags are set, false otherwise  (including no flags passed in).
+     */
+    fun hasAnyFlags(flagsToCheck: Int): Boolean {
+        return (flags and flagsToCheck) != 0
+    }
+
+    /**
+     * Returns the fully qualified pathname for this object, in the format:
+     * 'Outermost[.Outer].Name'
+     *
+     * @param    stopOuter    if specified, indicates that the output string should be relative to this object.  if stopOuter
+     *						does not exist in this object's outer chain, the result would be the same as passing null.
+     *
+     * @note    safe to call on NULL object pointers!
+     */
+    @JvmOverloads
+    fun getPathName(stopOuter: UObject? = null): String {
+        val result = StringBuilder()
+        getPathName(stopOuter, result)
+        return result.toString()
+    }
+
+    /**
+     * Versions of getPathName() that eliminates unnecessary copies and allocations.
+     */
+    fun getPathName(stopOuter: UObject?, resultString: StringBuilder) {
+        if (this != stopOuter) {
+            val objOuter = outer
+            if (objOuter != null && objOuter != stopOuter) {
+                objOuter.getPathName(stopOuter, resultString)
+
+                // SUBOBJECT_DELIMITER_CHAR is used to indicate that this object's outer is not a UPackage
+                if (objOuter.outer is Package) {
+                    resultString.append(':')
+                } else {
+                    resultString.append('.')
+                }
+            }
+            resultString.append(name)
+        } else {
+            resultString.append("None")
         }
     }
+
+    override fun toString() = name
+}
+
+fun deserializeVersionedTaggedProperties(properties: MutableList<FPropertyTag>, Ar: FAssetArchive) {
+    while (true) {
+        val tag = FPropertyTag(Ar, true)
+        if (tag.name.isNone())
+            break
+        properties.add(tag)
+    }
+}
+
+fun serializeProperties(Ar: FAssetArchiveWriter, properties: List<FPropertyTag>) {
+    properties.forEach { it.serialize(Ar, true) }
+    Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
 }

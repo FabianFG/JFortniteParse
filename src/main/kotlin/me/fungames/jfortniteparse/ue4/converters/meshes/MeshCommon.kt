@@ -12,7 +12,7 @@ import kotlin.math.round
 
 internal const val MAX_MESH_UV_SETS = 8
 
-class CMeshSection(val material: UMaterialInterface?, val firstIndex: Int, val numFaces: Int)
+class CMeshSection(val material: Lazy<UMaterialInterface>?, val firstIndex: Int, val numFaces: Int)
 
 class CMeshUVFloat(var u: Float, var v: Float) {
     constructor() : this(0f, 0f)

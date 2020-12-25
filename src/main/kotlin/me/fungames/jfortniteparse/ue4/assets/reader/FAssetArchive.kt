@@ -2,26 +2,30 @@ package me.fungames.jfortniteparse.ue4.assets.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
+import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.PakPackage
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.nio.ByteBuffer
 
 /**
  * Binary reader for UE4 Assets
  */
-@ExperimentalUnsignedTypes
-class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgName: String) : FByteArchive(data) {
+open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgName: String) : FByteArchive(data) {
     constructor(data: ByteArray, provider: FileProvider?, pkgName: String) : this(ByteBuffer.wrap(data), provider, pkgName)
 
     // Asset Specific Fields
     lateinit var owner: Package
-    private var payloads = mutableMapOf<PayloadType, FAssetArchive>()
+    protected var payloads = mutableMapOf<PayloadType, FAssetArchive>()
     var uassetSize = 0
     var uexpSize = 0
+    var bulkDataStartOffset = 0
 
-    fun getPayload(type: PayloadType) = payloads[type] ?: throw ParserException("${type.name} is needed to parse the current package")
+    open fun getPayload(type: PayloadType) = payloads[type] ?: throw ParserException("${type.name} is needed to parse the current package")
     fun addPayload(type: PayloadType, payload: FAssetArchive) {
         if (payloads.containsKey(type))
             throw ParserException("Can't add a payload that is already attached of type ${type.name}")
@@ -46,13 +50,27 @@ class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgName: 
     fun toNormalPos(relativePos: Int) = relativePos - uassetSize - uexpSize
     fun toRelativePos(normalPos: Int) = normalPos + uassetSize + uexpSize
 
-    fun readFName(): FName {
+    open fun handleBadNameIndex(nameIndex: Int) {
+        throw ParserException("FName could not be read, requested index $nameIndex, name map size ${(owner as PakPackage).nameMap.size}", this)
+    }
+
+    override fun readFName(): FName {
+        val owner = owner as PakPackage
         val nameIndex = this.readInt32()
         val extraIndex = this.readInt32()
-        if (nameIndex in owner.nameMap.indices)
+        if (nameIndex in owner.nameMap.indices) {
             return FName(owner.nameMap, nameIndex, extraIndex)
-        else
-            throw ParserException("FName could not be read, requested index $nameIndex, name map size ${owner.nameMap.size}", this)
+        }
+        handleBadNameIndex(nameIndex)
+        return FName()
+    }
+
+    fun <T : UObject> readObject() = FPackageIndex(this).let {
+        val out = owner.findObject<T>(it)
+        if (!it.isNull() && out == null) {
+            UClass.logger.warn("$pkgName: $it not found")
+        }
+        out
     }
 
     override fun printError() = "FAssetArchive Info: pos $pos, stopper $size, package $pkgName"

@@ -1,18 +1,23 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.4.0'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.20'
     id 'maven-publish'
     id 'com.jfrog.bintray' version '1.8.5'
     id 'org.jetbrains.dokka' version '0.10.0'
 }
 
 group 'me.fungames'
-version '3.2.7'
+version '3.3.0'
 
 sourceCompatibility = 1.8
 
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
+
 repositories {
-    mavenCentral()
     jcenter()
+    google()
+    mavenCentral()
     maven {
         url 'https://dl.bintray.com/fungamesleaks/mavenRepo'
     }
@@ -62,7 +67,8 @@ publishing {
 }
 
 dependencies {
-    implementation 'me.fungames:JOodle:1.1'
+    implementation 'androidx.collection:collection-ktx:1.1.0'
+    implementation 'me.fungames:JOodle:1.2'
     implementation 'me.fungames:KotlinASTC:1.1'
     implementation 'me.fungames:KotlinPointers:1.1'
     //implementation 'me.fungames:KotlinSquish:1.0' Somehow broken with alpha values
@@ -78,10 +84,15 @@ dependencies {
     implementation 'org.objenesis:objenesis:3.1'
 }
 
-compileKotlin {
-    kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.freeCompilerArgs += '-Xopt-in=kotlin.ExperimentalUnsignedTypes'
-}
-compileTestKotlin {
-    kotlinOptions.jvmTarget = "1.8"
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "1.8"
+        freeCompilerArgs += [
+                '-Xallow-result-return-type',
+                '-Xno-call-assertions',
+                '-Xno-param-assertions',
+                '-Xno-receiver-assertions',
+                '-Xopt-in=kotlin.ExperimentalUnsignedTypes'
+        ]
+    }
 }

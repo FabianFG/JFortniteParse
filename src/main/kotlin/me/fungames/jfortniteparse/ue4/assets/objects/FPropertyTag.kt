@@ -6,17 +6,46 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ARRAY_PROPERTY_INNER_TAGS
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_PROPERTY_GUID_IN_PROPERTY_TAG
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_PROPERTY_TAG_SET_MAP_SUPPORT
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_STRUCT_GUID_IN_PROPERTY_TAG
+import me.fungames.jfortniteparse.util.INDEX_NONE
+import java.lang.reflect.Type
 
-@ExperimentalUnsignedTypes
+/**
+ * A tag describing a class property, to aid in serialization.
+ */
 class FPropertyTag : UClass {
+    // Transient.
+    var prop: FProperty? = null // prop: FProperty
+
+    // Variables.
+    /** Type of property */
+    lateinit var type: FName
+    /** A boolean property's value (never need to serialize data for bool properties except here) */
+    var boolVal: Boolean = false
+    /** Name of property. */
     var name: FName
-    lateinit var propertyType: FName
-    var size = -1
-    var arrayIndex = -1
-    var tagData: FPropertyTagData? = null
-    var hasPropertyGuid = false
+    /** Struct name if FStructProperty. */
+    var structName = FName.NAME_None
+    /** Enum name if FByteProperty or FEnumProperty */
+    var enumName = FName.NAME_None
+    /** Inner type if FArrayProperty, FSetProperty, or FMapProperty */
+    var innerType = FName.NAME_None
+    /** Value type if UMapProperty */
+    var valueType = FName.NAME_None
+    /** Property size. */
+    var size: Int = 0
+    /** Index if an array; else 0. */
+    var arrayIndex = INDEX_NONE
+    /** Location in stream of tag size member */
+    var sizeOffset = -1L
+    var structGuid: FGuid? = null
+    var hasPropertyGuid: Boolean = false
     var propertyGuid: FGuid? = null
-    var tag: FPropertyTagType? = null
+
+    var typeData: PropertyType? = null
 
     constructor(name: FName) {
         this.name = name
@@ -25,46 +54,61 @@ class FPropertyTag : UClass {
     constructor(Ar: FAssetArchive, readData: Boolean) {
         super.init(Ar)
         name = Ar.readFName()
-        if (name.text != "None") {
-            propertyType = Ar.readFName()
+        if (!name.isNone()) {
+            type = Ar.readFName()
             size = Ar.readInt32()
             arrayIndex = Ar.readInt32()
-            tagData = when (propertyType.text) {
-                "StructProperty" -> FPropertyTagData.StructProperty(Ar)
-                "BoolProperty" -> FPropertyTagData.BoolProperty(Ar)
-                "EnumProperty" -> FPropertyTagData.EnumProperty(Ar)
-                "ByteProperty" -> FPropertyTagData.ByteProperty(Ar)
-                "ArrayProperty" -> FPropertyTagData.ArrayProperty(Ar)
-                "MapProperty" -> FPropertyTagData.MapProperty(Ar)
-                "SetProperty" -> FPropertyTagData.BoolProperty(Ar)
-                else -> null
+            val tagType = type.text
+
+            if (tagType == "StructProperty") { // only need to serialize this for structs
+                structName = Ar.readFName()
+                if (Ar.ver >= VER_UE4_STRUCT_GUID_IN_PROPERTY_TAG)
+                    structGuid = FGuid(Ar)
+            } else if (tagType == "BoolProperty") { // only need to serialize this for bools
+                boolVal = Ar.readFlag()
+            } else if (tagType == "ByteProperty") { // only need to serialize this for bytes/enums
+                enumName = Ar.readFName()
+            } else if (tagType == "EnumProperty") {
+                enumName = Ar.readFName()
+            } else if (tagType == "ArrayProperty") { // only need to serialize this for arrays
+                if (Ar.ver >= VER_UE4_ARRAY_PROPERTY_INNER_TAGS)
+                    innerType = Ar.readFName()
+            } else if (Ar.ver >= VER_UE4_PROPERTY_TAG_SET_MAP_SUPPORT) {
+                if (tagType == "SetProperty") {
+                    innerType = Ar.readFName()
+                } else if (tagType == "MapProperty") {
+                    innerType = Ar.readFName() // MapProperty doesn't seem to store the inner types as their types when they're UStructs.
+                    valueType = Ar.readFName()
+                }
             }
 
-            // MapProperty doesn't seem to store the inner types as their types when they're UStructs.
-            hasPropertyGuid = Ar.readFlag()
-            if (hasPropertyGuid)
-                propertyGuid = FGuid(Ar)
+            // Property tags to handle renamed blueprint properties effectively.
+            if (Ar.ver >= VER_UE4_PROPERTY_GUID_IN_PROPERTY_TAG) {
+                hasPropertyGuid = Ar.readFlag()
+                if (hasPropertyGuid)
+                    propertyGuid = FGuid(Ar)
+            }
+
+            typeData = PropertyType(this)
 
             if (readData) {
                 val pos = Ar.pos()
                 val finalPos = pos + size
                 try {
-                    tag =
-                        FPropertyTagType.readFPropertyTagType(
-                            Ar,
-                            propertyType.text,
-                            tagData,
-                            FPropertyTagType.Type.NORMAL
+                    prop =
+                        FProperty.readPropertyValue(
+                            Ar, typeData!!,
+                            FProperty.ReadType.NORMAL
                         )
                     if (finalPos != Ar.pos()) {
-                        logger.warn("FPropertyTagType $name (${tagData ?: propertyType}) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
+                        logger.warn("FPropertyTagType $name (${type}) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
                     }
                     //Even if the property wasn't read properly
                     //we don't need to crash here because we know the expected size
                     Ar.seek(finalPos)
                 } catch (e: ParserException) {
                     if (finalPos != Ar.pos()) {
-                        logger.warn("Failed to read FPropertyTagType $name (${tagData ?: propertyType}), skipping it, please report", e)
+                        logger.warn("Failed to read FPropertyTagType $name (${type}), skipping it, please report", e)
                     }
                     //Also no need to crash here, just seek to the desired offset
                     Ar.seek(finalPos)
@@ -74,48 +118,48 @@ class FPropertyTag : UClass {
         super.complete(Ar)
     }
 
-    fun <T> getTagTypeValue(clazz: Class<T>): T? {
-        if (tag == null)
+    fun <T> getTagTypeValue(clazz: Class<T>, type: Type? = null): T? {
+        if (prop == null)
             throw IllegalArgumentException("This tag was read without data")
-        return tag?.getTagTypeValue(clazz)
+        return prop?.getTagTypeValue(clazz, type)
     }
 
     inline fun <reified T> getTagTypeValue(): T? {
-        if (tag == null)
+        if (prop == null)
             throw IllegalArgumentException("This tag was read without data")
-        return tag?.getTagTypeValue()
+        return prop?.getTagTypeValue<T>()
     }
 
-    @Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
-    fun getTagTypeValueLegacy() = tag?.getTagTypeValueLegacy() ?: throw IllegalArgumentException("This tag was read without data")
+    //@Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
+    fun getTagTypeValueLegacy() = prop?.getTagTypeValueLegacy() ?: throw IllegalArgumentException("This tag was read without data")
 
-    fun setTagTypeValue(value: Any?) = tag?.setTagTypeValue(value)
+    fun setTagTypeValue(value: Any?) = prop?.setTagTypeValue(value)
 
     fun serialize(Ar: FAssetArchiveWriter, writeData: Boolean) {
         super.initWrite(Ar)
         Ar.writeFName(name)
         if (name.text != "None") {
-            Ar.writeFName(propertyType)
-            var tagTypeData : ByteArray? = null
+            Ar.writeFName(type)
+            var tagTypeData: ByteArray? = null
             if (writeData) {
                 //Recalculate the size of the tag and also save the serialized data
                 val tempAr = Ar.setupByteArrayWriter()
                 try {
-                    FPropertyTagType.writeFPropertyTagType(
+                    FProperty.writePropertyValue(
                         tempAr,
-                        tag ?: throw ParserException("FPropertyTagType is needed when trying to write it"),
-                        FPropertyTagType.Type.NORMAL
+                        prop ?: throw ParserException("FPropertyTagType is needed when trying to write it"),
+                        FProperty.ReadType.NORMAL
                     )
                     Ar.writeInt32(tempAr.pos() - Ar.pos())
                     tagTypeData = tempAr.toByteArray()
-                } catch (e : ParserException) {
-                    throw ParserException("Error occurred while writing the FPropertyTagType $name ($propertyType) ", Ar, e)
+                } catch (e: ParserException) {
+                    throw ParserException("Error occurred while writing the FPropertyTagType $name ($type) ", Ar, e)
                 }
             } else {
                 Ar.writeInt32(size)
             }
             Ar.writeInt32(arrayIndex)
-            tagData?.serialize(Ar)
+            // TODO tagData?.serialize(Ar)
 
             Ar.writeFlag(hasPropertyGuid)
             if (hasPropertyGuid)
@@ -130,5 +174,5 @@ class FPropertyTag : UClass {
         super.completeWrite(Ar)
     }
 
-    override fun toString() = "${name.text}   -->   ${if (tag != null) getTagTypeValueLegacy() else "Failed to parse"}"
+    override fun toString() = "${name.text}   -->   ${if (prop != null) getTagTypeValueLegacy() else "Failed to parse"}"
 }

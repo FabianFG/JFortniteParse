@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
@@ -12,10 +13,11 @@ import java.nio.ByteOrder
 /**
  * UE4 Generic Binary reader
  */
-@ExperimentalUnsignedTypes
 abstract class FArchive : Cloneable, InputStream() {
     var game = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)
     var ver = GAME_UE4_GET_AR_VER(game)
+    /** Whether tagged property serialization is replaced by faster unversioned serialization. This assumes writer and reader share the same property definitions. */
+    var useUnversionedPropertySerialization = false
     abstract var littleEndian: Boolean
 
     abstract override fun clone(): FArchive
@@ -24,13 +26,14 @@ abstract class FArchive : Cloneable, InputStream() {
     abstract fun size(): Int
     abstract fun pos(): Int
 
-    open fun readBuffer(size: Int) : ByteBuffer {
+    open fun readBuffer(size: Int): ByteBuffer {
         //if (!rangeCheck(pos() + size))
         //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
         val buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
         read(buffer.array())
         return buffer
     }
+
     open fun readBuffer(buffer: ByteBuffer) {
         val pos = buffer.position()
         buffer.put(read(buffer.remaining()))
@@ -42,9 +45,10 @@ abstract class FArchive : Cloneable, InputStream() {
     abstract override fun skip(n: Long): Long
     override fun read() = try {
         readUInt8().toInt()
-    } catch (t : Throwable) {
+    } catch (t: Throwable) {
         -1
     }
+
     abstract fun printError(): String
 
     open fun read(size: Int): ByteArray {
@@ -110,27 +114,30 @@ abstract class FArchive : Cloneable, InputStream() {
 
     fun readFloat16() = readUInt16().toFloat16()
 
-    fun readBoolean() = readInt32() != 0
+    fun readBoolean(): Boolean {
+        val int = readInt32()
+        if (int != 0 && int != 1) {
+            throw ParserException("Invalid bool value ($int)")
+        }
+        return int != 0
+    }
 
     fun readFlag() = readUInt8() != 0.toUByte()
 
     //FString
-    fun readString() : String {
-        val length = this.readInt32()
+    fun readString(): String {
+        val length = readInt32()
         if (!(-65536..65536).contains(length))
             throw ParserException("Invalid String length '$length'", this)
         return if (length < 0) {
-            val utf16length = length * -1
-            val data = IntArray(utf16length)
-            for (i in 0 until (utf16length - 1))
-                data[i] = readUInt16().toInt()
+            val utf16length = -length
+            val data = IntArray(utf16length - 1) { readUInt16().toInt() }
             if (readUInt16() != 0.toUShort())
                 throw ParserException("Serialized FString is not null-terminated", this)
             String(data, 0, utf16length - 1)
         } else {
             if (length == 0)
                 return ""
-            String
             val string = Charsets.UTF_8.decode(readBuffer(length - 1)).toString()
             if (readUInt8() != 0.toUByte())
                 throw ParserException("Serialized FString is not null-terminated", this)
@@ -141,8 +148,8 @@ abstract class FArchive : Cloneable, InputStream() {
         }
     }
 
-    inline fun <reified K, reified V> readTMap(length: Int, init : (FArchive) -> Pair<K,V>): MutableMap<K, V> {
-        val res = HashMap<K, V>(length)
+    inline fun <reified K, reified V> readTMap(length: Int, init: (FArchive) -> Pair<K, V>): MutableMap<K, V> {
+        val res = LinkedHashMap<K, V>(length)
         for (i in 0 until length) {
             val (key, value) = init(this)
             res[key] = value
@@ -150,18 +157,20 @@ abstract class FArchive : Cloneable, InputStream() {
         return res
     }
 
-    inline fun <reified K, reified V> readTMap(init : (FArchive) -> Pair<K, V>) = readTMap(readInt32(), init)
+    inline fun <reified K, reified V> readTMap(init: (FArchive) -> Pair<K, V>) = readTMap(readInt32(), init)
 
-    inline fun <reified T> readTArray(length : Int, init : (FArchive) -> T) = Array(length) {init(this)}
-
-    inline fun <reified T> readTArray(init: (FArchive) -> T) = readTArray(readInt32(), init)
+    inline fun <reified T> readTArray(init: (Int) -> T) = Array(readInt32()) { init(it) }
 
     inline fun <reified T> readBulkTArray(init: (FArchive) -> T): Array<T> {
         val elementSize = readInt32()
         val savePos = pos()
-        val array = readTArray(readInt32(), init)
+        val array = Array(readInt32()) { init(this) }
         if (pos() != savePos + 4 + array.size * elementSize)
             throw ParserException("RawArray item size mismatch: expected %d, serialized %d".format(elementSize, (pos() - savePos) / array.size))
         return array
     }
+
+    inline fun <reified T> readArray(init: (FArchive) -> T) = MutableList(readInt32()) { init(this) }
+
+    open fun readFName() = FName.NAME_None
 }
