@@ -5,6 +5,8 @@ import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
+import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.align
@@ -347,6 +349,15 @@ class FIoStoreReaderImpl {
 
             true
         }
+    }
+
+    fun getFiles() : List<GameFile> {
+        val files = ArrayList<GameFile>()
+        directoryIndexReader?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
+            files.add(GameFile(filename, pakFileName = environment.path,ioPackageId = FPackageId(toc.tocResource.chunkIds[tocEntryIndex.toInt()].chunkId)))
+            true
+        }
+        return files
     }
 
     fun getFileNames(outFileList: MutableList<String>) {

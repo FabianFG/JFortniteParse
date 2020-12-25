@@ -23,7 +23,7 @@ class FPackageId {
 
     constructor()
 
-    private constructor(id: ULong) {
+    constructor(id: ULong) {
         this.id = id
     }
 

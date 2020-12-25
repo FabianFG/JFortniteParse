@@ -5,6 +5,8 @@ import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.exceptions.NotFoundException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
+import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
 import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageStore
 import me.fungames.jfortniteparse.ue4.io.*
@@ -88,6 +90,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
             try {
                 val ioStoreReader = FIoStoreReaderImpl()
                 ioStoreReader.initialize(ioStoreEnvironment, keys)
+                ioStoreReader.getFiles().associateByTo(files) { it.path.toLowerCase() }
                 mountedIoStoreReaders.add(ioStoreReader)
                 globalPackageStore.onContainerMounted(FIoDispatcherMountedContainer(ioStoreEnvironment, ioStoreReader.containerId))
                 PakFileReader.logger.info("Mounted IoStore environment \"{}\"", ioStoreEnvironment.path)
@@ -113,8 +116,16 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     }
 
     override fun saveGameFile(file: GameFile): ByteArray {
+        if (file.ioPackageId != null)
+            return saveChunk(FIoChunkId(file.ioPackageId.value(), 0u, EIoChunkType.ExportBundleData))
         val reader = mountedPaks.firstOrNull { it.fileName == file.pakFileName } ?: throw IllegalArgumentException("Couldn't find any possible pak file readers")
         return reader.extract(file)
+    }
+
+    override fun loadGameFile(file: GameFile): Package {
+        if (file.ioPackageId != null)
+            return loadGameFile(file.ioPackageId)
+        return super.loadGameFile(file)
     }
 
     override fun saveChunk(chunkId: FIoChunkId): ByteArray {

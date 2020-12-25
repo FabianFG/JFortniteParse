@@ -134,7 +134,7 @@ class ItemDefinitionContainer(val itemDefinition: FortItemDefinition,
                               var seriesIcon: BufferedImage?,
                               var seriesDef: FortItemSeriesDefinition?) : Cloneable {
     val variantsLoaded: Boolean
-        get() = itemDefinition is AthenaCosmeticItemDefinition && itemDefinition.ItemVariants.firstOrNull { channel ->
+        get() = itemDefinition is AthenaCosmeticItemDefinition && itemDefinition.ItemVariants.map { it.value }.firstOrNull { channel ->
             channel is FortCosmeticVariantBackedByArray && channel.variants?.firstOrNull { variantDef ->
                 variantDef.PreviewImage != null && !variantDef.PreviewImage.assetPathName.isNone()
             } != null
@@ -164,7 +164,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
     val itemDef = container.itemDefinition as AthenaCosmeticItemDefinition
     var icon = container.icon
     //Don't include numeric and pattern channels (used for soccer skins, cannot be displayed properly)
-    val vars = itemDef.ItemVariants.filterIsInstance<FortCosmeticVariantBackedByArray>()
+    val vars = itemDef.ItemVariants.map { it.value }.filterIsInstance<FortCosmeticVariantBackedByArray>()
     if (icon.width != variantsIconSize || icon.height != variantsIconSize)
         icon = icon.scale(
             variantsIconSize,

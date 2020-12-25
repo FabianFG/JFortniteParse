@@ -15,13 +15,15 @@ import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.io.File
 import java.io.RandomAccessFile
 
-open class UsmapTypeMappingsProvider(val file: File) : TypeMappingsProvider() {
+open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMappingsProvider() {
     companion object {
         val FILE_MAGIC = 0x30C4.toShort()
     }
 
+    constructor(file : File) : this({ FByteArchive(file.readBytes()) })
+
     override fun reload(): Boolean {
-        val data = readCompressedUsmap(FPakFileArchive(RandomAccessFile(file, "r"), file))
+        val data = readCompressedUsmap(load())
         parseData(FUsmapNameTableArchive(FByteArchive(data)))
         return true
     }

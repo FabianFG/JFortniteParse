@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.pak
 
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
 import me.fungames.jfortniteparse.util.div
@@ -11,12 +12,13 @@ open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 
                     val compressedBlocks: Array<FPakCompressedBlock> = emptyArray(),
                     val compressionBlockSize: Int = 0,
                     val isEncrypted: Boolean = false,
-                    val pakFileName: String
+                    val pakFileName: String,
+                    val ioPackageId : FPackageId? = null
 ) {
     constructor(pakEntry: FPakEntry, mountPrefix : String, pakFileName : String) : this(
         mountPrefix / pakEntry.name, pakEntry.pos, pakEntry.size, pakEntry.uncompressedSize,
         pakEntry.compressionMethod, pakEntry.compressionBlocks, pakEntry.compressionBlockSize,
-        pakEntry.isEncrypted, pakFileName
+        pakEntry.isEncrypted, pakFileName, null
     )
 
     lateinit var uexp : GameFile

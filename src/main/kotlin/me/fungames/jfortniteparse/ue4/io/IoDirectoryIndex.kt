@@ -38,7 +38,7 @@ class FIoDirectoryIndexResource {
     var stringTable: Array<String>
 
     constructor(Ar: FArchive) {
-        mountPoint = Ar.readString()
+        mountPoint = Ar.readString().substringAfter("../../../")
         directoryEntries = Ar.readTArray { FIoDirectoryIndexEntry(Ar) }
         fileEntries = Ar.readTArray { FIoFileIndexEntry(Ar) }
         stringTable = Ar.readTArray { Ar.readString() }

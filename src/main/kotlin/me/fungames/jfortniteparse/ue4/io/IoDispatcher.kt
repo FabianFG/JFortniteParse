@@ -88,6 +88,9 @@ class FIoChunkId {
         private inline fun createEmptyId() = FIoChunkId(ByteArray(12), 12)
     }
 
+    public val chunkId : ULong
+        get() = ByteBuffer.wrap(id).order(ByteOrder.LITTLE_ENDIAN).long.toULong()
+
     /*private*/ var id = ByteArray(12)
 
     constructor(id: ByteArray, size: Int) {

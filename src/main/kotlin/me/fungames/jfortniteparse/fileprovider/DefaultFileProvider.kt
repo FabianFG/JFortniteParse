@@ -1,6 +1,8 @@
 package me.fungames.jfortniteparse.fileprovider
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.mappings.ReflectionTypeMappingsProvider
+import me.fungames.jfortniteparse.ue4.assets.mappings.TypeMappingsProvider
 import me.fungames.jfortniteparse.ue4.io.FIoStoreReaderImpl
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
@@ -22,9 +24,10 @@ open class DefaultFileProvider : PakFileProvider {
     override val mountedIoStoreReaders = CopyOnWriteArrayList<FIoStoreReaderImpl>()
 
     @JvmOverloads
-    constructor(folder: File, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
+    constructor(folder: File, game: Ue4Version = Ue4Version.GAME_UE4_LATEST, mappingsProvider: TypeMappingsProvider = ReflectionTypeMappingsProvider()) {
         this.folder = folder
         this.game = game
+        this.mappingsProvider = mappingsProvider
         scanFiles(folder)
     }
 
