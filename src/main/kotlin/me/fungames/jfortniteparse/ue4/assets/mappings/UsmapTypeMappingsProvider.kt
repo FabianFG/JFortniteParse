@@ -15,20 +15,18 @@ import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.io.File
 import java.io.RandomAccessFile
 
-class UsmapTypeMappingsProvider(val file: File) : TypeMappingsProvider() {
+open class UsmapTypeMappingsProvider(val file: File) : TypeMappingsProvider() {
     companion object {
         val FILE_MAGIC = 0x30C4.toShort()
     }
 
     override fun reload(): Boolean {
-        val data = readCompressedUsmap()
+        val data = readCompressedUsmap(FPakFileArchive(RandomAccessFile(file, "r"), file))
         parseData(FUsmapNameTableArchive(FByteArchive(data)))
         return true
     }
 
-    private fun readCompressedUsmap(): ByteArray {
-        val Ar = FPakFileArchive(RandomAccessFile(file, "r"), file)
-
+    protected fun readCompressedUsmap(Ar: FArchive): ByteArray {
         val magic = Ar.readInt16()
         if (magic != FILE_MAGIC) {
             throw ParserException(".usmap file has an invalid magic constant")
