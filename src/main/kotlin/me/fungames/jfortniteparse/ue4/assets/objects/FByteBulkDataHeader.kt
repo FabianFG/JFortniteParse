@@ -21,7 +21,10 @@ class FByteBulkDataHeader : UClass {
             elementCount = Ar.readInt32().toLong()
             sizeOnDisk = Ar.readInt32().toLong()
         }
-        offsetInFile = Ar.readInt64() + Ar.bulkDataStartOffset
+        offsetInFile = Ar.readInt64()
+        if (!EBulkDataFlags.BULKDATA_NoOffsetFixUp.check(bulkDataFlags)) {
+            offsetInFile += Ar.bulkDataStartOffset
+        }
         if (EBulkDataFlags.BULKDATA_BadDataVersion.check(bulkDataFlags)) {
             Ar.skip(2) //val dummyValue = Ar.readUInt16()
         }

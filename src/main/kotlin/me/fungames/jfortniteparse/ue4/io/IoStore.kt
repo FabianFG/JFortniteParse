@@ -309,8 +309,10 @@ class FIoStoreReaderImpl {
             if (threadBuffers.uncompressedBuffer == null || threadBuffers.uncompressedBuffer!!.size.toUInt() < uncompressedSize) {
                 threadBuffers.uncompressedBuffer = ByteArray(uncompressedSize.toInt())
             }
-            containerFileHandle.seek(compressionBlock.offset.toLong())
-            containerFileHandle.read(threadBuffers.compressedBuffer, 0, rawSize.toInt())
+            synchronized(containerFileHandle) {
+                containerFileHandle.seek(compressionBlock.offset.toLong())
+                containerFileHandle.read(threadBuffers.compressedBuffer, 0, rawSize.toInt())
+            }
             if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_ENCRYPTED) != 0) {
                 Aes.decryptData(threadBuffers.compressedBuffer!!, 0, rawSize.toInt(), decryptionKey!!)
             }
