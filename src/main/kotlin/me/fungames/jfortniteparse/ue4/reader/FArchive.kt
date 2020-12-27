@@ -117,12 +117,18 @@ abstract class FArchive : Cloneable, InputStream() {
     fun readBoolean(): Boolean {
         val int = readInt32()
         if (int != 0 && int != 1) {
-            throw ParserException("Invalid bool value ($int)")
+            throw ParserException("Invalid bool value ($int)", this)
         }
         return int != 0
     }
 
-    fun readFlag() = readUInt8() != 0.toUByte()
+    fun readFlag(): Boolean {
+        val int = readUInt8().toInt()
+        if (int != 0 && int != 1) {
+            throw ParserException("Invalid bool value ($int)", this)
+        }
+        return int != 0
+    }
 
     //FString
     fun readString(): String {

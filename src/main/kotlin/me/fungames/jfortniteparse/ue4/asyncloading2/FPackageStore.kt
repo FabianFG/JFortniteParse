@@ -1,18 +1,15 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.await
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
-
-val LOG_STREAMING: Logger = LoggerFactory.getLogger("Streaming")
 
 class FPackageStore(
     val provider: FileProvider,

@@ -5,6 +5,7 @@ import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import me.fungames.jfortniteparse.GSuppressMissingSchemaErrors
+import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
@@ -104,7 +105,7 @@ class IoPackage : Package {
                         obj.flags = export.objectFlags.toInt()
 
                         // Serialize
-                        val Ar = FExportArchive(ByteBuffer.wrap(uasset), this)
+                        val Ar = FExportArchive(ByteBuffer.wrap(uasset), obj, this)
                         Ar.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
                         Ar.uassetSize = summary.cookedHeaderSize.toInt() - allExportDataOffset
                         Ar.seek(localExportDataOffset)
@@ -112,7 +113,7 @@ class IoPackage : Package {
                         try {
                             obj.deserialize(Ar, validPos)
                             if (validPos != Ar.pos()) {
-                                logger.warn("Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining")
+                                LOG_STREAMING.warn { "Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining (${obj.getPathName()})" }
                             }
                         } catch (e: Throwable) {
                             if (e is MissingSchemaException && !GSuppressMissingSchemaErrors) {

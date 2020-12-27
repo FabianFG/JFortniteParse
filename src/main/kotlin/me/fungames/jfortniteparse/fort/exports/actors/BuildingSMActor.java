@@ -167,7 +167,7 @@ public class BuildingSMActor extends BuildingActor {
     public FMulticastScriptDelegate OnReplacementDestruction;
     @UProperty(arrayDim = 2)
     public Lazy<BuildingActor>[] AttachmentPlacementBlockingActors;
-    public FPackageIndex /*WeakObjectProperty BuildingFoundation*/ Foundation;
+    public Lazy<BuildingFoundation> /*WeakObjectProperty*/ Foundation;
     public Lazy<BuildingSMActor> DamagerOwner;
     public FPackageIndex /*FortConstructorBASE*/ RelevantBASE;
     @UProperty(skipNext = 1)

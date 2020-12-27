@@ -1,18 +1,18 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import kotlin.Lazy;
 import me.fungames.jfortniteparse.fort.enums.EPhysicalSurface;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.enums.EDetailMode;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
 import java.util.List;
 import java.util.Map;
 
 public class FortWeaponMeleeItemDefinition extends FortWeaponItemDefinition {
-    public FPackageIndex /*MarshalledVFX_AuthoredDataConfig*/ ManagedVFX_Defaults;
+    public Lazy<MarshalledVFX_AuthoredDataConfig> ManagedVFX_Defaults;
     public FSoftObjectPath IdleEffect;
     public FSoftObjectPath IdleEffectNiagara;
     public FName IdleFXSocketName;

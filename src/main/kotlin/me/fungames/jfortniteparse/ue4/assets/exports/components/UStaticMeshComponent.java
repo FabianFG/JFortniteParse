@@ -45,7 +45,7 @@ public class UStaticMeshComponent extends UMeshComponent {
         super.deserialize(Ar, validPos);
         int lodDataNum = Ar.readInt32();
         if (lodDataNum > 0) {
-            Companion.getLogger().info("Skipping {} LODData entries", lodDataNum);
+            Companion.getLogger().debug("Skipping {} LODData entries", lodDataNum);
             Ar.seek(validPos);
         }
     }

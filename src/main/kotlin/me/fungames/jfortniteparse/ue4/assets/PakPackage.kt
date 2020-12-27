@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.jsonObject
+import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -111,9 +112,9 @@ class PakPackage(
                 obj.outer = export.outerIndex.load() ?: this
                 obj.deserialize(uexpAr, validPos)
                 if (validPos != uexpAr.pos()) {
-                    logger.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
+                    LOG_STREAMING.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
                 } else {
-                    logger.debug("Successfully read $exportType at ${uexpAr.toNormalPos(export.serialOffset.toInt())} with size ${export.serialSize}")
+                    LOG_STREAMING.debug("Successfully read $exportType at ${uexpAr.toNormalPos(export.serialOffset.toInt())} with size ${export.serialSize}")
                 }
                 uexpAr.seek(origPos)
                 obj
@@ -146,7 +147,7 @@ class PakPackage(
         check(provider != null) { "Loading an import requires a file provider" }
         val pkg = import.outerIndex.getImportObject()?.run { provider.loadGameFile(objectName.text) }
         if (pkg != null) return pkg.findObjectByName(import.objectName.text, import.className.text)
-        else FileProvider.logger.warn { "Failed to load referenced import" }
+        else LOG_STREAMING.warn { "Failed to load referenced import" }
         return null
     }
 

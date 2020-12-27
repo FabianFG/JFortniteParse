@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.components;
 
 import kotlin.Lazy;
-import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.enums.EDetailMode;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
@@ -33,8 +32,13 @@ public class USceneComponent extends UActorComponent {
     public Boolean bHiddenInGame;
     public Boolean bBoundsChangeTriggersStreamingDataRebuild;
     public Boolean bUseAttachParentBound;
-    //public EComponentMobility Mobility;
-    @UProperty(skipPrevious = 1)
+    public EComponentMobility Mobility;
     public EDetailMode DetailMode;
     public FMulticastScriptDelegate PhysicsVolumeChangedDelegate;
+
+    public enum EComponentMobility {
+        Static,
+        Stationary,
+        Movable
+    }
 }
