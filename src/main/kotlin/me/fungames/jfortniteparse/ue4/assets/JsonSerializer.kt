@@ -9,12 +9,12 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.*
 import me.fungames.jfortniteparse.ue4.locres.Locres
+import me.fungames.jfortniteparse.ue4.objects.ai.navigation.FNavAgentSelector
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.math.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.detailcustomizations.FNavAgentSelectorCustomization
 import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
@@ -24,6 +24,7 @@ import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceLegacy
 import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
 import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
+import java.math.BigInteger
 
 object JsonSerializer {
     val importSerializer = jsonSerializer<FObjectImport> {
@@ -58,7 +59,7 @@ object JsonSerializer {
             is Int -> JsonPrimitive(ob)
             is UShort -> JsonPrimitive(ob.toInt())
             is UInt -> JsonPrimitive(ob.toLong())
-            is ULong -> JsonPrimitive(ob.toLong())
+            is ULong -> JsonPrimitive(BigInteger(ob.toString()))
             is UByte -> JsonPrimitive(ob.toShort())
             is Float -> JsonPrimitive(ob)
             is String -> JsonPrimitive(ob)
@@ -112,7 +113,7 @@ object JsonSerializer {
             )
             is FSimpleCurveKey -> jsonObject("time" to ob.time, "value" to ob.value)
             is FDateTime -> JsonPrimitive(ob.date)
-            is FNavAgentSelectorCustomization -> jsonObject("supportedDesc" to ob.supportedDesc.toJson(context))
+            is FNavAgentSelector -> jsonObject("packedBits" to ob.packedBits.toJson(context))
             /*is FVectorMaterialInput -> jsonObject(
                 "parent" to ob.parent.toJson(context),
                 "useConstant" to ob.useConstant,

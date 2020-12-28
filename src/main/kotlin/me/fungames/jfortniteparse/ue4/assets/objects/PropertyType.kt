@@ -143,4 +143,6 @@ class PropertyType(
         c == FMulticastScriptDelegate::class.java -> "MulticastDelegateProperty"
         else -> "StructProperty"
     })
+
+    override fun toString() = type.text
 }
