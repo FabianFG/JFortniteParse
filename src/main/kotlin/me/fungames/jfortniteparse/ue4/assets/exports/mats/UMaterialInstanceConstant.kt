@@ -1,12 +1,18 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.mats
 
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
+import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.converters.CMaterialParams
 import me.fungames.jfortniteparse.ue4.objects.core.math.FLinearColor
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 
 class UMaterialInstanceConstant : UMaterialInstance() {
     @JvmField var PhysMaterialMask: FPackageIndex? = null /*PhysicalMaterialMask*/
+
+    override fun deserialize(Ar: FAssetArchive, validPos: Int) {
+        super.deserialize(Ar, validPos)
+        Ar.seek(validPos)
+    }
 
     override fun getParams(params: CMaterialParams) {
         // get params from linked UMaterial3
