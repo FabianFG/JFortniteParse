@@ -87,12 +87,14 @@ class FIoStoreTocHeader {
 class FIoOffsetAndLength {
     // We use 5 bytes for offset and size, this is enough to represent
     // an offset and size of 1PB
-    private var offsetAndLength = UByteArray(5 + 5)
+    private var offsetAndLength: UByteArray
 
-    constructor()
+    constructor() {
+        offsetAndLength = UByteArray(5 + 5)
+    }
 
     constructor(Ar: FArchive) {
-        offsetAndLength = Ar.read(offsetAndLength.size).toUByteArray()
+        offsetAndLength = Ar.read(5 + 5).toUByteArray()
     }
 
     var offset: ULong
