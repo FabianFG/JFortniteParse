@@ -191,7 +191,7 @@ class IoPackage : Package {
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
         index.isExport() -> exportsLazy.getOrNull(index.toExport())
-        else -> importMap.getOrNull(index.toImport())?.let { (resolveObjectIndex(it, false)) }?.getObject()
+        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it, false) }?.getObject()
     } as Lazy<T>?
 
     override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
@@ -199,6 +199,12 @@ class IoPackage : Package {
             nameMap.getName(it.objectName).text.equals(objectName, true) && (className == null || resolveObjectIndex(it.classIndex)?.getName()?.text == className)
         }
         return if (exportIndex != -1) exportsLazy[exportIndex] else null
+    }
+
+    fun findObjectMinimal(index: FPackageIndex?) = when {
+        index == null || index.isNull() -> null
+        index.isExport() -> ResolvedExportObject(index.toExport(), this)
+        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it, false) }
     }
 
     fun dumpHeaderToJson(): JsonObject {
