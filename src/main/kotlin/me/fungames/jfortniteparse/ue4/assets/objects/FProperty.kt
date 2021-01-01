@@ -159,6 +159,8 @@ sealed class FProperty {
                 })
                 "StructProperty" -> StructProperty(UScriptStruct(Ar, typeData, type))
                 "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
+                "WeakObjectProperty" -> WeakObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
+                "ClassProperty" -> ClassProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type))
                 "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type))
                 "TextProperty" -> TextProperty(valueOr({ FText(Ar) }, { FText(0u, ETextHistoryType.None, FTextHistory.None()) }, type))
@@ -205,12 +207,14 @@ sealed class FProperty {
                         if (enumClass != null) { // reflection
                             val enumValue = enumClass.enumConstants.getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.simpleName}", Ar)
-                            val fakeName = (typeData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
+                            val fakeName = (typeData.enumName.text + "::" + enumValue)
+                            if (Ar is FExportArchive) Ar.checkDummyName(fakeName)
                             EnumProperty(FName.dummy(fakeName), enumValue)
                         } else { // loaded from mappings provider
                             val enumValue = Ar.provider!!.mappingsProvider.getEnum(typeData.enumName).getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${typeData.enumName}", Ar)
-                            val fakeName = (typeData.enumName.text + "::" + enumValue).also((Ar as FExportArchive)::checkDummyName)
+                            val fakeName = (typeData.enumName.text + "::" + enumValue)
+                            if (Ar is FExportArchive) Ar.checkDummyName(fakeName)
                             EnumProperty(FName.dummy(fakeName), null)
                         }
                     } else {
@@ -284,7 +288,9 @@ sealed class FProperty {
 
     class BoolProperty(var bool: Boolean) : FProperty()
     class StructProperty(var struct: UScriptStruct) : FProperty()
-    class ObjectProperty(var index: FPackageIndex) : FProperty()
+    open class ObjectProperty(var index: FPackageIndex) : FProperty()
+    class WeakObjectProperty(index: FPackageIndex) : ObjectProperty(index)
+    class ClassProperty(index: FPackageIndex) : ObjectProperty(index)
     class InterfaceProperty(var interfaceProperty: UInterfaceProperty) : FProperty()
     class FloatProperty(var float: Float) : FProperty()
     class TextProperty(var text: FText) : FProperty()

@@ -2,9 +2,9 @@ package me.fungames.jfortniteparse.ue4.assets.exports.components;
 
 import kotlin.Lazy;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
-import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.actors.AActor;
 import me.fungames.jfortniteparse.ue4.assets.objects.FBodyInstance;
+import me.fungames.jfortniteparse.ue4.assets.objects.FLightingChannels;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMulticastScriptDelegate;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
@@ -128,13 +128,6 @@ public class UPrimitiveComponent extends USceneComponent {
         ECB_No,
         ECB_Yes,
         ECB_Owner
-    }
-
-    @UStruct
-    public static class FLightingChannels {
-        public Boolean bChannel0;
-        public Boolean bChannel1;
-        public Boolean bChannel2;
     }
 
     public enum ERendererStencilMask {

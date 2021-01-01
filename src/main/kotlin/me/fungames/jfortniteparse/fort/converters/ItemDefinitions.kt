@@ -114,7 +114,7 @@ fun FortItemDefinition.createContainer(
                 icon = FortResources.fallbackIcon
         }
     }
-    val seriesDef = Series?.load<FortItemSeriesDefinition>()
+    val seriesDef = Series?.value
     val seriesIcon = seriesDef?.BackgroundTexture?.load<UTexture2D>()?.toBufferedImage()
     return ItemDefinitionContainer(this, icon, Rarity.rarityName.copy(), isFeatured, set?.run { ItemDefinitionInfo.sets[text] }?.run { SetName(this) }, seriesIcon, seriesDef)
 }

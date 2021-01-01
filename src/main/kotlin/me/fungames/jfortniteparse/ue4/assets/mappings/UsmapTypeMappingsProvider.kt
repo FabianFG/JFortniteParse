@@ -8,19 +8,17 @@ import me.fungames.jfortniteparse.ue4.assets.mappings.UsmapTypeMappingsProvider.
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchiveProxy
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.io.File
-import java.io.RandomAccessFile
 
 open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMappingsProvider() {
     companion object {
         val FILE_MAGIC = 0x30C4.toShort()
     }
 
-    constructor(file : File) : this({ FByteArchive(file.readBytes()) })
+    constructor(file: File) : this({ FByteArchive(file.readBytes()) })
 
     override fun reload(): Boolean {
         val data = readCompressedUsmap(load())

@@ -44,12 +44,12 @@ class FPackageIndex : UClass {
 
     val resource: FObjectResource?
         get() = importObject ?: exportObject*/
-    val name: String
-        get() = when(owner) {
-            is PakPackage -> (owner as PakPackage).run { getResource() }?.objectName?.text
-            is IoPackage -> (owner as IoPackage).findObjectName(this)
-            else -> "null"
-        } ?: "null"
+    val name: FName
+        get() = when (owner) {
+            is PakPackage -> (owner as PakPackage).run { getResource() }?.objectName
+            is IoPackage -> (owner as IoPackage).findObjectMinimal(this)?.getName()
+            else -> null
+        } ?: FName.NAME_None
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)

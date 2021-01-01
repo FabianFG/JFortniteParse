@@ -6,11 +6,11 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.Companion.valueOr
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.ai.navigation.FNavAgentSelector
 import me.fungames.jfortniteparse.ue4.objects.core.math.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.detailcustomizations.FNavAgentSelectorCustomization
 import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
@@ -56,7 +56,7 @@ class UScriptStruct : UClass {
             "MovieSceneSegmentIdentifier" -> FFrameNumber(Ar)
             "MovieSceneSequenceID" -> FFrameNumber(Ar)
             "MovieSceneTrackIdentifier" -> FFrameNumber(Ar)
-            "NavAgentSelector" -> FNavAgentSelectorCustomization(Ar)
+            "NavAgentSelector" -> FNavAgentSelector(Ar)
             "PerPlatformBool" -> FPerPlatformBool(Ar)
             "PerPlatformFloat" -> FPerPlatformFloat(Ar)
             "PerPlatformInt" -> FPerPlatformInt(Ar)
@@ -125,7 +125,7 @@ class UScriptStruct : UClass {
             is FRichCurveKey -> structType.serialize(Ar)
             is FSimpleCurveKey -> structType.serialize(Ar)
             is FDateTime -> structType.serialize(Ar)
-            is FNavAgentSelectorCustomization -> structType.serialize(Ar)
+            is FNavAgentSelector -> structType.serialize(Ar)
             is FExpressionInput -> structType.serialize(Ar)
             is FColorMaterialInput -> structType.serialize(Ar)
             is FScalarMaterialInput -> structType.serialize(Ar)

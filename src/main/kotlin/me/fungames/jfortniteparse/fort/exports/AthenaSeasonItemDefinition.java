@@ -31,8 +31,10 @@ public class AthenaSeasonItemDefinition extends FortAccountItemDefinition {
     public Lazy<UDataTable> SeasonXpCurve;
     public Lazy<UDataTable> BookXpCurve;
     public String SeasonStorefront;
+    @Deprecated
     public String BattlePassOfferId;
     public List<String> BattlePassOfferIds;
+    @Deprecated
     public String BattlePassLevelOfferID;
     public List<String> BattlePassLevelOfferIDs;
     public String BattlePassLevelBundleOfferID;

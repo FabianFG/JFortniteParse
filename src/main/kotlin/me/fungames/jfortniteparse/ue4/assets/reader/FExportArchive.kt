@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
+import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.asyncloading2.FMappedName
 import me.fungames.jfortniteparse.ue4.io.EIoChunkType
@@ -11,7 +12,7 @@ import me.fungames.jfortniteparse.ue4.io.FIoChunkId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import java.nio.ByteBuffer
 
-class FExportArchive(data: ByteBuffer, val pkg: IoPackage) : FAssetArchive(data, pkg.provider, pkg.fileName) {
+class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : FAssetArchive(data, pkg.provider, pkg.fileName) {
     init {
         game = pkg.game.game
         ver = pkg.game.version
@@ -47,4 +48,6 @@ class FExportArchive(data: ByteBuffer, val pkg: IoPackage) : FAssetArchive(data,
             UClass.logger.warn("$dummyName is not in the package name map. There must be something wrong.")
         }
     }
+
+    override fun printError() = "FExportArchive Info: pos $pos, stopper $size, object ${obj.getPathName()}"
 }

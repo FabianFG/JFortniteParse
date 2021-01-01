@@ -28,7 +28,7 @@ open class UStruct : UObject() {
         val serializedScriptSize = Ar.readInt32()
         Ar.skip(serializedScriptSize.toLong())
         if (serializedScriptSize > 0) {
-            logger.info("Skipped $serializedScriptSize bytes of bytecode data")
+            logger.debug("Skipped $serializedScriptSize bytes of bytecode data")
         }
         // endregion
     }
@@ -62,12 +62,14 @@ open class FField {
             "ClassProperty" -> FClassProperty()
             "DelegateProperty" -> FDelegateProperty()
             "FloatProperty" -> FFloatProperty()
+            "InterfaceProperty" -> FInterfaceProperty()
             "IntProperty" -> FIntProperty()
             "MapProperty" -> FMapProperty()
             "MulticastDelegateProperty" -> FMulticastDelegateProperty()
             "MulticastInlineDelegateProperty" -> FMulticastInlineDelegateProperty()
             "NameProperty" -> FNameProperty()
             "ObjectProperty" -> FObjectProperty()
+            "SoftObjectProperty" -> FSoftObjectProperty()
             "StrProperty" -> FStrProperty()
             "StructProperty" -> FStructProperty()
             "TextProperty" -> FTextProperty()
@@ -152,6 +154,15 @@ class FDelegateProperty : FPropertySerialized() {
 
 class FFloatProperty : FPropertySerialized()
 
+class FInterfaceProperty : FPropertySerialized() {
+    var interfaceClass: Lazy<UClassReal>? = null
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        interfaceClass = Ar.readObject()
+    }
+}
+
 class FIntProperty : FPropertySerialized()
 
 class FMapProperty : FPropertySerialized() {
@@ -193,6 +204,8 @@ open class FObjectProperty : FPropertySerialized() {
         propertyClass = Ar.readObject()
     }
 }
+
+class FSoftObjectProperty : FObjectProperty()
 
 class FStrProperty : FPropertySerialized()
 

@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import me.fungames.jfortniteparse.GSuppressMissingSchemaErrors
+import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
@@ -107,7 +108,7 @@ class IoPackage : Package {
                         obj.flags = export.objectFlags.toInt()
 
                         // Serialize
-                        val Ar = FExportArchive(ByteBuffer.wrap(uasset), this)
+                        val Ar = FExportArchive(ByteBuffer.wrap(uasset), obj, this)
                         Ar.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
                         Ar.uassetSize = summary.cookedHeaderSize.toInt() - allExportDataOffset
                         Ar.seek(localExportDataOffset)
@@ -115,7 +116,7 @@ class IoPackage : Package {
                         try {
                             obj.deserialize(Ar, validPos)
                             if (validPos != Ar.pos()) {
-                                logger.warn("Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining")
+                                LOG_STREAMING.warn { "Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining (${obj.getPathName()})" }
                             }
                         } catch (e: Throwable) {
                             if (e is MissingSchemaException && !GSuppressMissingSchemaErrors) {
@@ -201,7 +202,7 @@ class IoPackage : Package {
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
         index.isExport() -> exportsLazy.getOrNull(index.toExport())
-        else -> importMap.getOrNull(index.toImport())?.let { (resolveObjectIndex(it, false)) }?.getObject()
+        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it, false) }?.getObject()
     } as Lazy<T>?
 
     override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
@@ -218,6 +219,12 @@ class IoPackage : Package {
             it.takeIf { it is UObject }?.toJson(gson, locres)
         })
     )
+
+    fun findObjectMinimal(index: FPackageIndex?) = when {
+        index == null || index.isNull() -> null
+        index.isExport() -> ResolvedExportObject(index.toExport(), this)
+        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it, false) }
+    }
 
     fun dumpHeaderToJson(): JsonObject {
         val gson = gson.newBuilder().registerTypeAdapter(jsonSerializer<FMappedName> { JsonPrimitive(nameMap.tryGetName(it.src)?.text) }).create()

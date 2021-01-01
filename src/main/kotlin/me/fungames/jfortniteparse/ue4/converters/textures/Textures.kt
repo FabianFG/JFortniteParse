@@ -1,11 +1,16 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.converters.textures
 
 import com.github.memo33.jsquish.Squish
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.FTexture2DMipMap
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.FTexturePlatformData
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
+import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
+import me.fungames.jfortniteparse.ue4.converters.textures.PixelFormatInfo.*
+import me.fungames.jfortniteparse.ue4.converters.textures.dds.DDSCaps
+import me.fungames.jfortniteparse.ue4.converters.textures.dds.DDSHeader
+import me.fungames.jfortniteparse.ue4.converters.textures.dds.DDSHeader10
+import me.fungames.jfortniteparse.ue4.converters.textures.dds.DDSPixelFormat
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.kotlinASTC.ASTCCodecImage
 import me.fungames.kotlinASTC.Bitness
 import me.fungames.kotlinPointers.asPointer
@@ -56,7 +61,7 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
     val width = mip.sizeX
     val height = mip.sizeY
     val format = try {
-        PixelFormatInfo.valueOf(texture.pixelFormat)
+        valueOf(texture.pixelFormat)
     } catch (e: IllegalArgumentException) {
         throw IllegalArgumentException("Unknown pixel format: ${texture.pixelFormat}")
     }
@@ -66,7 +71,7 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
     val dst = ByteArray(size)
 
     when (format) {
-        PixelFormatInfo.PF_RGB8 -> {
+        PF_RGB8 -> {
             var s = data.asPointer()
             var d = dst.asPointer()
             for (i in 0 until width * height) {
@@ -79,10 +84,10 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 s += 3
             }
         }
-        PixelFormatInfo.PF_RGBA8, PixelFormatInfo.PF_R8G8B8A8 -> {
+        PF_RGBA8, PF_R8G8B8A8 -> {
             data.copyInto(dst, 0, 0, width * height * 4)
         }
-        PixelFormatInfo.PF_BGRA8, PixelFormatInfo.PF_B8G8R8A8 -> {
+        PF_BGRA8, PF_B8G8R8A8 -> {
             var s = data.asPointer()
             var d = dst.asPointer()
             for (i in 0 until width * height) {
@@ -95,7 +100,7 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 s += 4
             }
         }
-        PixelFormatInfo.PF_RGBA4 -> {
+        PF_RGBA4 -> {
             var s = data.asPointer()
             var d = dst.asPointer()
             for (i in 0 until width * height) {
@@ -110,7 +115,7 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 s += 2
             }
         }
-        PixelFormatInfo.PF_G8 -> {
+        PF_G8 -> {
             var s = data.asPointer()
             var d = dst.asPointer()
             for (i in 0 until width * height) {
@@ -123,10 +128,10 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 d += 4
             }
         }
-        PixelFormatInfo.PF_V8U8, PixelFormatInfo.PF_V8U8_2 -> {
+        PF_V8U8, PF_V8U8_2 -> {
             var s = data.asPointer()
             var d = dst.asPointer()
-            val offset = if (format == PixelFormatInfo.PF_V8U8) 128.toByte() else 0
+            val offset = if (format == PF_V8U8) 128.toByte() else 0
             for (i in 0 until width * height) {
                 val u = (s[0] + offset).toByte()
                 val v = (s[1] + offset).toByte()
@@ -144,26 +149,94 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 d += 4
             }
         }
-        PixelFormatInfo.PF_ASTC_4x4, PixelFormatInfo.PF_ASTC_6x6, PixelFormatInfo.PF_ASTC_8x8, PixelFormatInfo.PF_ASTC_10x10, PixelFormatInfo.PF_ASTC_12x12 -> {
+        PF_ASTC_4x4, PF_ASTC_6x6, PF_ASTC_8x8, PF_ASTC_10x10, PF_ASTC_12x12 -> {
             val img = ASTCCodecImage(Bitness.BITNESS_8, width, height, 1, 0, format.blockSizeX, format.blockSizeY)
             img.initializeImage()
             img.decode(data)
             img.toBuffer().copyInto(dst, 0, 0, width * height * 4)
         }
         //All DXT formats
-        PixelFormatInfo.PF_DXT1, PixelFormatInfo.PF_DXT3, PixelFormatInfo.PF_DXT5, PixelFormatInfo.PF_DXT5N -> {
+        PF_DXT1, PF_DXT3, PF_DXT5, PF_DXT5N -> {
             val decompressed = Squish.decompressImage(null, width, height, data, when (format) {
-                PixelFormatInfo.PF_DXT5, PixelFormatInfo.PF_DXT5N -> Squish.CompressionType.DXT5
-                PixelFormatInfo.PF_DXT3 -> Squish.CompressionType.DXT3
+                PF_DXT5, PF_DXT5N -> Squish.CompressionType.DXT5
+                PF_DXT3 -> Squish.CompressionType.DXT3
                 else -> Squish.CompressionType.DXT1
             })
             decompressed.copyInto(dst, 0, 0, width * height * 4)
         }
-        PixelFormatInfo.PF_BC5 -> {
+        PF_BC5 -> {
             val rgb = readBC5(data, width, height)
             return rgbBufferToImage(rgb, width, height)
         }
     }
 
     return rgbaBufferToImage(dst, width, height)
+}
+
+fun FTexturePlatformData.getDdsFourCC() = when (pixelFormat) {
+    "PF_DXT1" -> "DXT1"
+    "PF_DXT3" -> "DXT3"
+    "PF_DXT5", "PF_DXT5N" -> "DXT5"
+    "PF_BC4" -> "ATI1"
+    "PF_BC5" -> "ATI2"
+    else -> null
+}?.toCharArray()
+
+fun UTexture2D.toDdsArray(texture: FTexturePlatformData = getFirstTexture(), mip: FTexture2DMipMap = texture.mips[0]): ByteArray {
+    val fourCC = texture.getDdsFourCC()
+        ?: throw IllegalArgumentException("Pixel format ${texture.pixelFormat} cannot be exported to DDS")
+    val header = DDSHeader()
+    header.setFourCC(fourCC[0], fourCC[1], fourCC[2], fourCC[3])
+    header.setWidth(mip.sizeX)
+    header.setHeight(mip.sizeY)
+    header.setLinearSize(mip.data.data.size)
+    val Ar = FByteArchiveWriter()
+    header.serialize(Ar)
+    Ar.write(mip.data.data)
+    return Ar.toByteArray()
+}
+
+private fun DDSPixelFormat.serialize(Ar: FArchiveWriter) {
+    Ar.writeInt32(size)
+    Ar.writeInt32(flags)
+    Ar.writeInt32(fourcc)
+    Ar.writeInt32(bitcount)
+    Ar.writeInt32(rmask)
+    Ar.writeInt32(gmask)
+    Ar.writeInt32(bmask)
+    Ar.writeInt32(amask)
+}
+
+private fun DDSCaps.serialize(Ar: FArchiveWriter) {
+    Ar.writeInt32(caps1)
+    Ar.writeInt32(caps2)
+    Ar.writeInt32(caps3)
+    Ar.writeInt32(caps4)
+}
+
+private fun DDSHeader10.serialize(Ar: FArchiveWriter) {
+    Ar.writeInt32(dxgiFormat)
+    Ar.writeInt32(resourceDimension)
+    Ar.writeInt32(miscFlag)
+    Ar.writeInt32(arraySize)
+    Ar.writeInt32(reserved)
+}
+
+private fun DDSHeader.serialize(Ar: FArchiveWriter) {
+    Ar.writeInt32(fourcc)
+    Ar.writeInt32(size)
+    Ar.writeInt32(flags)
+    Ar.writeInt32(height)
+    Ar.writeInt32(width)
+    Ar.writeInt32(pitch)
+    Ar.writeInt32(depth)
+    Ar.writeInt32(mipmapcount)
+    reserved.forEach { Ar.writeInt32(it) }
+    pf.serialize(Ar)
+    caps.serialize(Ar)
+    Ar.writeInt32(notused)
+
+    if (hasDX10Header()) {
+        header10.serialize(Ar)
+    }
 }

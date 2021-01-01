@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import kotlin.Lazy;
 import me.fungames.jfortniteparse.fort.enums.EFortCustomBodyType;
 import me.fungames.jfortniteparse.fort.enums.EFortCustomGender;
 import me.fungames.jfortniteparse.fort.enums.EFortCustomPartType;
@@ -43,7 +44,7 @@ public class CustomCharacterPart extends UPrimaryDataAsset {
     public FSoftObjectPath IdleEffectNiagara;
     public FName IdleFXSocketName;
     public Boolean bAutoActivate;
-    public FPackageIndex /*MarshalledVFX_AuthoredDataConfig*/ AuthoredData;
+    public Lazy<MarshalledVFX_AuthoredDataConfig> AuthoredData;
 
     @UStruct
     public static class CustomPartMaterialOverrideData {

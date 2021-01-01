@@ -2,10 +2,12 @@ package me.fungames.jfortniteparse.ue4.assets
 
 import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.fort.exports.actors.*
+import me.fungames.jfortniteparse.fort.exports.components.FortPoiCollisionComponent
+import me.fungames.jfortniteparse.fort.exports.components.FortPoi_DiscoverableComponent
 import me.fungames.jfortniteparse.fort.exports.variants.*
 import me.fungames.jfortniteparse.fort.objects.rows.*
 import me.fungames.jfortniteparse.ue4.assets.exports.*
-import me.fungames.jfortniteparse.ue4.assets.exports.actors.AActor
+import me.fungames.jfortniteparse.ue4.assets.exports.actors.*
 import me.fungames.jfortniteparse.ue4.assets.exports.components.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstance
@@ -14,6 +16,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.objects.FScalableFloat
+import me.fungames.jfortniteparse.ue4.objects.core.math.FRandomStream
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat
 import me.fungames.jfortniteparse.valorant.exports.*
@@ -31,7 +34,11 @@ object ObjectTypeRegistry {
     private inline fun registerEngine() {
         // -- Export classes --
         registerClass(UActorComponent::class.java)
+        registerClass(UAudioComponent::class.java)
         registerClass(UBlueprintGeneratedClass::class.java)
+        registerClass(UBoxComponent::class.java)
+        registerClass(UCapsuleComponent::class.java)
+        registerClass(UChildActorComponent::class.java)
         registerClass("Class", UClassReal::class.java)
         registerClass(UCurveFloat::class.java)
         registerClass(UCurveTable::class.java)
@@ -39,16 +46,25 @@ object ObjectTypeRegistry {
         registerClass(UDataTable::class.java)
         registerClass(UFunction::class.java)
         registerClass(ULevel::class.java)
+        registerClass(ULightComponent::class.java)
+        registerClass(ULightComponentBase::class.java)
+        registerClass(ULocalLightComponent::class.java)
         registerClass(UMaterial::class.java)
         registerClass(UMaterialInstance::class.java)
         registerClass(UMaterialInstanceConstant::class.java)
         registerClass(UMaterialInterface::class.java)
         registerClass(UMeshComponent::class.java)
         registerClass(UPaperSprite::class.java)
+        registerClass(UPointLightComponent::class.java)
         registerClass(UPrimaryDataAsset::class.java)
         registerClass(UPrimitiveComponent::class.java)
+        registerClass(USCS_Node::class.java)
         registerClass(USceneComponent::class.java)
+        registerClass(UShapeComponent::class.java)
+        registerClass(USimpleConstructionScript::class.java)
         registerClass(USoundWave::class.java)
+        registerClass(USphereComponent::class.java)
+        registerClass(USpotLightComponent::class.java)
         registerClass(UStaticMesh::class.java)
         registerClass(UStaticMeshComponent::class.java)
         registerClass(UStreamableRenderAsset::class.java)
@@ -56,13 +72,22 @@ object ObjectTypeRegistry {
         registerClass(UTextRenderComponent::class.java)
         registerClass(UTexture2D::class.java)
         registerClass(UTexture::class.java)
+        registerClass(UTimelineComponent::class.java)
+        registerClass(UTimelineTemplate::class.java)
         registerClass(UUserDefinedEnum::class.java)
         registerClass(UUserDefinedStruct::class.java)
+        registerClass(UWorld::class.java)
 
         registerClass(AActor::class.java)
+        registerClass(ABrush::class.java)
+        registerClass(ALevelBounds::class.java)
+        registerClass(ALODActor::class.java)
+        registerClass(AStaticMeshActor::class.java)
+        registerClass(AVolume::class.java)
 
         // -- Structs --
         registerStruct(FPointerToUberGraphFrame::class.java)
+        registerStruct(FRandomStream::class.java)
         registerStruct(FScalableFloat::class.java)
         registerStruct(FTransform::class.java)
     }
@@ -184,6 +209,8 @@ object ObjectTypeRegistry {
         registerClass(FortPersistentResourceItemDefinition::class.java)
         registerClass(FortPersonalVehicleItemDefinition::class.java)
         registerClass(FortPlaysetGrenadeItemDefinition::class.java)
+        registerClass(FortPoiCollisionComponent::class.java)
+        registerClass(FortPoi_DiscoverableComponent::class.java)
         registerClass(FortPrerollDataItemDefinition::class.java)
         registerClass(FortProfileItemDefinition::class.java)
         registerClass(FortQuestItemDefinition::class.java)
@@ -216,11 +243,19 @@ object ObjectTypeRegistry {
         registerClass(VariantTypeParticles::class.java)
         registerClass(VariantTypeSounds::class.java)
 
+        registerClass(BGAConsumableSpawner::class.java)
         registerClass(BuildingActor::class.java)
         registerClass(BuildingAutoNav::class.java)
         registerClass(BuildingContainer::class.java)
         registerClass(BuildingCorner::class.java)
+        registerClass(BuildingDeco::class.java)
         registerClass(BuildingFloor::class.java)
+        registerClass(BuildingFoundation::class.java)
+        registerClass(BuildingFoundation3x3::class.java)
+        registerClass(BuildingFoundation5x5::class.java)
+        registerClass(BuildingFoundation5x10::class.java)
+        registerClass(BuildingGameplayActor::class.java)
+        registerClass(BuildingGameplayActorSpawnMachine::class.java)
         registerClass(BuildingProp::class.java)
         registerClass(BuildingPropCorner::class.java)
         registerClass(BuildingPropSimpleInteract::class.java)
@@ -230,6 +265,8 @@ object ObjectTypeRegistry {
         registerClass(BuildingSMActor::class.java)
         registerClass(BuildingTimeOfDayLights::class.java)
         registerClass(BuildingWall::class.java)
+        //registerClass(FortPoiVolume::class.java)
+        registerClass(FortStaticMeshActor::class.java)
 
         // -- Data table row structs --
         registerStruct(AlterationGroup::class.java)

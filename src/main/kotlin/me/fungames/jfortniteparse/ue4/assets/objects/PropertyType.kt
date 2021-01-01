@@ -42,24 +42,24 @@ class PropertyType(
     constructor(prop: FPropertySerialized) : this(prop.name) {
         type = FName.dummy(prop.javaClass.simpleName.unprefix())
         when (prop) {
-            is FStructProperty -> {
-                structClass = prop.struct
-                structType = structClass?.value?.name?.let { FName.dummy(it) } ?: NAME_None
+            is FArrayProperty -> {
+                innerType = prop.inner?.let { PropertyType(it) }
             }
             is FByteProperty -> {
-                //enumName = prop.enum TODO what about this
+                enumName = prop.enum.name //TODO if enum is UserDefinedEnum it will fail
             }
             //is FEnumProperty -> {
             //enumName = prop.enum
             //}
-            is FArrayProperty -> {
-                innerType = prop.inner?.let { PropertyType(it) }
-            }
             is FMapProperty -> {
                 innerType = prop.keyProp?.let { PropertyType(it) }
                 valueType = prop.valueProp?.let { PropertyType(it) }
             }
-            // TODO SetProperty and MapProperty
+            // TODO SetProperty
+            is FStructProperty -> {
+                structClass = prop.struct
+                structType = structClass?.value?.name?.let { FName.dummy(it) } ?: NAME_None
+            }
         }
     }
 
@@ -143,4 +143,6 @@ class PropertyType(
         c == FMulticastScriptDelegate::class.java -> "MulticastDelegateProperty"
         else -> "StructProperty"
     })
+
+    override fun toString() = type.text
 }
