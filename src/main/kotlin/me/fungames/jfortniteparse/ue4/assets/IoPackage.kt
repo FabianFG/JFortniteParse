@@ -193,12 +193,6 @@ class IoPackage : Package {
         override fun getObject() = lazy { pkg.provider!!.mappingsProvider.getStruct(getName()) }
     }
 
-    fun findObjectName(index: FPackageIndex?) = when {
-        index == null || index.isNull() -> null
-        index.isExport() -> exportMap.getOrNull(index.toExport())?.objectName?.let { nameMap.getName(it) }?.text
-        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it, false) }?.getName()?.text
-    }
-
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
         index.isExport() -> exportsLazy.getOrNull(index.toExport())
