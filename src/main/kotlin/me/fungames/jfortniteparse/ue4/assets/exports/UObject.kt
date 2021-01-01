@@ -87,7 +87,7 @@ open class UObject : UClass, IPropertyHolder {
         super.completeWrite(Ar)
     }
 
-    fun toJson(context: Gson = Package.gson, locres: Locres? = null): JsonObject {
+    open fun toJson(context: Gson = Package.gson, locres: Locres? = null): JsonObject {
         val ob = jsonObject("exportType" to exportType)
         properties.forEach { pTag ->
             val tagValue = pTag.prop ?: return@forEach

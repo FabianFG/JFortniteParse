@@ -9,7 +9,8 @@ class FPakFileArchive(val rafile : RandomAccessFile, val file : File) : FPakArch
 
     override fun clone(): FPakFileArchive {
         val clone = FPakFileArchive(rafile, file)
-        clone.pakInfo = pakInfo
+        if (hasPakInfo)
+            clone.pakInfo = pakInfo
         return clone
     }
 

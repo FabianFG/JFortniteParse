@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -44,7 +45,11 @@ class FPackageIndex : UClass {
     val resource: FObjectResource?
         get() = importObject ?: exportObject*/
     val name: String
-        get() = (owner as PakPackage).run { getResource() }?.objectName?.text ?: "null"
+        get() = when(owner) {
+            is PakPackage -> (owner as PakPackage).run { getResource() }?.objectName?.text
+            is IoPackage -> (owner as IoPackage).findObjectName(this)
+            else -> "null"
+        } ?: "null"
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)

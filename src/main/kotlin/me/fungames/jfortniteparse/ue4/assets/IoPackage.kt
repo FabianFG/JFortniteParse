@@ -1,7 +1,9 @@
 package me.fungames.jfortniteparse.ue4.assets
 
+import com.github.salomonbrys.kotson.jsonObject
 import com.github.salomonbrys.kotson.jsonSerializer
 import com.github.salomonbrys.kotson.registerTypeAdapter
+import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import me.fungames.jfortniteparse.GSuppressMissingSchemaErrors
@@ -13,6 +15,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.asyncloading2.*
+import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
@@ -33,7 +36,7 @@ class IoPackage : Package {
     val exportBundleHeaders: Array<FExportBundleHeader>
     val exportBundleEntries: Array<FExportBundleEntry>
     val graphData: Array<FImportedPackage>
-    val importedPackages: Lazy<List<IoPackage>>
+    val importedPackages: Lazy<List<IoPackage?>>
     override val exportsLazy: List<Lazy<UObject>>
 
     constructor(uasset: ByteArray,
@@ -127,6 +130,8 @@ class IoPackage : Package {
                 }
             }
         }
+
+        logger.info { "Successfully parsed package : $name" }
     }
 
     class FImportedPackage(Ar: FArchive) {
@@ -147,7 +152,7 @@ class IoPackage : Package {
             index.isExport() -> return ResolvedExportObject(index.toExport().toInt(), this@IoPackage)
             index.isScriptImport() -> return globalPackageStore.importStore.scriptObjectEntriesMap[index]?.let { ResolvedScriptObject(it, this@IoPackage) }
             index.isPackageImport() -> for (pkg in importedPackages.value) {
-                pkg.exportMap.forEachIndexed { exportIndex, exportMapEntry ->
+                pkg?.exportMap?.forEachIndexed { exportIndex, exportMapEntry ->
                     if (exportMapEntry.globalImportIndex == index) {
                         return ResolvedExportObject(exportIndex, pkg)
                     }
@@ -187,6 +192,12 @@ class IoPackage : Package {
         override fun getObject() = lazy { pkg.provider!!.mappingsProvider.getStruct(getName()) }
     }
 
+    fun findObjectName(index: FPackageIndex?) = when {
+        index == null || index.isNull() -> null
+        index.isExport() -> exportMap.getOrNull(index.toExport())?.objectName?.let { nameMap.getName(it) }?.text
+        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it, false) }?.getName()?.text
+    }
+
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
         index.isExport() -> exportsLazy.getOrNull(index.toExport())
@@ -199,6 +210,14 @@ class IoPackage : Package {
         }
         return if (exportIndex != -1) exportsLazy[exportIndex] else null
     }
+
+    override fun toJson(context: Gson, locres: Locres?) = jsonObject(
+        "import_map" to gson.toJsonTree(importMap),
+        "export_map" to gson.toJsonTree(exportMap),
+        "export_properties" to gson.toJsonTree(exports.map {
+            it.takeIf { it is UObject }?.toJson(gson, locres)
+        })
+    )
 
     fun dumpHeaderToJson(): JsonObject {
         val gson = gson.newBuilder().registerTypeAdapter(jsonSerializer<FMappedName> { JsonPrimitive(nameMap.tryGetName(it.src)?.text) }).create()

@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.fileprovider
 
-import me.fungames.jfortniteparse.exceptions.NotFoundException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
@@ -46,7 +45,7 @@ abstract class FileProvider {
      * @return the parsed package or null if the path was not found or the found game file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    abstract fun loadGameFile(filePath: String): Package
+    abstract fun loadGameFile(filePath: String): Package?
 
     /**
      * Loads a UE4 package
@@ -54,16 +53,15 @@ abstract class FileProvider {
      * @return the parsed package or null if the file was not an ue4 package (.uasset)
      */
     @Throws(ParserException::class)
-    abstract fun loadGameFile(file: GameFile): Package
+    abstract fun loadGameFile(file: GameFile): Package?
 
     /**
      * Loads a UE4 package from I/O Store by package ID.
      * @param packageId the package ID to load.
      * @return the parsed package
-     * @throws NotFoundException if the package was not found in loaded I/O store containers
      */
     @Throws(ParserException::class)
-    abstract fun loadGameFile(packageId: FPackageId): IoPackage
+    abstract fun loadGameFile(packageId: FPackageId): IoPackage?
 
     // Load object by object path string
     inline fun <reified T> loadObject(objectPath: String?): T? {
@@ -84,7 +82,7 @@ abstract class FileProvider {
             packagePath = packagePath.substring(0, dotIndex)
         }
         val pkg = loadGameFile(packagePath) // TODO allow reading umaps via this route, currently fixPath() only appends .uasset. EDIT(2020-12-15): This works with IoStore assets, but not PAK assets.
-        return pkg.findObjectByName(objectName)?.value
+        return pkg?.findObjectByName(objectName)?.value
     }
 
     // Load object by FSoftObjectPath
@@ -203,7 +201,9 @@ abstract class FileProvider {
                 path.startsWith("game/config/") -> path.replaceFirst("game/config/", gameName + "game/config/")
                 path.startsWith("game/plugins") -> path.replaceFirst("game/plugins/", gameName + "game/plugins/")
                 // For files like Game/AssetRegistry.bin
-                path.startsWith("game/") && path.substringAfter('/').substringBefore('/').contains('.') -> path.replace("game/", "${gameName}game/")
+                // path.startsWith("game/") && path.substringAfter('/').substringBefore('/').contains('.') -> ...
+                // ^ didn't work that way for normal assets at root, hacky fix below
+                path.contains("assetregistry") || path.endsWith(".uproject") -> path.replace("game/", "${gameName}game/")
                 else -> path.replaceFirst("game/", gameName + "game/content/")
             }
         } else if (path.startsWith("engine/")) {

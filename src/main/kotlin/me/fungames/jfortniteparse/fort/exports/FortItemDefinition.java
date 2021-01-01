@@ -55,14 +55,14 @@ public class FortItemDefinition extends McpItemDefinitionBase {
     public FSoftObjectPath FrontendPreviewSkeletalMeshOverride;
 
     public FName getSet() {
-        return GameplayTags.getValue("Cosmetics.Set");
+        return GameplayTags != null ? GameplayTags.getValue("Cosmetics.Set") : null;
     }
 
     public FName getSource() {
-        return GameplayTags.getValue("Cosmetics.Source");
+        return GameplayTags != null ? GameplayTags.getValue("Cosmetics.Source") : null;
     }
 
     public FName getUserFacingFlags() {
-        return GameplayTags.getValue("Cosmetics.UserFacingFlags");
+        return GameplayTags != null ? GameplayTags.getValue("Cosmetics.UserFacingFlags") : null;
     }
 }

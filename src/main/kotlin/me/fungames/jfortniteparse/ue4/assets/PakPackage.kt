@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.jsonObject
+import com.google.gson.Gson
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -119,6 +120,8 @@ class PakPackage(
                 obj
             }
         }
+
+        logger.info { "Successfully parsed package : $name" }
     }
 
     // Load object by FPackageIndex
@@ -170,13 +173,13 @@ class PakPackage(
     fun FPackageIndex.getResource() = getImportObject() ?: getExportObject()
     // endregion
 
-    fun toJson(locres: Locres? = null) = gson.toJson(jsonObject(
+    override fun toJson(context: Gson, locres: Locres?) = jsonObject(
         "import_map" to gson.toJsonTree(importMap),
         "export_map" to gson.toJsonTree(exportMap),
         "export_properties" to gson.toJsonTree(exports.map {
             it.takeIf { it is UObject }?.toJson(gson, locres)
         })
-    ))
+    )
 
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
     private fun updateHeader() {

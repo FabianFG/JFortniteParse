@@ -134,7 +134,7 @@ class ItemDefinitionContainer(val itemDefinition: FortItemDefinition,
                               var seriesIcon: BufferedImage?,
                               var seriesDef: FortItemSeriesDefinition?) : Cloneable {
     val variantsLoaded: Boolean
-        get() = itemDefinition is AthenaCosmeticItemDefinition && itemDefinition.ItemVariants.map { it.value }.firstOrNull { channel ->
+        get() = itemDefinition is AthenaCosmeticItemDefinition && itemDefinition.ItemVariants?.map { it.value }?.firstOrNull { channel ->
             channel is FortCosmeticVariantBackedByArray && channel.variants?.firstOrNull { variantDef ->
                 variantDef.PreviewImage != null && !variantDef.PreviewImage.assetPathName.isNone()
             } != null
@@ -274,8 +274,10 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
         g.drawString(displayName, rightX - fm.stringWidth(displayName), result.width - 52)
     }
 
-    val description = itemDef.Description?.textForLocres(locres)
+    var description = itemDef.Description?.textForLocres(locres)
     if (description != null) {
+        if (description.equals("TBD", true))
+            description = itemDef.name
         g.color = Color.WHITE
         var fontSize: Float
         var fm: FontMetrics
@@ -354,8 +356,10 @@ private fun getImageNoVariants(container: ItemDefinitionContainer, locres: Locre
         }
         g.drawCenteredString(displayName, result.width / 2, result.height - 95)
     }
-    val description = itemDef.Description?.textForLocres(locres)
+    var description = itemDef.Description?.textForLocres(locres)
     if (description != null) {
+        if (description.equals("TBD", true))
+            description = itemDef.name
         g.color = Color.LIGHT_GRAY
         var fontSize: Float
         var fm: FontMetrics

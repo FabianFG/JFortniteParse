@@ -9,6 +9,8 @@ import java.nio.ByteOrder
 @ExperimentalUnsignedTypes
 abstract class FPakArchive(val fileName : String) : FArchive() {
 
+    val hasPakInfo : Boolean
+        get() = ::pakInfo.isInitialized
     lateinit var pakInfo : FPakInfo
 
     public abstract override fun clone(): FPakArchive

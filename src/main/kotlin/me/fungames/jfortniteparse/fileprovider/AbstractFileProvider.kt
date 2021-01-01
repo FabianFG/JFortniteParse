@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.fileprovider
 
-import me.fungames.jfortniteparse.exceptions.NotFoundException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
@@ -13,7 +12,9 @@ import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 abstract class AbstractFileProvider : FileProvider() {
     protected var globalDataLoaded = false
 
-    override fun loadGameFile(file: GameFile): Package {
+    override fun loadGameFile(file: GameFile): Package? {
+        if (file.ioPackageId != null)
+            return loadGameFile(file.ioPackageId)
         if (!file.isUE4Package() || !file.hasUexp())
             throw IllegalArgumentException("The provided file is not a package file")
         val uasset = saveGameFile(file)
@@ -27,7 +28,7 @@ abstract class AbstractFileProvider : FileProvider() {
         return files[path]
     }
 
-    override fun loadGameFile(filePath: String): Package {
+    override fun loadGameFile(filePath: String): Package? {
         val path = fixPath(filePath)
         // try load from PAKs
         val gameFile = findGameFile(path)
@@ -38,17 +39,20 @@ abstract class AbstractFileProvider : FileProvider() {
             val name = compactFilePath(filePath)
             val packageId = FPackageId.fromName(FName.dummy(name))
             try {
-                return loadGameFile(packageId)
-            } catch (ignored: NotFoundException) {
+                val ioFile = loadGameFile(packageId)
+                if (ioFile != null)
+                    return ioFile
+            } catch (e: ParserException) {
+                logger.error { "Failed to load package $path" }
             }
         }
         // try load from file system
         if (!path.endsWith(".uasset") && !path.endsWith(".umap"))
-            throw NotFoundException("Path does not end with .uasset or .umap, or the package was not found")
+            return null//throw NotFoundException("Path does not end with .uasset or .umap, or the package was not found")
         val uasset = saveGameFile(path)
-            ?: throw NotFoundException("uasset/umap not found")
+            ?: return null//throw NotFoundException("uasset/umap not found")
         val uexp = saveGameFile(path.substringBeforeLast(".") + ".uexp")
-            ?: throw NotFoundException("uexp not found")
+            ?: return null//throw NotFoundException("uexp not found")
         val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
         return PakPackage(uasset, uexp, ubulk, path, this, game)
     }

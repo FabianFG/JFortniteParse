@@ -3,7 +3,6 @@ package me.fungames.jfortniteparse.fileprovider
 import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
-import me.fungames.jfortniteparse.exceptions.NotFoundException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
@@ -80,7 +79,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         }
     }
 
-    protected fun mount(reader: PakFileReader) {
+    protected open fun mount(reader: PakFileReader) {
         reader.readIndex()
         reader.files.associateByTo(files) { it.path.toLowerCase() }
         mountedPaks.add(reader)
@@ -89,6 +88,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
             val ioStoreEnvironment = FIoStoreEnvironment(reader.Ar.file.path.substringBeforeLast('.'))
             try {
                 val ioStoreReader = FIoStoreReaderImpl()
+                ioStoreReader.concurrent = reader.concurrent
                 ioStoreReader.initialize(ioStoreEnvironment, keys)
                 ioStoreReader.getFiles().associateByTo(files) { it.path.toLowerCase() }
                 mountedIoStoreReaders.add(ioStoreReader)
@@ -102,9 +102,9 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         mountListeners.forEach { it.onMount(reader) }
     }
 
-    override fun loadGameFile(packageId: FPackageId): IoPackage {
+    override fun loadGameFile(packageId: FPackageId): IoPackage? {
         val storeEntry = globalPackageStore.findStoreEntry(packageId)
-            ?: throw NotFoundException("The package to load does not exist on disk or in the loader")
+            ?: return null//throw NotFoundException("The package to load does not exist on disk or in the loader")
         val ioBuffer = saveChunk(FIoChunkId(packageId.value(), 0u, EIoChunkType.ExportBundleData))
         return IoPackage(ioBuffer, packageId, storeEntry, globalPackageStore, this, game)
     }
@@ -122,7 +122,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         return reader.extract(file)
     }
 
-    override fun loadGameFile(file: GameFile): Package {
+    override fun loadGameFile(file: GameFile): Package? {
         if (file.ioPackageId != null)
             return loadGameFile(file.ioPackageId)
         return super.loadGameFile(file)

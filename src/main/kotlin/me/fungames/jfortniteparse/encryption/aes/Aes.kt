@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 package me.fungames.jfortniteparse.encryption.aes
 
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
