@@ -22,8 +22,23 @@ class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : F
     override fun getPayload(type: PayloadType) = payloads.getOrPut(type) {
         if (provider == null)
             throw ParserException("Lazy loading a $type requires a file provider")
-        val payloadChunkId = FIoChunkId(pkg.packageId.value(), 0u, if (type == PayloadType.UBULK) EIoChunkType.BulkData else EIoChunkType.OptionalBulkData)
-        FAssetArchive(provider.saveChunk(payloadChunkId), provider, pkgName)
+        val payloadChunkId = FIoChunkId(pkg.packageId.value(), 0u, when (type) {
+            PayloadType.UBULK -> EIoChunkType.BulkData
+            PayloadType.M_UBULK -> EIoChunkType.MemoryMappedBulkData
+            PayloadType.UPTNL -> EIoChunkType.OptionalBulkData
+        })
+        val ioBuffer = runCatching { provider!!.saveChunk(payloadChunkId) }.getOrElse { ByteArray(0) }
+        FAssetArchive(ioBuffer, provider, pkgName)
+    }
+
+    override fun clone(): FExportArchive {
+        val c = FExportArchive(data, obj, pkg)
+        c.littleEndian = littleEndian
+        c.pos = pos
+        payloads.forEach { c.payloads[it.key] = it.value }
+        c.uassetSize = uassetSize
+        c.uexpSize = uexpSize
+        return c
     }
 
     override fun handleBadNameIndex(nameIndex: Int) {
@@ -34,6 +49,9 @@ class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : F
         val nameIndex = readUInt32()
         val number = readUInt32()
 
+        if (nameIndex > Int.MAX_VALUE.toUInt()) {
+            throw ParserException("FName could not be read, bad FMappedName index", this)
+        }
         val mappedName = FMappedName.create(nameIndex, number, FMappedName.EType.Package)
         var name = pkg.nameMap.tryGetName(mappedName)
         if (name == null) {

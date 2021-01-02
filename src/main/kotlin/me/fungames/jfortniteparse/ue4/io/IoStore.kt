@@ -4,7 +4,6 @@ import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
@@ -464,7 +463,7 @@ class FIoStoreTocResource {
     lateinit var chunkIds: MutableList<FIoChunkId>
     lateinit var chunkOffsetLengths: MutableList<FIoOffsetAndLength>
     lateinit var compressionBlocks: MutableList<FIoStoreTocCompressedBlockEntry>
-    lateinit var compressionMethods: MutableList<FName>
+    lateinit var compressionMethods: MutableList<String>
     lateinit var chunkBlockSignatures: MutableList<ByteArray> // FSHAHash
     lateinit var chunkMetas: MutableList<FIoStoreTocEntryMeta>
     var directoryIndexBuffer: ByteArray? = null
@@ -485,9 +484,14 @@ class FIoStoreTocResource {
 
         // Compression methods
         compressionMethods = ArrayList(header.compressionMethodNameCount.toInt() + 1)
-        compressionMethods.add(FName.NAME_None)
+        compressionMethods.add("None")
         for (i in 0u until header.compressionMethodNameCount) {
-            compressionMethods.add(FName.dummy(String(tocBuffer.read(header.compressionMethodNameLength.toInt()), Charsets.US_ASCII).trimEnd('\u0000')))
+            val compressionMethodName = tocBuffer.read(header.compressionMethodNameLength.toInt())
+            var length = 0
+            while (compressionMethodName[length] != 0.toByte()) {
+                ++length
+            }
+            compressionMethods.add(String(compressionMethodName, 0, length))
         }
 
         // Chunk block signatures

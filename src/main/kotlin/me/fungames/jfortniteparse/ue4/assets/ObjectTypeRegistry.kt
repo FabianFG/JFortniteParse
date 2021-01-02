@@ -19,6 +19,7 @@ import me.fungames.jfortniteparse.ue4.objects.FScalableFloat
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRandomStream
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag
 import me.fungames.jfortniteparse.valorant.exports.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -86,6 +87,7 @@ object ObjectTypeRegistry {
         registerClass(AVolume::class.java)
 
         // -- Structs --
+        registerStruct(FGameplayTag::class.java)
         registerStruct(FPointerToUberGraphFrame::class.java)
         registerStruct(FRandomStream::class.java)
         registerStruct(FScalableFloat::class.java)

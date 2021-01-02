@@ -1,8 +1,8 @@
 package me.fungames.jfortniteparse.ue4.assets.mappings
 
 import me.fungames.jfortniteparse.compression.Compression
+import me.fungames.jfortniteparse.compression.UnknownCompressionMethodException
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.exceptions.UnknownCompressionMethodException
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.mappings.UsmapTypeMappingsProvider.EUsmapPropertyType.*
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
@@ -48,9 +48,9 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         Ar.read(compData)
         val data = ByteArray(decompSize)
         Compression.uncompressMemory(when (method) {
-            0 -> FName.NAME_None
-            1 -> FName.dummy("Oodle")
-            2 -> FName.dummy("Brotli")
+            0 -> "None"
+            1 -> "Oodle"
+            2 -> "Brotli"
             else -> throw UnknownCompressionMethodException("Unknown compression method index $method")
         }, data, 0, decompSize, compData, 0, compSize)
         return data

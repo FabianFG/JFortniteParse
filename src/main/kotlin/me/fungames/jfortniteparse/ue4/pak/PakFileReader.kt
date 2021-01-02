@@ -4,7 +4,6 @@ import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_Latest
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_PathHashIndex
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_RelativeChunkOffsets
@@ -128,7 +127,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
                     // its either just the compression block size
                     // or if its the last block its the remaining data size
                     val uncompressedSize = min(gameFile.compressionBlockSize, (gameFile.uncompressedSize - uncompressedBufferOff).toInt())
-                    Compression.uncompressMemory(FName.dummy(gameFile.compressionMethod.name), uncompressedBuffer, uncompressedBufferOff, uncompressedSize, compressedBuffer, 0, srcSize)
+                    Compression.uncompressMemory(gameFile.compressionMethod.name, uncompressedBuffer, uncompressedBufferOff, uncompressedSize, compressedBuffer, 0, srcSize)
                     uncompressedBufferOff += gameFile.compressionBlockSize
                 }
                 return ByteBuffer.wrap(uncompressedBuffer)

@@ -32,15 +32,15 @@ class UTexture2D : UTexture() {
         cooked = Ar.readBoolean()
         textures = mutableMapOf()
         if (cooked) {
-            var pixelFormat = Ar.readFName()
-            while (!pixelFormat.isNone()) {
+            while (true) {
+                val pixelFormat = Ar.readFName()
+                if (pixelFormat.isNone()) break
                 val skipOffset = Ar.readInt64()
                 textures[FTexturePlatformData(Ar)] = pixelFormat
                 if (Ar.relativePos().toLong() != skipOffset) {
-                    logger.warn("Texture read incorrectly ${Ar.relativePos()}, skip offset $skipOffset")
+                    logger.warn("Texture read incorrectly. Current relative pos ${Ar.relativePos()}, skip offset $skipOffset")
                     Ar.seekRelative(skipOffset.toInt())
                 }
-                pixelFormat = Ar.readFName()
             }
         }
         super.complete(Ar)
@@ -79,25 +79,18 @@ class FTexturePlatformData : UClass {
     var numSlices: Int
     var pixelFormat: String
     var firstMip: Int
-    var mipCount: Int
-    var mips: MutableList<FTexture2DMipMap>
+    var mips: Array<FTexture2DMipMap>
     var isVirtual: Boolean = false
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
-        logger.debug("Reading Texture2D...")
         sizeX = Ar.readInt32()
-        logger.debug("Width: $sizeX")
         sizeY = Ar.readInt32()
-        logger.debug("Height: $sizeY")
         numSlices = Ar.readInt32()
         pixelFormat = Ar.readString()
         firstMip = Ar.readInt32()
-        mipCount = Ar.readInt32()
-        mips = mutableListOf()
-        for (i in 0 until mipCount) {
-            mips.add(FTexture2DMipMap(Ar))
-        }
+        val mipCount = Ar.readInt32()
+        mips = Array(mipCount) { FTexture2DMipMap(Ar) }
 
         if (Ar.game >= GAME_UE4(23)) {
             isVirtual = Ar.readBoolean()
@@ -110,6 +103,8 @@ class FTexturePlatformData : UClass {
 
     fun getFirstMip() = mips[firstMip]
 
+    fun getFirstLoadedMip() = mips.first { it.data.isBulkDataLoaded }
+
     fun serialize(Ar: FAssetArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeInt32(sizeX)
@@ -117,8 +112,7 @@ class FTexturePlatformData : UClass {
         Ar.writeInt32(numSlices)
         Ar.writeString(pixelFormat)
         Ar.writeInt32(firstMip)
-        Ar.writeInt32(mipCount)
-        mips.forEach { it.serialize(Ar) }
+        Ar.writeTArray(mips) { it.serialize(Ar) }
         if (Ar.game >= GAME_UE4(23)) {
             Ar.writeBoolean(isVirtual)
             if (isVirtual)
@@ -127,13 +121,12 @@ class FTexturePlatformData : UClass {
         super.completeWrite(Ar)
     }
 
-    constructor(sizeX: Int, sizeY: Int, numSlices: Int, pixelFormat: String, firstMip: Int, mipCount: Int, mips: MutableList<FTexture2DMipMap>, isVirtual: Boolean) {
+    constructor(sizeX: Int, sizeY: Int, numSlices: Int, pixelFormat: String, firstMip: Int, mips: Array<FTexture2DMipMap>, isVirtual: Boolean) {
         this.sizeX = sizeX
         this.sizeY = sizeY
         this.numSlices = numSlices
         this.pixelFormat = pixelFormat
         this.firstMip = firstMip
-        this.mipCount = mipCount
         this.mips = mips
         this.isVirtual = isVirtual
     }

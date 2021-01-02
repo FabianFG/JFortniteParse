@@ -111,13 +111,34 @@ open class UObject : UClass, IPropertyHolder {
     }
 
     /**
+     * Returns the fully qualified pathname for this object as well as the name of the class, in the format:
+     * 'ClassName Outermost.[Outer:]Name'.
+     *
+     * @param   stopOuter   if specified, indicates that the output string should be relative to this object.  if StopOuter
+     *                      does not exist in this object's Outer chain, the result would be the same as passing NULL.
+     */
+    fun getFullName(stopOuter: UObject?, includeClassPackage: Boolean = false): String {
+        val result = StringBuilder(128)
+        getFullName(stopOuter, result, includeClassPackage)
+        return result.toString()
+    }
+
+    fun getFullName(stopOuter: UObject?, resultString: StringBuilder, includeClassPackage: Boolean = false) {
+        if (includeClassPackage) {
+            resultString.append(clazz!!.getPathName())
+        } else {
+            resultString.append(clazz!!.name)
+        }
+        resultString.append(' ')
+        getPathName(stopOuter, resultString)
+    }
+
+    /**
      * Returns the fully qualified pathname for this object, in the format:
      * 'Outermost[.Outer].Name'
      *
-     * @param    stopOuter    if specified, indicates that the output string should be relative to this object.  if stopOuter
-     *						does not exist in this object's outer chain, the result would be the same as passing null.
-     *
-     * @note    safe to call on NULL object pointers!
+     * @param   stopOuter   if specified, indicates that the output string should be relative to this object.  if stopOuter
+     *                      does not exist in this object's outer chain, the result would be the same as passing null.
      */
     @JvmOverloads
     fun getPathName(stopOuter: UObject? = null): String {

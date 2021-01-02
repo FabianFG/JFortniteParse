@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.io
 
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.kotlinPointers.BytePointer
 import java.io.RandomAccessFile
 import java.util.*
@@ -10,7 +9,7 @@ class FFileIoStoreContainerFile {
     lateinit var fileHandle: RandomAccessFile
     var fileSize = 0uL
     var compressionBlockSize = 0uL
-    lateinit var compressionMethods: List<FName>
+    lateinit var compressionMethods: List<String>
     lateinit var compressionBlocks: List<FIoStoreTocCompressedBlockEntry>
     lateinit var filePath: String
 
@@ -59,7 +58,7 @@ class FFileIoStoreBlockScatter {
 class FFileIoStoreCompressedBlock {
     var next: FFileIoStoreCompressedBlock? = null
     lateinit var key: FFileIoStoreBlockKey
-    lateinit var compressionMethod: FName
+    lateinit var compressionMethod: String
     var rawOffset = 0uL
     var uncompressedSize = 0u
     var compressedSize = 0u

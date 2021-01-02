@@ -10,6 +10,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 class FByteBulkData : UClass {
     var header: FByteBulkDataHeader
     var data: ByteArray
+    val isBulkDataLoaded get() = data.isNotEmpty()
 
     constructor(Ar: FAssetArchive) {
         super.init(Ar)
@@ -29,18 +30,17 @@ class FByteBulkData : UClass {
             }
             BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
                 logger.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
-                val ubulkAr = Ar.getPayload(if (BULKDATA_OptionalPayload.check(bulkDataFlags)) PayloadType.UPTNL else PayloadType.UBULK)
-                /*val ubulkAr = if (BULKDATA_OptionalPayload.check(bulkDataFlags)) {
-                    try {
-                        Ar.getPayload(PayloadType.UPTNL)
-                    } catch (ignored: Exception) {
-                        Ar.getPayload(PayloadType.UBULK)
-                    }
-                } else {
-                    Ar.getPayload(PayloadType.UBULK)
-                }*/
-                ubulkAr.seek(header.offsetInFile.toInt())
-                ubulkAr.read(data)
+                val ubulkAr = Ar.getPayload(when {
+                    BULKDATA_OptionalPayload.check(bulkDataFlags) -> PayloadType.UPTNL
+                    BULKDATA_MemoryMappedPayload.check(bulkDataFlags) -> PayloadType.M_UBULK
+                    else -> PayloadType.UBULK
+                })
+                if (ubulkAr.size() > 0) {
+                    ubulkAr.seek(header.offsetInFile.toInt())
+                    ubulkAr.read(data)
+                } else { // bulk data file not found
+                    data = ByteArray(0)
+                }
             }
             BULKDATA_PayloadAtEndOfFile.check(bulkDataFlags) -> {
                 //stored in same file, but at different position

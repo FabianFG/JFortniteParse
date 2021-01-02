@@ -56,7 +56,7 @@ private fun rgbBufferToImage(rgb: ByteArray, width: Int, height: Int): BufferedI
 fun UTexture2D.toBufferedImage() = toBufferedImage(getFirstTexture())
 
 @Synchronized
-fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture(), mip: FTexture2DMipMap = texture.mips[0]): BufferedImage {
+fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture(), mip: FTexture2DMipMap = texture.getFirstLoadedMip()): BufferedImage {
     val data = mip.data.data
     val width = mip.sizeX
     val height = mip.sizeY
@@ -182,7 +182,7 @@ fun FTexturePlatformData.getDdsFourCC() = when (pixelFormat) {
     else -> null
 }?.toCharArray()
 
-fun UTexture2D.toDdsArray(texture: FTexturePlatformData = getFirstTexture(), mip: FTexture2DMipMap = texture.mips[0]): ByteArray {
+fun UTexture2D.toDdsArray(texture: FTexturePlatformData = getFirstTexture(), mip: FTexture2DMipMap = texture.getFirstLoadedMip()): ByteArray {
     val fourCC = texture.getDdsFourCC()
         ?: throw IllegalArgumentException("Pixel format ${texture.pixelFormat} cannot be exported to DDS")
     val header = DDSHeader()

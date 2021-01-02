@@ -341,7 +341,7 @@ class FFileIoStore : Runnable {
                 break
             }
             // Scatter block asynchronous when the block is compressed, encrypted or signed
-            val bScatterAsync = bIsMultithreaded && (!blockToDecompress.compressionMethod.isNone() || blockToDecompress.encryptionKey != null || blockToDecompress.signatureHash != null)
+            val bScatterAsync = bIsMultithreaded && (blockToDecompress.compressionMethod != "None" || blockToDecompress.encryptionKey != null || blockToDecompress.signatureHash != null)
             if (bScatterAsync) {
                 //TGraphTask<FDecompressAsyncTask>::CreateTask().ConstructAndDispatchWhenReady(*this, BlockToDecompress)
                 FDecompressAsyncTask(blockToDecompress).start()
@@ -552,7 +552,7 @@ class FFileIoStore : Runnable {
             }
             val uncompressedBuffer: ByteArray
             val uncompressedBufferOff: Int
-            if (compressedBlock.compressionMethod.isNone()) {
+            if (compressedBlock.compressionMethod == "None") {
                 uncompressedBuffer = compressedBuffer
                 uncompressedBufferOff = compressedBufferOff
             } else {

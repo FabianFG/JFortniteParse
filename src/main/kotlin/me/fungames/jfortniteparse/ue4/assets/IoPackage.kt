@@ -39,6 +39,7 @@ class IoPackage : Package {
     val graphData: Array<FImportedPackage>
     val importedPackages: Lazy<List<IoPackage?>>
     override val exportsLazy: List<Lazy<UObject>>
+    var bulkDataStartOffset = 0
 
     constructor(uasset: ByteArray,
                 packageId: FPackageId,
@@ -111,6 +112,7 @@ class IoPackage : Package {
                         val Ar = FExportArchive(ByteBuffer.wrap(uasset), obj, this)
                         Ar.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
                         Ar.uassetSize = summary.cookedHeaderSize.toInt() - allExportDataOffset
+                        Ar.bulkDataStartOffset = bulkDataStartOffset
                         Ar.seek(localExportDataOffset)
                         val validPos = Ar.pos() + export.cookedSerialSize.toInt()
                         try {
@@ -131,7 +133,7 @@ class IoPackage : Package {
                 }
             }
         }
-
+        bulkDataStartOffset = currentExportDataOffset
         logger.info { "Successfully parsed package : $name" }
     }
 

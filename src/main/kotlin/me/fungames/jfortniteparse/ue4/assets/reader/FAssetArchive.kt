@@ -25,7 +25,7 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
     var uexpSize = 0
     var bulkDataStartOffset = 0
 
-    open fun getPayload(type: PayloadType) = payloads[type] ?: throw ParserException("${type.name} is needed to parse the current package")
+    open fun getPayload(type: PayloadType) = payloads[type] ?: FByteArchive(ByteArray(0))
     fun addPayload(type: PayloadType, payload: FAssetArchive) {
         if (payloads.containsKey(type))
             throw ParserException("Can't add a payload that is already attached of type ${type.name}")

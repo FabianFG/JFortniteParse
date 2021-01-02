@@ -12,6 +12,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FTextHistory
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -88,64 +89,66 @@ sealed class FProperty {
 
     //@Deprecated(message = "Should not be used anymore, since its not able to process arrays and struct fallback", replaceWith = ReplaceWith("getTagTypeValue<T>"))
     fun getTagTypeValueLegacy() = when (this) {
+        is ArrayProperty -> this.array
         is BoolProperty -> this.bool
-        is StructProperty -> this.struct.structType
-        is ObjectProperty -> this.index
-        is InterfaceProperty -> this.interfaceProperty
+        is ByteProperty -> this.byte
+        is DelegateProperty -> this.delegate
+        is DoubleProperty -> this.number
+        is EnumProperty -> this.name
+        is FieldPathProperty -> this.fieldPath
         is FloatProperty -> this.float
-        is TextProperty -> this.text
-        is StrProperty -> this.str
-        is NameProperty -> this.name
+        is Int16Property -> this.number
+        is Int64Property -> this.number
+        is Int8Property -> this.number
         is IntProperty -> this.number
+        is InterfaceProperty -> this.interfaceProperty
+        is LazyObjectProperty -> this.guid
+        is MapProperty -> this.map
+        is MulticastDelegateProperty -> this.delegate
+        is NameProperty -> this.name
+        is ObjectProperty -> this.index
+        is SetProperty -> this.array
+        is SoftClassProperty -> this.`object`
+        is SoftObjectProperty -> this.`object`
+        is StrProperty -> this.str
+        is StructProperty -> this.struct.structType
+        is TextProperty -> this.text
         is UInt16Property -> this.number
         is UInt32Property -> this.number
         is UInt64Property -> this.number
-        is ArrayProperty -> this.array
-        is SetProperty -> this.array
-        is MapProperty -> this.map
-        is ByteProperty -> this.byte
-        is EnumProperty -> this.name
-        is SoftObjectProperty -> this.`object`
-        is SoftClassProperty -> this.`object`
-        is DelegateProperty -> this.delegate
-        is MulticastDelegateProperty -> this.delegate
-        is DoubleProperty -> this.number
-        is Int8Property -> this.number
-        is Int16Property -> this.number
-        is Int64Property -> this.number
-        is FieldPathProperty -> this.fieldPath
     }
 
     fun setTagTypeValue(value: Any?) {
         if (value == null)
             return
         when (this) {
+            is ArrayProperty -> this.array = value as UScriptArray
             is BoolProperty -> this.bool = value as Boolean
-            is StructProperty -> this.struct.structType = value
-            is ObjectProperty -> this.index = value as FPackageIndex
-            is InterfaceProperty -> this.interfaceProperty = value as UInterfaceProperty
+            is ByteProperty -> this.byte = value as UByte
+            is DelegateProperty -> this.delegate = value as FScriptDelegate
+            is DoubleProperty -> this.number = value as Double
+            is EnumProperty -> this.name = value as FName
+            is FieldPathProperty -> this.fieldPath = value as FFieldPath
             is FloatProperty -> this.float = value as Float
-            is TextProperty -> this.text = value as FText
-            is StrProperty -> this.str = value as String
-            is NameProperty -> this.name = value as FName
+            is Int16Property -> this.number = value as Short
+            is Int64Property -> this.number = value as Long
+            is Int8Property -> this.number = value as Byte
             is IntProperty -> this.number = value as Int
+            is InterfaceProperty -> this.interfaceProperty = value as UInterfaceProperty
+            is LazyObjectProperty -> this.guid = value as FUniqueObjectGuid
+            is MapProperty -> this.map = value as UScriptMap
+            is MulticastDelegateProperty -> this.delegate = value as FMulticastScriptDelegate
+            is NameProperty -> this.name = value as FName
+            is ObjectProperty -> this.index = value as FPackageIndex
+            is SetProperty -> this.array = value as UScriptArray
+            is SoftClassProperty -> this.`object` = value as FSoftClassPath
+            is SoftObjectProperty -> this.`object` = value as FSoftObjectPath
+            is StrProperty -> this.str = value as String
+            is StructProperty -> this.struct.structType = value
+            is TextProperty -> this.text = value as FText
             is UInt16Property -> this.number = value as UShort
             is UInt32Property -> this.number = value as UInt
             is UInt64Property -> this.number = value as ULong
-            is ArrayProperty -> this.array = value as UScriptArray
-            is SetProperty -> this.array = value as UScriptArray
-            is MapProperty -> this.map = value as UScriptMap
-            is ByteProperty -> this.byte = value as UByte
-            is EnumProperty -> this.name = value as FName
-            is SoftObjectProperty -> this.`object` = value as FSoftObjectPath
-            is SoftClassProperty -> this.`object` = value as FSoftClassPath
-            is DelegateProperty -> this.delegate = value as FScriptDelegate
-            is MulticastDelegateProperty -> this.delegate = value as FMulticastScriptDelegate
-            is DoubleProperty -> this.number = value as Double
-            is Int8Property -> this.number = value as Byte
-            is Int16Property -> this.number = value as Short
-            is Int64Property -> this.number = value as Long
-            is FieldPathProperty -> this.fieldPath = value as FFieldPath
         }
     }
 
@@ -160,6 +163,7 @@ sealed class FProperty {
                 "StructProperty" -> StructProperty(UScriptStruct(Ar, typeData, type))
                 "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "WeakObjectProperty" -> WeakObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
+                "LazyObjectProperty" -> LazyObjectProperty(valueOr({ FUniqueObjectGuid(Ar) }, { FUniqueObjectGuid(FGuid()) }, type))
                 "ClassProperty" -> ClassProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type))
                 "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type))
@@ -170,24 +174,9 @@ sealed class FProperty {
                 "UInt16Property" -> UInt16Property(valueOr({ Ar.readUInt16() }, { 0u }, type))
                 "UInt32Property" -> UInt32Property(valueOr({ Ar.readUInt32() }, { 0u }, type))
                 "UInt64Property" -> UInt64Property(valueOr({ Ar.readUInt64() }, { 0u }, type))
-                "ArrayProperty" ->
-                    ArrayProperty(if (type != ReadType.ZERO) {
-                        UScriptArray(Ar, typeData)
-                    } else {
-                        UScriptArray(null, mutableListOf())
-                    })
-                "SetProperty" ->
-                    SetProperty(if (type != ReadType.ZERO) {
-                        UScriptArray(Ar, typeData)
-                    } else {
-                        UScriptArray(null, mutableListOf())
-                    })
-                "MapProperty" ->
-                    MapProperty(if (type != ReadType.ZERO) {
-                        UScriptMap(Ar, typeData)
-                    } else {
-                        UScriptMap(0, mutableMapOf())
-                    })
+                "ArrayProperty" -> ArrayProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
+                "SetProperty" -> SetProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
+                "MapProperty" -> MapProperty(valueOr({ UScriptMap(Ar, typeData) }, { UScriptMap(0, mutableMapOf()) }, type))
                 "ByteProperty" ->
                     if (Ar.useUnversionedPropertySerialization && type == ReadType.NORMAL) {
                         ByteProperty(Ar.readUInt8())
@@ -229,7 +218,6 @@ sealed class FProperty {
                 "Int16Property" -> Int16Property(valueOr({ Ar.readInt16() }, { 0 }, type))
                 "Int64Property" -> Int64Property(valueOr({ Ar.readInt64() }, { 0 }, type))
                 "FieldPathProperty" -> FieldPathProperty(valueOr({ FFieldPath(Ar) }, { FFieldPath() }, type))
-                //"LazyObjectProperty" -> throw ParserException("LazyObjectProperty not implemented yet")
 
                 else -> {
                     UClass.logger.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
@@ -239,20 +227,8 @@ sealed class FProperty {
 
         fun writePropertyValue(Ar: FAssetArchiveWriter, tag: FProperty, type: ReadType) {
             when (tag) {
-                is StructProperty -> tag.struct.serialize(Ar)
-                is ObjectProperty -> tag.index.serialize(Ar)
-                is InterfaceProperty -> tag.interfaceProperty.serialize(Ar)
-                is FloatProperty -> Ar.writeFloat32(tag.float)
-                is TextProperty -> tag.text.serialize(Ar)
-                is StrProperty -> Ar.writeString(tag.str)
-                is NameProperty -> Ar.writeFName(tag.name)
-                is IntProperty -> Ar.writeInt32(tag.number)
-                is UInt16Property -> Ar.writeUInt16(tag.number)
-                is UInt32Property -> Ar.writeUInt32(tag.number)
-                is UInt64Property -> Ar.writeUInt64(tag.number)
                 is ArrayProperty -> tag.array.serialize(Ar)
-                is SetProperty -> tag.array.serialize(Ar)
-                is MapProperty -> tag.map.serialize(Ar)
+                is BoolProperty -> if (type == ReadType.MAP || type == ReadType.ARRAY) Ar.writeFlag(tag.bool)
                 is ByteProperty -> when (type) {
                     ReadType.NORMAL -> {
                         Ar.writeInt32(tag.byte.toInt())
@@ -261,24 +237,30 @@ sealed class FProperty {
                     ReadType.MAP -> Ar.writeUInt32(tag.byte.toUInt())
                     ReadType.ARRAY -> Ar.writeUInt8(tag.byte)
                 }
-                is EnumProperty -> {
-                    if (tag.name !is FName.FNameDummy)
-                        Ar.writeFName(tag.name)
-                }
-                is SoftObjectProperty -> {
-                    tag.`object`.serialize(Ar)
-                    if (type == ReadType.MAP)
-                        Ar.writeInt32(0)
-                }
                 is DelegateProperty -> tag.delegate.serialize(Ar)
-                is MulticastDelegateProperty -> tag.delegate.serialize(Ar)
                 is DoubleProperty -> Ar.writeDouble(tag.number)
-                is Int8Property -> Ar.writeInt8(tag.number)
+                is EnumProperty -> if (tag.name !is FName.FNameDummy) Ar.writeFName(tag.name)
+                //is FieldPathProperty -> tag.fieldPath.serialize(Ar)
+                is FloatProperty -> Ar.writeFloat32(tag.float)
                 is Int16Property -> Ar.writeInt16(tag.number)
                 is Int64Property -> Ar.writeInt64(tag.number)
-                is BoolProperty -> {
-                    if (type == ReadType.MAP || type == ReadType.ARRAY) Ar.writeFlag(tag.bool)
-                }
+                is Int8Property -> Ar.writeInt8(tag.number)
+                is IntProperty -> Ar.writeInt32(tag.number)
+                is InterfaceProperty -> tag.interfaceProperty.serialize(Ar)
+                is LazyObjectProperty -> tag.guid.serialize(Ar)
+                is MapProperty -> tag.map.serialize(Ar)
+                is MulticastDelegateProperty -> tag.delegate.serialize(Ar)
+                is NameProperty -> Ar.writeFName(tag.name)
+                is ObjectProperty -> tag.index.serialize(Ar)
+                is SetProperty -> tag.array.serialize(Ar)
+                is SoftClassProperty -> tag.`object`.serialize(Ar)
+                is SoftObjectProperty -> tag.`object`.serialize(Ar)
+                is StrProperty -> Ar.writeString(tag.str)
+                is StructProperty -> tag.struct.serialize(Ar)
+                is TextProperty -> tag.text.serialize(Ar)
+                is UInt16Property -> Ar.writeUInt16(tag.number)
+                is UInt32Property -> Ar.writeUInt32(tag.number)
+                is UInt64Property -> Ar.writeUInt64(tag.number)
             }
         }
 
@@ -286,34 +268,35 @@ sealed class FProperty {
             if (type != ReadType.ZERO) valueIfNonzero() else valueIfZero()
     }
 
+    class ArrayProperty(var array: UScriptArray) : FProperty()
     class BoolProperty(var bool: Boolean) : FProperty()
-    class StructProperty(var struct: UScriptStruct) : FProperty()
-    open class ObjectProperty(var index: FPackageIndex) : FProperty()
-    class WeakObjectProperty(index: FPackageIndex) : ObjectProperty(index)
+    class ByteProperty(var byte: UByte) : FProperty()
     class ClassProperty(index: FPackageIndex) : ObjectProperty(index)
-    class InterfaceProperty(var interfaceProperty: UInterfaceProperty) : FProperty()
+    class DelegateProperty(var delegate: FScriptDelegate) : FProperty()
+    class DoubleProperty(var number: Double) : FProperty()
+    class EnumProperty(var name: FName, var enumConstant: Enum<*>?) : FProperty()
+    class FieldPathProperty(var fieldPath: FFieldPath) : FProperty()
     class FloatProperty(var float: Float) : FProperty()
-    class TextProperty(var text: FText) : FProperty()
-    class StrProperty(var str: String) : FProperty()
-    class NameProperty(var name: FName) : FProperty()
+    class Int16Property(var number: Short) : FProperty()
+    class Int64Property(var number: Long) : FProperty()
+    class Int8Property(var number: Byte) : FProperty()
     class IntProperty(var number: Int) : FProperty()
+    class InterfaceProperty(var interfaceProperty: UInterfaceProperty) : FProperty()
+    class LazyObjectProperty(var guid: FUniqueObjectGuid) : FProperty()
+    class MapProperty(var map: UScriptMap) : FProperty()
+    class MulticastDelegateProperty(var delegate: FMulticastScriptDelegate) : FProperty()
+    class NameProperty(var name: FName) : FProperty()
+    open class ObjectProperty(var index: FPackageIndex) : FProperty()
+    class SetProperty(var array: UScriptArray) : FProperty()
+    class SoftClassProperty(var `object`: FSoftClassPath) : FProperty()
+    class SoftObjectProperty(var `object`: FSoftObjectPath) : FProperty()
+    class StrProperty(var str: String) : FProperty()
+    class StructProperty(var struct: UScriptStruct) : FProperty()
+    class TextProperty(var text: FText) : FProperty()
     class UInt16Property(var number: UShort) : FProperty()
     class UInt32Property(var number: UInt) : FProperty()
     class UInt64Property(var number: ULong) : FProperty()
-    class ArrayProperty(var array: UScriptArray) : FProperty()
-    class SetProperty(var array: UScriptArray) : FProperty()
-    class MapProperty(var map: UScriptMap) : FProperty()
-    class ByteProperty(var byte: UByte) : FProperty()
-    class EnumProperty(var name: FName, var enumConstant: Enum<*>?) : FProperty()
-    class SoftObjectProperty(var `object`: FSoftObjectPath) : FProperty()
-    class SoftClassProperty(var `object`: FSoftClassPath) : FProperty()
-    class DelegateProperty(var delegate: FScriptDelegate) : FProperty()
-    class MulticastDelegateProperty(var delegate: FMulticastScriptDelegate) : FProperty()
-    class DoubleProperty(var number: Double) : FProperty()
-    class Int8Property(var number: Byte) : FProperty()
-    class Int16Property(var number: Short) : FProperty()
-    class Int64Property(var number: Long) : FProperty()
-    class FieldPathProperty(var fieldPath: FFieldPath) : FProperty()
+    class WeakObjectProperty(index: FPackageIndex) : ObjectProperty(index)
 
     enum class ReadType {
         NORMAL,
