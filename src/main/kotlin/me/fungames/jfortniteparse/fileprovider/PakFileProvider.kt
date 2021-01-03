@@ -102,12 +102,12 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         mountListeners.forEach { it.onMount(reader) }
     }
 
-    override fun loadGameFile(packageId: FPackageId): IoPackage? {
+    override fun loadGameFile(packageId: FPackageId): IoPackage? = runCatching {
         val storeEntry = globalPackageStore.findStoreEntry(packageId)
             ?: return null//throw NotFoundException("The package to load does not exist on disk or in the loader")
         val ioBuffer = saveChunk(FIoChunkId(packageId.value(), 0u, EIoChunkType.ExportBundleData))
         return IoPackage(ioBuffer, packageId, storeEntry, globalPackageStore, this, game)
-    }
+    }.onFailure { logger.error { "Failed to load package with id ${packageId.value()}" } }.getOrNull()
 
     override fun saveGameFile(filePath: String): ByteArray? {
         val path = fixPath(filePath)

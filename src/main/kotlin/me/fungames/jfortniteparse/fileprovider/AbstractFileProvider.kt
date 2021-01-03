@@ -12,7 +12,7 @@ import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
 abstract class AbstractFileProvider : FileProvider() {
     protected var globalDataLoaded = false
 
-    override fun loadGameFile(file: GameFile): Package? {
+    override fun loadGameFile(file: GameFile): Package? = runCatching {
         if (file.ioPackageId != null)
             return loadGameFile(file.ioPackageId)
         if (!file.isUE4Package() || !file.hasUexp())
@@ -21,14 +21,14 @@ abstract class AbstractFileProvider : FileProvider() {
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
         return PakPackage(uasset, uexp, ubulk, file.path, this, game)
-    }
+    }.onFailure { logger.error { "Failed to load package ${file.path}" } }.getOrNull()
 
     override fun findGameFile(filePath: String): GameFile? {
         val path = fixPath(filePath)
         return files[path]
     }
 
-    override fun loadGameFile(filePath: String): Package? {
+    override fun loadGameFile(filePath: String): Package? = runCatching {
         val path = fixPath(filePath)
         // try load from PAKs
         val gameFile = findGameFile(path)
@@ -55,9 +55,9 @@ abstract class AbstractFileProvider : FileProvider() {
             ?: return null//throw NotFoundException("uexp not found")
         val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
         return PakPackage(uasset, uexp, ubulk, path, this, game)
-    }
+    }.onFailure { logger.error { "Failed to load package $filePath" } }.getOrNull()
 
-    override fun loadLocres(filePath: String): Locres? {
+    override fun loadLocres(filePath: String): Locres? = runCatching {
         val path = fixPath(filePath)
         val gameFile = findGameFile(path)
         if (gameFile != null)
@@ -65,27 +65,17 @@ abstract class AbstractFileProvider : FileProvider() {
         if (!path.endsWith(".locres"))
             return null
         val locres = saveGameFile(path) ?: return null
-        return try {
-            Locres(locres, path, getLocresLanguageByPath(filePath))
-        } catch (e: ParserException) {
-            logger.error("Failed to load locres $path", e)
-            null
-        }
-    }
+        return Locres(locres, path, getLocresLanguageByPath(filePath))
+    }.onFailure { logger.error("Failed to load locres $filePath", it) }.getOrNull()
 
-    override fun loadLocres(file: GameFile): Locres? {
+    override fun loadLocres(file: GameFile): Locres? = runCatching {
         if (!file.isLocres())
             return null
         val locres = saveGameFile(file)
-        return try {
-            Locres(locres, file.path, getLocresLanguageByPath(file.path))
-        } catch (e: Exception) {
-            logger.error("Failed to load locres ${file.path}", e)
-            null
-        }
-    }
+        return Locres(locres, file.path, getLocresLanguageByPath(file.path))
+    }.onFailure { logger.error("Failed to load locres ${file.path}", it) }.getOrNull()
 
-    override fun loadAssetRegistry(filePath: String): AssetRegistry? {
+    override fun loadAssetRegistry(filePath: String): AssetRegistry? = runCatching {
         val path = fixPath(filePath)
         val gameFile = findGameFile(path)
         if (gameFile != null)
@@ -93,25 +83,15 @@ abstract class AbstractFileProvider : FileProvider() {
         if (!path.endsWith(".bin"))
             return null
         val locres = saveGameFile(path) ?: return null
-        return try {
-            AssetRegistry(locres, path)
-        } catch (e: ParserException) {
-            logger.error("Failed to load asset registry $path", e)
-            null
-        }
-    }
+        return AssetRegistry(locres, path)
+    }.onFailure { logger.error("Failed to load asset registry $filePath", it) }.getOrNull()
 
-    override fun loadAssetRegistry(file: GameFile): AssetRegistry? {
+    override fun loadAssetRegistry(file: GameFile): AssetRegistry? = runCatching {
         if (!file.isAssetRegistry())
             return null
         val locres = saveGameFile(file)
-        return try {
-            AssetRegistry(locres, file.path)
-        } catch (e: Exception) {
-            logger.error("Failed to load asset registry ${file.path}", e)
-            null
-        }
-    }
+        return AssetRegistry(locres, file.path)
+    }.onFailure { logger.error("Failed to load asset registry ${file.path}", it) }.getOrNull()
 
     override fun savePackage(filePath: String): Map<String, ByteArray> {
         val path = fixPath(filePath)
@@ -119,35 +99,39 @@ abstract class AbstractFileProvider : FileProvider() {
         if (gameFile != null)
             return savePackage(gameFile)
         val map = mutableMapOf<String, ByteArray>()
-        if (path.endsWith(".uasset") || path.endsWith(".umap")) {
-            val uasset = saveGameFile(path) ?: return map
-            map[path] = uasset
-            val uexpPath = path.substringBeforeLast(".") + ".uexp"
-            val uexp = saveGameFile(uexpPath) ?: return map
-            map[uexpPath] = uexp
-            val ubulkPath = path.substringBeforeLast(".") + ".ubulk"
-            val ubulk = saveGameFile(ubulkPath) ?: return map
-            map[ubulkPath] = ubulk
-        } else {
-            val data = saveGameFile(path) ?: return map
-            map[path] = data
+        runCatching {
+            if (path.endsWith(".uasset") || path.endsWith(".umap")) {
+                val uasset = saveGameFile(path) ?: return map
+                map[path] = uasset
+                val uexpPath = path.substringBeforeLast(".") + ".uexp"
+                val uexp = saveGameFile(uexpPath) ?: return map
+                map[uexpPath] = uexp
+                val ubulkPath = path.substringBeforeLast(".") + ".ubulk"
+                val ubulk = saveGameFile(ubulkPath) ?: return map
+                map[ubulkPath] = ubulk
+            } else {
+                val data = saveGameFile(path) ?: return map
+                map[path] = data
+            }
         }
         return map
     }
 
     override fun savePackage(file: GameFile): Map<String, ByteArray> {
         val map = mutableMapOf<String, ByteArray>()
-        if (!file.isUE4Package() || !file.hasUexp()) {
-            val data = saveGameFile(file)
-            map[file.path] = data
-        } else {
-            val uasset = saveGameFile(file)
-            map[file.path] = uasset
-            val uexp = saveGameFile(file.uexp)
-            map[file.uexp.path] = uexp
-            val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
-            if (ubulk != null)
-                map[file.ubulk!!.path] = ubulk
+        runCatching {
+            if (!file.isUE4Package() || !file.hasUexp()) {
+                val data = saveGameFile(file)
+                map[file.path] = data
+            } else {
+                val uasset = saveGameFile(file)
+                map[file.path] = uasset
+                val uexp = saveGameFile(file.uexp)
+                map[file.uexp.path] = uexp
+                val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
+                if (ubulk != null)
+                    map[file.ubulk!!.path] = ubulk
+            }
         }
         return map
     }
