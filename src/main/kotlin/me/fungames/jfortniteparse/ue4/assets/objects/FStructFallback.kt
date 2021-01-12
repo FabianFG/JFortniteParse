@@ -8,7 +8,6 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.deserializeVersionedTaggedProperties
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
-import me.fungames.jfortniteparse.ue4.objects.uobject.EPackageFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
@@ -20,7 +19,7 @@ class FStructFallback : UClass, IPropertyHolder {
         properties = mutableListOf()
         if (Ar.useUnversionedPropertySerialization) {
             val structClass = struct?.value
-                ?: throw ParserException("Unknown struct type $structName, can't proceed with serialization", Ar)
+                ?: throw MissingSchemaException("Unknown struct $structName")
             deserializeUnversionedProperties(properties, structClass, Ar)
         } else {
             deserializeVersionedTaggedProperties(properties, Ar)
@@ -28,17 +27,15 @@ class FStructFallback : UClass, IPropertyHolder {
         super.complete(Ar)
     }
 
-    constructor(Ar: FAssetArchive, structName: FName) : this(Ar, Ar.provider?.let {
-        lazy {
-            var struct = Ar.provider.mappingsProvider.getStruct(structName)
-            if (struct == null) {
-                if (Ar.owner.packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
-                    throw MissingSchemaException("Unknown struct $structName")
-                }
-                struct = UScriptStruct(structName)
+    constructor(Ar: FAssetArchive, structName: FName) : this(Ar, lazy {
+        var struct = Ar.provider?.mappingsProvider?.getStruct(structName)
+        if (struct == null) {
+            if (Ar.useUnversionedPropertySerialization) {
+                throw MissingSchemaException("Unknown struct $structName")
             }
-            struct
+            struct = UScriptStruct(structName)
         }
+        struct
     }, structName)
 
     fun serialize(Ar: FAssetArchiveWriter) {
