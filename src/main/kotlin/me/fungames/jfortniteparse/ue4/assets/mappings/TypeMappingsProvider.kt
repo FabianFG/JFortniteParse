@@ -9,9 +9,9 @@ abstract class TypeMappingsProvider {
     val mappings = TypeMappings()
     abstract fun reload(): Boolean
 
-    open fun getStruct(structName: FName): UStruct {
-        val struct = (mappings.types[structName.text]
-            ?: throw MissingSchemaException("Unknown struct $structName"))
+    open fun getStruct(structName: FName): UStruct? {
+        val struct = mappings.types[structName.text]
+            ?: return null
         // required to be assigned so classes with custom serializers can be read properly
         struct.structClass = ObjectTypeRegistry.classes[structName.text] ?: ObjectTypeRegistry.structs[structName.text]
         return struct

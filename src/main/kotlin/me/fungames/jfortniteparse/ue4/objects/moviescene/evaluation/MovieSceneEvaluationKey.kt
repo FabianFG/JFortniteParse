@@ -4,7 +4,6 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
 class FMovieSceneEvaluationKey : UClass {
     var sequenceId: UInt
     var trackId: Int

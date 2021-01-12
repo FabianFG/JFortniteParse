@@ -19,7 +19,6 @@ enum class EVersionComponent {
 enum class EVersionComparison { Neither, First, Second }
 
 /** Base class for the EngineVersion class. Holds basic version numbers. */
-@ExperimentalUnsignedTypes
 open class FEngineVersionBase : UClass {
     /** Major version number. */
     var major: UShort

@@ -5,7 +5,6 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.TRange
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
 class FMovieSceneFrameRange : UClass {
     var value: TRange<Int>
 

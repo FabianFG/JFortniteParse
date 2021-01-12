@@ -64,15 +64,15 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
                 type.innerType = deserializePropData(Ar)
                 type.enumName = Ar.readFName()
             }
-            StructProperty -> type.structType = Ar.readFName()
+            StructProperty -> type.structName = Ar.readFName()
             SetProperty, ArrayProperty -> type.innerType = deserializePropData(Ar)
             MapProperty -> {
                 type.innerType = deserializePropData(Ar)
                 type.valueType = deserializePropData(Ar)
             }
         }
-        if (!type.structType.isNone()) {
-            type.structClass = lazy { mappings.types[type.structType.text]!! }
+        if (!type.structName.isNone()) {
+            type.structClass = lazy { mappings.types[type.structName.text]!! }
         }
         return type
     }

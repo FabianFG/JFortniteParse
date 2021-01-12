@@ -1,21 +1,45 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
+import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.deserializeVersionedTaggedProperties
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.uobject.EPackageFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
 class FStructFallback : UClass, IPropertyHolder {
     override var properties: MutableList<FPropertyTag>
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FAssetArchive, struct: Lazy<out UStruct>?, structName: FName = FName.NAME_None) {
         super.init(Ar)
         properties = mutableListOf()
-        deserializeVersionedTaggedProperties(properties, Ar)
+        if (Ar.useUnversionedPropertySerialization) {
+            val structClass = struct?.value
+                ?: throw ParserException("Unknown struct type $structName, can't proceed with serialization", Ar)
+            deserializeUnversionedProperties(properties, structClass, Ar)
+        } else {
+            deserializeVersionedTaggedProperties(properties, Ar)
+        }
         super.complete(Ar)
     }
+
+    constructor(Ar: FAssetArchive, structName: FName) : this(Ar, Ar.provider?.let {
+        lazy {
+            var struct = Ar.provider.mappingsProvider.getStruct(structName)
+            if (struct == null) {
+                if (Ar.owner.packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
+                    throw MissingSchemaException("Unknown struct $structName")
+                }
+                struct = UScriptStruct(structName)
+            }
+            struct
+        }
+    }, structName)
 
     fun serialize(Ar: FAssetArchiveWriter) {
         super.initWrite(Ar)

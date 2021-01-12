@@ -1,12 +1,13 @@
 package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.jsonObject
-import me.fungames.jfortniteparse.LOG_STREAMING
 import com.google.gson.Gson
+import me.fungames.jfortniteparse.LOG_STREAMING
+import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -107,7 +108,7 @@ class PakPackage(
                 }?.getImportObject()?.objectName ?: throw ParserException("Could not find class name for ${export.objectName}")
                 uexpAr.seekRelative(export.serialOffset.toInt())
                 val validPos = (uexpAr.pos() + export.serialSize).toInt()
-                val obj = constructExport(export.classIndex.load<UStruct>())
+                val obj = constructExport(export.classIndex.load())
                 obj.export = export
                 obj.name = export.objectName.text
                 obj.outer = export.outerIndex.load() ?: this
@@ -142,8 +143,18 @@ class PakPackage(
 
     fun findImport(import: FObjectImport?): Lazy<UObject>? {
         if (import == null) return null
-        if (import.classPackage.text.startsWith("/Script/")) {
-            return lazy { provider!!.mappingsProvider.getStruct(import.objectName) }
+        if (import.className.text == "Class") {
+            return lazy {
+                val structName = import.objectName
+                var struct = provider?.mappingsProvider?.getStruct(structName)
+                if (struct == null) {
+                    if (packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
+                        throw MissingSchemaException("Unknown struct $structName")
+                    }
+                    struct = UScriptStruct(structName)
+                }
+                struct
+            }
         }
         //The needed export is located in another asset, try to load it
         if (import.outerIndex.getImportObject() == null) return null

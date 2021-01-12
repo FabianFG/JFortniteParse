@@ -12,6 +12,7 @@ import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
@@ -177,7 +178,7 @@ class IoPackage : Package {
         abstract fun getName(): FName
         open fun getOuter(): ResolvedObject? = null
         open fun getSuper(): ResolvedObject? = null
-        open fun getObject(): Lazy<UObject>? = null
+        open fun getObject(): Lazy<out UObject>? = null
     }
 
     class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg) {
@@ -192,7 +193,17 @@ class IoPackage : Package {
     class ResolvedScriptObject(val scriptImport: FScriptObjectEntry, pkg: IoPackage) : ResolvedObject(pkg) {
         override fun getName() = scriptImport.objectName.toName()
         override fun getOuter() = pkg.resolveObjectIndex(scriptImport.outerIndex)
-        override fun getObject() = lazy { pkg.provider!!.mappingsProvider.getStruct(getName()) }
+        override fun getObject() = lazy {
+            val structName = getName()
+            var struct = pkg.provider?.mappingsProvider?.getStruct(structName)
+            if (struct == null) {
+                if (pkg.packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
+                    throw MissingSchemaException("Unknown struct $structName")
+                }
+                struct = UScriptStruct(structName)
+            }
+            struct
+        }
     }
 
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {

@@ -4,11 +4,10 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /** Utility functions. */
-@ExperimentalUnsignedTypes
 class FEngineVersion : FEngineVersionBase {
     /** Branch name. */
     var branch: String
-        get() = field.replace("+", "/")
+        //get() = field.replace("+", "/")
 
     constructor(Ar: FArchive) {
         super.init(Ar)

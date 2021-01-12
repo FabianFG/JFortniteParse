@@ -37,6 +37,7 @@ open class UStruct : UObject() {
         childProperties = Ar.readTArray {
             val propertyTypeName = Ar.readFName()
             val prop = FField.construct(propertyTypeName)
+                ?: throw ParserException("Unsupported serialized property type $propertyTypeName", Ar)
             prop.deserialize(Ar)
             if (GDebugProperties) println("$it = $propertyTypeName ${prop.name}")
             prop
@@ -61,6 +62,7 @@ open class FField {
             "ByteProperty" -> FByteProperty()
             "ClassProperty" -> FClassProperty()
             "DelegateProperty" -> FDelegateProperty()
+            "EnumProperty" -> FEnumProperty()
             "FloatProperty" -> FFloatProperty()
             "InterfaceProperty" -> FInterfaceProperty()
             "IntProperty" -> FIntProperty()
@@ -73,7 +75,7 @@ open class FField {
             "StrProperty" -> FStrProperty()
             "StructProperty" -> FStructProperty()
             "TextProperty" -> FTextProperty()
-            else -> throw ParserException("Unsupported serialized property type $fieldTypeName")
+            else -> null
         }
     }
 }
@@ -125,7 +127,7 @@ class FArrayProperty : FPropertySerialized() {
     }
 }
 
-class FByteProperty : FPropertySerialized() {
+class FByteProperty : FNumericProperty() {
     var enum: FPackageIndex = FPackageIndex()
 
     override fun deserialize(Ar: FAssetArchive) {
@@ -152,7 +154,18 @@ class FDelegateProperty : FPropertySerialized() {
     }
 }
 
-class FFloatProperty : FPropertySerialized()
+class FEnumProperty : FPropertySerialized() {
+    var underlyingProp: FNumericProperty? = null
+    var enum: FPackageIndex? = null
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        enum = FPackageIndex(Ar)
+        underlyingProp = serializeSingleField(Ar) as FNumericProperty?
+    }
+}
+
+class FFloatProperty : FNumericProperty()
 
 class FInterfaceProperty : FPropertySerialized() {
     var interfaceClass: Lazy<UClassReal>? = null
@@ -163,7 +176,7 @@ class FInterfaceProperty : FPropertySerialized() {
     }
 }
 
-class FIntProperty : FPropertySerialized()
+class FIntProperty : FNumericProperty()
 
 class FMapProperty : FPropertySerialized() {
     var keyProp: FPropertySerialized? = null
@@ -196,6 +209,8 @@ class FMulticastInlineDelegateProperty : FPropertySerialized() {
 
 class FNameProperty : FPropertySerialized()
 
+open class FNumericProperty : FPropertySerialized()
+
 open class FObjectProperty : FPropertySerialized() {
     var propertyClass: Lazy<UClassReal>? = null
 
@@ -223,6 +238,9 @@ class FTextProperty : FPropertySerialized()
 fun serializeSingleField(Ar: FAssetArchive): FField? {
     val propertyTypeName = Ar.readFName()
     return if (propertyTypeName != NAME_None) {
-        FField.construct(propertyTypeName).apply { deserialize(Ar) }
+        val field = FField.construct(propertyTypeName)
+            ?: throw ParserException("Unsupported serialized property type $propertyTypeName", Ar)
+        field.deserialize(Ar)
+        field
     } else null
 }

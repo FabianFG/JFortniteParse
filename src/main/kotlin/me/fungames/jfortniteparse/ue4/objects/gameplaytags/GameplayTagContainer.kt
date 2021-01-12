@@ -1,14 +1,14 @@
 package me.fungames.jfortniteparse.ue4.objects.gameplaytags
 
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 class FGameplayTagContainer : UClass, Iterable<FName> {
     var gameplayTags: MutableList<FName>
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
         val length = Ar.readUInt32()
         gameplayTags = mutableListOf()
@@ -18,9 +18,9 @@ class FGameplayTagContainer : UClass, Iterable<FName> {
         super.complete(Ar)
     }
 
-    fun getValue(category: String) = gameplayTags.firstOrNull { it.text.startsWith(category) }
+    fun getValue(parent: String) = gameplayTags.firstOrNull { it.text.startsWith(parent) }
 
-    fun serialize(Ar: FAssetArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeUInt32(gameplayTags.size.toUInt())
         gameplayTags.forEach { Ar.writeFName(it) }

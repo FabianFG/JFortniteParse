@@ -7,9 +7,9 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.TRange
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 /** Enumeration specifying how to evaluate a particular section when inside a segment */
-@ExperimentalUnsignedTypes
 enum class ESectionEvaluationFlags(val value: UByte) {
     /** No special flags - normal evaluation */
     None        (0x00u),
@@ -22,7 +22,6 @@ enum class ESectionEvaluationFlags(val value: UByte) {
 /**
  * Evaluation data that specifies information about what to evaluate for a given template
  */
-@ExperimentalUnsignedTypes
 @UStruct
 class FSectionEvaluationData(
     /** The implementation index we should evaluate (index into FMovieSceneEvaluationTrack::ChildTemplates) */
@@ -38,7 +37,6 @@ class FSectionEvaluationData(
 /**
  * Information about a single segment of an evaluation track
  */
-@ExperimentalUnsignedTypes
 class FMovieSceneSegment : UClass {
     /** The segment's range */
     var range: TRange<FFrameNumber>
@@ -53,7 +51,7 @@ class FMovieSceneSegment : UClass {
         range = TRange(Ar) { FFrameNumber(Ar) }
         id = Ar.readInt32()
         allowEmpty = Ar.readBoolean()
-        impls = Ar.readTArray { FStructFallback(Ar) }
+        impls = Ar.readTArray { FStructFallback(Ar, FName.dummy("SectionEvaluationData")) }
         super.complete(Ar)
     }
 

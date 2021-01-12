@@ -1,14 +1,12 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
-
 package me.fungames.jfortniteparse.ue4.objects.engine
 
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 open class FExpressionInput : UClass {
     /** Index into Expression's outputs array that this input is connected to. */
@@ -22,7 +20,7 @@ open class FExpressionInput : UClass {
     /** Material expression name that this input is connected to, or None if not connected. Used only in cooked builds */
     var expressionName: FName
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
         outputIndex = Ar.readInt32()
         inputName = Ar.readFName()
@@ -55,7 +53,7 @@ open class FExpressionInput : UClass {
         this.expressionName = expressionName
     }
 
-    open fun serialize(Ar: FAssetArchiveWriter) {
+    open fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeInt32(outputIndex)
         Ar.writeFName(inputName)
@@ -73,7 +71,7 @@ open class FMaterialInput<InputType> : FExpressionInput {
     var useConstant: Boolean
     var constant: InputType
 
-    constructor(Ar: FAssetArchive, init: () -> InputType) : super(Ar) {
+    constructor(Ar: FArchive, init: () -> InputType) : super(Ar) {
         useConstant = Ar.readUInt32() != 0u
         constant = init()
         super.complete(Ar)
@@ -95,7 +93,7 @@ open class FMaterialInput<InputType> : FExpressionInput {
         this.constant = constant
     }
 
-    fun serialize(Ar: FAssetArchiveWriter, write: (InputType) -> Unit) {
+    fun serialize(Ar: FArchiveWriter, write: (InputType) -> Unit) {
         super.serialize(Ar)
         Ar.writeUInt32(if (useConstant) 1u else 0u)
         write(constant)
@@ -104,7 +102,7 @@ open class FMaterialInput<InputType> : FExpressionInput {
 }
 
 class FColorMaterialInput : FMaterialInput<FColor> {
-    constructor(Ar: FAssetArchive) : super(Ar, { FColor(Ar) })
+    constructor(Ar: FArchive) : super(Ar, { FColor(Ar) })
 
     constructor(
         outputIndex: Int,
@@ -119,11 +117,11 @@ class FColorMaterialInput : FMaterialInput<FColor> {
         constant: FColor
     ) : super(outputIndex, inputName, mask, maskR, maskG, maskB, maskA, expressionName, useConstant, constant)
 
-    override fun serialize(Ar: FAssetArchiveWriter) = super.serialize(Ar) { it.serialize(Ar) }
+    override fun serialize(Ar: FArchiveWriter) = super.serialize(Ar) { it.serialize(Ar) }
 }
 
 class FScalarMaterialInput : FMaterialInput<Float> {
-    constructor(Ar: FAssetArchive) : super(Ar, { Ar.readFloat32() })
+    constructor(Ar: FArchive) : super(Ar, { Ar.readFloat32() })
 
     constructor(
         outputIndex: Int,
@@ -138,11 +136,11 @@ class FScalarMaterialInput : FMaterialInput<Float> {
         constant: Float
     ) : super(outputIndex, inputName, mask, maskR, maskG, maskB, maskA, expressionName, useConstant, constant)
 
-    override fun serialize(Ar: FAssetArchiveWriter) = super.serialize(Ar) { Ar.writeFloat32(it) }
+    override fun serialize(Ar: FArchiveWriter) = super.serialize(Ar) { Ar.writeFloat32(it) }
 }
 
 class FVectorMaterialInput : FMaterialInput<FVector> {
-    constructor(Ar: FAssetArchive) : super(Ar, { FVector(Ar) })
+    constructor(Ar: FArchive) : super(Ar, { FVector(Ar) })
 
     constructor(
         outputIndex: Int,
@@ -157,11 +155,11 @@ class FVectorMaterialInput : FMaterialInput<FVector> {
         constant: FVector
     ) : super(outputIndex, inputName, mask, maskR, maskG, maskB, maskA, expressionName, useConstant, constant)
 
-    override fun serialize(Ar: FAssetArchiveWriter) = super.serialize(Ar) { it.serialize(Ar) }
+    override fun serialize(Ar: FArchiveWriter) = super.serialize(Ar) { it.serialize(Ar) }
 }
 
 class FVector2MaterialInput : FMaterialInput<FVector2D> {
-    constructor(Ar: FAssetArchive) : super(Ar, { FVector2D(Ar) })
+    constructor(Ar: FArchive) : super(Ar, { FVector2D(Ar) })
 
     constructor(
         outputIndex: Int,
@@ -176,11 +174,11 @@ class FVector2MaterialInput : FMaterialInput<FVector2D> {
         constant: FVector2D
     ) : super(outputIndex, inputName, mask, maskR, maskG, maskB, maskA, expressionName, useConstant, constant)
 
-    override fun serialize(Ar: FAssetArchiveWriter) = super.serialize(Ar) { it.serialize(Ar) }
+    override fun serialize(Ar: FArchiveWriter) = super.serialize(Ar) { it.serialize(Ar) }
 }
 
 class FMaterialAttributesInput : FExpressionInput {
-    constructor(Ar: FAssetArchive) : super(Ar)
+    constructor(Ar: FArchive) : super(Ar)
 
     constructor(
         outputIndex: Int,

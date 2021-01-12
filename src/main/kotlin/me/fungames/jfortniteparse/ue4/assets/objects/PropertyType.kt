@@ -15,7 +15,7 @@ import java.lang.reflect.ParameterizedType
 @Suppress("UNCHECKED_CAST")
 class PropertyType(
     @JvmField var type: FName) {
-    @JvmField var structType = NAME_None
+    @JvmField var structName = NAME_None
     @JvmField var bool = false
     @JvmField var enumName = NAME_None
     @JvmField var isEnumAsByte = true
@@ -32,7 +32,7 @@ class PropertyType(
 
     constructor(tag: FPropertyTag) : this(tag.name) {
         type = tag.type
-        structType = tag.structName
+        structName = tag.structName
         bool = tag.boolVal
         enumName = tag.enumName
         innerType = PropertyType(tag.innerType)
@@ -58,7 +58,7 @@ class PropertyType(
             // TODO SetProperty
             is FStructProperty -> {
                 structClass = prop.struct
-                structType = structClass?.value?.name?.let { FName.dummy(it) } ?: NAME_None
+                structName = structClass?.value?.name?.let { FName.dummy(it) } ?: NAME_None
             }
         }
     }
@@ -76,7 +76,7 @@ class PropertyType(
                 enumClass = fieldType as Class<out Enum<*>>?
             }
             "StructProperty" -> {
-                structType = FName.dummy(fieldType.simpleName.unprefix())
+                structName = FName.dummy(fieldType.simpleName.unprefix())
                 structClass = lazy { UScriptStruct(fieldType) }
             }
             "ArrayProperty", "SetProperty" -> applyInner(field, false)
@@ -108,7 +108,7 @@ class PropertyType(
                 enumName = FName.dummy(clazz.simpleName.unprefix())
                 enumClass = clazz as Class<out Enum<*>>?
             } else if (propertyType.text == "StructProperty") {
-                structType = FName.dummy(clazz.simpleName.unprefix())
+                structName = FName.dummy(clazz.simpleName.unprefix())
                 structClass = lazy { UScriptStruct(clazz) }
             }
         }

@@ -4,7 +4,6 @@ import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
 class FMovieSceneEvaluationTemplate : UClass {
     /** The internal value of the serial number */
     var value: UInt

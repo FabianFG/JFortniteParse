@@ -3,8 +3,8 @@ package me.fungames.jfortniteparse.ue4.objects.engine.curves
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /** If using RCIM_Cubic, this enum describes how the tangents should be controlled in editor. */
 enum class ERichCurveTangentMode {
@@ -60,11 +60,20 @@ class FRichCurveKey : UClass {
     /** If RCTWM_WeightedLeave or RCTWM_WeightedBoth, the weight of the right tangent */
     var leaveTangentWeight: Float
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
-        interpMode = ERichCurveInterpMode.values()[Ar.read()]
-        tangentMode = ERichCurveTangentMode.values()[Ar.read()]
-        tangentWeightMode = ERichCurveTangentWeightMode.values()[Ar.read()]
+        interpMode = ERichCurveInterpMode.values().getOrElse(Ar.read()) {
+            logger.warn("Unknown ERichCurveInterpMode with ordinal $it, falling back to RCIM_Linear")
+            ERichCurveInterpMode.RCIM_Linear
+        }
+        tangentMode = ERichCurveTangentMode.values().getOrElse(Ar.read()) {
+            logger.warn("Unknown ERichCurveTangentMode with ordinal $it, falling back to RCTM_Auto")
+            ERichCurveTangentMode.RCTM_Auto
+        }
+        tangentWeightMode = ERichCurveTangentWeightMode.values().getOrElse(Ar.read()) {
+            logger.warn("Unknown ERichCurveTangentWeightMode with ordinal $it, falling back to RCTWM_WeightedNone")
+            ERichCurveTangentWeightMode.RCTWM_WeightedNone
+        }
         time = Ar.readFloat32()
         value = Ar.readFloat32()
         arriveTangent = Ar.readFloat32()
@@ -74,7 +83,7 @@ class FRichCurveKey : UClass {
         super.complete(Ar)
     }
 
-    fun serialize(Ar: FAssetArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.write(interpMode.ordinal)
         Ar.write(tangentMode.ordinal)

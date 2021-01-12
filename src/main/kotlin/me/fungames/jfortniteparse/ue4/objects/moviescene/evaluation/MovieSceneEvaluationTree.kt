@@ -5,65 +5,6 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.TRange
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-open class FMovieSceneEvaluationTree : UClass {
-    var rootNode: FMovieSceneEvaluationTreeNode
-    var childNodes: TEvaluationTreeEntryContainer<FMovieSceneEvaluationTreeNode>
-
-    constructor(Ar: FArchive) {
-        super.init(Ar)
-        rootNode = FMovieSceneEvaluationTreeNode(Ar)
-        childNodes = TEvaluationTreeEntryContainer(Ar) { Ar.readTArray { FMovieSceneEvaluationTreeNode(Ar) } }
-        super.complete(Ar)
-    }
-
-    constructor(rootNode: FMovieSceneEvaluationTreeNode, childNodes: TEvaluationTreeEntryContainer<FMovieSceneEvaluationTreeNode>) {
-        this.rootNode = rootNode
-        this.childNodes = childNodes
-    }
-
-    fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
-        rootNode.serialize(Ar)
-        childNodes.serialize(Ar) { items -> Ar.writeTArray(items) { it.serialize(Ar) } }
-        super.completeWrite(Ar)
-    }
-}
-
-@ExperimentalUnsignedTypes
-class FMovieSceneEvaluationTreeNode : UClass {
-    var range: TRange<Int>
-    var parent: FMovieSceneEvaluationTreeNodeHandle
-    var childrenId: FEvaluationTreeEntryHandle
-    var dataId: FEvaluationTreeEntryHandle
-
-    constructor(Ar: FArchive) {
-        super.init(Ar)
-        range = TRange(Ar) { Ar.readInt32() }
-        parent = FMovieSceneEvaluationTreeNodeHandle(Ar)
-        childrenId = FEvaluationTreeEntryHandle(Ar)
-        dataId = FEvaluationTreeEntryHandle(Ar)
-        super.complete(Ar)
-    }
-
-    constructor(range: TRange<Int>, parent: FMovieSceneEvaluationTreeNodeHandle, childrenId: FEvaluationTreeEntryHandle, dataId: FEvaluationTreeEntryHandle) {
-        this.range = range
-        this.parent = parent
-        this.childrenId = childrenId
-        this.dataId = dataId
-    }
-
-    fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
-        range.serialize(Ar) { Ar.writeInt32(it) }
-        parent.serialize(Ar)
-        childrenId.serialize(Ar)
-        dataId.serialize(Ar)
-        super.completeWrite(Ar)
-    }
-}
-
-@ExperimentalUnsignedTypes
 class FEvaluationTreeEntryHandle : UClass {
     var entryIndex: Int
 
@@ -84,7 +25,6 @@ class FEvaluationTreeEntryHandle : UClass {
     }
 }
 
-@ExperimentalUnsignedTypes
 class TEvaluationTreeEntryContainer<ElementType> : UClass {
     var entries: Array<FEntry>
     var items: Array<ElementType>
@@ -108,7 +48,6 @@ class TEvaluationTreeEntryContainer<ElementType> : UClass {
         super.completeWrite(Ar)
     }
 
-    @ExperimentalUnsignedTypes
     class FEntry : UClass {
         /** The index into Items of the first item */
         var startIndex: Int
@@ -141,7 +80,6 @@ class TEvaluationTreeEntryContainer<ElementType> : UClass {
     }
 }
 
-@ExperimentalUnsignedTypes
 class FMovieSceneEvaluationTreeNodeHandle : UClass {
     var childrenHandle: FEvaluationTreeEntryHandle
     var index: Int
@@ -166,7 +104,62 @@ class FMovieSceneEvaluationTreeNodeHandle : UClass {
     }
 }
 
-@ExperimentalUnsignedTypes
+class FMovieSceneEvaluationTreeNode : UClass {
+    var range: TRange<Int>
+    var parent: FMovieSceneEvaluationTreeNodeHandle
+    var childrenId: FEvaluationTreeEntryHandle
+    var dataId: FEvaluationTreeEntryHandle
+
+    constructor(Ar: FArchive) {
+        super.init(Ar)
+        range = TRange(Ar) { Ar.readInt32() }
+        parent = FMovieSceneEvaluationTreeNodeHandle(Ar)
+        childrenId = FEvaluationTreeEntryHandle(Ar)
+        dataId = FEvaluationTreeEntryHandle(Ar)
+        super.complete(Ar)
+    }
+
+    constructor(range: TRange<Int>, parent: FMovieSceneEvaluationTreeNodeHandle, childrenId: FEvaluationTreeEntryHandle, dataId: FEvaluationTreeEntryHandle) {
+        this.range = range
+        this.parent = parent
+        this.childrenId = childrenId
+        this.dataId = dataId
+    }
+
+    fun serialize(Ar: FArchiveWriter) {
+        super.initWrite(Ar)
+        range.serialize(Ar) { Ar.writeInt32(it) }
+        parent.serialize(Ar)
+        childrenId.serialize(Ar)
+        dataId.serialize(Ar)
+        super.completeWrite(Ar)
+    }
+}
+
+open class FMovieSceneEvaluationTree : UClass {
+    var rootNode: FMovieSceneEvaluationTreeNode
+    var childNodes: TEvaluationTreeEntryContainer<FMovieSceneEvaluationTreeNode>
+
+    constructor(Ar: FArchive) {
+        super.init(Ar)
+        rootNode = FMovieSceneEvaluationTreeNode(Ar)
+        childNodes = TEvaluationTreeEntryContainer(Ar) { Ar.readTArray { FMovieSceneEvaluationTreeNode(Ar) } }
+        super.complete(Ar)
+    }
+
+    constructor(rootNode: FMovieSceneEvaluationTreeNode, childNodes: TEvaluationTreeEntryContainer<FMovieSceneEvaluationTreeNode>) {
+        this.rootNode = rootNode
+        this.childNodes = childNodes
+    }
+
+    fun serialize(Ar: FArchiveWriter) {
+        super.initWrite(Ar)
+        rootNode.serialize(Ar)
+        childNodes.serialize(Ar) { items -> Ar.writeTArray(items) { it.serialize(Ar) } }
+        super.completeWrite(Ar)
+    }
+}
+
 class TMovieSceneEvaluationTree<DataType> : FMovieSceneEvaluationTree {
     var data: TEvaluationTreeEntryContainer<DataType>
 

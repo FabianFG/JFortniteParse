@@ -1,5 +1,3 @@
-@file:Suppress("NOTHING_TO_INLINE")
-
 package me.fungames.jfortniteparse.encryption.aes
 
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
@@ -25,11 +23,9 @@ object Aes {
     }
 
     fun encryptData(contents: ByteArray, offBytes: Int, numBytes: Int, keyBytes: ByteArray) {
-        check((numBytes and (BLOCK_SIZE - 1)) == 0) { "NumBytes needs to be a multiple of 16 bytes" }
         Cipher.getInstance("AES/ECB/NoPadding").apply {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(keyBytes, "AES"))
-            for (i in offBytes until offBytes + numBytes step BLOCK_SIZE)
-                doFinal(contents, i, BLOCK_SIZE, contents, i)
+            doFinal(contents, offBytes, contents.size, contents, offBytes)
         }
     }
 
@@ -38,11 +34,9 @@ object Aes {
     }
 
     fun decryptData(contents: ByteArray, offBytes: Int, numBytes: Int, keyBytes: ByteArray) {
-        check((numBytes and (BLOCK_SIZE - 1)) == 0) { "NumBytes needs to be a multiple of 16 bytes" }
         Cipher.getInstance("AES/ECB/NoPadding").apply {
             init(Cipher.DECRYPT_MODE, SecretKeySpec(keyBytes, "AES"))
-            for (i in offBytes until offBytes + numBytes step BLOCK_SIZE)
-                doFinal(contents, i, BLOCK_SIZE, contents, i)
+            doFinal(contents, offBytes, contents.size, contents, offBytes)
         }
     }
 }

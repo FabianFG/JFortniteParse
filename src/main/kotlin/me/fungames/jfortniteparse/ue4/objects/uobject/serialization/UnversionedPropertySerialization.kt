@@ -5,6 +5,7 @@ import androidx.collection.set
 import me.fungames.jfortniteparse.GDebugProperties
 import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
@@ -34,7 +35,7 @@ class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int
             val typeInfo = info.type
             setOf(
                 typeInfo.type,
-                typeInfo.structType,
+                typeInfo.structName,
                 typeInfo.enumName,
                 typeInfo.innerType?.type,
                 typeInfo.valueType?.type
@@ -269,7 +270,11 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                         properties.add(element)
                         if (GDebugProperties) println(element.toString())
                     } else {
+                        val start = Ar.pos()
                         properties.add(serializer.deserialize(Ar, ReadType.ZERO))
+                        if (Ar.pos() != start) {
+                            throw ParserException("Zero property #${it.schemaIt} should not advance the archive's position", Ar)
+                        }
                     }
                 } else {
                     if (it.isNonZero()) {

@@ -1,12 +1,12 @@
 package me.fungames.jfortniteparse.ue4.objects.ai.navigation
 
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 class FNavAgentSelector {
     var packedBits: UInt
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         packedBits = Ar.readUInt32()
     }
 
@@ -14,7 +14,7 @@ class FNavAgentSelector {
         this.packedBits = packedBits
     }
 
-    fun serialize(Ar: FAssetArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter) {
         Ar.writeUInt32(packedBits)
     }
 }

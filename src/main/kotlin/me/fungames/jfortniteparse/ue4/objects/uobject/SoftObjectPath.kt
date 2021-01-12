@@ -2,9 +2,8 @@ package me.fungames.jfortniteparse.ue4.objects.uobject
 
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /**
  * A struct that contains a string reference to an object, either a top level asset or a subobject.
@@ -27,7 +26,7 @@ open class FSoftObjectPath : UClass {
         super.complete(Ar)
     }
 
-    fun serialize(Ar: FAssetArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeFName(assetPathName)
         Ar.writeString(subPathString)
@@ -58,7 +57,7 @@ open class FSoftObjectPath : UClass {
  * A struct that contains a string reference to a class, can be used to make soft references to classes
  */
 class FSoftClassPath : FSoftObjectPath {
-    constructor(Ar: FAssetArchive) : super(Ar)
+    constructor(Ar: FArchive) : super(Ar)
     constructor() : super()
     constructor(assetPathName: FName, subPathString: String) : super(assetPathName, subPathString)
 }

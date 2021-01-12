@@ -1,21 +1,20 @@
 package me.fungames.jfortniteparse.ue4.objects.engine.animation
 
 import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
 class FSmartName : UClass {
     var displayName: FName
 
-    constructor(Ar: FAssetArchive) {
+    constructor(Ar: FArchive) {
         super.init(Ar)
         displayName = Ar.readFName()
         super.complete(Ar)
     }
 
-    fun serialize(Ar: FAssetArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
         Ar.writeFName(displayName)
         super.completeWrite(Ar)
