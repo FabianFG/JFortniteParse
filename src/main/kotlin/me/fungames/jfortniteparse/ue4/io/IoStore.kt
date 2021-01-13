@@ -6,6 +6,7 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.pak.GameFile
+import me.fungames.jfortniteparse.ue4.pak.PakFileReader
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
@@ -24,7 +25,8 @@ import kotlin.math.min
 enum class EIoStoreTocVersion {
     Invalid,
     Initial,
-    DirectoryIndex
+    DirectoryIndex,
+    PartitionSize
 }
 
 const val IO_CONTAINER_FLAG_COMPRESSED = 0x1
@@ -42,6 +44,8 @@ class FIoStoreTocHeader {
 
     var tocMagic = ByteArray(16)
     var version: EIoStoreTocVersion
+    /*var reserved0: UByte
+    var reserved1: UShort*/
     var tocHeaderSize: UInt
     var tocEntryCount: UInt
     var tocCompressedBlockEntryCount: UInt
@@ -49,17 +53,29 @@ class FIoStoreTocHeader {
     var compressionMethodNameCount: UInt
     var compressionMethodNameLength: UInt
     var compressionBlockSize: UInt
-    var directoryIndexSize: ULong
+    var directoryIndexSize: UInt
+    var partitionCount: UInt
     var containerId: FIoContainerId
     var encryptionKeyGuid: FGuid
     var containerFlags: Int //EIoContainerFlags
+    /*var reserved3: UByte
+    var reserved4: UShort
+    var reserved5: UInt
+    var partitionSize: ULong
+    var reserved6: ULongArray*/ //size: 6
     //var pad: ByteArray // uint8[60]
 
     constructor(Ar: FArchive) {
         Ar.read(tocMagic)
         if (!checkMagic())
             throw ParserException("Invalid utoc magic")
-        version = EIoStoreTocVersion.values()[Ar.readInt32()]
+        version = EIoStoreTocVersion.values().getOrElse(Ar.readInt32()) {
+            val latest = EIoStoreTocVersion.values().last()
+            PakFileReader.logger.warn("Unsupported TOC version $it, falling back to latest ($latest)")
+            latest
+        }
+        /*reserved0 = Ar.readUInt8()
+        reserved1 = Ar.readUInt16()*/
         tocHeaderSize = Ar.readUInt32()
         tocEntryCount = Ar.readUInt32()
         tocCompressedBlockEntryCount = Ar.readUInt32()
@@ -67,12 +83,18 @@ class FIoStoreTocHeader {
         compressionMethodNameCount = Ar.readUInt32()
         compressionMethodNameLength = Ar.readUInt32()
         compressionBlockSize = Ar.readUInt32()
-        directoryIndexSize = Ar.readUInt64()
+        directoryIndexSize = Ar.readUInt32()
+        partitionCount = Ar.readUInt32()
         containerId = FIoContainerId(Ar)
         encryptionKeyGuid = FGuid(Ar)
         containerFlags = Ar.readInt32()
         Ar.skip(60)
         //pad = Ar.read(60)
+        /*reserved3 = Ar.readUInt8()
+        reserved4 = Ar.readUInt16()
+        reserved5 = Ar.readUInt32()
+        partitionSize = Ar.readUInt64()
+        reserved6 = ULongArray(6) { Ar.readUInt64() }*/
     }
 
     fun makeMagic() {
@@ -473,6 +495,10 @@ class FIoStoreTocResource {
     fun read(tocBuffer: FArchive, readOptions: Int) {
         header = FIoStoreTocHeader(tocBuffer)
 
+        if (header.version < EIoStoreTocVersion.DirectoryIndex) {
+            throw ParserException("Outdated TOC header version")
+        }
+
         // Chunk IDs
         chunkIds = MutableList(header.tocEntryCount.toInt()) { FIoChunkId(tocBuffer) }
 
@@ -507,8 +533,7 @@ class FIoStoreTocResource {
         }
 
         // Directory index
-        if (header.version >= EIoStoreTocVersion.DirectoryIndex
-            && (readOptions and TOC_READ_OPTION_READ_DIRECTORY_INDEX) != 0
+        if ((readOptions and TOC_READ_OPTION_READ_DIRECTORY_INDEX) != 0
             && (header.containerFlags and IO_CONTAINER_FLAG_INDEXED) != 0
             && header.directoryIndexSize > 0u) {
             directoryIndexBuffer = tocBuffer.read(header.directoryIndexSize.toInt())

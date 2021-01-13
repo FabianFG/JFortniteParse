@@ -71,6 +71,7 @@ open class FField {
             "MulticastInlineDelegateProperty" -> FMulticastInlineDelegateProperty()
             "NameProperty" -> FNameProperty()
             "ObjectProperty" -> FObjectProperty()
+            "SoftClassProperty" -> FSoftClassProperty()
             "SoftObjectProperty" -> FSoftObjectProperty()
             "StrProperty" -> FStrProperty()
             "StructProperty" -> FStructProperty()
@@ -217,6 +218,15 @@ open class FObjectProperty : FPropertySerialized() {
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
         propertyClass = Ar.readObject()
+    }
+}
+
+class FSoftClassProperty : FObjectProperty() {
+    var metaClass: Lazy<UClassReal>? = null
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        metaClass = Ar.readObject()
     }
 }
 
