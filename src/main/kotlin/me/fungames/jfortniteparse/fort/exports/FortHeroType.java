@@ -24,7 +24,7 @@ public class FortHeroType extends FortWorkerType {
     public FPackageIndex /*FortHeroGameplayDefinition*/ HeroGameplayDefinition;
     public FPackageIndex /*AthenaCharacterItemDefinition*/ HeroCosmeticOutfitDefinition;
     public FPackageIndex /*AthenaBackpackItemDefinition*/ HeroCosmeticBackblingDefinition;
-    public FSoftObjectPath /*SoftClassPath*/ FrontendAnimClass;
+    public FSoftObjectPath /*SoftClassPath*/ FrontEndAnimClass;
     public FSoftObjectPath /*SoftClassPath*/ ItemPreviewAnimClass;
     public FSoftObjectPath FrontendAnimMontageIdleOverride;
     public Float FrontEndBackPreviewRotationOffset;

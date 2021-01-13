@@ -64,8 +64,11 @@ open class FField {
             "DelegateProperty" -> FDelegateProperty()
             "EnumProperty" -> FEnumProperty()
             "FloatProperty" -> FFloatProperty()
-            "InterfaceProperty" -> FInterfaceProperty()
+            "Int16Property" -> FInt16Property()
+            "Int64Property" -> FInt64Property()
+            "Int8Property" -> FInt8Property()
             "IntProperty" -> FIntProperty()
+            "InterfaceProperty" -> FInterfaceProperty()
             "MapProperty" -> FMapProperty()
             "MulticastDelegateProperty" -> FMulticastDelegateProperty()
             "MulticastInlineDelegateProperty" -> FMulticastInlineDelegateProperty()
@@ -76,6 +79,9 @@ open class FField {
             "StrProperty" -> FStrProperty()
             "StructProperty" -> FStructProperty()
             "TextProperty" -> FTextProperty()
+            "UInt16Property" -> FUInt16Property()
+            "UInt32Property" -> FUInt32Property()
+            "UInt64Property" -> FUInt64Property()
             else -> null
         }
     }
@@ -168,6 +174,14 @@ class FEnumProperty : FPropertySerialized() {
 
 class FFloatProperty : FNumericProperty()
 
+class FInt16Property : FNumericProperty()
+
+class FInt64Property : FNumericProperty()
+
+class FInt8Property : FNumericProperty()
+
+class FIntProperty : FNumericProperty()
+
 class FInterfaceProperty : FPropertySerialized() {
     var interfaceClass: Lazy<UClassReal>? = null
 
@@ -176,8 +190,6 @@ class FInterfaceProperty : FPropertySerialized() {
         interfaceClass = Ar.readObject()
     }
 }
-
-class FIntProperty : FNumericProperty()
 
 class FMapProperty : FPropertySerialized() {
     var keyProp: FPropertySerialized? = null
@@ -244,6 +256,12 @@ class FStructProperty : FPropertySerialized() {
 }
 
 class FTextProperty : FPropertySerialized()
+
+class FUInt16Property : FNumericProperty()
+
+class FUInt32Property : FNumericProperty()
+
+class FUInt64Property : FNumericProperty()
 
 fun serializeSingleField(Ar: FAssetArchive): FField? {
     val propertyTypeName = Ar.readFName()

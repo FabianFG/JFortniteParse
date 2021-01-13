@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
-import me.fungames.jfortniteparse.ue4.assets.exports.actors.AActor
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.core.math.FBox
 import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
@@ -49,7 +48,7 @@ class FPrecomputedVolumeDistanceField(Ar: FArchive) {
 @OnlyAnnotated
 class ULevel : ULevel_Properties() {
     lateinit var url: FURL
-    lateinit var actors: Array<Lazy<AActor>?>
+    lateinit var actors: Array<Lazy<UObject>?> // Array<Lazy<AActor>?>
     var model: Lazy<UObject>? = null // UModel
     lateinit var modelComponents: Array<Lazy<UObject>?> // UModelComponent
     var levelScriptActor: Lazy<UObject>? = null // ALevelScriptActor
