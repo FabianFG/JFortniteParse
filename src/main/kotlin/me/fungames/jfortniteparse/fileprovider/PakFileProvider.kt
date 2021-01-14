@@ -107,7 +107,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
             ?: return null//throw NotFoundException("The package to load does not exist on disk or in the loader")
         val ioBuffer = saveChunk(FIoChunkId(packageId.value(), 0u, EIoChunkType.ExportBundleData))
         return IoPackage(ioBuffer, packageId, storeEntry, globalPackageStore, this, game)
-    }.onFailure { logger.error { "Failed to load package with id ${packageId.value()}" } }.getOrNull()
+    }.onFailure { logger.error { "Failed to load package with id 0x%016X".format(packageId.value().toLong()) } }.getOrNull()
 
     override fun saveGameFile(filePath: String): ByteArray? {
         val path = fixPath(filePath)
@@ -142,18 +142,14 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     }
 
     protected fun loadGlobalData(globalTocFile: File) {
+        globalDataLoaded = true
         try {
-            globalDataLoaded = true
-            try {
-                val ioStoreReader = FIoStoreReaderImpl()
-                ioStoreReader.initialize(FIoStoreEnvironment(globalTocFile.path.substringBeforeLast('.')), keys)
-                mountedIoStoreReaders.add(ioStoreReader)
-                PakFileReader.logger.info("Initialized I/O dispatcher")
-            } catch (e: FIoStatusException) {
-                PakFileReader.logger.error("Failed to mount I/O dispatcher global environment: '{}'", e.message)
-            }
+            val ioStoreReader = FIoStoreReaderImpl()
+            ioStoreReader.initialize(FIoStoreEnvironment(globalTocFile.path.substringBeforeLast('.')), keys)
+            mountedIoStoreReaders.add(ioStoreReader)
+            PakFileReader.logger.info("Initialized I/O store")
         } catch (e: FIoStatusException) {
-            PakFileReader.logger.error("Failed to initialize I/O dispatcher: '{}'", e.message)
+            PakFileReader.logger.error("Failed to mount I/O store global environment: '{}'", e.message)
         }
     }
 

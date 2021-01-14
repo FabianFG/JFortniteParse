@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.io
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -41,8 +41,22 @@ class FIoStatus(val errorCode: EIoErrorCode, val errorMessage: String = "") {
     inline fun toException() = FIoStatusException(this)
 }
 
-class FIoStatusException(val status: FIoStatus, cause: Throwable? = null) : IOException(status.toString(), cause) {
-    constructor(errorCode: EIoErrorCode, errorMessage: String = "", cause: Throwable? = null) : this(FIoStatus(errorCode, errorMessage), cause)
+class FIoStatusException : ParserException {
+    val status: FIoStatus
+
+    constructor(status: FIoStatus, cause: Throwable? = null) : super(status.toString(), cause) {
+        this.status = status
+    }
+
+    constructor(errorCode: EIoErrorCode, errorMessage: String = "", cause: Throwable? = null)
+        : this(FIoStatus(errorCode, errorMessage), cause)
+
+    constructor(status: FIoStatus, Ar: FArchive, cause: Throwable? = null) : super(status.toString(), Ar, cause) {
+        this.status = status
+    }
+
+    constructor(errorCode: EIoErrorCode, errorMessage: String = "", Ar: FArchive, cause: Throwable? = null)
+        : this(FIoStatus(errorCode, errorMessage), Ar, cause)
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -192,6 +206,7 @@ class FIoStoreTocChunkInfo(
     val offset: ULong,
     val size: ULong,
     val compressedSize: ULong,
+    val partitionIndex: Int,
     val bForceUncompressed: Boolean,
     val bIsMemoryMapped: Boolean,
     val bIsCompressed: Boolean

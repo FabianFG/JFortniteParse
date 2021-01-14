@@ -7,6 +7,7 @@ import me.fungames.jfortniteparse.ue4.io.FIoStoreReaderImpl
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
@@ -32,7 +33,7 @@ open class DefaultFileProvider : PakFileProvider {
     }
 
     private fun scanFiles(folder: File) {
-        if (!globalDataLoaded && folder.name == "Paks") {
+        if (game.game >= GAME_UE4(26) && !globalDataLoaded && folder.name == "Paks") {
             val globalTocFile = File(folder, "global.utoc")
             if (globalTocFile.exists()) {
                 loadGlobalData(globalTocFile)
