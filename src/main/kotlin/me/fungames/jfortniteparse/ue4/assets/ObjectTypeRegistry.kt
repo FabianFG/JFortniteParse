@@ -63,6 +63,7 @@ object ObjectTypeRegistry {
         registerClass(USceneComponent::class.java)
         registerClass(UShapeComponent::class.java)
         registerClass(USimpleConstructionScript::class.java)
+        registerClass(USkeletalMesh::class.java)
         registerClass(USoundWave::class.java)
         registerClass(USphereComponent::class.java)
         registerClass(USpotLightComponent::class.java)

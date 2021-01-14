@@ -512,7 +512,7 @@ class FIoStoreTocResource {
             throw FIoStatusException(EIoErrorCode.CorruptToc, "TOC header size mismatch", tocBuffer)
         }
 
-        if (header.tocCompressedBlockEntrySize != 12u) {
+        if (header.tocCompressedBlockEntrySize != 12u /*sizeof(FIoStoreTocCompressedBlockEntry)*/) {
             throw FIoStatusException(EIoErrorCode.CorruptToc, "TOC compressed block entry size mismatch", tocBuffer)
         }
 
