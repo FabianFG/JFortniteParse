@@ -90,7 +90,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
             val struct = UScriptStruct()
             struct.name = Ar.readFName().text
             val superStructName = Ar.readFName()
-            struct.superStruct = if (!superStructName.isNone()) lazy { mappings.types[superStructName.text]!! } else null
+            struct.superStruct = if (!superStructName.isNone()) lazy { getStruct(superStructName)!! } else null
             struct.propertyCount = Ar.readUInt16().toInt()
             val serializablePropCount = Ar.readUInt16()
             struct.childProperties2 = List(serializablePropCount.toInt()) {

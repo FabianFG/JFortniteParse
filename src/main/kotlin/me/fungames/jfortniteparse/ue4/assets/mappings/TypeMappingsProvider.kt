@@ -13,7 +13,9 @@ abstract class TypeMappingsProvider {
         val struct = mappings.types[structName.text]
             ?: return null
         // required to be assigned so classes with custom serializers can be read properly
-        struct.structClass = ObjectTypeRegistry.classes[structName.text] ?: ObjectTypeRegistry.structs[structName.text]
+        if (struct.structClass == null) {
+            struct.structClass = ObjectTypeRegistry.classes[structName.text] ?: ObjectTypeRegistry.structs[structName.text]
+        }
         return struct
     }
 

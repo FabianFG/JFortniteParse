@@ -18,7 +18,7 @@ class FGameplayTagContainer : UClass, Iterable<FName> {
         super.complete(Ar)
     }
 
-    fun getValue(parent: String) = gameplayTags.firstOrNull { it.text.startsWith(parent) }
+    fun getValue(parent: String) = gameplayTags.firstOrNull { it.text.startsWith(parent, true) }
 
     fun serialize(Ar: FArchiveWriter) {
         super.initWrite(Ar)
