@@ -9,7 +9,6 @@ import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.ue4.reader.FArchiveProxy
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import java.io.File
 
@@ -22,7 +21,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
 
     override fun reload(): Boolean {
         val data = readCompressedUsmap(load())
-        parseData(FUsmapNameTableArchive(FByteArchive(data)))
+        parseData(FUsmapNameTableArchive(data))
         return true
     }
 
@@ -61,7 +60,9 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         val type = PropertyType(FName.dummy(propType.name))
         when (propType) {
             EnumProperty -> {
-                type.innerType = deserializePropData(Ar)
+                type.innerType = deserializePropData(Ar).also {
+                    type.isEnumAsByte = it.type.text == "ByteProperty"
+                }
                 type.enumName = Ar.readFName()
             }
             StructProperty -> type.structName = Ar.readFName()
@@ -104,7 +105,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         }
     }
 
-    class FUsmapNameTableArchive(innerAr: FArchive) : FArchiveProxy(innerAr) {
+    class FUsmapNameTableArchive(data: ByteArray) : FByteArchive(data) {
         lateinit var nameMap: Array<String>
 
         override fun readFName(): FName {
