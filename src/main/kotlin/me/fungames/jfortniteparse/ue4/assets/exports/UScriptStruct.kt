@@ -13,7 +13,7 @@ open class UScriptStruct : UStruct {
                 return
             }
             val superclass = value?.superclass
-            if (superclass != null && superclass != UObject::class.java && superclass != UObject::class.java) {
+            if (superclass != null && superclass != UObject::class.java) {
                 superStruct = lazy { UScriptStruct(superclass) }
             }
         }

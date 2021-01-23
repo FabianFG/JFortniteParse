@@ -55,7 +55,9 @@ class PropertyType(
                 innerType = prop.keyProp?.let { PropertyType(it) }
                 valueType = prop.valueProp?.let { PropertyType(it) }
             }
-            // TODO SetProperty
+            is FSetProperty -> {
+                innerType = prop.elementProp?.let { PropertyType(it) }
+            }
             is FStructProperty -> {
                 structClass = prop.struct
                 structName = structClass?.value?.name?.let { FName.dummy(it) } ?: NAME_None

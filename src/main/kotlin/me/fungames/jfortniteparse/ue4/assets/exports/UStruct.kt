@@ -76,6 +76,7 @@ open class FField {
             "ObjectProperty" -> FObjectProperty()
             "SoftClassProperty" -> FSoftClassProperty()
             "SoftObjectProperty" -> FSoftObjectProperty()
+            "SetProperty" -> FSetProperty()
             "StrProperty" -> FStrProperty()
             "StructProperty" -> FStructProperty()
             "TextProperty" -> FTextProperty()
@@ -243,6 +244,15 @@ class FSoftClassProperty : FObjectProperty() {
 }
 
 class FSoftObjectProperty : FObjectProperty()
+
+class FSetProperty : FPropertySerialized() {
+    var elementProp: FPropertySerialized? = null
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        elementProp = serializeSingleField(Ar) as FPropertySerialized?
+    }
+}
 
 class FStrProperty : FPropertySerialized()
 
