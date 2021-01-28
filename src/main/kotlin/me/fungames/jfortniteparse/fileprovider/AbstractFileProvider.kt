@@ -21,7 +21,7 @@ abstract class AbstractFileProvider : FileProvider() {
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
         return PakPackage(uasset, uexp, ubulk, file.path, this, game)
-    }.onFailure { logger.error { "Failed to load package ${file.path}" } }.getOrNull()
+    }.onFailure { logger.error(it) { "Failed to load package ${file.path}" } }.getOrNull()
 
     override fun findGameFile(filePath: String): GameFile? {
         val path = fixPath(filePath)
@@ -43,7 +43,7 @@ abstract class AbstractFileProvider : FileProvider() {
                 if (ioFile != null)
                     return ioFile
             } catch (e: ParserException) {
-                logger.error { "Failed to load package $path" }
+                logger.error(e) { "Failed to load package $path" }
             }
         }
         // try load from file system
@@ -55,7 +55,7 @@ abstract class AbstractFileProvider : FileProvider() {
             ?: return null//throw NotFoundException("uexp not found")
         val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
         return PakPackage(uasset, uexp, ubulk, path, this, game)
-    }.onFailure { logger.error { "Failed to load package $filePath" } }.getOrNull()
+    }.onFailure { logger.error(it) { "Failed to load package $filePath" } }.getOrNull()
 
     override fun loadLocres(filePath: String): Locres? = runCatching {
         val path = fixPath(filePath)
