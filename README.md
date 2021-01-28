@@ -193,12 +193,12 @@ Texts will be exported with the hotfixed ones
 <dependency>
   <groupId>me.fungames</groupId>
   <artifactId>JFortniteParseTextHotfixes</artifactId>
-  <version>1.5</version>
+  <version>1.5.1</version>
 </dependency>
 ```
 ##### Gradle
 ```groovy
-implementation 'me.fungames:JFortniteParseTextHotfixes:1.5'
+implementation 'me.fungames:JFortniteParseTextHotfixes:1.5.1'
 ```
 
 ### Contributors
