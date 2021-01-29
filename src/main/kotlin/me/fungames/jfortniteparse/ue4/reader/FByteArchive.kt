@@ -13,22 +13,15 @@ open class FByteArchive(val data: ByteBuffer) : FArchive() {
 
     override var littleEndian: Boolean
         get() = data.order() == ByteOrder.LITTLE_ENDIAN
-        set(value) {
-            if (value)
-                data.order(ByteOrder.LITTLE_ENDIAN)
-            else
-                data.order(ByteOrder.BIG_ENDIAN)
-        }
+        set(value) { data.order(if (value) ByteOrder.LITTLE_ENDIAN else ByteOrder.BIG_ENDIAN) }
 
     protected var pos: Int
         get() = data.position()
-        set(value) {
-            data.position(value)
-        }
+        set(value) { data.position(value) }
     protected val size = data.limit()
 
     override fun clone(): FByteArchive {
-        val clone = FByteArchive(data)
+        val clone = FByteArchive(data.duplicate())
         clone.pos = pos
         return clone
     }
@@ -45,31 +38,37 @@ open class FByteArchive(val data: ByteBuffer) : FArchive() {
     }
 
     override fun size() = size
-
     override fun pos() = pos
 
-
-    override fun readBuffer(size: Int): ByteBuffer {
-        return data.duplicate().apply {
+    override fun readBuffer(size: Int): ByteBuffer =
+        data.duplicate().apply {
             order(data.order())
             limit(position() + size)
             pos += size
         }
-    }
+
+    override fun read() =
+        if (!data.hasRemaining()) {
+            -1
+        } else {
+            data.get().toInt() and 0xFF
+        }
 
     override fun read(b: ByteArray, off: Int, len: Int): Int {
-        val count = min(size - pos, len)
-        if (count == 0) return -1
-        data.get(b, off, len)
+        if (!data.hasRemaining()) {
+            return -1
+        }
+        val count = min(len, data.remaining())
+        data.get(b, off, count)
         return count
     }
 
-    override fun readDouble() = data.double
-    override fun readFloat32() = data.float
     override fun readInt8() = data.get()
     override fun readInt16() = data.short
     override fun readInt32() = data.int
     override fun readInt64() = data.long
+    override fun readFloat32() = data.float
+    override fun readDouble() = data.double
 
     override fun printError() = "FByteArchive Info: pos $pos, stopper $size"
 }

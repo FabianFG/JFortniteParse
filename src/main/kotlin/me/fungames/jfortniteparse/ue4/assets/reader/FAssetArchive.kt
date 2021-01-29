@@ -32,13 +32,19 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
         payloads[type] = payload
     }
 
-    override fun clone(): FAssetArchive {
-        val c = FAssetArchive(data, provider, pkgName)
+    public override fun clone(): FAssetArchive {
+        val c = FAssetArchive(data.duplicate(), provider, pkgName)
+        c.game = game
+        c.ver = ver
+        c.useUnversionedPropertySerialization = useUnversionedPropertySerialization
+        c.isFilterEditorOnly = isFilterEditorOnly
         c.littleEndian = littleEndian
         c.pos = pos
+        c.owner = owner
         payloads.forEach { c.payloads[it.key] = it.value }
         c.uassetSize = uassetSize
         c.uexpSize = uexpSize
+        c.bulkDataStartOffset = bulkDataStartOffset
         return c
     }
 

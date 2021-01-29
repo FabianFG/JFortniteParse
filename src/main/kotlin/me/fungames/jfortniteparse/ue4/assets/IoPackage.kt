@@ -107,6 +107,7 @@ class IoPackage : Package {
                         val obj = constructExport(resolveObjectIndex(export.classIndex)?.getObject()?.value as UStruct?)
                         obj.name = objectName.text
                         obj.outer = (resolveObjectIndex(export.outerIndex) as? ResolvedExportObject)?.exportObject?.value ?: this
+                        obj.template = (resolveObjectIndex(export.templateIndex) as? ResolvedExportObject)?.exportObject
                         obj.flags = export.objectFlags.toInt()
 
                         // Serialize
@@ -135,7 +136,7 @@ class IoPackage : Package {
             }
         }
         bulkDataStartOffset = currentExportDataOffset
-        logger.info { "Successfully parsed package : $name" }
+        //logger.info { "Successfully parsed package : $name" }
     }
 
     class FImportedPackage(Ar: FArchive) {
@@ -223,7 +224,7 @@ class IoPackage : Package {
         "import_map" to gson.toJsonTree(importMap),
         "export_map" to gson.toJsonTree(exportMap),
         "export_properties" to gson.toJsonTree(exports.map {
-            it.takeIf { it is UObject }?.toJson(gson, locres)
+            it.toJson(gson, locres)
         })
     )
 

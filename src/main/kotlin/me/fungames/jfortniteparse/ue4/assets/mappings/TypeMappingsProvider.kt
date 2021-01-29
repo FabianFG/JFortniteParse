@@ -14,7 +14,7 @@ abstract class TypeMappingsProvider {
             ?: return null
         // required to be assigned so classes with custom serializers can be read properly
         if (struct.structClass == null) {
-            struct.structClass = ObjectTypeRegistry.classes[structName.text] ?: ObjectTypeRegistry.structs[structName.text]
+            struct.structClass = ObjectTypeRegistry.get(structName.text)
         }
         return struct
     }

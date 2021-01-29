@@ -11,6 +11,7 @@ open class FArchiveProxy(val wrappedAr: FArchive) : FArchive() {
     override fun size() = wrappedAr.size()
     override fun pos() = wrappedAr.pos()
 
+    override fun read() = wrappedAr.read()
     override fun read(b: ByteArray, off: Int, len: Int) = wrappedAr.read(b, off, len)
     override fun readBuffer(size: Int) = wrappedAr.readBuffer(size)
 
@@ -18,10 +19,10 @@ open class FArchiveProxy(val wrappedAr: FArchive) : FArchive() {
     override fun printError() = wrappedAr.printError()
 
     //Only overriding these to keep optimal performance with FByteArchive
-    override fun readDouble() = wrappedAr.readDouble()
-    override fun readFloat32() = wrappedAr.readFloat32()
     override fun readInt8() = wrappedAr.readInt8()
     override fun readInt16() = wrappedAr.readInt16()
     override fun readInt32() = wrappedAr.readInt32()
     override fun readInt64() = wrappedAr.readInt64()
+    override fun readFloat32() = wrappedAr.readFloat32()
+    override fun readDouble() = wrappedAr.readDouble()
 }

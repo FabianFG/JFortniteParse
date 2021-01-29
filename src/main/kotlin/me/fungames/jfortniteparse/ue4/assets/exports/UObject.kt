@@ -24,6 +24,7 @@ open class UObject : UClass, IPropertyHolder {
     var name = ""
     var outer: UObject? = null
     var clazz: UStruct? = null
+    var template: Lazy<UObject>? = null
     final override var properties: MutableList<FPropertyTag>
     var objectGuid: FGuid? = null
     var flags = 0

@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.util.await
-import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
@@ -40,9 +39,9 @@ class FPackageStore(
 
     fun setupInitialLoadData() {
         val initialLoadIoBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta))
-        val initialLoadArchive = FByteArchive(ByteBuffer.wrap(initialLoadIoBuffer))
+        val initialLoadArchive = FByteArchive(initialLoadIoBuffer)
 
-        for (i in 0 until initialLoadArchive.readInt32()) {
+        repeat(initialLoadArchive.readInt32()) {
             importStore.scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries).also {
                 val mappedName = FMappedName.fromMinimalName(it.objectName)
                 check(mappedName.isGlobal())
@@ -172,9 +171,9 @@ class FPackageStore(
         }
     }
 
-    fun getRedirectedPackageId(packageId: FPackageId): FPackageId {
+    fun getRedirectedPackageId(packageId: FPackageId): FPackageId? {
         synchronized(packageNameMapsCritical) {
-            return redirectsPackageMap[packageId] ?: FPackageId()
+            return redirectsPackageMap[packageId]
         }
     }
 

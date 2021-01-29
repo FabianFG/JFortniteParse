@@ -64,14 +64,10 @@ abstract class FileProvider {
     abstract fun loadGameFile(packageId: FPackageId): IoPackage?
 
     // Load object by object path string
-    inline fun <reified T> loadObject(objectPath: String?): T? {
-        if (objectPath == null) return null
-        val loaded = loadObject(objectPath) ?: return null
-        return if (loaded is T) loaded else null
-    }
+    inline fun <reified T> loadObject(objectPath: String?) = loadObject(objectPath) as? T
 
     fun loadObject(objectPath: String?): UObject? {
-        if (objectPath == null) return null
+        if (objectPath == null || objectPath == "None") return null
         var packagePath = objectPath
         val objectName: String
         val dotIndex = packagePath.indexOf('.')

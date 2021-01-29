@@ -32,12 +32,17 @@ class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : F
     }
 
     override fun clone(): FExportArchive {
-        val c = FExportArchive(data, obj, pkg)
+        val c = FExportArchive(data.duplicate(), obj, pkg)
+        c.game = game
+        c.ver = ver
+        c.useUnversionedPropertySerialization = useUnversionedPropertySerialization
+        c.isFilterEditorOnly = isFilterEditorOnly
         c.littleEndian = littleEndian
         c.pos = pos
         payloads.forEach { c.payloads[it.key] = it.value }
         c.uassetSize = uassetSize
         c.uexpSize = uexpSize
+        c.bulkDataStartOffset = bulkDataStartOffset
         return c
     }
 

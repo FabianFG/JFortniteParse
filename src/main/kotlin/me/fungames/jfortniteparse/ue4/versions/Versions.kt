@@ -56,6 +56,7 @@ internal const val VER_UE4_STRUCT_GUID_IN_PROPERTY_TAG = 441
 internal const val VER_UE4_PACKAGE_SUMMARY_HAS_COMPATIBLE_ENGINE_VERSION = 444
 internal const val VER_UE4_8 = 451
 internal const val VER_UE4_SERIALIZE_TEXT_IN_PACKAGES = 459
+internal const val VER_UE4_NEW_LIGHTMASS_PRIMITIVE_SETTING = 461
 internal const val VER_UE4_9 = 482
 internal const val VER_UE4_10 = VER_UE4_9								// exactly the same file version for 4.9 and 4.10
 internal const val VER_UE4_COOKED_ASSETS_IN_EDITOR_SUPPORT = 485
@@ -88,5 +89,8 @@ internal const val VER_UE4_24 = 518
 internal const val VER_UE4_25 = 518
 internal const val VER_UE4_SKINWEIGHT_PROFILE_DATA_LAYOUT_CHANGES = 519
 internal const val VER_UE4_26 = 519
+internal const val VER_UE4_NON_OUTER_PACKAGE_IMPORT = 520
+internal const val VER_UE4_ASSETREGISTRY_DEPENDENCYFLAGS = 521
+internal const val VER_UE4_CORRECT_LICENSEE_FLAG = 522
 // look for NEW_ENGINE_VERSION over the code to find places where version constants should be inserted.
 // LATEST_SUPPORTED_UE4_VERSION should be updated too.

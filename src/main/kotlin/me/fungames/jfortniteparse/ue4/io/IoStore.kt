@@ -323,8 +323,8 @@ class FIoStoreReaderImpl {
     }
 
     fun getChunkInfo(chunkId: FIoChunkId): FIoStoreTocChunkInfo {
-        val tocEntryIndex = toc.getTocEntryIndex(chunkId)!!
-        if (tocEntryIndex > 0) {
+        val tocEntryIndex = toc.getTocEntryIndex(chunkId)
+        if (tocEntryIndex != null) {
             return getTocChunkInfo(tocEntryIndex)
         } else {
             throw FIoStatusException(EIoErrorCode.NotFound, "Not found")
