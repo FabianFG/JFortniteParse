@@ -1,58 +1,13 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
-import me.fungames.jfortniteparse.LOG_STREAMING
-import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.get
-import org.slf4j.event.Level
-import org.slf4j.event.Level.*
 
 typealias FSourceToLocalizedPackageIdMap = Array<Pair<FPackageId, FPackageId>>
 typealias FCulturePackageMap = Map<String, FSourceToLocalizedPackageIdMap>
-
-// from Serialization/Archive.h
-typealias FExternalReadCallback = (remainingTime: Double) -> Boolean
-
-fun interface FCompletionCallback {
-    fun onCompletion(packageName: FName, loadedPackage: Package?, exceptions: List<Throwable>)
-}
-
-const val ALT2_LOG_VERBOSE = true
-
-internal fun asyncPackageLog(level: Level, packageDesc: FAsyncPackageDesc2, logDesc: String, format: String) {
-    val s = if (!packageDesc.customPackageName.isNone()) {
-        "%s: %s (0x%016X) %s (0x%016X) - %s".format(
-            logDesc,
-            packageDesc.customPackageName.toString(),
-            packageDesc.customPackageId.valueForDebugging().toLong(),
-            packageDesc.diskPackageName.toString(),
-            packageDesc.diskPackageId.valueForDebugging().toLong(),
-            format
-        )
-    } else {
-        "%s: %s (0x%016X) - %s".format(
-            logDesc,
-            packageDesc.diskPackageName.toString(),
-            packageDesc.diskPackageId.valueForDebugging().toLong(),
-            format
-        )
-    }
-    when (level) {
-        ERROR -> LOG_STREAMING.error(s)
-        WARN -> LOG_STREAMING.warn(s)
-        INFO -> LOG_STREAMING.info(s)
-        DEBUG -> LOG_STREAMING.debug(s)
-        TRACE -> LOG_STREAMING.trace(s)
-    }
-}
-
-internal inline fun asyncPackageLogVerbose(level: Level, packageDesc: FAsyncPackageDesc2, logDesc: String, format: String) {
-    if (ALT2_LOG_VERBOSE) asyncPackageLog(level, packageDesc, logDesc, format)
-}
 
 class FMappedName {
     companion object {
@@ -371,30 +326,3 @@ class FExportMapEntry {
         Ar.skip(3)
     }
 }
-
-var GIsInitialLoad = true
-
-/*fun GFindExistingScriptImport(
-    globalImportIndex: FPackageObjectIndex,
-    scriptObjects: MutableMap<FPackageObjectIndex, UObject?>,
-    scriptObjectEntriesMap: Map<FPackageObjectIndex, FScriptObjectEntry>): UObject? =
-    scriptObjects.getOrPut(globalImportIndex.apply { println(hashCode()) }) {
-        println("put: ${globalImportIndex.hashCode()}")
-        val entry = scriptObjectEntriesMap[globalImportIndex]
-        check(entry != null)
-        var obj: UObject?
-        if (entry.outerIndex.isNull()) {
-            obj = staticFindObjectFast(Package::class.java, null, entry.objectName.toName(), true)
-        } else {
-            val outer = GFindExistingScriptImport(entry.outerIndex, scriptObjects, scriptObjectEntriesMap)
-            obj = scriptObjects[globalImportIndex]
-            if (outer != null) {
-                obj = staticFindObjectFast(UObject::class.java, outer, entry.objectName.toName(), false, true)
-            }
-        }
-        obj
-    }
-
-fun staticFindObjectFast(clazz: Class<*>, outer: UObject?, name: FName, exactClass: Boolean, anyPackage: Boolean = false): UObject? {
-    return ObjectTypeRegistry.constructClass(name.toString())
-}*/

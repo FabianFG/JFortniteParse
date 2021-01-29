@@ -21,16 +21,8 @@ class FPackageStore(
 
     val storeEntriesMap = mutableMapOf<FPackageId, FPackageStoreEntry>()
     val redirectsPackageMap = mutableMapOf<FPackageId, FPackageId>()
-    var nextCustomPackageIndex = 0
 
     val importStore = FGlobalImportStore()
-
-    ///**
-    // * Packages in active loading or completely loaded packages, with desc.diskPackageName as key.
-    // * Does not track temp packages with custom UPackage names, since they are never imported by other packages.
-    // */
-    //val loadedPackageStore = mutableMapOf<FPackageId, FLoadedPackageRef>() /*FLoadedPackageStore*/
-    var scriptArcsCount = 0
 
     fun setupCulture() {
         currentCultureNames.clear()
@@ -40,8 +32,10 @@ class FPackageStore(
     fun setupInitialLoadData() {
         val initialLoadIoBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta))
         val initialLoadArchive = FByteArchive(initialLoadIoBuffer)
+        val numScriptObjects = initialLoadArchive.readInt32()
+        importStore.scriptObjectEntries.ensureCapacity(numScriptObjects)
 
-        repeat(initialLoadArchive.readInt32()) {
+        repeat(numScriptObjects) {
             importStore.scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries).also {
                 val mappedName = FMappedName.fromMinimalName(it.objectName)
                 check(mappedName.isGlobal())
@@ -151,19 +145,6 @@ class FPackageStore(
             }
         }
     }
-
-    fun finalizeInitialLoad() {
-        //importStore.findAllScriptObjects()
-
-        /*LOG_STREAMING.info("AsyncLoading2 - InitialLoad Finalized: %d script object entries in %.2f KB"
-            .format(importStore.scriptObjects.size, ObjectSizeCalculator.getObjectSize(importStore.scriptObjects) / 1024f))*/
-    }
-
-    //inline val globalImportStore get() = importStore
-
-    //fun removePackage(package: UPackage) {}
-
-    //fun removePublicExport(object: UObject) {}
 
     fun findStoreEntry(packageId: FPackageId): FPackageStoreEntry? {
         synchronized(packageNameMapsCritical) {
