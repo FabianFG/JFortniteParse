@@ -27,7 +27,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     protected abstract val requiredKeys: MutableList<FGuid>
     protected abstract val keys: MutableMap<FGuid, ByteArray>
     protected val mountListeners = mutableListOf<PakMountListener>()
-    protected val globalPackageStore by lazy {
+    open val globalPackageStore by lazy {
         val globalNameMap = FNameMap()
         val globalPackageStore = FPackageStore(this, globalNameMap)
         globalNameMap.loadGlobal(this)
