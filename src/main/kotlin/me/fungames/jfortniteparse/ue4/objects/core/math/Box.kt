@@ -14,10 +14,10 @@ import kotlin.math.min
  */
 class FBox : UClass {
     /** Holds the box's minimum point. */
-    var min: FVector
+    val min: FVector
 
     /** Holds the box's maximum point. */
-    var max: FVector
+    val max: FVector
 
     /** Holds a flag indicating whether this box is valid. */
     var isValid: Boolean
@@ -111,8 +111,8 @@ class FBox : UClass {
             max.y = max(max.y, other.y)
             max.z = max(max.z, other.z)
         } else {
-            min = other
-            max = other
+            min.set(other)
+            max.set(other)
             isValid = true
         }
     }
@@ -145,8 +145,8 @@ class FBox : UClass {
             max.y = max(max.y, other.max.y)
             max.z = max(max.z, other.max.z)
         } else if (other.isValid) {
-            min = other.min
-            max = other.max
+            min.set(other.min)
+            max.set(other.max)
             isValid = other.isValid
         }
     }
@@ -164,10 +164,10 @@ class FBox : UClass {
     }
 
     /**
-     * Gets reference to the min or max of this bounding volume.
+     * Gets the min or max of this bounding volume.
      *
      * @param index the index into points of the bounding volume.
-     * @return a reference to a point of the bounding volume.
+     * @return a point of the bounding volume.
      */
     operator fun get(index: Int) = when (index) {
         0 -> min

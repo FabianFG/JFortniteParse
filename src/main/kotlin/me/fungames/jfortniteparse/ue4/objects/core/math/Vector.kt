@@ -15,7 +15,7 @@ const val THRESH_VECTOR_NORMALIZED = 0.01f
 /**
  * A vector in 3-D space composed of components (X, Y, Z) with floating point precision.
  */
-@ExperimentalUnsignedTypes
+@Suppress("NOTHING_TO_INLINE")
 open class FVector : UClass {
     /** Vector's X component. */
     var x: Float
@@ -105,7 +105,7 @@ open class FVector : UClass {
      * @param other The other vector.
      * @return Reference to vector after copy.
      */
-    fun set(other: FVector): FVector {
+    inline fun set(other: FVector): FVector {
         x = other.x; y = other.y; z = other.z
         return this
     }
@@ -116,7 +116,7 @@ open class FVector : UClass {
      * @param v The other vector.
      * @return The cross product.
      */
-    infix fun xor(v: FVector) = FVector(
+    inline infix fun xor(v: FVector) = FVector(
         y * v.z - z * v.y,
         z * v.x - x * v.z,
         x * v.y - y * v.x
@@ -128,7 +128,7 @@ open class FVector : UClass {
      * @param v The other vector.
      * @return The dot product.
      */
-    infix fun or(v: FVector) = x * v.x + y * v.y + z * v.z
+    inline infix fun or(v: FVector) = x * v.x + y * v.y + z * v.z
 
     /**
      * Gets the result of component-wise addition of this and another vector.
@@ -136,7 +136,7 @@ open class FVector : UClass {
      * @param v The vector to add to this.
      * @return The result of vector addition.
      */
-    operator fun plus(v: FVector) = FVector(x + v.x, y + v.y, z + v.z)
+    inline operator fun plus(v: FVector) = FVector(x + v.x, y + v.y, z + v.z)
 
     /**
      * Gets the result of component-wise subtraction of this by another vector.
@@ -144,7 +144,7 @@ open class FVector : UClass {
      * @param v The vector to subtract from this.
      * @return The result of vector subtraction.
      */
-    operator fun minus(v: FVector) = FVector(x - v.x, y - v.y, z - v.z)
+    inline operator fun minus(v: FVector) = FVector(x - v.x, y - v.y, z - v.z)
 
     /**
      * Gets the result of subtracting from each component of the vector.
@@ -152,7 +152,7 @@ open class FVector : UClass {
      * @param bias How much to subtract from each component.
      * @return The result of subtraction.
      */
-    operator fun minus(bias: Float) = FVector(x - bias, y - bias, z - bias)
+    inline operator fun minus(bias: Float) = FVector(x - bias, y - bias, z - bias)
 
     /**
      * Gets the result of adding to each component of the vector.
@@ -160,7 +160,7 @@ open class FVector : UClass {
      * @param bias How much to add to each component.
      * @return The result of addition.
      */
-    operator fun plus(bias: Float) = FVector(x - bias, y - bias, z - bias)
+    inline operator fun plus(bias: Float) = FVector(x - bias, y - bias, z - bias)
 
     /**
      * Gets the result of scaling the vector (multiplying each component by a value).
@@ -168,7 +168,7 @@ open class FVector : UClass {
      * @param scale What to multiply each component by.
      * @return The result of multiplication.
      */
-    operator fun times(scale: Float) = FVector(x * scale, y * scale, z * scale)
+    inline operator fun times(scale: Float) = FVector(x * scale, y * scale, z * scale)
 
     /**
      * Gets the result of dividing each component of the vector by a value.
@@ -176,7 +176,7 @@ open class FVector : UClass {
      * @param scale What to divide each component by.
      * @return The result of division.
      */
-    operator fun div(scale: Float): FVector {
+    inline operator fun div(scale: Float): FVector {
         val rScale = 1f / scale
         return FVector(x * rScale, y * rScale, z * rScale)
     }
@@ -187,7 +187,7 @@ open class FVector : UClass {
      * @param v The vector to multiply with.
      * @return The result of multiplication.
      */
-    operator fun times(v: FVector) = FVector(x * v.x, y * v.y, z * v.z)
+    inline operator fun times(v: FVector) = FVector(x * v.x, y * v.y, z * v.z)
 
     /**
      * Gets the result of component-wise division of this vector by another.
@@ -195,7 +195,7 @@ open class FVector : UClass {
      * @param v The vector to divide by.
      * @return The result of division.
      */
-    operator fun div(v: FVector) = FVector(x / v.x, y / v.y, z / v.z)
+    inline operator fun div(v: FVector) = FVector(x / v.x, y / v.y, z / v.z)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -220,7 +220,7 @@ open class FVector : UClass {
      * @param tolerance Error tolerance.
      * @return true if the vectors are equal within tolerance limits, false otherwise.
      */
-    fun equals(v: FVector, tolerance: Float = KINDA_SMALL_NUMBER) = abs(x - v.x) <= tolerance && abs(y - v.y) <= tolerance && abs(z - v.z) <= tolerance
+    inline fun equals(v: FVector, tolerance: Float = KINDA_SMALL_NUMBER) = abs(x - v.x) <= tolerance && abs(y - v.y) <= tolerance && abs(z - v.z) <= tolerance
 
     /**
      * Checks whether all components of this vector are the same, within a tolerance.
@@ -228,14 +228,14 @@ open class FVector : UClass {
      * @param tolerance Error tolerance.
      * @return true if the vectors are equal within tolerance limits, false otherwise.
      */
-    fun allComponentsEqual(tolerance: Float = KINDA_SMALL_NUMBER) = abs(x - y) <= tolerance && abs(x - z) <= tolerance && abs(y - z) <= tolerance
+    inline fun allComponentsEqual(tolerance: Float = KINDA_SMALL_NUMBER) = abs(x - y) <= tolerance && abs(x - z) <= tolerance && abs(y - z) <= tolerance
 
     /**
      * Get a negated copy of the vector.
      *
      * @return A negated copy of the vector.
      */
-    operator fun unaryMinus() = FVector(-x, -y, -z)
+    inline operator fun unaryMinus() = FVector(-x, -y, -z)
 
     /**
      * Adds another vector to this.
@@ -243,7 +243,7 @@ open class FVector : UClass {
      *
      * @param v Vector to add to this.
      */
-    operator fun plusAssign(v: FVector) {
+    inline operator fun plusAssign(v: FVector) {
         x += v.x; y += v.y; z += v.z
     }
 
@@ -253,7 +253,7 @@ open class FVector : UClass {
      *
      * @param v Vector to subtract from this.
      */
-    operator fun minusAssign(v: FVector) {
+    inline operator fun minusAssign(v: FVector) {
         x -= v.x; y -= v.y; z -= v.z
     }
 
@@ -262,7 +262,7 @@ open class FVector : UClass {
      *
      * @param scale Amount to scale this vector by.
      */
-    operator fun timesAssign(scale: Float) {
+    inline operator fun timesAssign(scale: Float) {
         x *= scale; y *= scale; z *= scale
     }
 
@@ -271,7 +271,7 @@ open class FVector : UClass {
      *
      * @param V What to divide this vector by.
      */
-    operator fun divAssign(v: FVector) {
+    inline operator fun divAssign(v: FVector) {
         x /= v.x; y /= v.y; z /= v.z
     }
 
@@ -280,7 +280,7 @@ open class FVector : UClass {
      *
      * @param v What to multiply this vector with.
      */
-    operator fun timesAssign(v: FVector) {
+    inline operator fun timesAssign(v: FVector) {
         x *= v.x; y *= v.y; z *= v.z
     }
 
@@ -317,7 +317,7 @@ open class FVector : UClass {
      * @param y New Y coordinate.
      * @param z New Z coordinate.
      */
-    fun set(x: Float, y: Float, z: Float) {
+    inline fun set(x: Float, y: Float, z: Float) {
         this.x = x; this.y = y; this.z = z
     }
 
@@ -326,69 +326,69 @@ open class FVector : UClass {
      *
      * @return The maximum value of the vector's components.
      */
-    fun getMax() = max(max(x, y), z)
+    inline fun getMax() = max(max(x, y), z)
 
     /**
      * Get the maximum absolute value of the vector's components.
      *
      * @return The maximum absolute value of the vector's components.
      */
-    fun getAbsMax() = max(max(abs(x), abs(y)), abs(z))
+    inline fun getAbsMax() = max(max(abs(x), abs(y)), abs(z))
 
     /**
      * Get the minimum value of the vector's components.
      *
      * @return The minimum value of the vector's components.
      */
-    fun getMin() = min(min(x, y), z)
+    inline fun getMin() = min(min(x, y), z)
 
     /**
      * Get the minimum absolute value of the vector's components.
      *
      * @return The minimum absolute value of the vector's components.
      */
-    fun getAbsMin() = min(min(abs(x), abs(y)), abs(z))
+    inline fun getAbsMin() = min(min(abs(x), abs(y)), abs(z))
 
     /** Gets the component-wise min of two vectors. */
-    fun componentMin(other: FVector) = FVector(min(x, other.x), min(y, other.y), min(z, other.z))
+    inline fun componentMin(other: FVector) = FVector(min(x, other.x), min(y, other.y), min(z, other.z))
 
     /** Gets the component-wise max of two vectors. */
-    fun componentMax(other: FVector) = FVector(max(x, other.x), max(y, other.y), max(z, other.z))
+    inline fun componentMax(other: FVector) = FVector(max(x, other.x), max(y, other.y), max(z, other.z))
 
     /**
      * Get a copy of this vector with absolute value of each component.
      *
      * @return A copy of this vector with absolute value of each component.
      */
-    fun getAbs() = FVector(abs(x), abs(y), abs(z))
+    inline fun getAbs() = FVector(abs(x), abs(y), abs(z))
 
     /**
      * Get the length (magnitude) of this vector.
      *
      * @return The length of this vector.
      */
-    fun size() = sqrt(x * x + y * y + z * z)
+    inline fun size() = sqrt(x * x + y * y + z * z)
 
     /**
      * Get the squared length of this vector.
      *
      * @return The squared length of this vector.
      */
-    fun sizeSquared() = x * x + y * y + z * z
+    inline fun sizeSquared() = x * x + y * y + z * z
 
     /**
      * Get the length of the 2D components of this vector.
      *
      * @return The 2D length of this vector.
      */
-    fun size2D() = sqrt(x * x + y * y)
+    inline fun size2D() = sqrt(x * x + y * y)
 
     /**
      * Get the squared length of the 2D components of this vector.
      *
      * @return The squared 2D length of this vector.
      */
-    fun sizeSquared2D() = x * x + y * y
+    inline fun sizeSquared2D() = x * x + y * y
 
     /**
      * Checks whether vector is near to zero within a specified tolerance.
@@ -396,14 +396,14 @@ open class FVector : UClass {
      * @param tolerance Error tolerance.
      * @return true if the vector is near to zero, false otherwise.
      */
-    fun isNearlyZero(tolerance: Float = KINDA_SMALL_NUMBER) = abs(x) <= tolerance && abs(y) <= tolerance && abs(z) <= tolerance
+    inline fun isNearlyZero(tolerance: Float = KINDA_SMALL_NUMBER) = abs(x) <= tolerance && abs(y) <= tolerance && abs(z) <= tolerance
 
     /**
      * Checks whether all components of the vector are exactly zero.
      *
      * @return true if the vector is exactly zero, false otherwise.
      */
-    fun isZero() = x == 0f && y == 0f && z == 0f
+    inline fun isZero() = x == 0f && y == 0f && z == 0f
 
     /**
      * Check if the vector is of unit length, with specified tolerance.
@@ -411,14 +411,14 @@ open class FVector : UClass {
      * @param lengthSquaredTolerance Tolerance against squared length.
      * @return true if the vector is a unit vector within the specified tolerance.
      */
-    fun isUnit(lengthSquaredTolerance: Float = KINDA_SMALL_NUMBER) = abs(1f - sizeSquared()) < lengthSquaredTolerance
+    inline fun isUnit(lengthSquaredTolerance: Float = KINDA_SMALL_NUMBER) = abs(1f - sizeSquared()) < lengthSquaredTolerance
 
     /**
      * Checks whether vector is normalized.
      *
      * @return true if normalized, false otherwise.
      */
-    fun isNormalized() = abs(1f - sizeSquared()) < THRESH_VECTOR_NORMALIZED // TODO port more methods
+    inline fun isNormalized() = abs(1f - sizeSquared()) < THRESH_VECTOR_NORMALIZED // TODO port more methods
 
     /**
      * Get a textual representation of this vector.
@@ -426,6 +426,14 @@ open class FVector : UClass {
      * @return A string describing the vector.
      */
     override fun toString() = "X=%3.3f Y=%3.3f Z=%3.3f".format(x, y, z)
+
+    /**
+     * Squared distance between two points.
+     *
+     * @param other The other point.
+     * @return The squared distance between two points.
+     */
+    inline fun distSquared(other: FVector) = square(other.x - x) + square(other.y - y)
 
     companion object {
         /**

@@ -303,6 +303,9 @@ class FObjectImport : FObjectResource {
         className = Ar.readFName()
         outerIndex = FPackageIndex(Ar)
         objectName = Ar.readFName()
+        if (Ar.ver >= VER_UE4_NON_OUTER_PACKAGE_IMPORT && !Ar.isFilterEditorOnly) {
+            val packageName = Ar.readFName()
+        }
         super.complete(Ar)
     }
 

@@ -21,7 +21,7 @@ import java.nio.ByteBuffer
 
 class PakPackage(
     uasset: ByteBuffer,
-    uexp: ByteBuffer,
+    uexp: ByteBuffer? = null,
     ubulk: ByteBuffer? = null,
     fileName: String,
     provider: FileProvider? = null,
@@ -31,8 +31,8 @@ class PakPackage(
         val packageMagic = 0x9E2A83C1u
     }
 
-    constructor(uasset: ByteArray, uexp: ByteArray, ubulk: ByteArray? = null, name: String, provider: FileProvider? = null, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) :
-        this(ByteBuffer.wrap(uasset), ByteBuffer.wrap(uexp), ubulk?.let { ByteBuffer.wrap(it) }, name, provider, game)
+    constructor(uasset: ByteArray, uexp: ByteArray? = null, ubulk: ByteArray? = null, name: String, provider: FileProvider? = null, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) :
+        this(ByteBuffer.wrap(uasset), uexp?.let { ByteBuffer.wrap(it) }, ubulk?.let { ByteBuffer.wrap(it) }, name, provider, game)
 
     constructor(uasset: File, uexp: File, ubulk: File?, provider: FileProvider? = null, game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : this(
         uasset.readBytes(), uexp.readBytes(), ubulk?.readBytes(),
@@ -50,7 +50,7 @@ class PakPackage(
     init {
         name = provider?.compactFilePath(fileName)?.substringBeforeLast('.') ?: fileName
         val uassetAr = FAssetArchive(uasset, provider, fileName)
-        val uexpAr = FAssetArchive(uexp, provider, fileName)
+        val uexpAr = if (uexp != null) FAssetArchive(uexp, provider, fileName) else uassetAr
         val ubulkAr = ubulk?.let { FAssetArchive(it, provider, fileName) }
         uassetAr.game = game.game
         uassetAr.ver = game.version
@@ -70,6 +70,12 @@ class PakPackage(
         if (info.tag != packageMagic)
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
 
+        val ver = info.fileVersionUE4
+        if (ver > 0) {
+            uassetAr.ver = ver
+            uexpAr.ver = ver
+            ubulkAr?.ver = ver
+        }
         packageFlags = info.packageFlags.toInt()
 
         uassetAr.seek(info.nameOffset)
@@ -85,7 +91,9 @@ class PakPackage(
             exportMap.add(FObjectExport(uassetAr))
 
         //Setup uexp reader
-        uexpAr.uassetSize = info.totalHeaderSize
+        if (uexp != null) {
+            uexpAr.uassetSize = info.totalHeaderSize
+        }
         uexpAr.bulkDataStartOffset = info.bulkDataStartOffset
         uexpAr.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
 
@@ -98,32 +106,25 @@ class PakPackage(
 
         exportMap.forEach { export ->
             export.exportObject = lazy {
-                val origPos = uexpAr.pos()
-                val exportType = export.classIndex.run {
-                    when {
-                        isExport() -> exportMap[toExport()].superIndex
-                        isImport() -> this
-                        else -> null
-                    }
-                }?.getImportObject()?.objectName ?: throw ParserException("Could not find class name for ${export.objectName}")
+                val uexpAr = uexpAr.clone()
                 uexpAr.seekRelative(export.serialOffset.toInt())
                 val validPos = (uexpAr.pos() + export.serialSize).toInt()
                 val obj = constructExport(export.classIndex.load())
                 obj.export = export
                 obj.name = export.objectName.text
                 obj.outer = export.outerIndex.load() ?: this
+                //obj.template = findObject(export.templateIndex)
                 obj.deserialize(uexpAr, validPos)
                 if (validPos != uexpAr.pos()) {
-                    LOG_STREAMING.warn("Did not read $exportType correctly, ${validPos - uexpAr.pos()} bytes remaining")
+                    LOG_STREAMING.warn("Did not read ${obj.exportType} correctly, ${validPos - uexpAr.pos()} bytes remaining")
                 } else {
-                    LOG_STREAMING.debug("Successfully read $exportType at ${uexpAr.toNormalPos(export.serialOffset.toInt())} with size ${export.serialSize}")
+                    LOG_STREAMING.debug("Successfully read ${obj.exportType} at ${uexpAr.toNormalPos(export.serialOffset.toInt())} with size ${export.serialSize}")
                 }
-                uexpAr.seek(origPos)
                 obj
             }
         }
 
-        logger.info { "Successfully parsed package : $name" }
+        //logger.info { "Successfully parsed package : $name" }
     }
 
     // Load object by FPackageIndex
@@ -151,14 +152,14 @@ class PakPackage(
                     if (packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
                         throw MissingSchemaException("Unknown struct $structName")
                     }
-                    struct = UScriptStruct(structName)
+                    struct = UScriptStruct(ObjectTypeRegistry.get(structName.text), structName)
                 }
                 struct
             }
         }
         //The needed export is located in another asset, try to load it
         if (import.outerIndex.getImportObject() == null) return null
-        check(provider != null) { "Loading an import requires a file provider" }
+        if (provider == null) return null
         val pkg = import.outerIndex.getImportObject()?.run { provider.loadGameFile(objectName.text) }
         if (pkg != null) return pkg.findObjectByName(import.objectName.text, import.className.text)
         else LOG_STREAMING.warn { "Failed to load referenced import" }

@@ -18,7 +18,9 @@ import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.objects.FScalableFloat
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRandomStream
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform
+import me.fungames.jfortniteparse.ue4.objects.engine.UModel
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat
+import me.fungames.jfortniteparse.ue4.objects.engine.editorframework.UAssetImportData
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag
 import me.fungames.jfortniteparse.valorant.exports.*
 import java.util.concurrent.ConcurrentHashMap
@@ -35,6 +37,7 @@ object ObjectTypeRegistry {
     private inline fun registerEngine() {
         // -- Export classes --
         registerClass(UActorComponent::class.java)
+        registerClass(UAssetImportData::class.java)
         registerClass(UAudioComponent::class.java)
         registerClass(UBlueprintGeneratedClass::class.java)
         registerClass(UBoxComponent::class.java)
@@ -55,6 +58,7 @@ object ObjectTypeRegistry {
         registerClass(UMaterialInstanceConstant::class.java)
         registerClass(UMaterialInterface::class.java)
         registerClass(UMeshComponent::class.java)
+        registerClass(UModel::class.java)
         registerClass(UPaperSprite::class.java)
         registerClass(UPointLightComponent::class.java)
         registerClass(UPrimaryDataAsset::class.java)
@@ -357,6 +361,8 @@ object ObjectTypeRegistry {
     fun registerStruct(serializedName: String, clazz: Class<*>) {
         structs[serializedName] = clazz
     }
+
+    fun get(name: String) = classes[name] ?: structs[name]
 }
 
 fun String.unprefix(): String {

@@ -13,7 +13,10 @@ const val KINDA_SMALL_NUMBER = 1e-4f
  * @param errorTolerance Maximum allowed difference for considering Value as 'nearly zero'
  * @return true if Value is nearly zero
  */
-fun isNearlyZero(value: Float, errorTolerance: Float = SMALL_NUMBER) = abs(value) <= errorTolerance
+inline fun isNearlyZero(value: Float, errorTolerance: Float = SMALL_NUMBER) = abs(value) <= errorTolerance
+
+/** Multiples value by itself */
+inline fun square(a: Float) = a * a
 
 /** Performs a linear interpolation between two values, alpha ranges from 0-1 */
-fun lerp(a: Float, b: Float, alpha: Float) = a + alpha * (b - a)
+inline fun lerp(a: Float, b: Float, alpha: Float) = a + alpha * (b - a)

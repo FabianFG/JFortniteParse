@@ -6,6 +6,9 @@ import me.fungames.jfortniteparse.ue4.objects.core.misc.FEngineVersion
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.core.serialization.FCustomVersion
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ADDED_PACKAGE_OWNER
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_NON_OUTER_PACKAGE_IMPORT
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /**
@@ -96,8 +99,16 @@ class FPackageFileSummary : UClass {
         totalHeaderSize = Ar.readInt32()
         folderName = Ar.readString()
         packageFlags = Ar.readUInt32()
+        if (packageFlags.toInt() and EPackageFlags.PKG_FilterEditorOnly.value != 0) {
+            Ar.isFilterEditorOnly = true
+        }
         nameCount = Ar.readInt32()
         nameOffset = Ar.readInt32()
+        if (!Ar.isFilterEditorOnly) {
+            if (fileVersionUE4 >= VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID) {
+                val localizationId = Ar.readString()
+            }
+        }
         gatherableTextDataCount = Ar.readInt32()
         gatherableTextDataOffset = Ar.readInt32()
         exportCount = Ar.readInt32()
@@ -110,6 +121,14 @@ class FPackageFileSummary : UClass {
         searchableNamesOffset = Ar.readInt32()
         thumbnailTableOffset = Ar.readInt32()
         guid = FGuid(Ar)
+        if (!Ar.isFilterEditorOnly) {
+            if (fileVersionUE4 >= VER_UE4_ADDED_PACKAGE_OWNER) {
+                val persistentGuid = FGuid(Ar)
+            }
+            if (fileVersionUE4 in VER_UE4_ADDED_PACKAGE_OWNER until VER_UE4_NON_OUTER_PACKAGE_IMPORT) {
+                val ownerPersistentGuid = FGuid(Ar)
+            }
+        }
         generations = Ar.readTArray { FGenerationInfo(Ar) }
         savedByEngineVersion = FEngineVersion(Ar)
         compatibleWithEngineVersion = FEngineVersion(Ar)

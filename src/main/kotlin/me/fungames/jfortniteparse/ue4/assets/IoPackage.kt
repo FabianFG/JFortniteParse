@@ -136,7 +136,7 @@ class IoPackage : Package {
             }
         }
         bulkDataStartOffset = currentExportDataOffset
-        //logger.info { "Successfully parsed package : $name" }
+        logger.info { "Successfully parsed package : $name" }
     }
 
     class FImportedPackage(Ar: FArchive) {
