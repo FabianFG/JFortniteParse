@@ -5,7 +5,6 @@ import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
-import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
 import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageStore
 import me.fungames.jfortniteparse.ue4.io.*
@@ -38,14 +37,14 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         globalPackageStore
     }
     open fun keys(): Map<FGuid, ByteArray> = keys
-    open fun keysStr(): Map<FGuid, String> = keys.mapValues { it.value.printAesKey() }
+    fun keysStr(): Map<FGuid, String> = keys.mapValues { it.value.printAesKey() }
     open fun requiredKeys(): List<FGuid> = requiredKeys
     open fun unloadedPaks(): List<PakFileReader> = unloadedPaks
     open fun mountedPaks(): List<PakFileReader> = mountedPaks
     open fun mountedIoStoreReaders(): List<FIoStoreReaderImpl> = mountedIoStoreReaders
-    open fun submitKey(guid: FGuid, key: String) = submitKeysStr(mapOf(guid to key))
-    open fun submitKeysStr(keys: Map<FGuid, String>) = submitKeys(keys.mapValues { Aes.parseKey(it.value) })
-    open fun submitKey(guid: FGuid, key: ByteArray) = submitKeys(mapOf(guid to key))
+    fun submitKey(guid: FGuid, key: String) = submitKeysStr(mapOf(guid to key))
+    fun submitKeysStr(keys: Map<FGuid, String>) = submitKeys(keys.mapValues { Aes.parseKey(it.value) })
+    fun submitKey(guid: FGuid, key: ByteArray) = submitKeys(mapOf(guid to key))
     open fun submitKeys(keys: Map<FGuid, ByteArray>) = runBlocking { submitKeysAsync(keys).await() }
 
     open fun unloadedPaksByGuid(guid: FGuid) = unloadedPaks.filter { it.pakInfo.encryptionKeyGuid == guid }

@@ -155,7 +155,7 @@ class IoPackage : Package {
         }
         when {
             index.isExport() -> return ResolvedExportObject(index.toExport().toInt(), this@IoPackage)
-            index.isScriptImport() -> return globalPackageStore.importStore.scriptObjectEntriesMap[index]?.let { ResolvedScriptObject(it, this@IoPackage) }
+            index.isScriptImport() -> return globalPackageStore.scriptObjectEntriesMap[index]?.let { ResolvedScriptObject(it, this@IoPackage) }
             index.isPackageImport() -> for (pkg in importedPackages.value) {
                 pkg?.exportMap?.forEachIndexed { exportIndex, exportMapEntry ->
                     if (exportMapEntry.globalImportIndex == index) {
@@ -235,7 +235,7 @@ class IoPackage : Package {
     }
 
     fun dumpHeaderToJson(): JsonObject {
-        val gson = gson.newBuilder().registerTypeAdapter(jsonSerializer<FMappedName> { JsonPrimitive(nameMap.tryGetName(it.src)?.text) }).create()
+        val gson = gson.newBuilder().registerTypeAdapter(jsonSerializer<FMappedName> { JsonPrimitive(nameMap.getNameOrNull(it.src)?.text) }).create()
         return JsonObject().apply {
             add("summary", gson.toJsonTree(summary))
             add("nameMap", gson.toJsonTree(nameMap))

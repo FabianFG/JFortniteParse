@@ -58,7 +58,7 @@ class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : F
             throw ParserException("FName could not be read, bad FMappedName index", this)
         }
         val mappedName = FMappedName.create(nameIndex, number, FMappedName.EType.Package)
-        var name = pkg.nameMap.tryGetName(mappedName)
+        var name = pkg.nameMap.getNameOrNull(mappedName)
         if (name == null) {
             handleBadNameIndex(nameIndex.toInt())
             name = FName()

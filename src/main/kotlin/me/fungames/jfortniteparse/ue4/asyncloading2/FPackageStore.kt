@@ -13,16 +13,18 @@ import java.util.concurrent.atomic.AtomicInteger
 class FPackageStore(
     val provider: FileProvider,
     val globalNameMap: FNameMap) : FOnContainerMountedListener {
-    val loadedContainers = mutableMapOf<FIoContainerId, FLoadedContainer>()
+    val loadedContainers = hashMapOf<FIoContainerId, FLoadedContainer>()
 
     val currentCultureNames = mutableListOf<String>()
 
     val packageNameMapsCritical = Object()
 
-    val storeEntriesMap = mutableMapOf<FPackageId, FPackageStoreEntry>()
-    val redirectsPackageMap = mutableMapOf<FPackageId, FPackageId>()
+    val storeEntriesMap = hashMapOf<FPackageId, FPackageStoreEntry>()
+    val redirectsPackageMap = hashMapOf<FPackageId, FPackageId>()
 
-    val importStore = FGlobalImportStore()
+    // Temporary initial load data
+    val scriptObjectEntries = arrayListOf<FScriptObjectEntry>()
+    val scriptObjectEntriesMap = hashMapOf<FPackageObjectIndex, FScriptObjectEntry>()
 
     fun setupCulture() {
         currentCultureNames.clear()
@@ -33,15 +35,15 @@ class FPackageStore(
         val initialLoadIoBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta))
         val initialLoadArchive = FByteArchive(initialLoadIoBuffer)
         val numScriptObjects = initialLoadArchive.readInt32()
-        importStore.scriptObjectEntries.ensureCapacity(numScriptObjects)
+        scriptObjectEntries.ensureCapacity(numScriptObjects)
 
         repeat(numScriptObjects) {
-            importStore.scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries).also {
+            scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries).also {
                 val mappedName = FMappedName.fromMinimalName(it.objectName)
                 check(mappedName.isGlobal())
                 it.objectName = globalNameMap.getMinimalName(mappedName)
 
-                importStore.scriptObjectEntriesMap[it.globalIndex] = it
+                scriptObjectEntriesMap[it.globalIndex] = it
             })
         }
     }

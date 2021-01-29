@@ -18,7 +18,6 @@ import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.objects.FScalableFloat
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRandomStream
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform
-import me.fungames.jfortniteparse.ue4.objects.engine.UModel
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat
 import me.fungames.jfortniteparse.ue4.objects.engine.editorframework.UAssetImportData
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag
@@ -58,7 +57,7 @@ object ObjectTypeRegistry {
         registerClass(UMaterialInstanceConstant::class.java)
         registerClass(UMaterialInterface::class.java)
         registerClass(UMeshComponent::class.java)
-        registerClass(UModel::class.java)
+        //registerClass(UModel::class.java) not ready for production yet
         registerClass(UPaperSprite::class.java)
         registerClass(UPointLightComponent::class.java)
         registerClass(UPrimaryDataAsset::class.java)

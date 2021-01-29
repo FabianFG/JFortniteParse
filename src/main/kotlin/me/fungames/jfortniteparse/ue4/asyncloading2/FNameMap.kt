@@ -46,7 +46,7 @@ class FNameMap {
         return FName.createFromDisplayId(nameEntry, mappedName.number.toInt())
     }
 
-    fun tryGetName(mappedName: FMappedName): FName? {
+    fun getNameOrNull(mappedName: FMappedName): FName? {
         check(mappedName.getType() == nameMapType)
         val index = mappedName.getIndex()
         if (index < nameEntries.size.toUInt()) {

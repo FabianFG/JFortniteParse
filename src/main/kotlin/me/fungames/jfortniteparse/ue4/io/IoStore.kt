@@ -220,7 +220,7 @@ class FIoStoreTocCompressedBlockEntry {
 }
 
 class FIoStoreToc {
-    private val chunkIdToIndex = mutableMapOf<FIoChunkId, Int>()
+    private val chunkIdToIndex = hashMapOf<FIoChunkId, Int>()
     private val toc = FIoStoreTocResource()
     private lateinit var filesToIndex: Array<String>
     private lateinit var fileTocEntryIndices: IntArray

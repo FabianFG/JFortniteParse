@@ -2,9 +2,9 @@ package me.fungames.jfortniteparse.ue4.objects.core.misc
 
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.parseHexBinary
+import java.nio.ByteBuffer
 
 /**
  * Enumerates known GUID formats.
@@ -113,11 +113,11 @@ class FGuid : UClass {
     }
 
     constructor(hexString: String) {
-        val ar = FByteArchive(hexString.parseHexBinary())
-        a = ar.readUInt32()
-        b = ar.readUInt32()
-        c = ar.readUInt32()
-        d = ar.readUInt32()
+        val ar = ByteBuffer.wrap(hexString.parseHexBinary())
+        a = ar.int.toUInt()
+        b = ar.int.toUInt()
+        c = ar.int.toUInt()
+        d = ar.int.toUInt()
     }
 
     override fun equals(other: Any?): Boolean {
