@@ -4,8 +4,10 @@ import androidx.collection.SparseArrayCompat
 import androidx.collection.set
 import me.fungames.jfortniteparse.GDebugProperties
 import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
+import me.fungames.jfortniteparse.GFatalUnknownProperty
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
@@ -277,9 +279,12 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                     }
                 } else {
                     if (it.isNonZero()) {
-                        UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization. Serialized ${properties.size} until now.", Ar)
-                        return
-                        //throw UnknownPropertyException("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization", Ar)
+                        if (GFatalUnknownProperty) {
+                            UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization. Serialized ${properties.size} until now.", Ar)
+                            return
+                        } else {
+                            throw UnknownPropertyException("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization", Ar)
+                        }
                     }
                     UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, but it's zero so we're good")
                 }

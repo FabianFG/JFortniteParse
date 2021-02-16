@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.registry.objects
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntryId
 import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryReader
@@ -8,7 +9,8 @@ import me.fungames.jfortniteparse.util.get
 /** Stores a fixed set of values and all the key-values maps used for lookup */
 class FStore(Ar: FAssetRegistryReader) {
     companion object {
-        val BEGIN_MAGIC = 0x12345678u
+        val OLD_BEGIN_MAGIC = 0x12345678u
+        val BEGIN_MAGIC = 0x12345679u
         val END_MAGIC = 0x87654321u
     }
 
@@ -25,28 +27,45 @@ class FStore(Ar: FAssetRegistryReader) {
     var names: Array<FName>
     var numberlessExportPaths: Array<FNumberlessExportPath>
     var exportPaths: Array<FAssetRegistryExportPath>
-    var texts: Array<String> // FText objects serialized in NSLOCTEXT() strings
+    var texts = emptyArray<String>() // FText objects serialized in NSLOCTEXT() strings
 
     val nameMap: List<String> = Ar.names
 
     init {
-        check(Ar.readUInt32() == BEGIN_MAGIC)
-        val nums = Array(11) { Ar.readInt32() }.iterator()
+        val initialMagic = Ar.readUInt32()
+        val order = getLoadOrder(initialMagic)
+            ?: throw ParserException("Bad init magic", Ar)
 
-        numberlessNames = Array(nums.next()) { FNameEntryId(Ar) }
-        names = Array(nums.next()) { Ar.readFName() }
-        numberlessExportPaths = Array(nums.next()) { FNumberlessExportPath(Ar, nameMap) }
-        exportPaths = Array(nums.next()) { FAssetRegistryExportPath(Ar) }
-        texts = Array(nums.next()) { Ar.readString() /*FText(Ar)*/ }
+        val nums = Array(11) { Ar.readInt32() }
 
-        ansiStringOffsets = Array(nums.next()) { Ar.readUInt32() }
-        wideStringOffsets = Array(nums.next()) { Ar.readUInt32() }
-        ansiStrings = Ar.read(nums.next())
-        wideStrings = Ar.read(nums.next() * 2)
+        if (order == ELoadOrder.TextFirst) {
+            val textDataBytes = Ar.readUInt32()
+            texts = Array(nums[4]) { Ar.readString() /*FText(Ar)*/ }
+        }
 
-        numberlessPairs = Array(nums.next()) { FNumberlessPair(Ar) }
-        pairs = Array(nums.next()) { FNumberedPair(Ar) }
+        numberlessNames = Array(nums[0]) { FNameEntryId(Ar) }
+        names = Array(nums[1]) { Ar.readFName() }
+        numberlessExportPaths = Array(nums[2]) { FNumberlessExportPath(Ar, nameMap) }
+        exportPaths = Array(nums[3]) { FAssetRegistryExportPath(Ar) }
+
+        if (order == ELoadOrder.Member) {
+            texts = Array(nums[4]) { Ar.readString() /*FText(Ar)*/ }
+        }
+
+        ansiStringOffsets = Array(nums[5]) { Ar.readUInt32() }
+        wideStringOffsets = Array(nums[6]) { Ar.readUInt32() }
+        ansiStrings = Ar.read(nums[7])
+        wideStrings = Ar.read(nums[8] * 2)
+
+        numberlessPairs = Array(nums[9]) { FNumberlessPair(Ar) }
+        pairs = Array(nums[10]) { FNumberedPair(Ar) }
         check(Ar.readUInt32() == END_MAGIC)
+    }
+
+    fun getLoadOrder(initialMagic: UInt) = when (initialMagic) {
+        OLD_BEGIN_MAGIC -> ELoadOrder.Member
+        BEGIN_MAGIC -> ELoadOrder.TextFirst
+        else -> null
     }
 
     fun getAnsiString(idx: UInt): String {
@@ -77,3 +96,5 @@ class FPartialMapHandle(int: ULong) {
 
     fun toInt() = ((if (bHasNumberlessKeys) 1uL else 0uL) shl 63) or (num.toULong() shl 32) or pairBegin.toULong()
 }
+
+enum class ELoadOrder { Member, TextFirst }
