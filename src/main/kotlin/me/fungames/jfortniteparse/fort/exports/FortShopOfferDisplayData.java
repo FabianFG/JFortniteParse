@@ -1,10 +1,11 @@
 package me.fungames.jfortniteparse.fort.exports;
 
+import kotlin.Lazy;
 import me.fungames.jfortniteparse.ue4.assets.exports.UPrimaryDataAsset;
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
+import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface;
 
 import java.util.List;
 
 public class FortShopOfferDisplayData extends UPrimaryDataAsset {
-    public List<FPackageIndex /*MaterialInterface*/> Presentations;
+    public List<Lazy<UMaterialInterface>> Presentations;
 }

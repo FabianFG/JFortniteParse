@@ -39,7 +39,7 @@ class PropertyType(
         valueType = PropertyType(tag.valueType)
     }
 
-    constructor(prop: FPropertySerialized) : this(prop.name) {
+    constructor(prop: FPropertySerialized) : this(NAME_None) {
         type = FName.dummy(prop.javaClass.simpleName.unprefix())
         when (prop) {
             is FArrayProperty -> {

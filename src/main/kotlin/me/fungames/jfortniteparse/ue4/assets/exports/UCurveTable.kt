@@ -86,16 +86,16 @@ class UCurveTable : UObject() {
 
     /** Function to find the row of a table given its name. */
     @JvmOverloads
-    fun findCurve(RowName: FName, warnIfNotFound: Boolean = true): FRealCurve? {
-        if (RowName == NAME_None) {
+    fun findCurve(rowName: FName, warnIfNotFound: Boolean = true): FRealCurve? {
+        if (rowName == NAME_None) {
             if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : NAME_None is invalid row name for CurveTable '${getPathName()}'.")
             return null
         }
 
-        val foundCurve = rowMap[RowName]
+        val foundCurve = rowMap[rowName]
 
         if (foundCurve == null) {
-            if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : Row '$RowName' not found in CurveTable '${getPathName()}'.")
+            if (warnIfNotFound) LOG_CURVE_TABLE.warn("UCurveTable::FindCurve : Row '$rowName' not found in CurveTable '${getPathName()}'.")
             return null
         }
 

@@ -322,6 +322,7 @@ object ObjectTypeRegistry {
         registerStruct(HomebaseBannerCategoryData::class.java)
         registerStruct(HomebaseBannerColorData::class.java)
         registerStruct(HomebaseBannerIconData::class.java)
+        registerStruct(HomebaseNodeGameplayEffectDataTableRow::class.java)
         registerStruct(HomebaseSquad::class.java)
         registerStruct(ItemPromotionCosts::class.java)
         registerStruct(Recipe::class.java)

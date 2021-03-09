@@ -16,7 +16,7 @@ enum class EFortStatType(val displayName: FText, val icon: String?) {
 
     companion object {
         @JvmStatic
-        fun from(s: String) = when (s.toLowerCase(Locale.ENGLISH)) {
+        fun from(s: String) = when (s.toLowerCase(Locale.ROOT)) {
             "fortitude" -> Fortitude
             "offense" -> Offense
             "resistance" -> Resistance
