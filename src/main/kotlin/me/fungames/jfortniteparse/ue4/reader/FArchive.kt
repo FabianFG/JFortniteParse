@@ -174,7 +174,7 @@ abstract class FArchive : Cloneable, InputStream() {
     inline fun <reified T> readBulkTArray(init: (Int) -> T): Array<T> {
         val elementSize = readInt32()
         val savePos = pos()
-        val array = readTArray { init(it) }
+        val array = readTArray(init)
         if (pos() != savePos + 4 + array.size * elementSize)
             throw ParserException("RawArray item size mismatch: expected %d, serialized %d".format(elementSize, (pos() - savePos) / array.size))
         return array

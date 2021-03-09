@@ -14,7 +14,6 @@ import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
-import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.asyncloading2.*
 import me.fungames.jfortniteparse.ue4.locres.Locres
@@ -50,7 +49,7 @@ class IoPackage : Package {
                 game: Ue4Version = provider.game) : super("", provider, game) {
         this.packageId = packageId
         this.globalPackageStore = globalPackageStore
-        val Ar = FAssetArchive(uasset, provider, fileName)
+        val Ar = FByteArchive(uasset)
         summary = FPackageSummary(Ar)
 
         // Name map
@@ -113,7 +112,7 @@ class IoPackage : Package {
                         // Serialize
                         val Ar = FExportArchive(ByteBuffer.wrap(uasset), obj, this)
                         Ar.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
-                        Ar.uassetSize = summary.cookedHeaderSize.toInt() - allExportDataOffset
+                        Ar.uassetSize = export.cookedSerialOffset.toInt() - localExportDataOffset
                         Ar.bulkDataStartOffset = bulkDataStartOffset
                         Ar.seek(localExportDataOffset)
                         val validPos = Ar.pos() + export.cookedSerialSize.toInt()
@@ -136,7 +135,7 @@ class IoPackage : Package {
             }
         }
         bulkDataStartOffset = currentExportDataOffset
-        logger.info { "Successfully parsed package : $name" }
+        //logger.info { "Successfully parsed package : $name" }
     }
 
     class FImportedPackage(Ar: FArchive) {
