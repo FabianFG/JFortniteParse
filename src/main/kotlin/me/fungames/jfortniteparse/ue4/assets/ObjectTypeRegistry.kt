@@ -47,6 +47,7 @@ object ObjectTypeRegistry {
         registerClass(UCurveTable::class.java)
         registerClass(UDataAsset::class.java)
         registerClass(UDataTable::class.java)
+        registerClass(UEnum::class.java)
         registerClass(UFunction::class.java)
         registerClass(ULevel::class.java)
         registerClass(ULightComponent::class.java)

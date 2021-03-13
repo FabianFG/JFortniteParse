@@ -11,6 +11,7 @@ import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
+import me.fungames.jfortniteparse.ue4.assets.exports.UEnum
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
@@ -178,7 +179,7 @@ class IoPackage : Package {
         abstract fun getName(): FName
         open fun getOuter(): ResolvedObject? = null
         open fun getSuper(): ResolvedObject? = null
-        open fun getObject(): Lazy<out UObject>? = null
+        open fun getObject(): Lazy<UObject>? = null
     }
 
     class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg) {
@@ -194,15 +195,29 @@ class IoPackage : Package {
         override fun getName() = scriptImport.objectName.toName()
         override fun getOuter() = pkg.resolveObjectIndex(scriptImport.outerIndex)
         override fun getObject() = lazy {
-            val structName = getName()
-            var struct = pkg.provider?.mappingsProvider?.getStruct(structName)
-            if (struct == null) {
-                if (pkg.packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
-                    throw MissingSchemaException("Unknown struct $structName")
+            val name = getName()
+            if (name.text[0] == 'E') {
+                var enumValues = pkg.provider?.mappingsProvider?.getEnum(name)
+                if (enumValues == null) {
+                    if (pkg.packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
+                        throw MissingSchemaException("Unknown enum $name")
+                    }
+                    enumValues = emptyList()
                 }
-                struct = UScriptStruct(structName)
+                val enum = UEnum()
+                enum.name = name.text
+                enum.names = Array(enumValues.size) { FName.dummy("$name::${enumValues[it]}") to it.toLong() }
+                enum
+            } else {
+                var struct = pkg.provider?.mappingsProvider?.getStruct(name)
+                if (struct == null) {
+                    if (pkg.packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
+                        throw MissingSchemaException("Unknown struct $name")
+                    }
+                    struct = UScriptStruct(name)
+                }
+                struct
             }
-            struct
         }
     }
 

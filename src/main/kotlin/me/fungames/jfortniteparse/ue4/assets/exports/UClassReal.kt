@@ -26,7 +26,7 @@ open class UClassReal : UStruct() {
     lateinit var classDefaultObject: FPackageIndex
 
     /** Map of all functions by name contained in this class */
-    private lateinit var funcMap: MutableMap<FName, Lazy<UFunction>?>
+    lateinit var funcMap: MutableMap<FName, Lazy<UFunction>?>
 
     /**
      * The list of interfaces which this class implements, along with the pointer property that is located at the offset of the interface's vtable.

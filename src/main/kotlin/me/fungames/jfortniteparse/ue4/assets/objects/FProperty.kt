@@ -70,19 +70,16 @@ sealed class FProperty {
                 map
             }
             value is FPackageIndex && Lazy::class.java.isAssignableFrom(clazz) -> value.owner?.findObject<UObject>(value)
-            this is EnumProperty && clazz.isEnum ->
-                if (enumConstant != null) {
-                    enumConstant // already searched by the unversioned property serializer
+            this is EnumProperty && clazz.isEnum -> {
+                val storedEnum = name.text
+                val sep = storedEnum.indexOf("::")
+                if (sep != -1 && clazz.simpleName != storedEnum.substring(0, sep)) {
+                    null
                 } else {
-                    val storedEnum = name.text
-                    val sep = storedEnum.indexOf("::")
-                    if (sep != -1 && clazz.simpleName != storedEnum.substring(0, sep)) {
-                        null
-                    } else {
-                        val search = storedEnum.substringAfter("::")
-                        clazz.enumConstants.firstOrNull { (it as Enum<*>).name == search }
-                    }
+                    val search = storedEnum.substringAfter("::")
+                    clazz.enumConstants.firstOrNull { (it as Enum<*>).name == search }
                 }
+            }
             else -> null
         } as T
     }
@@ -183,31 +180,29 @@ sealed class FProperty {
                     } else if (Ar.useUnversionedPropertySerialization && type == ReadType.ZERO) {
                         ByteProperty(0u)
                     } else if (type == ReadType.MAP || !typeData.enumName.isNone()) {
-                        EnumProperty(Ar.readFName(), null) // TEnumAsByte
+                        EnumProperty(Ar.readFName()) // TEnumAsByte
                     } else {
                         ByteProperty(Ar.readUInt8())
                     }
                 "EnumProperty" ->
                     if (type == ReadType.NORMAL && typeData.enumName.isNone()) {
-                        EnumProperty(FName.NAME_None, null)
+                        EnumProperty(FName.NAME_None)
                     } else if (type != ReadType.MAP && type != ReadType.ARRAY && Ar.useUnversionedPropertySerialization) {
                         val ordinal = valueOr({ if (typeData.isEnumAsByte) Ar.read() else Ar.readInt32() }, { 0 }, type)
-                        val enumClass = typeData.enumClass
-                        if (enumClass != null) { // reflection
-                            val enumValue = enumClass.enumConstants.getOrNull(ordinal)
-                                ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.simpleName}", Ar)
-                            val fakeName = (typeData.enumName.text + "::" + enumValue)
-                            if (Ar is FExportArchive) Ar.checkDummyName(fakeName)
-                            EnumProperty(FName.dummy(fakeName), enumValue)
+                        val enumClass = typeData.enumClass?.value
+                        if (enumClass != null) { // serialized or reflection
+                            val enumValue = enumClass.names.firstOrNull { it.second == ordinal.toLong() }
+                                ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.name}", Ar)
+                            EnumProperty(enumValue.first)
                         } else { // loaded from mappings provider
                             val enumValue = Ar.provider!!.mappingsProvider.getEnum(typeData.enumName).getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${typeData.enumName}", Ar)
                             val fakeName = (typeData.enumName.text + "::" + enumValue)
                             if (Ar is FExportArchive) Ar.checkDummyName(fakeName)
-                            EnumProperty(FName.dummy(fakeName), null)
+                            EnumProperty(FName.dummy(fakeName))
                         }
                     } else {
-                        EnumProperty(Ar.readFName(), null)
+                        EnumProperty(Ar.readFName())
                     }
                 "SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type).apply { owner = Ar.owner })
                 "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type).apply { owner = Ar.owner })
@@ -274,7 +269,7 @@ sealed class FProperty {
     class ClassProperty(index: FPackageIndex) : ObjectProperty(index)
     class DelegateProperty(var delegate: FScriptDelegate) : FProperty()
     class DoubleProperty(var number: Double) : FProperty()
-    class EnumProperty(var name: FName, var enumConstant: Enum<*>?) : FProperty()
+    class EnumProperty(var name: FName) : FProperty()
     class FieldPathProperty(var fieldPath: FFieldPath) : FProperty()
     class FloatProperty(var float: Float) : FProperty()
     class Int16Property(var number: Short) : FProperty()

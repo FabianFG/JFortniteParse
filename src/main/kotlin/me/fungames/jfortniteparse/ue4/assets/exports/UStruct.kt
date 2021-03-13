@@ -136,11 +136,11 @@ class FArrayProperty : FPropertySerialized() {
 }
 
 class FByteProperty : FNumericProperty() {
-    var enum: FPackageIndex = FPackageIndex()
+    var enum: Lazy<UEnum>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
-        this.enum = FPackageIndex(Ar)
+        this.enum = Ar.readObject()
     }
 }
 
@@ -164,11 +164,11 @@ class FDelegateProperty : FPropertySerialized() {
 
 class FEnumProperty : FPropertySerialized() {
     var underlyingProp: FNumericProperty? = null
-    var enum: FPackageIndex? = null
+    var enum: Lazy<UEnum>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
-        enum = FPackageIndex(Ar)
+        enum = Ar.readObject()
         underlyingProp = serializeSingleField(Ar) as FNumericProperty?
     }
 }
@@ -226,7 +226,7 @@ class FNameProperty : FPropertySerialized()
 open class FNumericProperty : FPropertySerialized()
 
 open class FObjectProperty : FPropertySerialized() {
-    var propertyClass: Lazy<UClassReal>? = null
+    var propertyClass: Lazy<UStruct>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)

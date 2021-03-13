@@ -22,7 +22,7 @@ class PropertyType(
     @JvmField var innerType: PropertyType? = null
     @JvmField var valueType: PropertyType? = null
     var structClass: Lazy<UScriptStruct>? = null
-    var enumClass: Class<out Enum<*>>? = null
+    var enumClass: Lazy<UEnum>? = null
 
     constructor() : this(NAME_None)
 
@@ -46,11 +46,11 @@ class PropertyType(
                 innerType = prop.inner?.let { PropertyType(it) }
             }
             is FByteProperty -> {
-                enumName = prop.enum.name //TODO if enum is UserDefinedEnum it will fail
+                enumName = prop.enum?.value?.name?.let { FName.dummy(it) } ?: NAME_None
             }
-            //is FEnumProperty -> {
-            //enumName = prop.enum
-            //}
+            is FEnumProperty -> {
+                enumName = prop.enum?.value?.name?.let { FName.dummy(it) } ?: NAME_None
+            }
             is FMapProperty -> {
                 innerType = prop.keyProp?.let { PropertyType(it) }
                 valueType = prop.valueProp?.let { PropertyType(it) }
@@ -75,7 +75,7 @@ class PropertyType(
         when (type.text) {
             "EnumProperty" -> {
                 enumName = FName.dummy(fieldType.simpleName)
-                enumClass = fieldType as Class<out Enum<*>>?
+                enumClass = enumClassToUEnum(fieldType)
             }
             "StructProperty" -> {
                 structName = FName.dummy(fieldType.simpleName.unprefix())
@@ -108,7 +108,7 @@ class PropertyType(
             this.type = propertyType
             if (propertyType.text == "EnumProperty") {
                 enumName = FName.dummy(clazz.simpleName.unprefix())
-                enumClass = clazz as Class<out Enum<*>>?
+                enumClass = enumClassToUEnum(clazz)
             } else if (propertyType.text == "StructProperty") {
                 structName = FName.dummy(clazz.simpleName.unprefix())
                 structClass = lazy { UScriptStruct(clazz) }
@@ -145,6 +145,17 @@ class PropertyType(
         c == FMulticastScriptDelegate::class.java -> "MulticastDelegateProperty"
         else -> "StructProperty"
     })
+
+    private fun enumClassToUEnum(fieldType: Class<*>) = lazy {
+        val enum = UEnum()
+        enum.name = fieldType.simpleName
+        val values = fieldType.enumConstants
+        enum.names = Array(values.size) {
+            val value = values[it] as Enum<*>
+            FName.dummy(enum.name + "::" + value.name) to it.toLong()
+        }
+        enum
+    }
 
     override fun toString() = type.text
 }
