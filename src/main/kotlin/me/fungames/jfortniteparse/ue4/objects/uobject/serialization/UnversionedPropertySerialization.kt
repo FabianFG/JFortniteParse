@@ -265,9 +265,9 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                     }
                 } else {
                     if (it.isNonZero()) {
-                        throw UnknownPropertyException("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization. Serialized ${properties.size} until now.", Ar)
+                        throw UnknownPropertyException("${struct.name}: Unknown property with value ${it.schemaIt}. Can't proceed with serialization (Serialized ${properties.size} properties until now)", Ar)
                     }
-                    UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, but it's zero so we're good")
+                    UClass.logger.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
                 }
                 it.next()
             }
@@ -276,7 +276,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 check(!it.isNonZero())
                 it.serializer?.run { properties.add(deserialize(Ar, ReadType.ZERO)) }
-                    ?: UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, but it's zero so we're good")
+                    ?: UClass.logger.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
                 it.next()
             }
         }
