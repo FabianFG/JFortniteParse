@@ -3,8 +3,6 @@ package me.fungames.jfortniteparse
 import mu.KotlinLogging
 
 var GDebugProperties = false
-var GExportArchiveCheckDummyName = false
-var GFatalUnknownProperty = false
-var GSuppressMissingSchemaErrors = false
+var GFatalObjectSerializationErrors = false
 
 val LOG_STREAMING = KotlinLogging.logger("Streaming")

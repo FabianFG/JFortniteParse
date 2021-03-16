@@ -486,6 +486,9 @@ const val TOC_READ_OPTION_READ_DIRECTORY_INDEX = 1 shl 0
 const val TOC_READ_OPTION_READ_TOC_META = 1 shl 1
 const val TOC_READ_OPTION_READ_ALL = TOC_READ_OPTION_READ_DIRECTORY_INDEX or TOC_READ_OPTION_READ_TOC_META
 
+/**
+ * Container TOC data.
+ */
 class FIoStoreTocResource {
     companion object {
         const val COMPRESSION_METHOD_NAME_LEN = 32

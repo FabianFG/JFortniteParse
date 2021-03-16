@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets
 
 import com.github.salomonbrys.kotson.jsonObject
 import com.google.gson.Gson
+import me.fungames.jfortniteparse.GFatalObjectSerializationErrors
 import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
@@ -106,19 +107,28 @@ class PakPackage(
 
         exportMap.forEach { export ->
             export.exportObject = lazy {
-                val uexpAr = uexpAr.clone()
-                uexpAr.seekRelative(export.serialOffset.toInt())
-                val validPos = (uexpAr.pos() + export.serialSize).toInt()
                 val obj = constructExport(export.classIndex.load())
                 obj.export = export
                 obj.name = export.objectName.text
                 obj.outer = export.outerIndex.load() ?: this
                 //obj.template = findObject(export.templateIndex)
-                obj.deserialize(uexpAr, validPos)
-                if (validPos != uexpAr.pos()) {
-                    LOG_STREAMING.warn("Did not read ${obj.exportType} correctly, ${validPos - uexpAr.pos()} bytes remaining")
-                } else {
-                    LOG_STREAMING.debug("Successfully read ${obj.exportType} at ${uexpAr.toNormalPos(export.serialOffset.toInt())} with size ${export.serialSize}")
+
+                val uexpAr = uexpAr.clone()
+                uexpAr.seekRelative(export.serialOffset.toInt())
+                val validPos = (uexpAr.pos() + export.serialSize).toInt()
+                try {
+                    obj.deserialize(uexpAr, validPos)
+                    if (validPos != uexpAr.pos()) {
+                        LOG_STREAMING.warn { "Did not read ${obj.exportType} correctly, ${validPos - uexpAr.pos()} bytes remaining (${obj.getPathName()})" }
+                    } else {
+                        LOG_STREAMING.debug { "Successfully read ${obj.exportType} at ${uexpAr.toNormalPos(export.serialOffset.toInt())} with size ${export.serialSize}" }
+                    }
+                } catch (e: Throwable) {
+                    if (GFatalObjectSerializationErrors) {
+                        throw e
+                    } else {
+                        LOG_STREAMING.error(e) { "Could not read ${obj.exportType} correctly" }
+                    }
                 }
                 obj
             }

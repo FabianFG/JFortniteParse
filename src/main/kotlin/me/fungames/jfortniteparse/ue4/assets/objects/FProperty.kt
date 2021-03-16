@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
@@ -195,10 +194,9 @@ sealed class FProperty {
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.name}", Ar)
                             EnumProperty(enumValue.first)
                         } else { // loaded from mappings provider
-                            val enumValue = Ar.provider!!.mappingsProvider.getEnum(typeData.enumName).getOrNull(ordinal)
+                            val enumValue = Ar.provider!!.mappingsProvider.getEnum(typeData.enumName)?.getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${typeData.enumName}", Ar)
                             val fakeName = (typeData.enumName.text + "::" + enumValue)
-                            if (Ar is FExportArchive) Ar.checkDummyName(fakeName)
                             EnumProperty(FName.dummy(fakeName))
                         }
                     } else {

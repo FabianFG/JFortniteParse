@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.assets.mappings
 
-import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.ue4.assets.ObjectTypeRegistry
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -20,5 +19,4 @@ abstract class TypeMappingsProvider {
     }
 
     open fun getEnum(enumName: FName) = mappings.enums[enumName.text]
-        ?: throw MissingSchemaException("Unknown enum $enumName")
 }

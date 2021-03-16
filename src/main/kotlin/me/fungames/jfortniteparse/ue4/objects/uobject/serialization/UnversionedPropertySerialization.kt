@@ -3,8 +3,6 @@ package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 import androidx.collection.SparseArrayCompat
 import androidx.collection.set
 import me.fungames.jfortniteparse.GDebugProperties
-import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
-import me.fungames.jfortniteparse.GFatalUnknownProperty
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
@@ -20,7 +18,6 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
@@ -31,17 +28,6 @@ import java.util.*
 
 class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int) {
     fun deserialize(Ar: FAssetArchive, type: ReadType): FPropertyTag {
-        if (GExportArchiveCheckDummyName && Ar is FExportArchive) {
-            Ar.checkDummyName(info.name)
-            val typeInfo = info.type
-            setOf(
-                typeInfo.type,
-                typeInfo.structName,
-                typeInfo.enumName,
-                typeInfo.innerType?.type,
-                typeInfo.valueType?.type
-            ).forEach { if (it != null) Ar.checkDummyName(it.text) }
-        }
         val tag = FPropertyTag(FName.dummy(info.name))
         /*if (true) {
             tag.name = FName.dummy(data.name!!)
@@ -279,12 +265,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                     }
                 } else {
                     if (it.isNonZero()) {
-                        if (GFatalUnknownProperty) {
-                            UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization. Serialized ${properties.size} until now.", Ar)
-                            return
-                        } else {
-                            throw UnknownPropertyException("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization", Ar)
-                        }
+                        throw UnknownPropertyException("Unknown property for ${struct.name} with index ${it.schemaIt}, cannot proceed with serialization. Serialized ${properties.size} until now.", Ar)
                     }
                     UClass.logger.warn("Unknown property for ${struct.name} with index ${it.schemaIt}, but it's zero so we're good")
                 }

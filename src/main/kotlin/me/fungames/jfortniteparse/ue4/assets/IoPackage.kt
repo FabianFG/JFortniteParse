@@ -6,14 +6,12 @@ import com.github.salomonbrys.kotson.registerTypeAdapter
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
-import me.fungames.jfortniteparse.GSuppressMissingSchemaErrors
+import me.fungames.jfortniteparse.GFatalObjectSerializationErrors
 import me.fungames.jfortniteparse.LOG_STREAMING
-import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UEnum
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
-import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.asyncloading2.*
@@ -121,12 +119,14 @@ class IoPackage : Package {
                             obj.deserialize(Ar, validPos)
                             if (validPos != Ar.pos()) {
                                 LOG_STREAMING.warn { "Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining (${obj.getPathName()})" }
+                            } else {
+                                LOG_STREAMING.debug { "Successfully read ${obj.exportType} at $localExportDataOffset with size ${export.cookedSerialSize}" }
                             }
                         } catch (e: Throwable) {
-                            if (e is MissingSchemaException && !GSuppressMissingSchemaErrors) {
-                                LOG_STREAMING.warn(e.message)
-                            } else {
+                            if (GFatalObjectSerializationErrors) {
                                 throw e
+                            } else {
+                                LOG_STREAMING.error(e) { "Could not read ${obj.exportType} correctly" }
                             }
                         }
                         obj
@@ -179,7 +179,7 @@ class IoPackage : Package {
         abstract fun getName(): FName
         open fun getOuter(): ResolvedObject? = null
         open fun getSuper(): ResolvedObject? = null
-        open fun getObject(): Lazy<UObject>? = null
+        open fun getObject(): Lazy<UObject?>? = null
     }
 
     class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg) {
@@ -196,27 +196,17 @@ class IoPackage : Package {
         override fun getOuter() = pkg.resolveObjectIndex(scriptImport.outerIndex)
         override fun getObject() = lazy {
             val name = getName()
-            if (name.text[0] == 'E') {
-                var enumValues = pkg.provider?.mappingsProvider?.getEnum(name)
-                if (enumValues == null) {
-                    if (pkg.packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
-                        throw MissingSchemaException("Unknown enum $name")
-                    }
-                    enumValues = emptyList()
-                }
-                val enum = UEnum()
-                enum.name = name.text
-                enum.names = Array(enumValues.size) { FName.dummy("$name::${enumValues[it]}") to it.toLong() }
-                enum
-            } else {
-                var struct = pkg.provider?.mappingsProvider?.getStruct(name)
-                if (struct == null) {
-                    if (pkg.packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
-                        throw MissingSchemaException("Unknown struct $name")
-                    }
-                    struct = UScriptStruct(name)
-                }
+            val struct = pkg.provider?.mappingsProvider?.getStruct(name)
+            if (struct != null) {
                 struct
+            } else {
+                val enumValues = pkg.provider?.mappingsProvider?.getEnum(name)
+                if (enumValues != null) {
+                    val enum = UEnum()
+                    enum.name = name.text
+                    enum.names = Array(enumValues.size) { FName.dummy("$name::${enumValues[it]}") to it.toLong() }
+                    enum
+                } else null
             }
         }
     }

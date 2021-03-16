@@ -1,8 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.reader
 
-import me.fungames.jfortniteparse.GExportArchiveCheckDummyName
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
@@ -64,12 +62,6 @@ class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : F
             name = FName()
         }
         return name
-    }
-
-    fun checkDummyName(dummyName: String) {
-        if (GExportArchiveCheckDummyName && dummyName !in pkg.nameMap.nameEntries) {
-            UClass.logger.warn("$dummyName is not in the package name map. There must be something wrong.")
-        }
     }
 
     override fun printError() = "FExportArchive Info: pos $pos, stopper $size, object ${obj.getPathName()}"
