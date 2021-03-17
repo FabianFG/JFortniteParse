@@ -13,8 +13,8 @@ import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
 
 @Suppress("UNCHECKED_CAST")
-class PropertyType(
-    @JvmField var type: FName) {
+class PropertyType {
+    @JvmField var type: FName
     @JvmField var structName = NAME_None
     @JvmField var bool = false
     @JvmField var enumName = NAME_None
@@ -26,8 +26,36 @@ class PropertyType(
 
     constructor() : this(NAME_None)
 
-    constructor(json: JsonObject) : this() {
+    constructor(type: FName) {
+        this.type = type
+    }
 
+    constructor(json: JsonObject) {
+        var type = json["type"].asString
+        when (type) { // Replace unsupported property type names in usmap format
+            "ClassProperty" -> type = "ObjectProperty"
+            "MulticastInlineDelegateProperty" -> type = "MulticastDelegateProperty"
+            "MulticastSparseDelegateProperty" -> type = "MulticastDelegateProperty"
+            "SoftClassProperty" -> type = "SoftObjectProperty"
+        }
+        this.type = FName.dummy(type)
+        when (type) {
+            "ByteProperty" -> {
+                json["enumName"]?.run { enumName = FName.dummy(asString) }
+            }
+            "EnumProperty" -> {
+                innerType = PropertyType(json["innerType"].asJsonObject).also {
+                    isEnumAsByte = it.type.text == "ByteProperty"
+                }
+                enumName = FName.dummy(json["enumName"].asString)
+            }
+            "StructProperty" -> structName = FName.dummy(json["structType"].asString) // key name should be structName
+            "SetProperty", "ArrayProperty" -> innerType = PropertyType(json["innerType"].asJsonObject)
+            "MapProperty" -> {
+                innerType = PropertyType(json["innerType"].asJsonObject)
+                valueType = PropertyType(json["valueType"].asJsonObject)
+            }
+        }
     }
 
     constructor(tag: FPropertyTag) : this(tag.name) {

@@ -80,11 +80,9 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
 
     private fun parseData(Ar: FUsmapNameTableArchive) {
         Ar.nameMap = Ar.readTArray { String(Ar.read(Ar.read())) }
-        var cnt = 0
         mappings.enums = Ar.readTMap {
             val enumName = Ar.readFName().text
             val enumValues = List(Ar.read()) { Ar.readFName().text }
-            ++cnt
             enumName to enumValues
         }
         repeat(Ar.readInt32()) {
@@ -96,10 +94,10 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
             val serializablePropCount = Ar.readUInt16()
             struct.childProperties2 = List(serializablePropCount.toInt()) {
                 val schemaIdx = Ar.readUInt16()
-                val arraySize = Ar.readUInt8()
+                val arraySize = Ar.read()
                 val propertyName = Ar.readFName()
                 val type = deserializePropData(Ar)
-                PropertyInfo(propertyName.text, type, arraySize.toInt()).apply { index = schemaIdx.toInt() }
+                PropertyInfo(propertyName.text, type, arraySize).apply { index = schemaIdx.toInt() }
             }
             mappings.types[struct.name] = struct
         }
