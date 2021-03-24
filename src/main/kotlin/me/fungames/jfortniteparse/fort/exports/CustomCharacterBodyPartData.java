@@ -2,7 +2,7 @@ package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
-public class CustomCharacterBodyPartData extends CustomCharacterAccessoryData {
+public class CustomCharacterBodyPartData extends CustomCharacterPartData {
     public FSoftObjectPath /*SoftClassPath*/ AnimClass;
     public FSoftObjectPath /*SoftClassPath*/ FrontEndAnimClass;
     public FSoftObjectPath /*SoftClassPath*/ MannequinAnimClass;

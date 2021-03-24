@@ -181,7 +181,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         primaryIndexAr.pakInfo = Ar.pakInfo
 
         mountPrefix = runCatching { primaryIndexAr.readString().substringAfter("../../../") }.getOrElse {
-            throw InvalidAesKeyException("Given encryption key '$aesKeyStr'is not working with '$fileName'", it)
+            throw InvalidAesKeyException("Given encryption key '$aesKeyStr' is not working with '$fileName'", it)
         }
 
         val fileCount = primaryIndexAr.readInt32()
@@ -256,15 +256,6 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             }
         }
         this.files = files
-
-        // Print statistics
-        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
-        if (encryptedFileCount != 0)
-            stats += " (%d encrypted)".format(encryptedFileCount)
-        if (mountPrefix.contains('/'))
-            stats += ", mount point: \"%s\"".format(mountPrefix)
-        logger.info(stats + ", version %d".format(pakInfo.version))
-
         return files
     }
 
@@ -379,10 +370,22 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         return FPakEntry(pakInfo, "", offset, size, uncompressedSize, compressionMethodIndex.toInt(), compressionBlocks, encrypted, compressionBlockSize.toInt())
     }
 
-    fun readIndex() : List<GameFile> = if (pakInfo.version >= PakVersion_PathHashIndex) readIndexUpdated() else readIndexLegacy()
+    fun readIndex(): List<GameFile> {
+        val start = System.currentTimeMillis()
+        val files = if (pakInfo.version >= PakVersion_PathHashIndex) readIndexUpdated() else readIndexLegacy()
+
+        // Print statistics
+        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
+        if (encryptedFileCount != 0)
+            stats += " (%d encrypted)".format(encryptedFileCount)
+        if (mountPrefix.contains('/'))
+            stats += ", mount point: \"%s\"".format(mountPrefix)
+        logger.info(stats + ", version %d in %dms".format(pakInfo.version, System.currentTimeMillis() - start))
+
+        return files
+    }
 
     private fun readIndexLegacy() : List<GameFile> {
-
         // Prepare index and decrypt if necessary
         Ar.seek(pakInfo.indexOffset)
         val index = Ar.read(pakInfo.indexSize.toInt())
@@ -442,15 +445,6 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             }
         }
         this.files = files
-
-
-        // Print statistics
-        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
-        if (encryptedFileCount != 0)
-            stats += " (%d encrypted)".format(encryptedFileCount)
-        if (mountPrefix.contains('/'))
-            stats += ", mount point: \"%s\"".format(mountPrefix)
-        logger.info(stats + ", version %d".format(pakInfo.version))
         return this.files
     }
 
@@ -511,7 +505,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
 
         // Read the index
         var mountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
-            throw InvalidAesKeyException("Given encryption key '$aesKeyStr'is not working with '$fileName'", it)
+            throw InvalidAesKeyException("Given encryption key '$aesKeyStr' is not working with '$fileName'", it)
         }
         var badMountPoint = false
         if (!mountPoint.startsWith("../../.."))
@@ -678,14 +672,6 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             }
         }
         this.files = files
-
-        // Print statistics
-        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
-        if (encryptedFileCount != 0)
-            stats += " (%d encrypted)".format(encryptedFileCount)
-        if (mountPrefix.contains('/'))
-            stats += ", mount point: \"%s\"".format(mountPrefix)
-        logger.info(stats + ", version %d".format(pakInfo.version))
 
         if (!keepIndexData) {
             //this.encodedPakEntries = byteArrayOf()

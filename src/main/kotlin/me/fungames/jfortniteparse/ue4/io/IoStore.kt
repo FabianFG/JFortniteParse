@@ -219,33 +219,19 @@ class FIoStoreTocCompressedBlockEntry {
         }
 }
 
-class FIoStoreToc {
-    private val chunkIdToIndex = hashMapOf<FIoChunkId, Int>()
-    private val toc = FIoStoreTocResource()
-    private lateinit var filesToIndex: Array<String>
-    private lateinit var fileTocEntryIndices: IntArray
-
-    fun initialize() {
-        chunkIdToIndex.clear()
-
-        for (chunkIndex in 0 until toc.chunkIds.size) {
-            chunkIdToIndex[toc.chunkIds[chunkIndex]] = chunkIndex
-        }
-    }
-
-    val tocResource get() = toc
-    fun getTocEntryIndex(chunkId: FIoChunkId) = chunkIdToIndex[chunkId]
-    fun getOffsetAndLength(chunkId: FIoChunkId) = chunkIdToIndex[chunkId]?.let { toc.chunkOffsetLengths[it] }
-}
-
 // class FIoStoreWriterImpl
 
 class FIoStoreReaderImpl {
-    private val toc = FIoStoreToc()
+    private val tocResource = FIoStoreTocResource()
     private var decryptionKey: ByteArray? = null
     private val containerFileHandles = mutableListOf<FPakArchive>()
-    var directoryIndexReader: FIoDirectoryIndexReaderImpl? = null
-        private set
+    val directoryIndexReader by lazy {
+        if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_INDEXED) != 0 && tocResource.directoryIndexBuffer != null) {
+            val out = FIoDirectoryIndexReaderImpl(tocResource.directoryIndexBuffer!!, decryptionKey)
+            tocResource.directoryIndexBuffer = null
+            out
+        } else null
+    }
     private val threadBuffers = object : ThreadLocal<FThreadBuffers>() {
         override fun initialValue() = FThreadBuffers()
     }
@@ -255,11 +241,7 @@ class FIoStoreReaderImpl {
 
     fun initialize(utocReader: FArchive, ucasReader: FPakArchive, decryptionKeys: Map<FGuid, ByteArray>) {
         this.environment = FIoStoreEnvironment(ucasReader.fileName.substringBeforeLast('.'))
-        val tocResource = toc.tocResource
         tocResource.read(utocReader, TOC_READ_OPTION_READ_ALL)
-
-        toc.initialize()
-
         if (tocResource.header.partitionCount > 1u) {
             throw FIoStatusException(EIoErrorCode.CorruptToc, "This method does not support IoStore environments with multiple partitions")
         }
@@ -269,19 +251,12 @@ class FIoStoreReaderImpl {
             decryptionKey = decryptionKeys[tocResource.header.encryptionKeyGuid]
                 ?: throw FIoStatusException(EIoErrorCode.FileOpenFailed, "Missing decryption key for IoStore environment '${environment.path}'")
         }
-
-        if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_INDEXED) != 0 && tocResource.directoryIndexBuffer != null) {
-            directoryIndexReader = FIoDirectoryIndexReaderImpl(tocResource.directoryIndexBuffer!!, decryptionKey)
-        }
     }
 
     fun initialize(environment: FIoStoreEnvironment, decryptionKeys: Map<FGuid, ByteArray>) {
         this.environment = environment
-        val tocResource = toc.tocResource
+        val start = System.currentTimeMillis()
         tocResource.read(File(environment.path + ".utoc"), TOC_READ_OPTION_READ_ALL)
-
-        toc.initialize()
-
         for (partitionIndex in 0u until tocResource.header.partitionCount) {
             val containerFilePath = StringBuilder(256)
             containerFilePath.append(environment.path)
@@ -302,19 +277,20 @@ class FIoStoreReaderImpl {
                 ?: throw FIoStatusException(EIoErrorCode.FileOpenFailed, "Missing decryption key for IoStore environment '${environment.path}'")
         }
 
-        if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_INDEXED) != 0 && tocResource.directoryIndexBuffer != null) {
-            directoryIndexReader = FIoDirectoryIndexReaderImpl(tocResource.directoryIndexBuffer!!, decryptionKey)
-        }
+        PakFileReader.logger.info("IoStore \"{}\": {} {}, version {} in {}ms",
+            environment.path,
+            this.tocResource.header.tocEntryCount,
+            if (decryptionKey != null) "encrypted chunks" else "chunks",
+            this.tocResource.header.version.ordinal,
+            System.currentTimeMillis() - start)
     }
 
-    val containerId get() = toc.tocResource.header.containerId
-    val containerFlags get() = toc.tocResource.header.containerFlags
-    val encryptionKeyGuid get() = toc.tocResource.header.encryptionKeyGuid
+    val containerId get() = tocResource.header.containerId
+    val containerFlags get() = tocResource.header.containerFlags
+    val encryptionKeyGuid get() = tocResource.header.encryptionKeyGuid
 
     fun enumerateChunks(callback: (FIoStoreTocChunkInfo) -> Boolean) {
-        val tocResource = toc.tocResource
-
-        for (chunkIndex in 0 until tocResource.chunkIds.size) {
+        for (chunkIndex in tocResource.chunkIds.indices) {
             val chunkInfo = getTocChunkInfo(chunkIndex)
             if (!callback(chunkInfo)) {
                 break
@@ -323,7 +299,7 @@ class FIoStoreReaderImpl {
     }
 
     fun getChunkInfo(chunkId: FIoChunkId): FIoStoreTocChunkInfo {
-        val tocEntryIndex = toc.getTocEntryIndex(chunkId)
+        val tocEntryIndex = tocResource.getTocEntryIndex(chunkId)
         if (tocEntryIndex != null) {
             return getTocChunkInfo(tocEntryIndex)
         } else {
@@ -332,8 +308,6 @@ class FIoStoreReaderImpl {
     }
 
     fun getChunkInfo(tocEntryIndex: Int): FIoStoreTocChunkInfo {
-        val tocResource = toc.tocResource
-
         if (tocEntryIndex < tocResource.chunkIds.size) {
             return getTocChunkInfo(tocEntryIndex)
         } else {
@@ -342,13 +316,12 @@ class FIoStoreReaderImpl {
     }
 
     fun read(chunkId: FIoChunkId/*, options: FIoReadOptions = FIoReadOptions()*/): ByteArray {
-        val offsetAndLength = toc.getOffsetAndLength(chunkId)
+        val offsetAndLength = tocResource.getOffsetAndLength(chunkId)
             ?: throw FIoStatusException(EIoErrorCode.NotFound, "Unknown chunk ID")
 
         val exContainerFileHandles = if (concurrent) containerFileHandles.map { it.clone() } else containerFileHandles
 
         val threadBuffers = threadBuffers.get()
-        val tocResource = toc.tocResource
         val compressionBlockSize = tocResource.header.compressionBlockSize
         val firstBlockIndex = (offsetAndLength.offset / compressionBlockSize).toInt()
         val lastBlockIndex = ((align(offsetAndLength.offset + offsetAndLength.length, compressionBlockSize.toULong()) - 1u) / compressionBlockSize).toInt()
@@ -411,10 +384,10 @@ class FIoStoreReaderImpl {
         }
     }
 
-    fun getFiles() : List<GameFile> {
+    fun getFiles(): List<GameFile> {
         val files = ArrayList<GameFile>()
         directoryIndexReader?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
-            files.add(GameFile(filename, pakFileName = environment.path,ioPackageId = FPackageId(toc.tocResource.chunkIds[tocEntryIndex.toInt()].chunkId)))
+            files.add(GameFile(filename, pakFileName = environment.path, ioPackageId = FPackageId(tocResource.chunkIds[tocEntryIndex.toInt()].chunkId)))
             true
         }
         return files
@@ -432,7 +405,6 @@ class FIoStoreReaderImpl {
     }
 
     fun tocChunkContainsBlockIndex(tocEntryIndex: Int, blockIndex: Int): Boolean {
-        val tocResource = toc.tocResource
         val offsetLength = tocResource.chunkOffsetLengths[tocEntryIndex]
 
         val compressionBlockSize = tocResource.header.compressionBlockSize
@@ -443,7 +415,6 @@ class FIoStoreReaderImpl {
     }
 
     private fun getTocChunkInfo(tocEntryIndex: Int): FIoStoreTocChunkInfo {
-        val tocResource = toc.tocResource
         val meta = tocResource.chunkMetas[tocEntryIndex]
         val offsetLength = tocResource.chunkOffsetLengths[tocEntryIndex]
 
@@ -495,13 +466,14 @@ class FIoStoreTocResource {
     }
 
     lateinit var header: FIoStoreTocHeader
-    lateinit var chunkIds: MutableList<FIoChunkId>
-    lateinit var chunkOffsetLengths: MutableList<FIoOffsetAndLength>
-    lateinit var compressionBlocks: MutableList<FIoStoreTocCompressedBlockEntry>
-    lateinit var compressionMethods: MutableList<String>
-    lateinit var chunkBlockSignatures: MutableList<ByteArray> // FSHAHash
-    lateinit var chunkMetas: MutableList<FIoStoreTocEntryMeta>
+    lateinit var chunkIds: Array<FIoChunkId>
+    lateinit var chunkOffsetLengths: Array<FIoOffsetAndLength>
+    lateinit var compressionBlocks: Array<FIoStoreTocCompressedBlockEntry>
+    lateinit var compressionMethods: Array<String>
+    lateinit var chunkBlockSignatures: Array<ByteArray> // FSHAHash
+    lateinit var chunkMetas: Array<FIoStoreTocEntryMeta>
     var directoryIndexBuffer: ByteArray? = null
+    private lateinit var chunkIdToIndex: MutableMap<FIoChunkId, Int>
 
     fun read(tocFile: File, readOptions: Int) = read(object : FByteArchive(tocFile.readBytes()) {
         override fun printError() = super.printError() + ", file $tocFile"
@@ -529,24 +501,30 @@ class FIoStoreTocResource {
         }
 
         // Chunk IDs
-        chunkIds = MutableList(header.tocEntryCount.toInt()) { FIoChunkId(tocBuffer) }
+        chunkIdToIndex = HashMap(header.tocEntryCount.toInt(), 1f)
+        chunkIds = Array(header.tocEntryCount.toInt()) {
+            val id = FIoChunkId(tocBuffer)
+            chunkIdToIndex[id] = it
+            id
+        }
 
         // Chunk offsets
-        chunkOffsetLengths = MutableList(header.tocEntryCount.toInt()) { FIoOffsetAndLength(tocBuffer) }
+        chunkOffsetLengths = Array(header.tocEntryCount.toInt()) { FIoOffsetAndLength(tocBuffer) }
 
         // Compression blocks
-        compressionBlocks = MutableList(header.tocCompressedBlockEntryCount.toInt()) { FIoStoreTocCompressedBlockEntry(tocBuffer) }
+        compressionBlocks = Array(header.tocCompressedBlockEntryCount.toInt()) { FIoStoreTocCompressedBlockEntry(tocBuffer) }
 
         // Compression methods
-        compressionMethods = ArrayList(header.compressionMethodNameCount.toInt() + 1)
-        compressionMethods.add("None")
-        for (i in 0u until header.compressionMethodNameCount) {
-            val compressionMethodName = tocBuffer.read(header.compressionMethodNameLength.toInt())
-            var length = 0
-            while (compressionMethodName[length] != 0.toByte()) {
-                ++length
+        compressionMethods = Array(header.compressionMethodNameCount.toInt() + 1) {
+            if (it == 0) "None"
+            else {
+                val compressionMethodName = tocBuffer.read(header.compressionMethodNameLength.toInt())
+                var length = 0
+                while (compressionMethodName[length] != 0.toByte()) {
+                    ++length
+                }
+                String(compressionMethodName, 0, length)
             }
-            compressionMethods.add(String(compressionMethodName, 0, length))
         }
 
         // Chunk block signatures
@@ -554,11 +532,11 @@ class FIoStoreTocResource {
             val hashSize = tocBuffer.readInt32()
             tocBuffer.skip(hashSize.toLong()) // actually: var tocSignature = reader.ReadBytes(hashSize);
             tocBuffer.skip(hashSize.toLong()) // actually: var blockSignature = reader.ReadBytes(hashSize);
-            chunkBlockSignatures = MutableList(header.tocCompressedBlockEntryCount.toInt()) { tocBuffer.read(20) }
+            chunkBlockSignatures = Array(header.tocCompressedBlockEntryCount.toInt()) { tocBuffer.read(20) }
 
             // You could verify hashes here but nah
         } else {
-            chunkBlockSignatures = ArrayList(0)
+            chunkBlockSignatures = emptyArray()
         }
 
         // Directory index
@@ -570,9 +548,12 @@ class FIoStoreTocResource {
 
         // Meta
         chunkMetas = if ((readOptions and TOC_READ_OPTION_READ_TOC_META) != 0) {
-            MutableList(header.tocEntryCount.toInt()) { FIoStoreTocEntryMeta(tocBuffer) }
+            Array(header.tocEntryCount.toInt()) { FIoStoreTocEntryMeta(tocBuffer) }
         } else {
-            ArrayList(0)
+            emptyArray()
         }
     }
+
+    fun getTocEntryIndex(chunkId: FIoChunkId) = chunkIdToIndex[chunkId]
+    fun getOffsetAndLength(chunkId: FIoChunkId) = chunkIdToIndex[chunkId]?.let { chunkOffsetLengths[it] }
 }

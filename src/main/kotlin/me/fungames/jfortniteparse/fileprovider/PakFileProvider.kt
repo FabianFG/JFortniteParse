@@ -89,10 +89,11 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
                 val ioStoreReader = FIoStoreReaderImpl()
                 ioStoreReader.concurrent = reader.concurrent
                 ioStoreReader.initialize(ioStoreEnvironment, keys)
-                ioStoreReader.getFiles().associateByTo(files) { it.path.toLowerCase() }
+                if (populateIoStoreFiles) {
+                    ioStoreReader.getFiles().associateByTo(files) { it.path.toLowerCase() }
+                }
                 mountedIoStoreReaders.add(ioStoreReader)
                 globalPackageStore.onContainerMounted(FIoDispatcherMountedContainer(ioStoreEnvironment, ioStoreReader.containerId))
-                PakFileReader.logger.info("Mounted IoStore environment \"{}\"", ioStoreEnvironment.path)
             } catch (e: FIoStatusException) {
                 PakFileReader.logger.warn("Failed to mount IoStore environment \"{}\" [{}]", ioStoreEnvironment.path, e.message)
             }

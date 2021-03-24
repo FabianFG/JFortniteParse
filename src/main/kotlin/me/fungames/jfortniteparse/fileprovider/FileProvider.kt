@@ -23,6 +23,7 @@ abstract class FileProvider {
 
     abstract var game: Ue4Version
     var mappingsProvider: TypeMappingsProvider = ReflectionTypeMappingsProvider()
+    var populateIoStoreFiles = true
     protected abstract val files: MutableMap<String, GameFile>
 
     open fun files(): Map<String, GameFile> = files

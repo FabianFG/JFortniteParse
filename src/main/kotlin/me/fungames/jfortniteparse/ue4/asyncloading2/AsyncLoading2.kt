@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
+import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
@@ -18,8 +19,11 @@ class FMappedName {
         private val TYPE_SHIFT = INDEX_BITS
 
         @JvmStatic
-        fun create(index: UInt, number: UInt, type: EType): FMappedName {
-            check(index <= Int.MAX_VALUE.toUInt()) { "Bad name index" }
+        fun create(index: UInt, number: UInt, type: EType, Ar: FArchive? = null): FMappedName {
+            if (index > Int.MAX_VALUE.toUInt()) {
+                if (Ar != null) throw ParserException("Bad name index", Ar)
+                else throw ParserException("Bad name index")
+            }
             return FMappedName((type.ordinal.toUInt() shl TYPE_SHIFT.toInt()) or index, number)
         }
 

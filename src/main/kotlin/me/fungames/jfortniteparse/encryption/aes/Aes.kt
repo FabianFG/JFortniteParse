@@ -25,7 +25,7 @@ object Aes {
     fun encryptData(contents: ByteArray, offBytes: Int, numBytes: Int, keyBytes: ByteArray) {
         Cipher.getInstance("AES/ECB/NoPadding").apply {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(keyBytes, "AES"))
-            doFinal(contents, offBytes, contents.size, contents, offBytes)
+            doFinal(contents, offBytes, numBytes, contents, offBytes)
         }
     }
 
@@ -36,7 +36,7 @@ object Aes {
     fun decryptData(contents: ByteArray, offBytes: Int, numBytes: Int, keyBytes: ByteArray) {
         Cipher.getInstance("AES/ECB/NoPadding").apply {
             init(Cipher.DECRYPT_MODE, SecretKeySpec(keyBytes, "AES"))
-            doFinal(contents, offBytes, contents.size, contents, offBytes)
+            doFinal(contents, offBytes, numBytes, contents, offBytes)
         }
     }
 }
