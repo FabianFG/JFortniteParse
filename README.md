@@ -157,7 +157,7 @@ val translatedString = text.textForLocres(locres)
 <dependency>
 	<groupId>me.fungames</groupId>
 	<artifactId>JFortniteParse</artifactId>
-	<version>3.6.4</version>
+	<version>3.6.5</version>
 </dependency>
 ```
 ##### Gradle
@@ -171,7 +171,7 @@ repositories {
 ```
 - Add the dependency
 ```groovy
-implementation 'me.fungames:JFortniteParse:3.6.4'
+implementation 'me.fungames:JFortniteParse:3.6.5'
 ```
 
 ### Fortnite Text Hotfixes
