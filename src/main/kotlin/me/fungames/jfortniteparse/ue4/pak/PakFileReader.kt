@@ -375,7 +375,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         val files = if (pakInfo.version >= PakVersion_PathHashIndex) readIndexUpdated() else readIndexLegacy()
 
         // Print statistics
-        var stats = "Pak %s: %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
+        var stats = "Pak \"%s\": %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
         if (encryptedFileCount != 0)
             stats += " (%d encrypted)".format(encryptedFileCount)
         if (mountPrefix.contains('/'))
