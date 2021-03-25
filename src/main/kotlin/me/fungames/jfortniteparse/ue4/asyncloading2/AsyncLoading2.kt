@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.util.CityHash.cityHash64
 import me.fungames.jfortniteparse.util.get
 
 typealias FSourceToLocalizedPackageIdMap = Array<Pair<FPackageId, FPackageId>>
@@ -123,7 +124,18 @@ class FPackageObjectIndex {
         val INVALID = 0uL.inv()
 
         fun generateImportHashFromObjectPath(objectPath: String): ULong {
-            return 0uL
+            val fullImportPath = StringBuilder(objectPath)
+            fullImportPath.forEachIndexed { i, c ->
+                if (c == '.' || c == ':') {
+                    fullImportPath[i] = '/'
+                } else {
+                    fullImportPath[i] = c.toLowerCase()
+                }
+            }
+            val data = fullImportPath.toString().toByteArray(Charsets.UTF_16LE)
+            var hash = cityHash64(data, 0, data.size).toULong()
+            hash = hash and (3uL shl 62).inv()
+            return hash
         }
 
         fun fromExportIndex(index: Int) =

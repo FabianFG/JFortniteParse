@@ -253,10 +253,10 @@ class FIoStoreReaderImpl {
         }
     }
 
-    fun initialize(environment: FIoStoreEnvironment, decryptionKeys: Map<FGuid, ByteArray>) {
+    fun initialize(environment: FIoStoreEnvironment, readOptions: Int, decryptionKeys: Map<FGuid, ByteArray>) {
         this.environment = environment
         val start = System.currentTimeMillis()
-        tocResource.read(File(environment.path + ".utoc"), TOC_READ_OPTION_READ_ALL)
+        tocResource.read(File(environment.path + ".utoc"), readOptions)
         for (partitionIndex in 0u until tocResource.header.partitionCount) {
             val containerFilePath = StringBuilder(256)
             containerFilePath.append(environment.path)
@@ -415,6 +415,7 @@ class FIoStoreReaderImpl {
     }
 
     private fun getTocChunkInfo(tocEntryIndex: Int): FIoStoreTocChunkInfo {
+        check(tocResource.chunkMetas.isNotEmpty()) { "TOC was read without ChunkMetas" }
         val meta = tocResource.chunkMetas[tocEntryIndex]
         val offsetLength = tocResource.chunkOffsetLengths[tocEntryIndex]
 
@@ -470,7 +471,7 @@ class FIoStoreTocResource {
     lateinit var chunkOffsetLengths: Array<FIoOffsetAndLength>
     lateinit var compressionBlocks: Array<FIoStoreTocCompressedBlockEntry>
     lateinit var compressionMethods: Array<String>
-    lateinit var chunkBlockSignatures: Array<ByteArray> // FSHAHash
+    //lateinit var chunkBlockSignatures: Array<ByteArray> // FSHAHash
     lateinit var chunkMetas: Array<FIoStoreTocEntryMeta>
     var directoryIndexBuffer: ByteArray? = null
     private lateinit var chunkIdToIndex: MutableMap<FIoChunkId, Int>
@@ -530,20 +531,23 @@ class FIoStoreTocResource {
         // Chunk block signatures
         if (header.containerFlags and IO_CONTAINER_FLAG_SIGNED != 0) {
             val hashSize = tocBuffer.readInt32()
-            tocBuffer.skip(hashSize.toLong()) // actually: var tocSignature = reader.ReadBytes(hashSize);
-            tocBuffer.skip(hashSize.toLong()) // actually: var blockSignature = reader.ReadBytes(hashSize);
-            chunkBlockSignatures = Array(header.tocCompressedBlockEntryCount.toInt()) { tocBuffer.read(20) }
+            /*var tocSignature = tocBuffer.read(hashSize)
+            var blockSignature = tocBuffer.read(hashSize)
+            chunkBlockSignatures = Array(header.tocCompressedBlockEntryCount.toInt()) { tocBuffer.read(20) }*/
+            tocBuffer.skip(hashSize + hashSize + header.tocCompressedBlockEntryCount.toInt() * 20L)
 
             // You could verify hashes here but nah
-        } else {
+        }/* else {
             chunkBlockSignatures = emptyArray()
-        }
+        }*/
 
         // Directory index
-        if ((readOptions and TOC_READ_OPTION_READ_DIRECTORY_INDEX) != 0
-            && (header.containerFlags and IO_CONTAINER_FLAG_INDEXED) != 0
-            && header.directoryIndexSize > 0u) {
-            directoryIndexBuffer = tocBuffer.read(header.directoryIndexSize.toInt())
+        if (header.containerFlags and IO_CONTAINER_FLAG_INDEXED != 0 && header.directoryIndexSize > 0u) {
+            if (readOptions and TOC_READ_OPTION_READ_DIRECTORY_INDEX != 0) {
+                directoryIndexBuffer = tocBuffer.read(header.directoryIndexSize.toInt())
+            } else {
+                tocBuffer.skip(header.directoryIndexSize.toLong())
+            }
         }
 
         // Meta

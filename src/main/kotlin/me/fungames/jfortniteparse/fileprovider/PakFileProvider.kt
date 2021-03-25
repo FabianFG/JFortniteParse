@@ -88,10 +88,8 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
             try {
                 val ioStoreReader = FIoStoreReaderImpl()
                 ioStoreReader.concurrent = reader.concurrent
-                ioStoreReader.initialize(ioStoreEnvironment, keys)
-                if (populateIoStoreFiles) {
-                    ioStoreReader.getFiles().associateByTo(files) { it.path.toLowerCase() }
-                }
+                ioStoreReader.initialize(ioStoreEnvironment, ioStoreTocReadOptions, keys)
+                ioStoreReader.getFiles().associateByTo(files) { it.path.toLowerCase() }
                 mountedIoStoreReaders.add(ioStoreReader)
                 globalPackageStore.onContainerMounted(FIoDispatcherMountedContainer(ioStoreEnvironment, ioStoreReader.containerId))
             } catch (e: FIoStatusException) {
@@ -145,7 +143,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         globalDataLoaded = true
         try {
             val ioStoreReader = FIoStoreReaderImpl()
-            ioStoreReader.initialize(FIoStoreEnvironment(globalTocFile.path.substringBeforeLast('.')), keys)
+            ioStoreReader.initialize(FIoStoreEnvironment(globalTocFile.path.substringBeforeLast('.')), ioStoreTocReadOptions, keys)
             mountedIoStoreReaders.add(ioStoreReader)
             PakFileReader.logger.info("Initialized I/O store")
         } catch (e: FIoStatusException) {

@@ -7,6 +7,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.mappings.ReflectionTypeMappingsProvider
 import me.fungames.jfortniteparse.ue4.assets.mappings.TypeMappingsProvider
 import me.fungames.jfortniteparse.ue4.io.FIoChunkId
+import me.fungames.jfortniteparse.ue4.io.TOC_READ_OPTION_READ_ALL
 import me.fungames.jfortniteparse.ue4.locres.FnLanguage
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
@@ -23,7 +24,7 @@ abstract class FileProvider {
 
     abstract var game: Ue4Version
     var mappingsProvider: TypeMappingsProvider = ReflectionTypeMappingsProvider()
-    var populateIoStoreFiles = true
+    var ioStoreTocReadOptions = TOC_READ_OPTION_READ_ALL
     protected abstract val files: MutableMap<String, GameFile>
 
     open fun files(): Map<String, GameFile> = files
