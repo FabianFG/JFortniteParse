@@ -154,6 +154,33 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
     }
 
     /**
+     * Test all keys from a collection and return the working one if there is one
+     */
+    fun testAesKeys(keys : Iterable<ByteArray>) : ByteArray? {
+        if (!isEncrypted())
+            return null
+        keys.forEach {
+            if (testAesKey(it))
+                return it
+        }
+        return null
+    }
+
+    /**
+     * Test all keys from a collection and return the working one if there is one
+     */
+    @JvmName("testAesKeysStr")
+    fun testAesKeys(keys : Iterable<String>) : String? {
+        if (!isEncrypted())
+            return null
+        keys.forEach {
+            if (testAesKey(it))
+                return it
+        }
+        return null
+    }
+
+    /**
      * Test whether the given encryption key is valid by attempting to read the pak mount point and validating it
      */
     fun testAesKey(key : ByteArray) : Boolean {
@@ -165,7 +192,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
     /**
      * Test whether the given encryption key is valid by attempting to read the pak mount point and validating it
      */
-    fun testAesKey(key : String) = testAesKey((if (key.startsWith("0x")) key.substring(2) else key).parseHexBinary())
+    fun testAesKey(key : String) = testAesKey(Aes.parseKey(key))
 
     private fun readIndexUpdated() : List<GameFile> {
         // Prepare primary index and decrypt if necessary
