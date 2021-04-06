@@ -1,11 +1,12 @@
 package me.fungames.jfortniteparse.ue4.pak
 
+import me.fungames.jfortniteparse.ue4.io.FIoChunkId
+import me.fungames.jfortniteparse.ue4.io.FIoStoreReaderImpl
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
 import me.fungames.jfortniteparse.util.div
 
-@Suppress("EXPERIMENTAL_API_USAGE")
 open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 0L,
                     val uncompressedSize: Long = 0L,
                     val compressionMethod: CompressionMethod = CompressionMethod.None,
@@ -13,7 +14,8 @@ open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 
                     val compressionBlockSize: Int = 0,
                     val isEncrypted: Boolean = false,
                     val pakFileName: String,
-                    val ioPackageId : FPackageId? = null
+                    val ioChunkId: FIoChunkId? = null,
+                    val ioStoreReader: FIoStoreReaderImpl? = null
 ) {
     constructor(pakEntry: FPakEntry, mountPrefix : String, pakFileName : String) : this(
         mountPrefix / pakEntry.name, pakEntry.pos, pakEntry.size, pakEntry.uncompressedSize,
@@ -21,8 +23,8 @@ open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 
         pakEntry.isEncrypted, pakFileName, null
     )
 
-    lateinit var uexp : GameFile
-    var ubulk : GameFile? = null
+    lateinit var uexp: GameFile
+    var ubulk: GameFile? = null
 
     fun getExtension() = path.substringAfterLast('.')
     fun isUE4Package() = getExtension().run { this == "uasset" || this == "umap" }
@@ -36,6 +38,8 @@ open class GameFile(val path: String = "", val pos: Long = 0L, val size: Long = 
     fun getPathWithoutExtension() = path.substringBeforeLast('.')
     fun getName() = path.substringAfterLast('/')
     fun getNameWithoutExtension() = getName().substringBeforeLast('.')
+
+    val ioPackageId get() = ioChunkId?.run { FPackageId(chunkId) }
 
     override fun toString() = path
 

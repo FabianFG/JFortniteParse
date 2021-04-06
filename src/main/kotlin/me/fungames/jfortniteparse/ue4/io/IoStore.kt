@@ -4,7 +4,6 @@ import me.fungames.jfortniteparse.compression.Compression
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
@@ -222,7 +221,7 @@ class FIoStoreTocCompressedBlockEntry {
 // class FIoStoreWriterImpl
 
 class FIoStoreReaderImpl {
-    private val tocResource = FIoStoreTocResource()
+    val tocResource = FIoStoreTocResource()
     private var decryptionKey: ByteArray? = null
     private val containerFileHandles = mutableListOf<FPakArchive>()
     val directoryIndexReader by lazy {
@@ -387,7 +386,10 @@ class FIoStoreReaderImpl {
     fun getFiles(): List<GameFile> {
         val files = ArrayList<GameFile>()
         directoryIndexReader?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
-            files.add(GameFile(filename, pakFileName = environment.path, ioPackageId = FPackageId(tocResource.chunkIds[tocEntryIndex.toInt()].chunkId)))
+            val chunkId = tocResource.chunkIds[tocEntryIndex.toInt()]
+            if (chunkId.chunkType == EIoChunkType.ExportBundleData) {
+                files.add(GameFile(filename, pakFileName = environment.path, ioChunkId = chunkId, ioStoreReader = this))
+            }
             true
         }
         return files

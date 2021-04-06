@@ -71,7 +71,7 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
         return FName()
     }
 
-    fun <T : UObject> readObject() = FPackageIndex(this).let {
+    open fun <T : UObject> readObject() = FPackageIndex(this).let {
         val out = owner.findObject<T>(it)
         if (!it.isNull() && out == null) {
             UClass.logger.warn("$pkgName: $it not found")

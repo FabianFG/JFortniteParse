@@ -13,8 +13,7 @@ abstract class AbstractFileProvider : FileProvider() {
     protected var globalDataLoaded = false
 
     override fun loadGameFile(file: GameFile): Package? = runCatching {
-        if (file.ioPackageId != null)
-            return loadGameFile(file.ioPackageId)
+        file.ioPackageId?.let { return loadGameFile(it) }
         if (!file.isUE4Package() || !file.hasUexp())
             throw IllegalArgumentException("The provided file is not a package file")
         val uasset = saveGameFile(file)

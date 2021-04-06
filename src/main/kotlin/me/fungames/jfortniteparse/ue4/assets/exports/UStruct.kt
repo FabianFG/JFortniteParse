@@ -91,7 +91,7 @@ open class FField {
 open class FPropertySerialized : FField() {
     var arrayDim: Int = 1
     var elementSize: Int = 0
-    var saveFlags: ULong = 0u
+    var propertyFlags: ULong = 0u
     var repIndex: UShort = 0u
     var repNotifyFunc: FName = NAME_None
     var blueprintReplicationCondition: UByte = 0u
@@ -100,7 +100,7 @@ open class FPropertySerialized : FField() {
         super.deserialize(Ar)
         arrayDim = Ar.readInt32()
         elementSize = Ar.readInt32()
-        saveFlags = Ar.readUInt64()
+        propertyFlags = Ar.readUInt64()
         repIndex = Ar.readUInt16()
         repNotifyFunc = Ar.readFName()
         blueprintReplicationCondition = Ar.readUInt8()

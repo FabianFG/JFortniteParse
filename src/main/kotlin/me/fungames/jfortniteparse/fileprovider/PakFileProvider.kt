@@ -4,7 +4,6 @@ import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
-import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
 import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageStore
 import me.fungames.jfortniteparse.ue4.io.*
@@ -114,16 +113,10 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     }
 
     override fun saveGameFile(file: GameFile): ByteArray {
-        if (file.ioPackageId != null)
-            return saveChunk(FIoChunkId(file.ioPackageId.value(), 0u, EIoChunkType.ExportBundleData))
+        if (file.ioChunkId != null && file.ioStoreReader != null)
+            return file.ioStoreReader.read(file.ioChunkId)
         val reader = mountedPaks.firstOrNull { it.fileName == file.pakFileName } ?: throw IllegalArgumentException("Couldn't find any possible pak file readers")
         return reader.extract(file)
-    }
-
-    override fun loadGameFile(file: GameFile): Package? {
-        if (file.ioPackageId != null)
-            return loadGameFile(file.ioPackageId)
-        return super.loadGameFile(file)
     }
 
     override fun saveChunk(chunkId: FIoChunkId): ByteArray {

@@ -25,17 +25,6 @@ abstract class Package(var fileName: String,
         get() = exportsLazy.map { it.value }
     var packageFlags = 0
 
-    protected fun constructExport(struct: UStruct?): UObject {
-        var current = struct
-        while (current != null) {
-            (current as? UScriptStruct)?.structClass?.let {
-                return (it.newInstance() as UObject).apply { clazz = struct }
-            }
-            current = current.superStruct?.value
-        }
-        return UObject().apply { clazz = struct }
-    }
-
     /**
      * @return the first export of the given type
      * @throws IllegalArgumentException if there is no export of the given type
@@ -58,6 +47,17 @@ abstract class Package(var fileName: String,
     abstract fun findObjectByName(objectName: String, className: String? = null): Lazy<UObject>?
 
     companion object {
+        fun constructExport(struct: UStruct?): UObject {
+            var current = struct
+            while (current != null) {
+                (current as? UScriptStruct)?.structClass?.let {
+                    return (it.newInstance() as UObject).apply { clazz = struct }
+                }
+                current = current.superStruct?.value
+            }
+            return UObject().apply { clazz = struct }
+        }
+
         val gson = GsonBuilder()
             .setPrettyPrinting()
             .registerTypeAdapter(jsonSerializer<UByte> { JsonPrimitive(it.src.toShort()) })

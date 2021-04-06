@@ -86,6 +86,8 @@ class FIoChunkId {
 
     val chunkId: ULong
         get() = ByteBuffer.wrap(id).order(ByteOrder.LITTLE_ENDIAN).long.toULong()
+    val chunkType: EIoChunkType
+        get() = EIoChunkType.values()[id[11].toInt()]
 
     /*private*/ var id = ByteArray(12)
 
