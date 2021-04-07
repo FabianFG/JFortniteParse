@@ -383,7 +383,7 @@ class FIoStoreReaderImpl {
         }
     }
 
-    fun getFiles(): List<GameFile> {
+    val files: List<GameFile> by lazy {
         val files = ArrayList<GameFile>()
         directoryIndexReader?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
             val chunkId = tocResource.chunkIds[tocEntryIndex.toInt()]
@@ -392,7 +392,7 @@ class FIoStoreReaderImpl {
             }
             true
         }
-        return files
+        files
     }
 
     fun getFileNames(outFileList: MutableList<String>) {
