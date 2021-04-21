@@ -6,6 +6,6 @@ import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface;
 
 import java.util.List;
 
-public class FortShopOfferDisplayData extends UPrimaryDataAsset {
+public class AthenaItemShopOfferDisplayData extends UPrimaryDataAsset {
     public List<Lazy<UMaterialInterface>> Presentations;
 }

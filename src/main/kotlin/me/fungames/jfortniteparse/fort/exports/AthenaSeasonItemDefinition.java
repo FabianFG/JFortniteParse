@@ -98,7 +98,7 @@ public class AthenaSeasonItemDefinition extends FortAccountItemDefinition {
         public FLinearColor TertiaryColor;
         public Boolean bIsSpecial;
         public Boolean bIsFoil;
-        public int MinimalDiscoveryLevel;
+        public Integer MinimalDiscoveryLevel;
     }
 
     @UStruct
