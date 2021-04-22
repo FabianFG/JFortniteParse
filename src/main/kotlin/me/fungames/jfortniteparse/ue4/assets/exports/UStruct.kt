@@ -257,7 +257,7 @@ class FSetProperty : FPropertySerialized() {
 class FStrProperty : FPropertySerialized()
 
 class FStructProperty : FPropertySerialized() {
-    var struct: Lazy<UScriptStruct>? = null
+    var struct: Lazy<UStruct>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)

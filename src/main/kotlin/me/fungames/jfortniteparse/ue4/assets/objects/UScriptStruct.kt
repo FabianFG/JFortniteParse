@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.fort.objects.FFortActorRecord
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.Companion.valueOr
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
@@ -80,6 +81,7 @@ class UScriptStruct : UClass {
             "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
             "Vector4" -> valueOr({ FVector4(Ar) }, { FVector4() }, type)
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)
+            "FortActorRecord" -> FFortActorRecord(Ar)
 
             else -> {
                 logger.debug("Using property serialization for struct $structName")

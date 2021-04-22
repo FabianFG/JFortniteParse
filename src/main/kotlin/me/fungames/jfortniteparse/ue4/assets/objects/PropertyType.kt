@@ -21,7 +21,7 @@ class PropertyType {
     @JvmField var isEnumAsByte = true
     @JvmField var innerType: PropertyType? = null
     @JvmField var valueType: PropertyType? = null
-    var structClass: Lazy<UScriptStruct>? = null
+    var structClass: Lazy<UStruct>? = null
     var enumClass: Lazy<UEnum>? = null
 
     constructor() : this(NAME_None)
@@ -41,7 +41,13 @@ class PropertyType {
         this.type = FName.dummy(type)
         when (type) {
             "ByteProperty" -> {
-                json["enumName"]?.run { enumName = FName.dummy(asString) }
+                json["enumName"]?.also {
+                    this.type = FName.dummy("EnumProperty")
+                    innerType = PropertyType(FName.dummy("ByteProperty")).also {
+                        isEnumAsByte = true
+                    }
+                    enumName = FName.dummy(it.asString)
+                }
             }
             "EnumProperty" -> {
                 innerType = PropertyType(json["innerType"].asJsonObject).also {
