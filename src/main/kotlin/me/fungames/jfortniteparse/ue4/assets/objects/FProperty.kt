@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.assets.reader.FObjectAndNameAsStringAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
@@ -137,7 +136,7 @@ sealed class FProperty {
             is MulticastDelegateProperty -> this.delegate = value as FMulticastScriptDelegate
             is NameProperty -> this.name = value as FName
             is ObjectProperty -> this.index = value as FPackageIndex
-            is SetProperty -> this.array = value as UScriptArray //UScriptSet
+            is SetProperty -> this.array = value as UScriptArray
             is SoftClassProperty -> this.`object` = value as FSoftClassPath
             is SoftObjectProperty -> this.`object` = value as FSoftObjectPath
             is StrProperty -> this.str = value as String
@@ -158,7 +157,7 @@ sealed class FProperty {
                     ReadType.ZERO -> typeData.bool
                 })
                 "StructProperty" -> StructProperty(UScriptStruct(Ar, typeData, type))
-                "ObjectProperty" -> if (Ar is FObjectAndNameAsStringAssetArchive) StrProperty(Ar.readString()) else ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
+                "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "WeakObjectProperty" -> WeakObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "LazyObjectProperty" -> LazyObjectProperty(valueOr({ FUniqueObjectGuid(Ar) }, { FUniqueObjectGuid(FGuid()) }, type))
                 "ClassProperty" -> ClassProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
@@ -172,7 +171,6 @@ sealed class FProperty {
                 "UInt32Property" -> UInt32Property(valueOr({ Ar.readUInt32() }, { 0u }, type))
                 "UInt64Property" -> UInt64Property(valueOr({ Ar.readUInt64() }, { 0u }, type))
                 "ArrayProperty" -> ArrayProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
-                //"SetProperty" -> SetProperty(valueOr({ UScriptSet(Ar, typeData) }, { UScriptSet(0, mutableListOf()) }, type))
                 "SetProperty" -> SetProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
                 "MapProperty" -> MapProperty(valueOr({ UScriptMap(Ar, typeData) }, { UScriptMap(0, mutableMapOf()) }, type))
                 "ByteProperty" ->
@@ -181,11 +179,7 @@ sealed class FProperty {
                     } else if (Ar.useUnversionedPropertySerialization && type == ReadType.ZERO) {
                         ByteProperty(0u)
                     } else if (type == ReadType.MAP || !typeData.enumName.isNone()) {
-                        //try { // This is hacky, but it's the only way to discern the key type without mappings
-                            EnumProperty(Ar.readFName()) // TEnumAsByte, if enumName is present this will succeed
-                        //} catch (ignored: ParserException) {
-                        //    ByteProperty(Ar.readUInt8())
-                        //}
+                        EnumProperty(Ar.readFName()) // TEnumAsByte
                     } else {
                         ByteProperty(Ar.readUInt8())
                     }
@@ -286,7 +280,6 @@ sealed class FProperty {
     class MulticastDelegateProperty(var delegate: FMulticastScriptDelegate) : FProperty()
     class NameProperty(var name: FName) : FProperty()
     open class ObjectProperty(var index: FPackageIndex) : FProperty()
-    //class SetProperty(var array: UScriptSet) : FProperty()
     class SetProperty(var array: UScriptArray) : FProperty()
     class SoftClassProperty(var `object`: FSoftClassPath) : FProperty()
     class SoftObjectProperty(var `object`: FSoftObjectPath) : FProperty()
