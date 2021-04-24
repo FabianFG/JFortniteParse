@@ -7,7 +7,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
 
 import java.util.List;
 
-public class UBlueprintGeneratedClass_Properties extends UClassReal {
+public class UBlueprintGeneratedClass_Properties extends UClass {
     public Integer NumReplicatedProperties;
     public Boolean bHasNativizedParent;
     public Boolean bHasCookedComponentInstancingData;

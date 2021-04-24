@@ -146,7 +146,7 @@ class FByteProperty : FNumericProperty() {
 }
 
 class FClassProperty : FObjectProperty() {
-    var metaClass: Lazy<UClassReal>? = null
+    var metaClass: Lazy<UClass>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
@@ -185,7 +185,7 @@ class FInt8Property : FNumericProperty()
 class FIntProperty : FNumericProperty()
 
 class FInterfaceProperty : FPropertySerialized() {
-    var interfaceClass: Lazy<UClassReal>? = null
+    var interfaceClass: Lazy<UClass>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
@@ -236,7 +236,7 @@ open class FObjectProperty : FPropertySerialized() {
 }
 
 class FSoftClassProperty : FObjectProperty() {
-    var metaClass: Lazy<UClassReal>? = null
+    var metaClass: Lazy<UClass>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)

@@ -42,7 +42,7 @@ object ObjectTypeRegistry {
         registerClass(UBoxComponent::class.java)
         registerClass(UCapsuleComponent::class.java)
         registerClass(UChildActorComponent::class.java)
-        registerClass("Class", UClassReal::class.java)
+        registerClass(UClass::class.java)
         registerClass(UCurveFloat::class.java)
         registerClass(UCurveTable::class.java)
         registerClass(UDataAsset::class.java)

@@ -64,7 +64,7 @@ open class UObject : IPropertyHolder {
 
     open fun deserialize(Ar: FAssetArchive, validPos: Int) {
         properties = mutableListOf()
-        if (javaClass != UClassReal::class.java) {
+        if (javaClass != UClass::class.java) {
             if (Ar.useUnversionedPropertySerialization) {
                 deserializeUnversionedProperties(properties, clazz!!, Ar)
             } else {

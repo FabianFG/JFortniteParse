@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken
 import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.UProperty
-import me.fungames.jfortniteparse.ue4.assets.exports.UClassReal
+import me.fungames.jfortniteparse.ue4.assets.exports.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
@@ -120,7 +120,7 @@ private fun getBoundFields(type: TypeToken<*>, raw: Class<*>): Map<String, Field
     while (raw != Any::class.java) {
         val fields = raw.declaredFields
         for (field in fields) {
-            if (field.declaringClass == UClassReal::class.java || field.declaringClass == UObject::class.java || field.declaringClass == UObject::class.java) {
+            if (field.declaringClass == UClass::class.java || field.declaringClass == UObject::class.java || field.declaringClass == UObject::class.java) {
                 continue
             }
             ReflectionAccessor.getInstance().makeAccessible(field)
