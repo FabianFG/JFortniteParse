@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.valorant.converters
 
 import me.fungames.jfortniteparse.exceptions.ParserException

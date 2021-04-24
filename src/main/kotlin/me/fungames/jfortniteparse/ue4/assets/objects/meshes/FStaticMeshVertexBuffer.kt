@@ -1,25 +1,21 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_STATIC_SKELETAL_MESH_SERIALIZATION_FIX
 
-@ExperimentalUnsignedTypes
-class FStaticMeshVertexBuffer : UClass {
-    var stripFlags : FStripDataFlags
-    var numTexCoords : Int
-    var stride : Int
-    var numVertices : Int
-    var useFullPrecisionUVs : Boolean
-    var useHighPrecisionTangentBasis : Boolean
-    var uv : Array<FStaticMeshUVItem>
+class FStaticMeshVertexBuffer {
+    var stripFlags: FStripDataFlags
+    var numTexCoords: Int
+    var stride: Int
+    var numVertices: Int
+    var useFullPrecisionUVs: Boolean
+    var useHighPrecisionTangentBasis: Boolean
+    var uv: Array<FStaticMeshUVItem>
 
-    constructor(Ar : FArchive) {
-        super.init(Ar)
-
+    constructor(Ar: FArchive) {
         stripFlags = FStripDataFlags(Ar, VER_UE4_STATIC_SKELETAL_MESH_SERIALIZATION_FIX)
         numTexCoords = Ar.readInt32()
         stride = if (Ar.game < GAME_UE4(19))
@@ -61,8 +57,6 @@ class FStaticMeshVertexBuffer : UClass {
         } else {
             uv = emptyArray()
         }
-
-        super.complete(Ar)
     }
 
     constructor(

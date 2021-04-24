@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.objects.FStructFallback
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -37,7 +36,7 @@ class FSectionEvaluationData(
 /**
  * Information about a single segment of an evaluation track
  */
-class FMovieSceneSegment : UClass {
+class FMovieSceneSegment {
     /** The segment's range */
     var range: TRange<FFrameNumber>
     var id: Int
@@ -47,12 +46,10 @@ class FMovieSceneSegment : UClass {
     var impls: Array<FStructFallback> // Array<FSectionEvaluationData>
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         range = TRange(Ar) { FFrameNumber(Ar) }
         id = Ar.readInt32()
         allowEmpty = Ar.readBoolean()
         impls = Ar.readTArray { FStructFallback(Ar, FName.dummy("SectionEvaluationData")) }
-        super.complete(Ar)
     }
 
     constructor(range: TRange<FFrameNumber>, id: Int, allowEmpty: Boolean, impls: Array<FStructFallback>) {
@@ -63,11 +60,9 @@ class FMovieSceneSegment : UClass {
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         range.serialize(Ar) { it.serialize(Ar) }
         Ar.writeInt32(id)
         Ar.writeBoolean(allowEmpty)
         Ar.writeTArray(impls) { it.serialize(Ar) }
-        super.completeWrite(Ar)
     }
 }

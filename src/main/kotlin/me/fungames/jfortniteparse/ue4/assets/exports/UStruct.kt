@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.GDebugProperties
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
@@ -28,7 +29,7 @@ open class UStruct : UObject() {
         val serializedScriptSize = Ar.readInt32()
         Ar.skip(serializedScriptSize.toLong())
         if (serializedScriptSize > 0) {
-            logger.debug("Skipped $serializedScriptSize bytes of bytecode data")
+            LOG_JFP.debug("Skipped $serializedScriptSize bytes of bytecode data")
         }
         // endregion
     }

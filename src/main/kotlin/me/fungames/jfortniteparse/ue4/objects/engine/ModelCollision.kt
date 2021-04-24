@@ -16,7 +16,7 @@ fun findNearestVertex(
     destPoint: ObjectRef<FVector>,
     minRadius: FloatRef,
     iNode: Int,
-    pVertex: IntRef,
+    pVertex: IntRef
 ): Float {
     var iNode = iNode
     var resultRadius = -1f

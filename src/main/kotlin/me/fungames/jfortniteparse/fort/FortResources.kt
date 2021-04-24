@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.fort
 
 import me.fungames.jfortniteparse.fort.enums.EFortRarity

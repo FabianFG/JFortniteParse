@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4.registry.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
@@ -48,7 +48,7 @@ class FAssetRegistryVersion(Ar: FArchive) : Comparable<FAssetRegistryVersion.Typ
 
     private fun fallback(ordinal: Int?): Type {
         val latest = Type.values().last()
-        if (ordinal != null) UClass.logger.warn("Unknown FAssetRegistryVersion::Type with ordinal $ordinal, defaulting to latest supported version ($latest)")
+        if (ordinal != null) LOG_JFP.warn("Unknown FAssetRegistryVersion::Type with ordinal $ordinal, defaulting to latest supported version ($latest)")
         return latest
     }
 

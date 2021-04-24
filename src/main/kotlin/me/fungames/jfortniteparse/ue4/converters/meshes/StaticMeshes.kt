@@ -1,9 +1,7 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
-
 package me.fungames.jfortniteparse.ue4.converters.meshes
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh
 import me.fungames.jfortniteparse.ue4.objects.core.math.FBox
 import me.fungames.jfortniteparse.ue4.objects.core.math.FSphere
@@ -49,7 +47,7 @@ fun UStaticMesh.convertMesh(): CStaticMesh {
         val numVerts = srcLod.positionVertexBuffer.verts.size
 
         if (numVerts == 0 && numTexCoords == 0 && lodIndex < this.lods.size - 1) {
-            UClass.logger.debug { "Lod $lodIndex is stripped, skipping..." }
+            LOG_JFP.debug { "Lod $lodIndex is stripped, skipping..." }
             continue
         }
 

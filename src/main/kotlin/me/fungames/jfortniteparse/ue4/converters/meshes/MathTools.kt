@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
-
 package me.fungames.jfortniteparse.ue4.converters.meshes
 
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector

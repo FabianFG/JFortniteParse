@@ -1,8 +1,6 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.converters.meshes.psk
 
-import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.converters.MaterialExport
 import me.fungames.jfortniteparse.ue4.converters.meshes.CStaticMesh
@@ -15,14 +13,14 @@ import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class StaticMeshExport(val fileName : String, val pskx : ByteArray, val materials: MutableList<MaterialExport>) {
-    fun writeToDir(dir : File) {
+class StaticMeshExport(val fileName: String, val pskx: ByteArray, val materials: MutableList<MaterialExport>) {
+    fun writeToDir(dir: File) {
         dir.mkdirs()
         File(dir.absolutePath + "/$fileName").writeBytes(pskx)
         materials.forEach { it.writeToDir(dir) }
     }
 
-    fun appendToZip(zos : ZipOutputStream) {
+    fun appendToZip(zos: ZipOutputStream) {
         runCatching {
             val mat = ZipEntry(fileName)
             zos.putNextEntry(mat)
@@ -33,7 +31,7 @@ class StaticMeshExport(val fileName : String, val pskx : ByteArray, val material
         materials.forEach { it.appendToZip(zos) }
     }
 
-    fun toZip() : ByteArray {
+    fun toZip(): ByteArray {
         val bos = ByteArrayOutputStream()
         val zos = ZipOutputStream(bos)
         zos.setMethod(ZipOutputStream.DEFLATED)
@@ -43,11 +41,11 @@ class StaticMeshExport(val fileName : String, val pskx : ByteArray, val material
     }
 }
 
-fun CStaticMesh.export(exportLods : Boolean = false, exportMaterials : Boolean = true) = exportLods(exportLods, exportMaterials).firstOrNull()
+fun CStaticMesh.export(exportLods: Boolean = false, exportMaterials: Boolean = true) = exportLods(exportLods, exportMaterials).firstOrNull()
 
-fun CStaticMesh.exportLods(exportLods : Boolean = false, exportMaterials : Boolean = true) : List<StaticMeshExport> {
+fun CStaticMesh.exportLods(exportLods: Boolean = false, exportMaterials: Boolean = true): List<StaticMeshExport> {
     if (lods.isEmpty()) {
-        UClass.logger.warn { "Mesh ${originalMesh.name} has 0 lods" }
+        LOG_JFP.warn { "Mesh ${originalMesh.name} has 0 lods" }
         return emptyList()
     }
 
@@ -55,7 +53,7 @@ fun CStaticMesh.exportLods(exportLods : Boolean = false, exportMaterials : Boole
     val maxLod = if (exportLods) lods.size else 1
     for (lod in 0 until maxLod) {
         if (lods[lod].sections.isEmpty()) {
-            UClass.logger.warn { "Mesh ${originalMesh.name} Lod $lod has no sections" }
+            LOG_JFP.warn { "Mesh ${originalMesh.name} Lod $lod has no sections" }
             continue
         }
         val fileName = if (lod == 0)
@@ -75,7 +73,7 @@ fun CStaticMesh.exportLods(exportLods : Boolean = false, exportMaterials : Boole
     return exports
 }
 
-private fun exportStaticMeshLod(lod : CStaticMeshLod, Ar : FArchiveWriter, materialExports : MutableList<MaterialExport>?) {
+private fun exportStaticMeshLod(lod: CStaticMeshLod, Ar: FArchiveWriter, materialExports: MutableList<MaterialExport>?) {
     val share = CVertexShare()
 
     val boneHdr = VChunkHeader()
@@ -94,11 +92,11 @@ private fun exportStaticMeshLod(lod : CStaticMeshLod, Ar : FArchiveWriter, mater
         materialExports
     )
 
-    boneHdr.dataCount = 0		// dummy ...
+    boneHdr.dataCount = 0       // dummy ...
     boneHdr.dataSize = 120      // sizeof(VBone)
     Ar.saveChunkHeader(boneHdr, "REFSKELT")
 
-    infHdr.dataCount = 0		// dummy ...
+    infHdr.dataCount = 0        // dummy ...
     infHdr.dataSize = 12        // sizeof(VBone)
     Ar.saveChunkHeader(infHdr, "RAWWEIGHTS")
 

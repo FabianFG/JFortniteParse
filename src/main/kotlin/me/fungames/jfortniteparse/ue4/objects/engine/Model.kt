@@ -209,6 +209,6 @@ class UModel : UObject() {
         sourcePoint: FVector,
         destPoint: ObjectRef<FVector>,
         minRadius: FloatRef,
-        pVertex: IntRef,
+        pVertex: IntRef
     ) = if (nodes.isNotEmpty()) findNearestVertex(this, sourcePoint, destPoint, minRadius, 0, pVertex) else -1f
 }

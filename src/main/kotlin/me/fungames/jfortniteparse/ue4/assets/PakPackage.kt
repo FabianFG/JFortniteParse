@@ -26,7 +26,7 @@ class PakPackage(
     ubulk: ByteBuffer? = null,
     fileName: String,
     provider: FileProvider? = null,
-    game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST,
+    game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST
 ) : Package(fileName, provider, game) {
     companion object {
         val packageMagic = 0x9E2A83C1u

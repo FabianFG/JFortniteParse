@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4.objects.engine.curves
 
-import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.reader.FArchive
@@ -32,7 +32,7 @@ enum class ERichCurveTangentWeightMode {
 }
 
 /** One key in a rich, editable float curve */
-class FRichCurveKey : UClass {
+class FRichCurveKey {
     /** Interpolation mode between this key and the next */
     var interpMode: ERichCurveInterpMode
 
@@ -61,17 +61,16 @@ class FRichCurveKey : UClass {
     var leaveTangentWeight: Float
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         interpMode = ERichCurveInterpMode.values().getOrElse(Ar.read()) {
-            logger.warn("Unknown ERichCurveInterpMode with ordinal $it, falling back to RCIM_Linear")
+            LOG_JFP.warn("Unknown ERichCurveInterpMode with ordinal $it, falling back to RCIM_Linear")
             ERichCurveInterpMode.RCIM_Linear
         }
         tangentMode = ERichCurveTangentMode.values().getOrElse(Ar.read()) {
-            logger.warn("Unknown ERichCurveTangentMode with ordinal $it, falling back to RCTM_Auto")
+            LOG_JFP.warn("Unknown ERichCurveTangentMode with ordinal $it, falling back to RCTM_Auto")
             ERichCurveTangentMode.RCTM_Auto
         }
         tangentWeightMode = ERichCurveTangentWeightMode.values().getOrElse(Ar.read()) {
-            logger.warn("Unknown ERichCurveTangentWeightMode with ordinal $it, falling back to RCTWM_WeightedNone")
+            LOG_JFP.warn("Unknown ERichCurveTangentWeightMode with ordinal $it, falling back to RCTWM_WeightedNone")
             ERichCurveTangentWeightMode.RCTWM_WeightedNone
         }
         time = Ar.readFloat32()
@@ -80,11 +79,9 @@ class FRichCurveKey : UClass {
         arriveTangentWeight = Ar.readFloat32()
         leaveTangent = Ar.readFloat32()
         leaveTangentWeight = Ar.readFloat32()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.write(interpMode.ordinal)
         Ar.write(tangentMode.ordinal)
         Ar.write(tangentWeightMode.ordinal)
@@ -94,7 +91,6 @@ class FRichCurveKey : UClass {
         Ar.writeFloat32(arriveTangentWeight)
         Ar.writeFloat32(leaveTangent)
         Ar.writeFloat32(leaveTangentWeight)
-        super.completeWrite(Ar)
     }
 
     constructor(

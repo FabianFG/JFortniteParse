@@ -1,22 +1,18 @@
 package me.fungames.jfortniteparse.ue4.objects.rendercore
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /** A normal vector, quantized and packed into 32-bits. */
-@ExperimentalUnsignedTypes
-class FPackedNormal : UClass {
+class FPackedNormal {
     var data: UInt
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         data = Ar.readUInt32()
         if (Ar.game >= GAME_UE4(20))
             data = data xor 0x80808080u
-        super.complete(Ar)
     }
 
     constructor(vector: FVector) {
@@ -26,9 +22,7 @@ class FPackedNormal : UClass {
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeUInt32(if (Ar.game >= GAME_UE4(20)) data xor 0x80808080u else data)
-        super.completeWrite(Ar)
     }
 
     constructor(data: UInt) {
@@ -37,15 +31,13 @@ class FPackedNormal : UClass {
 }
 
 /** A vector, quantized and packed into 32-bits. */
-@ExperimentalUnsignedTypes
-class FPackedRGBA16N : UClass {
+class FPackedRGBA16N {
     var x: UShort
     var y: UShort
     var z: UShort
     var w: UShort
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         x = Ar.readUInt16()
         y = Ar.readUInt16()
         z = Ar.readUInt16()
@@ -56,11 +48,9 @@ class FPackedRGBA16N : UClass {
             z = z xor 0x8000u
             w = w xor 0x8000u
         }
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         if (Ar.game >= GAME_UE4(20)) {
             Ar.writeUInt16(x xor 0x8000u)
             Ar.writeUInt16(y xor 0x8000u)
@@ -72,7 +62,6 @@ class FPackedRGBA16N : UClass {
             Ar.writeUInt16(z)
             Ar.writeUInt16(w)
         }
-        super.completeWrite(Ar)
     }
 
     constructor(x: UShort, y: UShort, z: UShort, w: UShort) {

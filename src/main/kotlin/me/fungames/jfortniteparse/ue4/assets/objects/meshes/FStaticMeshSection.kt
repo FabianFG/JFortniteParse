@@ -1,13 +1,11 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.FRenderingObjectVersion
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FStaticMeshSection : UClass {
+class FStaticMeshSection {
     var materialIndex: Int
     var firstIndex : Int
     var numTriangles : Int
@@ -19,7 +17,6 @@ class FStaticMeshSection : UClass {
     var visibleInRayTracing : Boolean
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         materialIndex = Ar.readInt32()
         firstIndex = Ar.readInt32()
         numTriangles = Ar.readInt32()
@@ -35,11 +32,9 @@ class FStaticMeshSection : UClass {
             Ar.readBoolean()
         else
             false
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeInt32(materialIndex)
         Ar.writeInt32(firstIndex)
         Ar.writeInt32(numTriangles)
@@ -49,7 +44,6 @@ class FStaticMeshSection : UClass {
         Ar.writeBoolean(castShadow)
         if (Ar.game >= GAME_UE4(25))
             Ar.writeBoolean(forceOpaque)
-        super.completeWrite(Ar)
     }
 
     constructor(

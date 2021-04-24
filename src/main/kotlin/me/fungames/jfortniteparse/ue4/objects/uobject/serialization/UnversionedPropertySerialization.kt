@@ -3,10 +3,10 @@ package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 import androidx.collection.SparseArrayCompat
 import androidx.collection.set
 import me.fungames.jfortniteparse.GDebugProperties
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.exports.FPropertySerialized
@@ -267,7 +267,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                     if (it.isNonZero()) {
                         throw UnknownPropertyException("${struct.name}: Unknown property with value ${it.schemaIt}. Can't proceed with serialization (Serialized ${properties.size} properties until now)", Ar)
                     }
-                    UClass.logger.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
+                    LOG_JFP.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
                 }
                 it.next()
             }
@@ -276,7 +276,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             while (!it.bDone) {
                 check(!it.isNonZero())
                 it.serializer?.run { properties.add(deserialize(Ar, ReadType.ZERO)) }
-                    ?: UClass.logger.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
+                    ?: LOG_JFP.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
                 it.next()
             }
         }

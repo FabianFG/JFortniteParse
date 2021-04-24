@@ -5,7 +5,6 @@ import com.github.salomonbrys.kotson.set
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
@@ -20,7 +19,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
-open class UObject : UClass, IPropertyHolder {
+open class UObject : IPropertyHolder {
     var name = ""
     var outer: UObject? = null
     var clazz: UStruct? = null
@@ -64,7 +63,6 @@ open class UObject : UClass, IPropertyHolder {
     inline fun <reified T> get(name: String): T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
 
     open fun deserialize(Ar: FAssetArchive, validPos: Int) {
-        super.init(Ar)
         properties = mutableListOf()
         if (javaClass != UClassReal::class.java) {
             if (Ar.useUnversionedPropertySerialization) {
@@ -76,16 +74,13 @@ open class UObject : UClass, IPropertyHolder {
         //FLazyObjectPtr::PossiblySerializeObjectGuid
         if (Ar.pos() + 4 <= validPos && Ar.readBoolean() && Ar.pos() + 16 <= validPos)
             objectGuid = FGuid(Ar)
-        super.complete(Ar)
         mapToClass(properties, javaClass, this)
     }
 
     open fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         serializeProperties(Ar, properties)
         Ar.writeBoolean(objectGuid != null)
         objectGuid?.serialize(Ar)
-        super.completeWrite(Ar)
     }
 
     open fun toJson(context: Gson = Package.gson, locres: Locres? = null): JsonObject {

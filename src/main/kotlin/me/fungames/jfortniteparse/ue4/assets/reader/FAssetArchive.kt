@@ -1,8 +1,8 @@
 package me.fungames.jfortniteparse.ue4.assets.reader
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -74,7 +74,7 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
     open fun <T : UObject> readObject() = FPackageIndex(this).let {
         val out = owner.findObject<T>(it)
         if (!it.isNull() && out == null) {
-            UClass.logger.warn("$pkgName: $it not found")
+            LOG_JFP.warn("$pkgName: $it not found")
         }
         out
     }

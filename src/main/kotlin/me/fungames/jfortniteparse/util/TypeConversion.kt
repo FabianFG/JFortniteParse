@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.util
 
-@ExperimentalUnsignedTypes
 fun UShort.toFloat16(): Float {
     val hbits = this.toInt()
     var mant = hbits and 0x03ff // 10 bits mantissa

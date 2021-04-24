@@ -1,12 +1,11 @@
 package me.fungames.jfortniteparse.ue4.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 
-class FFieldPath : UClass {
+class FFieldPath {
     var path: MutableList<FName>
     var resolvedOwner: FPackageIndex /*UStruct*/
 

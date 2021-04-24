@@ -1,16 +1,14 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
-class UScriptMap : UClass {
+class UScriptMap {
     var keysToRemove: MutableList<FProperty>
     val entries: MutableMap<FProperty, FProperty>
 
     constructor(Ar: FAssetArchive, typeData: PropertyType) {
-        super.init(Ar)
         val numKeysToRemove = Ar.readInt32()
         keysToRemove = ArrayList(numKeysToRemove)
         repeat(numKeysToRemove) {
@@ -33,11 +31,9 @@ class UScriptMap : UClass {
                 throw ParserException("Failed to read ${if (isReadingValue) "value" else "key"} for index $it in map", Ar, e)
             }
         }
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeInt32(keysToRemove.size)
         keysToRemove.forEach { FProperty.writePropertyValue(Ar, it, FProperty.ReadType.MAP) }
         Ar.writeInt32(entries.size)
@@ -45,7 +41,6 @@ class UScriptMap : UClass {
             FProperty.writePropertyValue(Ar, it.key, FProperty.ReadType.MAP)
             FProperty.writePropertyValue(Ar, it.value, FProperty.ReadType.MAP)
         }
-        super.completeWrite(Ar)
     }
 
     constructor(keysToRemove: MutableList<FProperty>, entries: MutableMap<FProperty, FProperty>) {

@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -213,7 +213,7 @@ sealed class FProperty {
                 "FieldPathProperty" -> FieldPathProperty(valueOr({ FFieldPath(Ar) }, { FFieldPath() }, type))
 
                 else -> {
-                    UClass.logger.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
+                    LOG_JFP.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
                     null
                 }
             }

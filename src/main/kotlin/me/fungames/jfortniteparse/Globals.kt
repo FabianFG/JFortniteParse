@@ -1,8 +1,11 @@
+@file:JvmName("Globals")
+
 package me.fungames.jfortniteparse
 
 import mu.KotlinLogging
 
-var GDebugProperties = false
-var GFatalObjectSerializationErrors = false
+@JvmField var GDebugProperties = false
+@JvmField var GFatalObjectSerializationErrors = false
 
-val LOG_STREAMING = KotlinLogging.logger("Streaming")
+@JvmField val LOG_STREAMING = KotlinLogging.logger("Streaming")
+@JvmField val LOG_JFP = KotlinLogging.logger("JFortniteParse")

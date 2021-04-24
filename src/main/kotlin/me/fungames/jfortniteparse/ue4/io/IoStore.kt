@@ -165,11 +165,11 @@ class FIoStoreTocEntryMeta {
  */
 class FIoStoreTocCompressedBlockEntry {
     companion object {
-        val OffsetBits = 40u
-        val OffsetMask = ((1L shl OffsetBits.toInt()) - 1L).toULong()
-        val SizeBits = 24u
-        val SizeMask = ((1 shl SizeBits.toInt()) - 1).toUInt()
-        val SizeShift = 8u
+        val OFFSET_BITS = 40u
+        val OFFSET_MASK = ((1L shl OFFSET_BITS.toInt()) - 1L).toULong()
+        val SIZE_BITS = 24u
+        val SIZE_MASK = ((1 shl SIZE_BITS.toInt()) - 1).toUInt()
+        val SIZE_SHIFT = 8u
     }
 
     /* 5 bytes offset, 3 bytes for size / uncompressed size and 1 byte for compresseion method. */
@@ -182,7 +182,7 @@ class FIoStoreTocCompressedBlockEntry {
     var offset: ULong
         get() {
             val offset = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).long.toULong()
-            return offset and OffsetMask
+            return offset and OFFSET_MASK
         }
         set(value) {
             /*val l = (value and OffsetMask).toLong()
@@ -193,7 +193,7 @@ class FIoStoreTocCompressedBlockEntry {
     var compressedSize: UInt
         get() {
             val size = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).apply { position(1 * 4 /*+ 1*/) }.int.toUInt()
-            return (size shr SizeShift.toInt()) and SizeMask
+            return (size shr SIZE_SHIFT.toInt()) and SIZE_MASK
         }
         set(value) {
             throw NotImplementedError()
@@ -202,7 +202,7 @@ class FIoStoreTocCompressedBlockEntry {
     var uncompressedSize: UInt
         get() {
             val uncompressedSize = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).apply { position(2 * 4 /*+ 2*/) }.int.toUInt()
-            return uncompressedSize and SizeMask
+            return uncompressedSize and SIZE_MASK
         }
         set(value) {
             throw NotImplementedError()
@@ -211,7 +211,7 @@ class FIoStoreTocCompressedBlockEntry {
     var compressionMethodIndex: UByte
         get() {
             val index = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).apply { position(2 * 4 /*+ 2*/) }.int.toUInt()
-            return (index shr SizeBits.toInt()).toUByte()
+            return (index shr SIZE_BITS.toInt()).toUByte()
         }
         set(value) {
             throw NotImplementedError()

@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.pak.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.pak.CompressionMethod
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_CompressionEncryption
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_FNameBasedCompressionMethod
@@ -9,8 +8,7 @@ import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_RelativeChunkOffsets
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_VALORANT
 
-@ExperimentalUnsignedTypes
-class FPakEntry : UClass {
+class FPakEntry {
     var name : String
     var pos : Long
     var size : Long
@@ -45,7 +43,6 @@ class FPakEntry : UClass {
     }
 
     constructor(Ar: FPakArchive, inIndex : Boolean) {
-        super.init(Ar)
         name = if (inIndex) Ar.readString() else ""
         pos = Ar.readInt64()
         size = Ar.readInt64()
@@ -96,7 +93,6 @@ class FPakEntry : UClass {
                 it.compressedEnd += pos
             }
         }
-        super.complete(Ar)
     }
 
     constructor(

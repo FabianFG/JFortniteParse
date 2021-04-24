@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.converters.textures
 
 import com.tomgibara.bits.BitReader

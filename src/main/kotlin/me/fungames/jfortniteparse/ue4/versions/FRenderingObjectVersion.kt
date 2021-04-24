@@ -9,8 +9,7 @@ object FRenderingObjectVersion {
     const val StaticMeshSectionForceOpaqueField = 37
     const val LatestVersion = StaticMeshSectionForceOpaqueField
 
-    @Suppress("EXPERIMENTAL_API_USAGE")
-    fun get(Ar : FArchive) = when {
+    fun get(Ar: FArchive) = when {
         Ar.game < GAME_UE4(12) -> BeforeCustomVersionWasAdded
         Ar.game < GAME_UE4(13) -> 2
         Ar.game < GAME_UE4(14) -> 4

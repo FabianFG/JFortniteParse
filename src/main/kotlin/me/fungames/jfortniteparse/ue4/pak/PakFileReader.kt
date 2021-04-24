@@ -18,7 +18,6 @@ import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.align
-import me.fungames.jfortniteparse.util.parseHexBinary
 import me.fungames.jfortniteparse.util.printAesKey
 import mu.KotlinLogging
 import java.io.File

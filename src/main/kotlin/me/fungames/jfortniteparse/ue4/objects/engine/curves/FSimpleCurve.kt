@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.engine.curves
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.objects.core.math.isNearlyZero
@@ -13,24 +12,20 @@ import kotlin.math.max
 import kotlin.math.min
 
 /** One key in a rich, editable float curve */
-class FSimpleCurveKey : UClass {
+class FSimpleCurveKey {
     /** Time at this key */
     var time: Float = 0f
     /** Value at this key */
     var value: Float = 0f
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         time = Ar.readFloat32()
         value = Ar.readFloat32()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeFloat32(time)
         Ar.writeFloat32(value)
-        super.completeWrite(Ar)
     }
 
     constructor(time: Float, value: Float) {

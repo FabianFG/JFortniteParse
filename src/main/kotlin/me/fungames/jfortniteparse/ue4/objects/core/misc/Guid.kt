@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.core.misc
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.parseHexBinary
@@ -67,7 +66,7 @@ enum class EGuidFormats {
     Base36Encoded,
 }
 
-class FGuid : UClass {
+class FGuid {
     companion object {
         @JvmStatic
         val mainGuid = FGuid()
@@ -86,12 +85,10 @@ class FGuid : UClass {
     var d: UInt
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         a = Ar.readUInt32()
         b = Ar.readUInt32()
         c = Ar.readUInt32()
         d = Ar.readUInt32()
-        super.complete(Ar)
     }
 
     /** Default constructor. */
@@ -149,12 +146,10 @@ class FGuid : UClass {
      * @param Ar The archive to serialize into.
      */
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeUInt32(a)
         Ar.writeUInt32(b)
         Ar.writeUInt32(c)
         Ar.writeUInt32(d)
-        super.completeWrite(Ar)
     }
 
     /**

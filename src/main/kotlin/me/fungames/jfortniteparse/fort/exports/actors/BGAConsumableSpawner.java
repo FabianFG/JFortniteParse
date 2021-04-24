@@ -3,8 +3,8 @@ package me.fungames.jfortniteparse.fort.exports.actors;
 import kotlin.Lazy;
 import kotlin.UByte;
 import me.fungames.jfortniteparse.fort.objects.FortItemEntry;
-import me.fungames.jfortniteparse.ue4.UClass;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
+import me.fungames.jfortniteparse.ue4.assets.exports.UClassReal;
 import me.fungames.jfortniteparse.ue4.assets.exports.components.USceneComponent;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex;
@@ -38,7 +38,7 @@ public class BGAConsumableSpawner extends BuildingActor {
     public static class FBlackboardKeySelector {
         public List<FPackageIndex /*BlackboardKeyType*/> AllowedTypes;
         public FName SelectedKeyName;
-        public Lazy<UClass> SelectedKeyType;
+        public Lazy<UClassReal> SelectedKeyType;
         public UByte SelectedKeyID;
         public Boolean bNoneIsAllowedValue;
     }

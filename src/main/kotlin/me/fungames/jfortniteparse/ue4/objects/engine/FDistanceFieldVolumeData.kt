@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.engine
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.core.math.FBox
 import me.fungames.jfortniteparse.ue4.objects.core.math.FIntVector
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D
@@ -10,20 +9,18 @@ import me.fungames.jfortniteparse.ue4.versions.VER_UE4_DEPRECATE_UMG_STYLE_ASSET
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FDistanceFieldVolumeData : UClass {
-    var distanceFieldVolume : Array<Short> // TArray<Float16>
-    var size : FIntVector
-    var localBoundingBox : FBox
-    var meshWasClosed : Boolean
-    var builtAsIfTwoSided : Boolean
-    var meshWasPlane : Boolean
+class FDistanceFieldVolumeData {
+    var distanceFieldVolume: Array<Short> // TArray<Float16>
+    var size: FIntVector
+    var localBoundingBox: FBox
+    var meshWasClosed: Boolean
+    var builtAsIfTwoSided: Boolean
+    var meshWasPlane: Boolean
     // 4.16+
-    var compressedDistanceFieldVolume : Array<Byte>
-    var distanceMinMax : FVector2D
+    var compressedDistanceFieldVolume: Array<Byte>
+    var distanceMinMax: FVector2D
 
-    constructor(Ar : FArchive) {
-        super.init(Ar)
+    constructor(Ar: FArchive) {
         if (Ar.game >= GAME_UE4(16)) {
             compressedDistanceFieldVolume = Ar.readTArray { Ar.readInt8() }
             size = FIntVector(Ar)
@@ -39,24 +36,19 @@ class FDistanceFieldVolumeData : UClass {
             localBoundingBox = FBox(Ar)
             meshWasClosed = Ar.readBoolean()
             builtAsIfTwoSided = if (Ar.ver >= VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN)
-                 Ar.readBoolean()
+                Ar.readBoolean()
             else
                 false
             meshWasPlane = if (Ar.ver >= VER_UE4_DEPRECATE_UMG_STYLE_ASSETS)
-                 Ar.readBoolean()
+                Ar.readBoolean()
             else
                 false
             compressedDistanceFieldVolume = emptyArray()
             distanceMinMax = FVector2D(0f, 0f)
         }
-        super.complete(Ar)
     }
 
-    fun serialize(Ar : FArchiveWriter) {
-        super.initWrite(Ar)
-
-        super.completeWrite(Ar)
-    }
+    fun serialize(Ar: FArchiveWriter) {}
 
     constructor(
         distanceFieldVolume: Array<Short>,

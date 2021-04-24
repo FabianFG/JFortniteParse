@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets.exports.components;
 
 import kotlin.Lazy;
 import kotlin.UInt;
+import me.fungames.jfortniteparse.Globals;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh;
@@ -47,7 +48,7 @@ public class UStaticMeshComponent extends UMeshComponent {
         super.deserialize(Ar, validPos);
         int lodDataNum = Ar.readInt32();
         if (lodDataNum > 0) {
-            Companion.getLogger().debug("Skipping {} LODData entries", lodDataNum);
+            Globals.LOG_JFP.debug("Skipping {} LODData entries", lodDataNum);
             Ar.seek(validPos);
         }
     }

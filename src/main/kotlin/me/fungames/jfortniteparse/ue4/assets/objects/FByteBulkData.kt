@@ -1,19 +1,18 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.enums.EBulkDataFlags.*
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
-class FByteBulkData : UClass {
+class FByteBulkData {
     var header: FByteBulkDataHeader
     var data: ByteArray
     val isBulkDataLoaded get() = data.isNotEmpty()
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         header = FByteBulkDataHeader(Ar)
         val bulkDataFlags = header.bulkDataFlags
         data = ByteArray(header.elementCount.toInt())
@@ -22,14 +21,14 @@ class FByteBulkData : UClass {
                 // Nothing to do here
             }
             BULKDATA_Unused.check(bulkDataFlags) -> {
-                logger.warn("Bulk with no data")
+                LOG_JFP.warn("Bulk with no data")
             }
             BULKDATA_ForceInlinePayload.check(bulkDataFlags) -> {
-                logger.debug("bulk data in .uexp file (Force Inline Payload) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
+                LOG_JFP.debug("bulk data in .uexp file (Force Inline Payload) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
                 Ar.read(data)
             }
             BULKDATA_PayloadInSeperateFile.check(bulkDataFlags) -> {
-                logger.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
+                LOG_JFP.debug("bulk data in .ubulk file (Payload In Seperate File) (flags=$bulkDataFlags, pos=${header.offsetInFile}, size=${header.sizeOnDisk})")
                 val ubulkAr = Ar.getPayload(when {
                     BULKDATA_OptionalPayload.check(bulkDataFlags) -> PayloadType.UPTNL
                     BULKDATA_MemoryMappedPayload.check(bulkDataFlags) -> PayloadType.M_UBULK
@@ -55,11 +54,9 @@ class FByteBulkData : UClass {
                 Ar.seek(savePos)
             }
         }
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         val bulkDataFlags = header.bulkDataFlags
         when {
             BULKDATA_Unused.check(bulkDataFlags) -> {
@@ -90,7 +87,6 @@ class FByteBulkData : UClass {
             }
             else -> throw ParserException("Unsupported BulkData type $bulkDataFlags")
         }
-        super.completeWrite(Ar)
     }
 
     constructor(header: FByteBulkDataHeader, data: ByteArray) {

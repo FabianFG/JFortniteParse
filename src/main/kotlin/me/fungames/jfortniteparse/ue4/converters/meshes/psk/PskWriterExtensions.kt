@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.converters.meshes.psk
 
 import me.fungames.jfortniteparse.ue4.converters.meshes.psk.common.VChunkHeader

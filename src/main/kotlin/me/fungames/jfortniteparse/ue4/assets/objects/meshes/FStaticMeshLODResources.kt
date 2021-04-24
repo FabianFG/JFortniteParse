@@ -1,8 +1,5 @@
-@file:Suppress("EXPERIMENTAL_UNSIGNED_LITERALS", "EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
@@ -20,8 +17,7 @@ internal val CDSF_MinLodData : UByte = 2u
 internal val CDSF_ReversedIndexBuffer : UByte = 4u
 internal val CDSF_RaytracingResources : UByte = 8u
 
-@ExperimentalUnsignedTypes
-class FStaticMeshLODResources : UClass {
+class FStaticMeshLODResources {
     var stripFlags : FStripDataFlags
     var sections: Array<FStaticMeshSection>
     var vertexBuffer = FStaticMeshVertexBuffer(FStripDataFlags(0u, 0u), 0, 0, 0, false, false, emptyArray())
@@ -38,7 +34,6 @@ class FStaticMeshLODResources : UClass {
     var inlined = false
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         stripFlags = FStripDataFlags(Ar)
         sections = Ar.readTArray { FStaticMeshSection(Ar) }
         maxDeviation = Ar.readFloat32()
@@ -87,7 +82,6 @@ class FStaticMeshLODResources : UClass {
         Ar.readUInt32() // SerializedBuffersSize
         Ar.readUInt32() // DepthOnlyIBSize
         Ar.readUInt32() // ReversedIBsSize
-        super.complete(Ar)
     }
 
     private fun serializeBuffersLegacy(Ar: FArchive) {

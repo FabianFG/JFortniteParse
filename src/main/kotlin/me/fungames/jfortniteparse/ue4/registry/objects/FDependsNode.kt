@@ -5,7 +5,6 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.ref
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.jvm.internal.Ref.ObjectRef
 
 class FDependsNode {

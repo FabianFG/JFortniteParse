@@ -68,6 +68,5 @@ class ULevel : ULevel_Properties() {
         navListEnd = Ar.readObject()
         precomputedVisibilityHandler = FPrecomputedVisibilityHandler(Ar)
         precomputedVolumeDistanceField = FPrecomputedVolumeDistanceField(Ar)
-        super.complete(Ar)
     }
 }

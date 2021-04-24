@@ -72,7 +72,6 @@ class UCurveTable : UObject() {
                 mapToClass(properties, javaClass, this)
             }
         }
-        super.complete(Ar)
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
@@ -81,7 +80,6 @@ class UCurveTable : UObject() {
             Ar.writeFName(key)
             serializeProperties(Ar, value.properties)
         }*/
-        super.completeWrite(Ar)
     }
 
     /** Function to find the row of a table given its name. */

@@ -146,7 +146,6 @@ class UStaticMesh : UStaticMesh_Properties() {
 
         //Drop remaining SpeedTree data
         if (validPos > 0) Ar.seek(validPos)
-        super.complete(Ar)
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {

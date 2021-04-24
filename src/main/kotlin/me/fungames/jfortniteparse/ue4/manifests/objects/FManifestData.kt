@@ -1,11 +1,10 @@
 package me.fungames.jfortniteparse.ue4.manifests.objects
 
 import me.fungames.jfortniteparse.compression.Compression
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 
-class FManifestData : UClass {
+class FManifestData {
     var header: FManifestHeader
     var meta: FManifestMeta
     var chunkDataList: FChunkDataList
@@ -13,7 +12,6 @@ class FManifestData : UClass {
     var customFields: FCustomFields
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         val startPos = Ar.pos()
         header = FManifestHeader(Ar)
         var manifestRawData = Ar.read(header.dataSizeCompressed.toInt())
@@ -27,6 +25,5 @@ class FManifestData : UClass {
         fileManifestList = FFileManifestList(rawAr)
         customFields = FCustomFields(rawAr)
         Ar.seek(startPos + header.headerSize.toInt() + header.dataSizeCompressed.toInt())
-        super.complete(Ar)
     }
 }

@@ -1,16 +1,13 @@
 package me.fungames.jfortniteparse.ue4.manifests.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FChunkDataList : UClass {
+class FChunkDataList {
+    var chunkList: Array<FChunkInfo>
 
-    var chunkList : Array<FChunkInfo>
-
-    constructor(Ar : FArchive) {
-        super.init(Ar)
+    constructor(Ar: FArchive) {
         val startPos = Ar.pos()
         val dataSize = Ar.readUInt32()
         /*val dataVersionInt = */Ar.readUInt8()
@@ -23,10 +20,7 @@ class FChunkDataList : UClass {
         for (chunkInfo in chunkList) chunkInfo.windowSize = Ar.readUInt32()
         for (chunkInfo in chunkList) chunkInfo.fileSize = Ar.readInt64()
         Ar.seek(startPos + dataSize.toInt())
-        super.complete(Ar)
     }
 
-    fun serialize(Ar : FArchive) {
-
-    }
+    fun serialize(Ar: FArchiveWriter) {}
 }

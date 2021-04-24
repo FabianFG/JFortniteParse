@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
-
 package me.fungames.jfortniteparse.ue4.converters.meshes.psk
 
 import me.fungames.jfortniteparse.exceptions.ParserException
@@ -16,7 +14,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.MIRROR_MESH
 
-fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, verts : Array<CMeshVertex>, indices : CIndexBuffer, share: CVertexShare, materialExports : MutableList<MaterialExport>?) {
+fun exportCommonMeshData(Ar: FArchiveWriter, sections: Array<CMeshSection>, verts: Array<CMeshVertex>, indices: CIndexBuffer, share: CVertexShare, materialExports: MutableList<MaterialExport>?) {
     val mainHdr = VChunkHeader()
     val ptsHdr = VChunkHeader()
     val wedgHdr = VChunkHeader()
@@ -68,12 +66,12 @@ fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, ver
 
     if (numVerts <= 65536) {
         facesHdr.dataCount = numFaces
-        facesHdr.dataSize =  12 // sizeof(VTriangle16)
+        facesHdr.dataSize = 12 // sizeof(VTriangle16)
         Ar.saveChunkHeader(facesHdr, "FACE0000")
         for (i in 0 until numSections) {
             val sec = sections[i]
             for (j in 0 until sec.numFaces) {
-                val wedgeIndex = UShortArray(3) {k ->
+                val wedgeIndex = UShortArray(3) { k ->
                     val idx = index[sec.firstIndex + j * 3 + k]
                     if (idx < 0 || idx >= 65536)
                         throw ParserException("Invalid index out of range of uint16")
@@ -98,7 +96,7 @@ fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, ver
         for (i in 0 until numSections) {
             val sec = sections[i]
             for (j in 0 until sec.numFaces) {
-                val wedgeIndex = IntArray(3) {k ->
+                val wedgeIndex = IntArray(3) { k ->
                     index[sec.firstIndex + j * 3 + k]
                 }
                 val t = VTriangle32(
@@ -127,7 +125,7 @@ fun exportCommonMeshData(Ar : FArchiveWriter, sections: Array<CMeshSection>, ver
     }
 }
 
-fun exportVertexColors(Ar: FArchiveWriter, colors : Array<FColor>?, numVerts : Int) {
+fun exportVertexColors(Ar: FArchiveWriter, colors: Array<FColor>?, numVerts: Int) {
     if (colors == null) return
 
     val colorHdr = VChunkHeader()
@@ -139,13 +137,13 @@ fun exportVertexColors(Ar: FArchiveWriter, colors : Array<FColor>?, numVerts : I
         colors[i].serialize(Ar)
 }
 
-fun exportExtraUV(Ar: FArchiveWriter, extraUV : Array<Array<CMeshUVFloat>>, numVerts: Int, numTexCoords : Int) {
+fun exportExtraUV(Ar: FArchiveWriter, extraUV: Array<Array<CMeshUVFloat>>, numVerts: Int, numTexCoords: Int) {
     val uvHdr = VChunkHeader()
     uvHdr.dataCount = numVerts
     uvHdr.dataSize = 8 // sizeof(VMeshUV)
 
     for (j in 1 until numTexCoords) {
-        val chunkName = "EXTRAUVS${j-1}"
+        val chunkName = "EXTRAUVS${j - 1}"
         Ar.saveChunkHeader(uvHdr, chunkName)
         val suv = extraUV[j - 1]
         for (i in 0 until numVerts) {

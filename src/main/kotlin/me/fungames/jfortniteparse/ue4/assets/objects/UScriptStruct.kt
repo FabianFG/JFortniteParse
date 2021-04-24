@@ -1,6 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.Companion.valueOr
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -28,12 +28,11 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 
-class UScriptStruct : UClass {
+class UScriptStruct {
     val structName: FName
     var structType: Any
 
     constructor(Ar: FAssetArchive, typeData: PropertyType, type: ReadType = ReadType.NORMAL) {
-        super.init(Ar)
         structName = typeData.structName
         structType = when (structName.text) { // TODO please complete the zero constructors
             "Box" -> valueOr({ FBox(Ar) }, { FBox() }, type)
@@ -82,17 +81,15 @@ class UScriptStruct : UClass {
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)
 
             else -> {
-                logger.debug("Using property serialization for struct $structName")
+                LOG_JFP.debug("Using property serialization for struct $structName")
                 //TODO this should in theory map the struct fallbacks directly to their target, not implemented yet
                 //For now it will be done with the getTagTypeValue method, not optimal though
                 FStructFallback(Ar, typeData.structClass, structName)
             }
         }
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         when (val structType = structType) {
             is FBox -> structType.serialize(Ar)
             is FBox2D -> structType.serialize(Ar)
@@ -135,7 +132,6 @@ class UScriptStruct : UClass {
             is FVectorMaterialInput -> structType.serialize(Ar)
             is FWeightedRandomSampler -> structType.serialize(Ar)
         }
-        super.completeWrite(Ar)
     }
 
     constructor(structName: FName, structType: Any) {

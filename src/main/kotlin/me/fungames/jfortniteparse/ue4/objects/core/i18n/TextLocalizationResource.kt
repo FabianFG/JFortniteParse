@@ -1,13 +1,11 @@
 package me.fungames.jfortniteparse.ue4.objects.core.i18n
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FTextLocalizationResource : UClass {
+class FTextLocalizationResource {
     companion object {
         // val locMetaMagic = FGuid(0xA14CEE4Fu, 0x83554868u, 0xBD464C6Cu, 0x7C50DA70u)
         val locResMagic = FGuid(0x7574140Eu, 0xFC034A67u, 0x9D90154Au, 0x1B7F37C3u)
@@ -19,7 +17,6 @@ class FTextLocalizationResource : UClass {
     val stringData: MutableMap<String, MutableMap<String, String>>
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         val magic = FGuid(Ar)
         if (magic != locResMagic)
             throw ParserException("Wrong locres guid")
@@ -52,27 +49,21 @@ class FTextLocalizationResource : UClass {
             }
             stringData[nameSpace.text] = strings
         }
-        super.complete(Ar)
     }
 }
 
-@ExperimentalUnsignedTypes
-class FTextLocalizationResourceString : UClass {
+class FTextLocalizationResourceString {
     var data: String
     var refCount: Int
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         data = Ar.readString()
         refCount = Ar.readInt32()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeString(data)
         Ar.writeInt32(refCount)
-        super.completeWrite(Ar)
     }
 
     constructor(data: String, refCount: Int) {
@@ -81,23 +72,18 @@ class FTextLocalizationResourceString : UClass {
     }
 }
 
-@ExperimentalUnsignedTypes
-class FTextKey : UClass {
+class FTextKey {
     var stringHash: UInt
     var text: String
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         stringHash = Ar.readUInt32()
         text = Ar.readString()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeUInt32(stringHash)
         Ar.writeString(text)
-        super.completeWrite(Ar)
     }
 
     constructor(stringHash: UInt, text: String) {

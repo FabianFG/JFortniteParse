@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.fort.enums
 
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText
 
-@ExperimentalUnsignedTypes
 enum class EFortRarity(val rarityName: FText) {
     Common(FText("Fort.Rarity", "Common", "Common")),
     Uncommon(FText("Fort.Rarity", "Uncommon", "Uncommon")), // Default
