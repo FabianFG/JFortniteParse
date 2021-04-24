@@ -6,6 +6,7 @@ import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.reader.FObjectAndNameAsStringAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
@@ -53,7 +54,7 @@ sealed class FProperty {
                 val keyType = typeArgs[0]
                 val valueType = typeArgs[1]
                 val map = linkedMapOf<Any?, Any?>()
-                value.mapData.forEach { (k, v) ->
+                value.entries.forEach { (k, v) ->
                     val mappedKey = if (keyType is ParameterizedType) {
                         k.getTagTypeValue(keyType.rawType as Class<*>, keyType)
                     } else {
@@ -103,7 +104,7 @@ sealed class FProperty {
         is MulticastDelegateProperty -> this.delegate
         is NameProperty -> this.name
         is ObjectProperty -> this.index
-        is SetProperty -> this.array
+        is SetProperty -> this.set
         is SoftClassProperty -> this.`object`
         is SoftObjectProperty -> this.`object`
         is StrProperty -> this.str
@@ -136,7 +137,7 @@ sealed class FProperty {
             is MulticastDelegateProperty -> this.delegate = value as FMulticastScriptDelegate
             is NameProperty -> this.name = value as FName
             is ObjectProperty -> this.index = value as FPackageIndex
-            is SetProperty -> this.array = value as UScriptArray
+            is SetProperty -> this.set = value as UScriptSet
             is SoftClassProperty -> this.`object` = value as FSoftClassPath
             is SoftObjectProperty -> this.`object` = value as FSoftObjectPath
             is StrProperty -> this.str = value as String
@@ -171,8 +172,8 @@ sealed class FProperty {
                 "UInt32Property" -> UInt32Property(valueOr({ Ar.readUInt32() }, { 0u }, type))
                 "UInt64Property" -> UInt64Property(valueOr({ Ar.readUInt64() }, { 0u }, type))
                 "ArrayProperty" -> ArrayProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
-                "SetProperty" -> SetProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
-                "MapProperty" -> MapProperty(valueOr({ UScriptMap(Ar, typeData) }, { UScriptMap(0, mutableMapOf()) }, type))
+                "SetProperty" -> SetProperty(valueOr({ UScriptSet(Ar, typeData) }, { UScriptSet(mutableListOf(), mutableListOf()) }, type))
+                "MapProperty" -> MapProperty(valueOr({ UScriptMap(Ar, typeData) }, { UScriptMap(mutableListOf(), mutableMapOf()) }, type))
                 "ByteProperty" ->
                     if (Ar.useUnversionedPropertySerialization && type == ReadType.NORMAL) {
                         ByteProperty(Ar.readUInt8())
@@ -245,7 +246,7 @@ sealed class FProperty {
                 is MulticastDelegateProperty -> tag.delegate.serialize(Ar)
                 is NameProperty -> Ar.writeFName(tag.name)
                 is ObjectProperty -> tag.index.serialize(Ar)
-                is SetProperty -> tag.array.serialize(Ar)
+                is SetProperty -> tag.set.serialize(Ar)
                 is SoftClassProperty -> tag.`object`.serialize(Ar)
                 is SoftObjectProperty -> tag.`object`.serialize(Ar)
                 is StrProperty -> Ar.writeString(tag.str)
@@ -280,7 +281,7 @@ sealed class FProperty {
     class MulticastDelegateProperty(var delegate: FMulticastScriptDelegate) : FProperty()
     class NameProperty(var name: FName) : FProperty()
     open class ObjectProperty(var index: FPackageIndex) : FProperty()
-    class SetProperty(var array: UScriptArray) : FProperty()
+    class SetProperty(var set: UScriptSet) : FProperty()
     class SoftClassProperty(var `object`: FSoftClassPath) : FProperty()
     class SoftObjectProperty(var `object`: FSoftObjectPath) : FProperty()
     class StrProperty(var str: String) : FProperty()

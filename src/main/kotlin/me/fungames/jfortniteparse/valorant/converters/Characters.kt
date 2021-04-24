@@ -48,7 +48,7 @@ fun CharacterDataAsset.createContainer(iconType: IconType): CharacterContainer {
     }?.load<UTexture2D>()?.toBufferedImage() ?: throw ParserException("Failed to load $iconType")
     val abilities = mutableMapOf<ECharacterAbilitySlot, CharacterAbilityContainer>()
     if (uiData.Abilities != null)
-        for ((slotEnumRaw, abilityPkgIndexRaw) in uiData.Abilities!!.mapData) {
+        for ((slotEnumRaw, abilityPkgIndexRaw) in uiData.Abilities!!.entries) {
             val data = (abilityPkgIndexRaw.getTagTypeValueLegacy() as FPackageIndex).load<CharacterAbilityUIData>() ?: continue
             abilities[ECharacterAbilitySlot.valueOf((slotEnumRaw.getTagTypeValueLegacy() as FName).text.substringAfter("ECharacterAbilitySlot::"))] =
                 CharacterAbilityContainer(data, data.DisplayIcon?.load<UTexture2D>()?.toBufferedImage())
