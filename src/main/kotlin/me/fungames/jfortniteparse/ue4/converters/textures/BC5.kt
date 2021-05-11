@@ -21,7 +21,7 @@ private fun getZNormal(x: UByte, y: UByte): UByte {
         1.0
     ).toFloat()
     val f = zval * 127.0 + 128.0
-    return f.toByte().toUByte()
+    return f.toInt().toByte().toUByte()
 }
 
 
@@ -97,12 +97,12 @@ private fun decodeBC3Block(bin: UByteArrayInputStream): UByteArray {
     for (i in 0..7) {
         val blockValue = indexBlock1[i]
         val c = refSl[blockValue.toInt()]
-        bytes[7 - i] = c.toByte().toUByte()
+        bytes[7 - i] = c.toInt().toByte().toUByte()
     }
     for (i in 0..7) {
         val blockValue = indexBlock2[i]
         val c = refSl[blockValue.toInt()]
-        bytes[15 - i] = c.toByte().toUByte()
+        bytes[15 - i] = c.toInt().toByte().toUByte()
     }
     return bytes
 }
