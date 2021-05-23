@@ -155,7 +155,7 @@ open class FVector {
      * @param bias How much to add to each component.
      * @return The result of addition.
      */
-    inline operator fun plus(bias: Float) = FVector(x - bias, y - bias, z - bias)
+    inline operator fun plus(bias: Float) = FVector(x + bias, y + bias, z + bias)
 
     /**
      * Gets the result of scaling the vector (multiplying each component by a value).
