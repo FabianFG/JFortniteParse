@@ -13,7 +13,7 @@ class UScriptMap {
         keysToRemove = ArrayList(numKeysToRemove)
         repeat(numKeysToRemove) {
             try {
-                keysToRemove[it] = FProperty.readPropertyValue(Ar, typeData.innerType!!, FProperty.ReadType.MAP)!!
+                keysToRemove.add(FProperty.readPropertyValue(Ar, typeData.innerType!!, FProperty.ReadType.MAP)!!)
             } catch (e: ParserException) {
                 throw ParserException("Failed to read property for index $it in map keys to remove", Ar, e)
             }

@@ -13,7 +13,7 @@ class UScriptSet {
         elementsToRemove = ArrayList(numElementsToRemove)
         repeat(numElementsToRemove) {
             try {
-                elementsToRemove[it] = FProperty.readPropertyValue(Ar, typeData.innerType!!, FProperty.ReadType.ARRAY)!!
+                elementsToRemove.add(FProperty.readPropertyValue(Ar, typeData.innerType!!, FProperty.ReadType.ARRAY)!!)
             } catch (e: ParserException) {
                 throw ParserException("Failed to read property for index $it in set elements to remove", Ar, e)
             }

@@ -56,12 +56,16 @@ class UStaticMesh : UStaticMesh_Properties() {
 
         // serialize FStaticMeshRenderData
         if (cooked) {
+            if (Ar.game >= GAME_UE4(27)) {
+                // The serialization of this variable is cvar-dependent in UE4, so there's no clear way to understand
+                // if it should be serialize in our code or not.
+                Ar.readInt32() // MinMobileLODIdx
+            }
             if (!cooked) {
                 Ar.readTArray { Ar.readInt32() } // WedgeMap
                 Ar.readTArray { Ar.readInt32() } // MaterialIndexToImportIndex
             }
 
-            if (Ar.useUnversionedPropertySerialization) Ar.skip(4) // TODO what is this
             lods = Ar.readTArray { FStaticMeshLODResources(Ar) }
 
             if (Ar.game >= GAME_UE4(23))

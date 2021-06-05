@@ -73,12 +73,8 @@ class PropertyType {
             is FArrayProperty -> {
                 innerType = prop.inner?.let { PropertyType(it) }
             }
-            is FByteProperty -> {
-                enumName = prop.enum?.value?.name?.let { FName.dummy(it) } ?: NAME_None
-            }
-            is FEnumProperty -> {
-                enumName = prop.enum?.value?.name?.let { FName.dummy(it) } ?: NAME_None
-            }
+            is FByteProperty -> applyEnum(prop, prop.enum)
+            is FEnumProperty -> applyEnum(prop, prop.enum)
             is FMapProperty -> {
                 innerType = prop.keyProp?.let { PropertyType(it) }
                 valueType = prop.valueProp?.let { PropertyType(it) }
@@ -91,6 +87,15 @@ class PropertyType {
                 structName = structClass?.value?.name?.let { FName.dummy(it) } ?: NAME_None
             }
         }
+    }
+
+    private inline fun applyEnum(prop: FPropertySerialized, enum_: Lazy<UEnum>?) {
+        val enum = enum_?.value
+        if (enum != null) {
+            enumClass = enum_
+            enumName = FName.dummy(enum.name)
+        }
+        isEnumAsByte = prop.elementSize == 1
     }
 
     fun setupWithField(field: Field) {

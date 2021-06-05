@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.LOG_JFP
+import me.fungames.jfortniteparse.fort.objects.FFortActorRecord
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.Companion.valueOr
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -43,7 +44,7 @@ class UScriptStruct {
             "ExpressionInput" -> FExpressionInput(Ar)
             "FrameNumber" -> FFrameNumber(Ar)
             "GameplayTagContainer" -> valueOr({ FGameplayTagContainer(Ar) }, { FGameplayTagContainer() }, type)
-            "Guid" -> valueOr({ FGuid(Ar) }, { FGuid() }, type)
+            "Guid", "GUID" -> valueOr({ FGuid(Ar) }, { FGuid() }, type)
             "IntPoint" -> FIntPoint(Ar)
             "IntVector" -> FIntVector(Ar)
             "LevelSequenceObjectReferenceMap" -> FLevelSequenceObjectReferenceMap(Ar)
@@ -79,6 +80,7 @@ class UScriptStruct {
             "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
             "Vector4" -> valueOr({ FVector4(Ar) }, { FVector4() }, type)
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)
+            "FortActorRecord" -> FFortActorRecord(Ar)
 
             else -> {
                 LOG_JFP.debug("Using property serialization for struct $structName")
