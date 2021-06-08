@@ -5,7 +5,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class FortCosmeticVariantBackedByArray extends FortCosmeticVariant {
+public class FortCosmeticVariantBackedByArray extends FortCosmeticVariant {
     @Nullable
-    public abstract List<? extends BaseVariantDef> getVariants();
+    public List<? extends BaseVariantDef> getVariants() {
+        return null;
+    }
 }

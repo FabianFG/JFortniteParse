@@ -170,6 +170,7 @@ object ObjectTypeRegistry {
         registerClass(FortCosmeticDynamicVariant::class.java)
         registerClass(FortCosmeticFloatSliderVariant::class.java)
         registerClass(FortCosmeticItemTexture::class.java)
+        registerClass(FortCosmeticLoadoutTagDrivenVariant::class.java)
         registerClass(FortCosmeticLockerItemDefinition::class.java)
         registerClass(FortCosmeticMaterialVariant::class.java)
         registerClass(FortCosmeticMeshVariant::class.java)
