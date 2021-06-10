@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.util
 
-import me.fungames.jfortniteparse.ue4.reader.FByteArchive
-import me.fungames.kotlinPointers.BytePointer
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import java.awt.Graphics2D
 import java.awt.Image
 import java.awt.image.BufferedImage
@@ -10,11 +9,7 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.atomic.AtomicReferenceArray
 import javax.imageio.ImageIO
-import kotlin.jvm.internal.Ref.IntRef
 import kotlin.jvm.internal.Ref.ObjectRef
 import kotlin.math.min
 
@@ -41,22 +36,6 @@ fun BufferedImage.toPngArray(): ByteArray {
     ImageIO.write(this, "png", out)
     return out.toByteArray()
 }
-
-fun BytePointer.toUInt32() = FByteArchive(byteArrayOf(this[0],
-    this[1],
-    this[2],
-    this[3]))
-    .readUInt32()
-
-fun BytePointer.toInt64() = FByteArchive(byteArrayOf(this[0],
-    this[1],
-    this[2],
-    this[3],
-    this[4],
-    this[5],
-    this[6],
-    this[7]))
-    .readInt64()
 
 inline operator fun <T> List<T>.get(index: UInt) = get(index.toInt())
 inline operator fun <T> Array<T>.get(index: UInt) = get(index.toInt())
@@ -91,27 +70,6 @@ inline fun align(value: ULong, alignment: ULong) = value + alignment - 1u and (a
 inline fun align(value: UInt, alignment: UInt) = value + alignment - 1u and (alignment - 1u).inv()
 inline fun isAligned(value: Int, alignment: Int) = value and (alignment - 1) <= 0
 
-fun AtomicInteger.compareExchange(expected: IntRef, value: Int): Boolean {
-    val prevValue = get()
-    val bResult = compareAndSet(expected.element, value)
-    expected.element = prevValue
-    return bResult
-}
-
-fun <T> AtomicReference<T>.compareExchange(expected: ObjectRef<T>, value: T): Boolean {
-    val prevValue = get()
-    val bResult = compareAndSet(expected.element, value)
-    expected.element = prevValue
-    return bResult
-}
-
-fun <E> AtomicReferenceArray<E>.compareExchange(i: Int, expected: ObjectRef<E>, value: E): Boolean {
-    val prevValue = get(i)
-    val bResult = compareAndSet(i, expected.element, value)
-    expected.element = prevValue
-    return bResult
-}
-
 fun BitSet.indexOfFirst(value: Boolean): Int {
     for (i in 0 until size()) {
         if (get(i) == value) {
@@ -125,3 +83,5 @@ fun BitSet.indexOfFirst(value: Boolean): Int {
 fun UInt.divideAndRoundUp(divisor: UInt) = (this + divisor - 1u) / divisor
 
 inline fun <T> T.ref() = ObjectRef<T>().also { it.element = this }
+
+inline fun FName?.isNone() = this == null || this.isNone()

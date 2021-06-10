@@ -3,9 +3,11 @@
 package me.fungames.jfortniteparse
 
 import mu.KotlinLogging
+import kotlin.jvm.JvmField as F
 
-@JvmField var GDebugProperties = false
-@JvmField var GFatalObjectSerializationErrors = false
+@F var GDebugProperties = false
+@F var GFatalObjectSerializationErrors = false
 
-@JvmField val LOG_STREAMING = KotlinLogging.logger("Streaming")
-@JvmField val LOG_JFP = KotlinLogging.logger("JFortniteParse")
+@F val LOG_DATA_TABLE = KotlinLogging.logger("DataTable")
+@F val LOG_JFP = KotlinLogging.logger("JFortniteParse")
+@F val LOG_STREAMING = KotlinLogging.logger("Streaming")
