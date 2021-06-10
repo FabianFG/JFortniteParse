@@ -53,8 +53,8 @@ open class UDataTable : UObject {
     fun findRow(rowName: String) = rows[FName.dummy(rowName)]
     fun findRow(rowName: FName) = rows[rowName]
 
-    inline fun <reified T : FTableRowBase> findRowMapped(rowName: FName): T? =
-        findRow(rowName)?.mapToClass(T::class.java)
+    inline fun <reified T : FTableRowBase> findRowMapped(rowName: FName) = findRow(rowName)?.mapToClass(T::class.java)
+    fun <T : FTableRowBase> findRowMapped(rowName: FName, clazz: Class<T>) = findRow(rowName)?.mapToClass(clazz)
 
     fun toJson(): String {
         val data = rows.mapKeys { it.key.text }.mapValues { Package.gson.toJsonTree(it.value) }
