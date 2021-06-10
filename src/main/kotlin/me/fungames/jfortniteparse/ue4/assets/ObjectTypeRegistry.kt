@@ -122,7 +122,6 @@ object ObjectTypeRegistry {
         registerClass(AthenaPickaxeItemDefinition::class.java)
         registerClass(AthenaRewardEventGraph::class.java)
         registerClass(AthenaRewardEventGraphCosmeticItemDefinition::class.java)
-        registerClass(AthenaSeasonItemDefinition::class.java)
         registerClass(AthenaSkyDiveContrailItemDefinition::class.java)
         registerClass(AthenaSprayItemDefinition::class.java)
         registerClass(AthenaToyItemDefinition::class.java)
