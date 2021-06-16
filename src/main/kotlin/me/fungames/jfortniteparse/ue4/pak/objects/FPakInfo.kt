@@ -3,9 +3,7 @@ package me.fungames.jfortniteparse.ue4.pak.objects
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_FNameBasedCompressionMethod
-import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_FrozenIndex
-import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_PathHashIndex
+import me.fungames.jfortniteparse.ue4.pak.enums.*
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
@@ -59,15 +57,31 @@ class FPakInfo : UClass {
     constructor(Ar : FArchive, maxNumCompressionMethods : Int = 4) {
         super.init(Ar)
 
-        // New FPakInfo fields
-        encryptionKeyGuid = FGuid(Ar)
-        encryptedIndex = Ar.readFlag()
+        val newFieldsPos = Ar.pos()
+        Ar.skip(17)
 
         // Old FPakInfoFields
         val magic = Ar.readUInt32()
         if (magic != PAK_MAGIC)
             throw ParserException("Invalid pak file magic", Ar)
         version = Ar.readInt32()
+
+        val pos = Ar.pos()
+        Ar.seek(newFieldsPos)
+        // Seek back to read new pak fields that we couldn't read before because we need to know the version first
+        // New FPakInfo fields
+        encryptionKeyGuid = if (version >= PakVersion_EncryptionKeyGuid)
+            FGuid(Ar)
+        else
+            FGuid.mainGuid.apply { Ar.skip(16) }
+
+        encryptedIndex = if (version >= PakVersion_IndexEncryption)
+            Ar.readFlag()
+        else
+            false.apply { Ar.skip(1) }
+
+        Ar.seek(pos)
+
         indexOffset = Ar.readInt64()
         indexSize = Ar.readInt64()
         indexHash = Ar.read(20)
