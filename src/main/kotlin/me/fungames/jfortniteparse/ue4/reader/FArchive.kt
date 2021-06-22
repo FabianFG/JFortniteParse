@@ -142,6 +142,19 @@ abstract class FArchive : Cloneable, InputStream() {
         return int != 0
     }
 
+    fun readIntPacked(): UInt {
+        var value = 0u
+        var cnt = 0
+        var more = true
+        while (more) {
+            var nextByte = read()
+            more = nextByte and 1 != 0                  // Check 1 bit to see if theres more after this
+            nextByte = nextByte shr 1                   // Shift to get actual 7 bit value
+            value += nextByte.toUInt() shl (7 * cnt++)  // Add to total value
+        }
+        return value
+    }
+
     //FString
     fun readString(): String {
         val length = readInt32()

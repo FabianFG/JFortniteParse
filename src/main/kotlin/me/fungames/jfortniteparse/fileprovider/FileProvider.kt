@@ -93,7 +93,7 @@ abstract class FileProvider {
     fun loadObject(softObjectPath: FSoftObjectPath?): UObject? {
         if (softObjectPath == null) return null
         val path = softObjectPath.toString()
-        return if (path != "None") loadObject(path) else null
+        return if (path.isNotEmpty() && path != "None") loadObject(path) else null
     }
 
     /**
