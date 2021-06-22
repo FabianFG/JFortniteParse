@@ -87,10 +87,14 @@ abstract class FileProvider {
     inline fun <reified T> loadObject(softObjectPath: FSoftObjectPath?): T? {
         if (softObjectPath == null) return null
         val loaded = loadObject(softObjectPath) ?: return null
-        return if (loaded is T) loaded else null
+        return loaded as? T
     }
 
-    fun loadObject(softObjectPath: FSoftObjectPath?) = softObjectPath?.run { loadObject(softObjectPath.assetPathName.text) }
+    fun loadObject(softObjectPath: FSoftObjectPath?): UObject? {
+        if (softObjectPath == null) return null
+        val path = softObjectPath.toString()
+        return if (path != "None") loadObject(path) else null
+    }
 
     /**
      * Searches for the game file and then load its contained locres

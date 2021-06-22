@@ -27,7 +27,7 @@ class CVertexShare {
         // compute bounds for better hashing
         computeBounds(verts)
         extents = maxs - mins
-        extents[0] += 1f; extents[1] += 1f; extents[2] += 1f; // avoid zero divide
+        extents[0] += 1f; extents[1] += 1f; extents[2] += 1f // avoid zero divide
         // initialize Hash and HashNext with -1
         hashNext = IntArray(verts.size) { -1 }
     }

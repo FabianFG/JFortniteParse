@@ -9,6 +9,7 @@ import me.fungames.jfortniteparse.util.toFloat16
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.experimental.and
 
 /**
  * UE4 Generic Binary reader
@@ -53,6 +54,13 @@ abstract class FArchive : Cloneable, InputStream() {
         val res = ByteArray(size)
         read(res)
         return res
+    }
+
+    open fun readBits(b: ByteArray, sizeBits: Int) {
+        read(b, 0, (sizeBits + 7) / 8);
+        if (sizeBits % 8 != 0) {
+            b[sizeBits / 8] = b[sizeBits / 8] and ((1 shl (sizeBits and 7)) - 1).toByte()
+        }
     }
 
     fun isAtStopper() = pos() == size()
@@ -137,7 +145,7 @@ abstract class FArchive : Cloneable, InputStream() {
     //FString
     fun readString(): String {
         val length = readInt32()
-        if (!(-65536..65536).contains(length))
+        if (length < -65536 || length > 65536)
             throw ParserException("Invalid String length '$length'", this)
         return if (length < 0) {
             val utf16length = -length

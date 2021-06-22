@@ -113,7 +113,7 @@ open class UObject : IPropertyHolder {
      * @param   stopOuter   if specified, indicates that the output string should be relative to this object.  if StopOuter
      *                      does not exist in this object's Outer chain, the result would be the same as passing NULL.
      */
-    fun getFullName(stopOuter: UObject?, includeClassPackage: Boolean = false): String {
+    fun getFullName(stopOuter: UObject? = null, includeClassPackage: Boolean = false): String {
         val result = StringBuilder(128)
         getFullName(stopOuter, result, includeClassPackage)
         return result.toString()

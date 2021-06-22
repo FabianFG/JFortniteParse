@@ -46,6 +46,6 @@ class FEngineVersion : FEngineVersionBase {
                 }
             }
         }
-        return result;
+        return result
     }
 }

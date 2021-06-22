@@ -12,6 +12,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
 import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageObjectIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
@@ -76,5 +77,12 @@ abstract class Package(var fileName: String,
                 }
             })
             .create()
+    }
+
+    class ResolvedLoadedObject(val obj: UObject) : IoPackage.ResolvedObject(obj as? IoPackage ?: obj.owner as IoPackage) {
+        override fun getName() = FName.dummy(obj.name)
+        override fun getOuter() = obj.outer?.let { ResolvedLoadedObject(it) }
+        override fun getClazz() = obj.clazz?.let { ResolvedLoadedObject(it) }
+        override fun getObject() = lazy { obj }
     }
 }

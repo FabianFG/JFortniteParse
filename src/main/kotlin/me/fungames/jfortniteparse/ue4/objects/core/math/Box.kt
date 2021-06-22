@@ -323,18 +323,18 @@ class FBox {
      */
     fun intersect(other: FBox): Boolean {
         if ((min.x > other.max.x) || (other.min.x > max.x)) {
-            return false;
+            return false
         }
 
         if ((min.y > other.max.y) || (other.min.y > max.y)) {
-            return false;
+            return false
         }
 
         if ((min.z > other.max.z) || (other.min.z > max.z)) {
-            return false;
+            return false
         }
 
-        return true;
+        return true
     }
 
     /**
@@ -345,14 +345,14 @@ class FBox {
      */
     fun intersectXY(other: FBox): Boolean {
         if ((min.x > other.max.x) || (other.min.x > max.x)) {
-            return false;
+            return false
         }
 
         if ((min.y > other.max.y) || (other.min.y > max.y)) {
-            return false;
+            return false
         }
 
-        return true;
+        return true
     }
 
     /**

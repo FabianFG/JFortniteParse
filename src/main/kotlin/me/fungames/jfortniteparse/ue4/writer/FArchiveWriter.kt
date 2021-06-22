@@ -85,7 +85,7 @@ abstract class FArchiveWriter : OutputStream() {
     }
 
     fun writeString(i : String) {
-        if (!(-65536..65536).contains(i.length))
+        if (i.length < -65536 || i.length > 65536)
             throw ParserException("Invalid String length '${i.length}'", this)
         when {
 //            i == " " -> {

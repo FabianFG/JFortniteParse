@@ -178,22 +178,67 @@ class IoPackage : Package {
     abstract class ResolvedObject(val pkg: IoPackage) {
         abstract fun getName(): FName
         open fun getOuter(): ResolvedObject? = null
+        open fun getClazz(): ResolvedObject? = null
         open fun getSuper(): ResolvedObject? = null
         open fun getObject(): Lazy<UObject?>? = null
+
+        @JvmOverloads
+        fun getFullName(stopOuter: ResolvedObject? = null, includeClassPackage: Boolean = false): String {
+            val result = StringBuilder(128)
+            getFullName(stopOuter, result, includeClassPackage)
+            return result.toString()
+        }
+
+        fun getFullName(stopOuter: ResolvedObject?, resultString: StringBuilder, includeClassPackage: Boolean = false) {
+            if (includeClassPackage) {
+                resultString.append(getClazz()?.getPathName())
+            } else {
+                resultString.append(getClazz()?.getName())
+            }
+            resultString.append(' ')
+            getPathName(stopOuter, resultString)
+        }
+
+        @JvmOverloads
+        fun getPathName(stopOuter: ResolvedObject? = null): String {
+            val result = StringBuilder()
+            getPathName(stopOuter, result)
+            return result.toString()
+        }
+
+        fun getPathName(stopOuter: ResolvedObject?, resultString: StringBuilder) {
+            if (this != stopOuter) {
+                val objOuter = getOuter()
+                if (objOuter != null && objOuter != stopOuter) {
+                    objOuter.getPathName(stopOuter, resultString)
+
+                    // SUBOBJECT_DELIMITER_CHAR is used to indicate that this object's outer is not a UPackage
+                    if (objOuter.getOuter()?.getClazz()?.getName()?.text == "Package") {
+                        resultString.append(':')
+                    } else {
+                        resultString.append('.')
+                    }
+                }
+                resultString.append(getName())
+            } else {
+                resultString.append("None")
+            }
+        }
     }
 
     class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg) {
         val exportMapEntry = pkg.exportMap[exportIndex]
         val exportObject = pkg.exportsLazy[exportIndex]
         override fun getName() = pkg.nameMap.getName(exportMapEntry.objectName)
-        override fun getOuter() = pkg.resolveObjectIndex(exportMapEntry.outerIndex)
+        override fun getOuter() = pkg.resolveObjectIndex(exportMapEntry.outerIndex) ?: ResolvedLoadedObject(pkg)
+        override fun getClazz() = pkg.resolveObjectIndex(exportMapEntry.classIndex)
         override fun getSuper() = pkg.resolveObjectIndex(exportMapEntry.superIndex)
         override fun getObject() = exportObject
     }
 
     class ResolvedScriptObject(val scriptImport: FScriptObjectEntry, pkg: IoPackage) : ResolvedObject(pkg) {
         override fun getName() = scriptImport.objectName.toName()
-        override fun getOuter() = pkg.resolveObjectIndex(scriptImport.outerIndex)
+        override fun getOuter() = pkg?.resolveObjectIndex(scriptImport.outerIndex)
         override fun getObject() = lazy {
             val name = getName()
             val struct = pkg.provider?.mappingsProvider?.getStruct(name)

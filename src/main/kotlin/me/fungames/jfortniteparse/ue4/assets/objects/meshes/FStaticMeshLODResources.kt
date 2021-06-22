@@ -66,7 +66,7 @@ class FStaticMeshLODResources {
                 Ar.readUInt32() // PackedData
 
                 // ... SerializeMetaData() for all arrays
-                Ar.seek(Ar.pos() + 4*4 + 2*4 + 2*4 + 6*(2*4));
+                Ar.seek(Ar.pos() + 4*4 + 2*4 + 2*4 + 6*(2*4))
 /*				StaticMeshVertexBuffer = 2x int32, 2x bool
 				PositionVertexBuffer = 2x int32
 				ColorVertexBuffer = 2x int32
