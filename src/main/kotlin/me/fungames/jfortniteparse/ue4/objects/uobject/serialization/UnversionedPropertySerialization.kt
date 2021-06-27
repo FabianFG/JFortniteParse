@@ -26,7 +26,7 @@ import java.util.*
 
 class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int) {
     fun deserialize(Ar: FAssetArchive, type: ReadType) = FPropertyTag(Ar, info, arrayIndex, type)
-    override fun toString() = info.toString()
+    override fun toString() = "${info.type} ${info.name}"
 }
 
 /**
