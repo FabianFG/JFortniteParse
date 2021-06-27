@@ -18,10 +18,9 @@ import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurveKey
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
 import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceObjectReferenceMap
 import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
-import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationKey
-import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationTemplate
-import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneSegment
-import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEvaluationDataTree
+import me.fungames.jfortniteparse.ue4.objects.moviescene.channels.FMovieSceneFloatChannel
+import me.fungames.jfortniteparse.ue4.objects.moviescene.channels.FMovieSceneFloatValue
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.*
 import me.fungames.jfortniteparse.ue4.objects.niagara.FNiagaraVariable
 import me.fungames.jfortniteparse.ue4.objects.niagara.FNiagaraVariableBase
 import me.fungames.jfortniteparse.ue4.objects.niagara.FNiagaraVariableWithOffset
@@ -35,9 +34,9 @@ class UScriptStruct {
 
     constructor(Ar: FAssetArchive, typeData: PropertyType, type: ReadType = ReadType.NORMAL) {
         structName = typeData.structName
-        structType = when (structName.text) { // TODO please complete the zero constructors
-            "Box" -> valueOr({ FBox(Ar) }, { FBox() }, type)
-            "Box2D" -> valueOr({ FBox2D(Ar) }, { FBox2D() }, type)
+        structType = when (structName.text) {
+            "Box" -> valueOr({ FBox(Ar) }, { FBox(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f)) }, type)
+            "Box2D" -> valueOr({ FBox2D(Ar) }, { FBox2D(FVector2D(0f, 0f), FVector2D(0f, 0f)) }, type)
             "Color" -> valueOr({ FColor(Ar) }, { FColor() }, type)
             "ColorMaterialInput" -> FColorMaterialInput(Ar)
             "DateTime", "Timespan" -> valueOr({ FDateTime(Ar) }, { FDateTime() }, type)
@@ -50,14 +49,17 @@ class UScriptStruct {
             "LevelSequenceObjectReferenceMap" -> FLevelSequenceObjectReferenceMap(Ar)
             "LinearColor" -> valueOr({ FLinearColor(Ar) }, { FLinearColor() }, type)
             "MaterialAttributesInput" -> FMaterialAttributesInput(Ar)
+            "MovieSceneEvalTemplatePtr" -> FMovieSceneEvalTemplatePtr(Ar)
+            "MovieSceneEvaluationFieldEntityTree" -> FMovieSceneEvaluationFieldEntityTree(Ar)
             "MovieSceneEvaluationKey" -> FMovieSceneEvaluationKey(Ar)
-            "MovieSceneEvaluationTemplate" -> FMovieSceneEvaluationTemplate(Ar)
-            "MovieSceneFloatValue" -> FRichCurveKey(Ar)
+            "MovieSceneFloatChannel" -> FMovieSceneFloatChannel(Ar)
+            "MovieSceneFloatValue" -> FMovieSceneFloatValue(Ar)
             "MovieSceneFrameRange" -> FMovieSceneFrameRange(Ar)
             "MovieSceneSegment" -> FMovieSceneSegment(Ar)
             "MovieSceneSegmentIdentifier" -> FFrameNumber(Ar)
             "MovieSceneSequenceID" -> FFrameNumber(Ar)
             "MovieSceneTrackIdentifier" -> FFrameNumber(Ar)
+            "MovieSceneTrackImplementationPtr" -> FMovieSceneTrackImplementationPtr(Ar)
             "NavAgentSelector" -> FNavAgentSelector(Ar)
             "NiagaraVariable" -> FNiagaraVariable(Ar)
             "NiagaraVariableBase" -> FNiagaraVariableBase(Ar)
@@ -83,7 +85,7 @@ class UScriptStruct {
             "FortActorRecord" -> FFortActorRecord(Ar)
 
             else -> {
-                LOG_JFP.debug("Using property serialization for struct $structName")
+                LOG_JFP.debug { "Using property serialization for struct $structName" }
                 //TODO this should in theory map the struct fallbacks directly to their target, not implemented yet
                 //For now it will be done with the getTagTypeValue method, not optimal though
                 FStructFallback(Ar, typeData.structClass, structName)
@@ -108,7 +110,6 @@ class UScriptStruct {
             is FLinearColor -> structType.serialize(Ar)
             is FMaterialAttributesInput -> structType.serialize(Ar)
             is FMovieSceneEvaluationKey -> structType.serialize(Ar)
-            is FMovieSceneEvaluationTemplate -> structType.serialize(Ar)
             is FMovieSceneFrameRange -> structType.serialize(Ar)
             is FMovieSceneSegment -> structType.serialize(Ar)
             is FNavAgentSelector -> structType.serialize(Ar)

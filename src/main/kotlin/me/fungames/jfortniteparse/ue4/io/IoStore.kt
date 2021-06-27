@@ -224,12 +224,24 @@ class FIoStoreReaderImpl {
     val tocResource = FIoStoreTocResource()
     private var decryptionKey: ByteArray? = null
     private val containerFileHandles = mutableListOf<FPakArchive>()
-    val directoryIndexReader by lazy {
-        if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_INDEXED) != 0 && tocResource.directoryIndexBuffer != null) {
+    private var _directoryIndexReader: FIoDirectoryIndexReader? = null
+    private val directoryIndexReaderLock = Object()
+    val directoryIndexReader: FIoDirectoryIndexReader? get() {
+        synchronized(directoryIndexReaderLock) {
+            if (_directoryIndexReader != null) {
+                return _directoryIndexReader
+            }
+            if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_INDEXED) == 0 || tocResource.directoryIndexBuffer == null) {
+                return null
+            }
+            if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_ENCRYPTED) != 0 && decryptionKey == null) {
+                return null
+            }
             val out = FIoDirectoryIndexReaderImpl(tocResource.directoryIndexBuffer!!, decryptionKey)
             tocResource.directoryIndexBuffer = null
-            out
-        } else null
+            _directoryIndexReader = out
+            return out
+        }
     }
     private val threadBuffers = object : ThreadLocal<FThreadBuffers>() {
         override fun initialValue() = FThreadBuffers()
@@ -383,16 +395,22 @@ class FIoStoreReaderImpl {
         }
     }
 
-    val files: List<GameFile> by lazy {
-        val files = ArrayList<GameFile>()
-        directoryIndexReader?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
-            val chunkId = tocResource.chunkIds[tocEntryIndex.toInt()]
-            if (chunkId.chunkType == EIoChunkType.ExportBundleData) {
-                files.add(GameFile(filename, pakFileName = environment.path, ioChunkId = chunkId, ioStoreReader = this))
+    private var _files: List<GameFile>? = null
+    private val filesLock = Object()
+    val files: List<GameFile> get() {
+        synchronized(filesLock) {
+            _files?.let { return it }
+            val files = ArrayList<GameFile>()
+            directoryIndexReader?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
+                val chunkId = tocResource.chunkIds[tocEntryIndex.toInt()]
+                if (chunkId.chunkType == EIoChunkType.ExportBundleData) {
+                    files.add(GameFile(filename, pakFileName = environment.path, ioChunkId = chunkId, ioStoreReader = this))
+                }
+                true
             }
-            true
+            _files = files
+            return files
         }
-        files
     }
 
     fun getFileNames(outFileList: MutableList<String>) {

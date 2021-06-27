@@ -56,14 +56,17 @@ abstract class FArchive : Cloneable, InputStream() {
         return res
     }
 
-    open fun readBits(b: ByteArray, sizeBits: Int) {
-        read(b, 0, (sizeBits + 7) / 8);
-        if (sizeBits % 8 != 0) {
-            b[sizeBits / 8] = b[sizeBits / 8] and ((1 shl (sizeBits and 7)) - 1).toByte()
+    open fun readBits(b: ByteArray, offBytes: Int, lenBits: Int) {
+        read(b, offBytes, (lenBits + 7) / 8)
+        if (lenBits % 8 != 0) {
+            b[offBytes + lenBits / 8] = b[offBytes + lenBits / 8] and ((1 shl (lenBits and 7)) - 1).toByte()
         }
     }
 
-    fun isAtStopper() = pos() == size()
+    inline fun readInt(max: Int) = readInt(max.toUInt())
+    open fun readInt(max: UInt) = readUInt32()
+
+    open val atEnd get() = pos() == size()
     //protected open fun rangeCheck(pos: Int) = (0..size()).contains(pos)
 
     open fun readInt8() = read().toByte()
@@ -142,7 +145,7 @@ abstract class FArchive : Cloneable, InputStream() {
         return int != 0
     }
 
-    fun readIntPacked(): UInt {
+    open fun readIntPacked(): UInt {
         var value = 0u
         var cnt = 0
         var more = true

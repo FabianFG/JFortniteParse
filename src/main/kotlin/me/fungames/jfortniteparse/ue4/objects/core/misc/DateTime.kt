@@ -4,7 +4,7 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import java.util.*
 
-class FDateTime {
+class FDateTime : Comparable<FDateTime> {
     var date: Long
 
     constructor(Ar: FArchive) {
@@ -22,4 +22,19 @@ class FDateTime {
     }
 
     inline fun toDate() = Date(date)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FDateTime
+
+        if (date != other.date) return false
+
+        return true
+    }
+
+    override fun hashCode() = date.hashCode()
+
+    override operator fun compareTo(other: FDateTime) = date.compareTo(other.date)
 }

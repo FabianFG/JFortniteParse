@@ -15,6 +15,7 @@ import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.uobject.EObjectFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
@@ -31,13 +32,11 @@ open class UObject : IPropertyHolder {
     var export: FObjectExport? = null
     val owner: Package?
         get() {
-            var current = outer
-            var next = current?.outer
-            while (next != null) {
-                current = next
-                next = current.outer
+            var top = this
+            while (true) {
+                top = top.outer ?: break
             }
-            return current as? Package
+            return top as? Package
         }
     val exportType get() = clazz?.name ?: javaClass.simpleName.unprefix()
 
@@ -72,7 +71,7 @@ open class UObject : IPropertyHolder {
             }
         }
         //FLazyObjectPtr::PossiblySerializeObjectGuid
-        if (Ar.pos() + 4 <= validPos && Ar.readBoolean() && Ar.pos() + 16 <= validPos)
+        if ((flags and EObjectFlags.RF_ClassDefaultObject.value) == 0 && Ar.readBoolean())
             objectGuid = FGuid(Ar)
         mapToClass(properties, javaClass, this)
     }

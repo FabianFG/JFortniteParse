@@ -192,7 +192,6 @@ object JsonSerializer {
                 "trackId" to ob.trackId,
                 "sectionIndex" to ob.sectionIndex.toLong()
             )
-            is FMovieSceneEvaluationTemplate -> JsonPrimitive(ob.value.toLong())
             else -> throw ParserException("Unknown tag value ${ob::class.java.simpleName}, cannot be serialized to json")
         }
     }
