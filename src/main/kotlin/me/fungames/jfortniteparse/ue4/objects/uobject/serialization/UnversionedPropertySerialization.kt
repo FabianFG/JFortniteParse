@@ -12,13 +12,11 @@ import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.exports.FPropertySerialized
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
-import me.fungames.jfortniteparse.ue4.assets.objects.FProperty
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.divideAndRoundUp
@@ -27,24 +25,8 @@ import java.lang.reflect.Modifier
 import java.util.*
 
 class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int) {
-    fun deserialize(Ar: FAssetArchive, type: ReadType): FPropertyTag {
-        val tag = FPropertyTag(FName.dummy(info.name))
-        /*if (true) {
-            tag.name = FName.dummy(data.name!!)
-            tag.type = data.type.type
-            tag.structName = data.type.structType
-            tag.boolVal = data.type.bool
-            tag.enumName = data.type.enumName
-            tag.enumType = data.type.enumType
-            tag.innerType = data.type.innerType?.type ?: FName.NAME_None
-            tag.valueType = data.type.valueType?.type ?: FName.NAME_None
-        }*/
-        tag.arrayIndex = arrayIndex
-        tag.prop = FProperty.readPropertyValue(Ar, info.type, type)
-        return tag
-    }
-
-    override fun toString() = (info.field?.type?.simpleName ?: info.type.toString()) + ' ' + info.name
+    fun deserialize(Ar: FAssetArchive, type: ReadType) = FPropertyTag(Ar, info, arrayIndex, type)
+    override fun toString() = info.toString()
 }
 
 /**
@@ -101,7 +83,7 @@ class FUnversionedStructSchema {
     }
 }
 
-val schemaCache = mutableMapOf<Class<*>, FUnversionedStructSchema>()
+val schemaCache = hashMapOf<Class<*>, FUnversionedStructSchema>()
 
 fun getOrCreateUnversionedSchema(struct: UStruct): FUnversionedStructSchema {
     return if (struct is UScriptStruct && struct.useClassProperties && struct.structClass != null) {

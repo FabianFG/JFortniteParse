@@ -47,10 +47,6 @@ class FPropertyTag {
 
     var typeData: PropertyType? = null
 
-    constructor(name: FName) {
-        this.name = name
-    }
-
     constructor(Ar: FAssetArchive, readData: Boolean) {
         name = Ar.readFName()
         if (!name.isNone()) {
@@ -110,6 +106,20 @@ class FPropertyTag {
                 }
             }
         }
+    }
+
+    constructor(Ar: FAssetArchive, info: PropertyInfo, arrayIndex: Int, type: FProperty.ReadType) {
+        name = FName.dummy(info.name)
+        this.arrayIndex = arrayIndex
+        val typeData = info.type
+        this.typeData = typeData
+        val pos = Ar.pos()
+        try {
+            prop = FProperty.readPropertyValue(Ar, typeData, type)
+        } catch (e: ParserException) {
+            throw ParserException("Failed to read FPropertyTagType $typeData $name", e)
+        }
+        size = Ar.pos() - pos
     }
 
     fun <T> getTagTypeValue(clazz: Class<T>, type: Type? = null): T? {

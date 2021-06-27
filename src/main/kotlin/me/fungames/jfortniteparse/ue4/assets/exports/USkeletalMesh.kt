@@ -20,7 +20,6 @@ class USkeletalMesh : UObject() {
         val stripFlags = FStripDataFlags(Ar)
         bounds = FBoxSphereBounds(Ar)
         materials = Ar.readTArray { FSkeletalMaterial(Ar) }
-        println("read skel mesh done")
     }
 }
 
