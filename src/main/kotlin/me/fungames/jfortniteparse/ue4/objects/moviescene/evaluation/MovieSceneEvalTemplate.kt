@@ -6,10 +6,12 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 class FMovieSceneEvalTemplatePtr {
     var typeName: String
-    var data: FStructFallback
+    var data: FStructFallback? = null
 
     constructor(Ar: FAssetArchive) {
         typeName = Ar.readString()
-        data = FStructFallback(Ar, FName.dummy(typeName.substringAfterLast('.')))
+        if (typeName.isNotEmpty()) {
+            data = FStructFallback(Ar, FName.dummy(typeName.substringAfterLast('.')))
+        }
     }
 }
