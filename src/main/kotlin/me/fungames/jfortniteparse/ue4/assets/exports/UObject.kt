@@ -65,7 +65,7 @@ open class UObject : IPropertyHolder {
         properties = mutableListOf()
         if (javaClass != UClass::class.java) {
             if (Ar.useUnversionedPropertySerialization) {
-                deserializeUnversionedProperties(properties, clazz!!, Ar)
+                deserializeUnversionedProperties(properties, clazz, Ar)
             } else {
                 deserializeVersionedTaggedProperties(properties, Ar)
             }

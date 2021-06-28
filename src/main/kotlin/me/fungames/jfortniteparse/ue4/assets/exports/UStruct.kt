@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.GDebugProperties
-import me.fungames.jfortniteparse.LOG_JFP
+import me.fungames.jfortniteparse.GReadScriptData
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
@@ -18,6 +18,7 @@ open class UStruct : UObject() {
     var childProperties = emptyArray<FField>()
     var childProperties2 = emptyList<PropertyInfo>()
     var propertyCount = 0
+    var script: ByteArray? = null
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
@@ -27,9 +28,10 @@ open class UStruct : UObject() {
         // region FStructScriptLoader::FStructScriptLoader
         val bytecodeBufferSize = Ar.readInt32()
         val serializedScriptSize = Ar.readInt32()
-        Ar.skip(serializedScriptSize.toLong())
-        if (serializedScriptSize > 0) {
-            LOG_JFP.debug("Skipped $serializedScriptSize bytes of bytecode data")
+        if (GReadScriptData) {
+            script = Ar.read(serializedScriptSize)
+        } else {
+            Ar.skip(serializedScriptSize.toLong())
         }
         // endregion
     }
@@ -258,7 +260,7 @@ class FSetProperty : FPropertySerialized() {
 class FStrProperty : FPropertySerialized()
 
 class FStructProperty : FPropertySerialized() {
-    var struct: Lazy<UScriptStruct>? = null
+    var struct: Lazy<UStruct>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
