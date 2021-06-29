@@ -58,18 +58,14 @@ open class FName {
     /** True for FName(), FName(NAME_None) and FName("None") */
     inline fun isNone() = text == "None"
 
-    class FNameDummy(var name: String, number: Int = 0) : FName(emptyList(), -1, number) {
-        override var text = name
-            get() = if (number == 0) name else "${name}_${number - 1}"
-            set(value) {
-                field = value
-                name = value
-            }
-    }
-
     companion object {
         @F val NONE_SINGLETON_LIST = listOf("None")
         @F val NAME_None = FName()
+
+        @JvmStatic
+        @JvmOverloads
+        @Deprecated("Use FName() instead.", ReplaceWith("FName(text, number)", "me.fungames.jfortniteparse.ue4.objects.uobject.FName"))
+        inline fun dummy(text: String, number: Int = 0) = FName(text, number)
 
         fun getByNameMap(text: String, nameMap: List<String>): FName? {
             val nameEntry = nameMap.firstOrNull { it == text } ?: return null
