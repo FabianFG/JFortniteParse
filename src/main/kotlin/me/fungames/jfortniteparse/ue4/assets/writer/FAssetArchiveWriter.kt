@@ -3,7 +3,6 @@ package me.fungames.jfortniteparse.ue4.assets.writer
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
@@ -16,7 +15,7 @@ open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter(
     protected var pos = 0
 
     //Asset Specific Fields
-    lateinit var nameMap : MutableList<FNameEntry>
+    lateinit var nameMap : MutableList<String>
     lateinit var importMap : MutableList<FObjectImport>
     lateinit var exportMap : MutableList<FObjectExport>
 
@@ -40,10 +39,10 @@ open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter(
     fun toRelativePos(normalPos : Int) = normalPos + uassetSize + uexpSize
 
     override fun writeFName(name: FName) {
-        if (name is FName.FNameDummy)
+        if (name.names.size == 1 && name.index == 0)
             return
-        if (nameMap[name.index].name != name.text) {
-            throw ParserException("FName does not have a valid value, value in name map : ${nameMap[name.index].name}, value in fname : ${name.text}", this)
+        if (nameMap[name.index] != name.text) {
+            throw ParserException("FName does not have a valid value, value in name map : ${nameMap[name.index]}, value in fname : ${name.text}", this)
         }
         writeInt32(name.index)
         writeInt32(name.number)

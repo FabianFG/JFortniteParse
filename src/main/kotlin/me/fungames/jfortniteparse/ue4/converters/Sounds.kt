@@ -46,7 +46,7 @@ fun USoundWave.convert(): SoundWave {
         val runningPlatformData = runningPlatformData ?: throw ParserException("Streamed sounds need streamed audio chunks")
         val streamedChunks = runningPlatformData.chunks
         LOG_JFP.debug("Found streamed sound data, exporting...")
-        val data = ByteArray(streamedChunks.sumBy { it.audioDataSize })
+        val data = ByteArray(streamedChunks.sumOf { it.audioDataSize })
         var dataOff = 0
         var exportFormat = runningPlatformData.audioFormat.text
         if (exportFormat.startsWith("OGG1")) {

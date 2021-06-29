@@ -36,7 +36,7 @@ abstract class AbstractFileProvider : FileProvider() {
         // try load from IoStore
         if (globalDataLoaded) {
             val name = compactFilePath(filePath)
-            val packageId = FPackageId.fromName(FName.dummy(name))
+            val packageId = FPackageId.fromName(FName(name))
             try {
                 val ioFile = loadGameFile(packageId)
                 if (ioFile != null)

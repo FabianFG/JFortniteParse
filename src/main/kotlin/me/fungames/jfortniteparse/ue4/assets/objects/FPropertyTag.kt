@@ -109,7 +109,7 @@ class FPropertyTag {
     }
 
     constructor(Ar: FAssetArchive, info: PropertyInfo, arrayIndex: Int, type: FProperty.ReadType) {
-        name = FName.dummy(info.name)
+        name = FName(info.name)
         this.arrayIndex = arrayIndex
         val typeData = info.type
         this.typeData = typeData

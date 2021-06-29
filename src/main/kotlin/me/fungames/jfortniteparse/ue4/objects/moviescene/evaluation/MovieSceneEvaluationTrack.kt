@@ -11,7 +11,7 @@ class FSectionEvaluationDataTree {
     var tree: TMovieSceneEvaluationTree<FStructFallback> /*TMovieSceneEvaluationTree<FSectionEvaluationData>*/
 
     constructor(Ar: FAssetArchive) {
-        tree = TMovieSceneEvaluationTree(Ar) { Ar.readTArray { FStructFallback(Ar, FName.dummy("SectionEvaluationData")) } }
+        tree = TMovieSceneEvaluationTree(Ar) { Ar.readTArray { FStructFallback(Ar, FName("SectionEvaluationData")) } }
     }
 
     fun serialize(Ar: FArchiveWriter) {

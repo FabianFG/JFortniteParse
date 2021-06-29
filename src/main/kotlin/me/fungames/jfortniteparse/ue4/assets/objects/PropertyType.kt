@@ -21,7 +21,7 @@ class PropertyType {
     @JvmField var isEnumAsByte = true
     @JvmField var innerType: PropertyType? = null
     @JvmField var valueType: PropertyType? = null
-    var structClass: Lazy<UScriptStruct>? = null
+    var structClass: Lazy<UStruct>? = null
     var enumClass: Lazy<UEnum>? = null
 
     constructor() : this(NAME_None)
@@ -38,18 +38,18 @@ class PropertyType {
             "MulticastSparseDelegateProperty" -> type = "MulticastDelegateProperty"
             "SoftClassProperty" -> type = "SoftObjectProperty"
         }
-        this.type = FName.dummy(type)
+        this.type = FName(type)
         when (type) {
             "ByteProperty" -> {
-                json["enumName"]?.run { enumName = FName.dummy(asString) }
+                json["enumName"]?.run { enumName = FName(asString) }
             }
             "EnumProperty" -> {
                 innerType = PropertyType(json["innerType"].asJsonObject).also {
                     isEnumAsByte = it.type.text == "ByteProperty"
                 }
-                enumName = FName.dummy(json["enumName"].asString)
+                enumName = FName(json["enumName"].asString)
             }
-            "StructProperty" -> structName = FName.dummy(json["structType"].asString) // key name should be structName
+            "StructProperty" -> structName = FName(json["structType"].asString) // key name should be structName
             "SetProperty", "ArrayProperty" -> innerType = PropertyType(json["innerType"].asJsonObject)
             "MapProperty" -> {
                 innerType = PropertyType(json["innerType"].asJsonObject)
@@ -68,7 +68,7 @@ class PropertyType {
     }
 
     constructor(prop: FPropertySerialized) : this(NAME_None) {
-        type = FName.dummy(prop.javaClass.simpleName.unprefix())
+        type = FName(prop.javaClass.simpleName.unprefix())
         when (prop) {
             is FArrayProperty -> {
                 innerType = prop.inner?.let { PropertyType(it) }
@@ -84,7 +84,7 @@ class PropertyType {
             }
             is FStructProperty -> {
                 structClass = prop.struct
-                structName = structClass?.value?.name?.let { FName.dummy(it) } ?: NAME_None
+                structName = structClass?.value?.name?.let { FName(it) } ?: NAME_None
             }
         }
     }
@@ -93,7 +93,7 @@ class PropertyType {
         val enum = enum_?.value
         if (enum != null) {
             enumClass = enum_
-            enumName = FName.dummy(enum.name)
+            enumName = FName(enum.name)
         }
         isEnumAsByte = prop.elementSize == 1
     }
@@ -107,11 +107,11 @@ class PropertyType {
 
         when (type.text) {
             "EnumProperty" -> {
-                enumName = FName.dummy(fieldType.simpleName)
+                enumName = FName(fieldType.simpleName)
                 enumClass = enumClassToUEnum(fieldType)
             }
             "StructProperty" -> {
-                structName = FName.dummy(fieldType.simpleName.unprefix())
+                structName = FName(fieldType.simpleName.unprefix())
                 structClass = lazy { UScriptStruct(fieldType) }
             }
             "ArrayProperty", "SetProperty" -> applyInner(field, false)
@@ -140,16 +140,16 @@ class PropertyType {
         }!!.apply {
             this.type = propertyType
             if (propertyType.text == "EnumProperty") {
-                enumName = FName.dummy(clazz.simpleName.unprefix())
+                enumName = FName(clazz.simpleName.unprefix())
                 enumClass = enumClassToUEnum(clazz)
             } else if (propertyType.text == "StructProperty") {
-                structName = FName.dummy(clazz.simpleName.unprefix())
+                structName = FName(clazz.simpleName.unprefix())
                 structClass = lazy { UScriptStruct(clazz) }
             }
         }
     }
 
-    private fun classToPropertyType(c: Class<*>) = FName.dummy(when {
+    private fun classToPropertyType(c: Class<*>) = FName(when {
         c == Boolean::class.javaPrimitiveType || c == Boolean::class.javaObjectType -> "BoolProperty"
         c == Char::class.javaPrimitiveType || c == Char::class.javaObjectType -> "CharProperty"
         c == Double::class.javaPrimitiveType || c == Double::class.javaObjectType -> "DoubleProperty"
@@ -185,7 +185,7 @@ class PropertyType {
         val values = fieldType.enumConstants
         enum.names = Array(values.size) {
             val value = values[it] as Enum<*>
-            FName.dummy(enum.name + "::" + value.name) to it.toLong()
+            FName(enum.name + "::" + value.name) to it.toLong()
         }
         enum
     }

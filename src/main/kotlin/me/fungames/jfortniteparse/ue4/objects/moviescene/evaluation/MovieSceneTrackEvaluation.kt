@@ -11,7 +11,7 @@ class FMovieSceneTrackImplementationPtr {
     constructor(Ar: FAssetArchive) {
         typeName = Ar.readString()
         if (typeName.isNotEmpty()) {
-            data = FStructFallback(Ar, FName.dummy(typeName.substringAfterLast('.')))
+            data = FStructFallback(Ar, FName(typeName.substringAfterLast('.')))
         }
     }
 }

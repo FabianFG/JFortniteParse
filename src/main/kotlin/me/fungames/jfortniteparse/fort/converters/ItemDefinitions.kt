@@ -192,10 +192,10 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
     }
     val availableX = variantsX - (numChannels * g.fontMetrics.height)
 
-    val totalRows = vars.sumBy {
+    val totalRows = vars.sumOf {
         var count = it.variants?.size ?: 0
         if (count < variantsMaxPerRow)
-            return@sumBy 1
+            return@sumOf 1
         while (count % variantsMaxPerRow != 0)
             count++
         count / variantsMaxPerRow

@@ -50,7 +50,7 @@ open class UDataTable : UObject {
         }
     }
 
-    fun findRow(rowName: String) = rows[FName.dummy(rowName)]
+    fun findRow(rowName: String) = rows[FName(rowName)]
     fun findRow(rowName: FName) = rows[rowName]
 
     inline fun <reified T : FTableRowBase> findRowMapped(rowName: FName) = findRow(rowName)?.mapToClass(T::class.java)

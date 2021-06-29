@@ -9,7 +9,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntryId
 import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
-import me.fungames.jfortniteparse.util.get
 
 class FNameMap {
     internal var nameEntries = emptyList<String>()
@@ -42,16 +41,14 @@ class FNameMap {
     fun getName(mappedName: FMappedName): FName {
         check(mappedName.getType() == nameMapType)
         check(mappedName.getIndex() < nameEntries.size.toUInt())
-        val nameEntry = nameEntries[mappedName.getIndex()]
-        return FName.createFromDisplayId(nameEntry, mappedName.number.toInt())
+        return FName(nameEntries, mappedName.getIndex().toInt(), mappedName.number.toInt())
     }
 
     fun getNameOrNull(mappedName: FMappedName): FName? {
         check(mappedName.getType() == nameMapType)
-        val index = mappedName.getIndex()
-        if (index < nameEntries.size.toUInt()) {
-            val nameEntry = nameEntries[mappedName.getIndex()]
-            return FName.createFromDisplayId(nameEntry, mappedName.number.toInt())
+        val index = mappedName.getIndex().toInt()
+        if (index < nameEntries.size) {
+            return FName(nameEntries, index, mappedName.number.toInt())
         }
         return null
     }

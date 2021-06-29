@@ -11,7 +11,7 @@ open class FNiagaraVariableBase {
 
     constructor(Ar: FAssetArchive) {
         name = Ar.readFName()
-        typeDef = FStructFallback(Ar, FName.dummy("NiagaraTypeDefinition"))
+        typeDef = FStructFallback(Ar, FName("NiagaraTypeDefinition"))
     }
 
     open fun serialize(Ar: FAssetArchiveWriter) {

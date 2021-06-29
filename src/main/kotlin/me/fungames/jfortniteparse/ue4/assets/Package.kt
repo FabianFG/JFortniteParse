@@ -80,7 +80,7 @@ abstract class Package(var fileName: String,
     }
 
     class ResolvedLoadedObject(val obj: UObject) : IoPackage.ResolvedObject(obj as? IoPackage ?: obj.owner as IoPackage) {
-        override fun getName() = FName.dummy(obj.name)
+        override fun getName() = FName(obj.name)
         override fun getOuter() = obj.outer?.let { ResolvedLoadedObject(it) }
         override fun getClazz() = obj.clazz?.let { ResolvedLoadedObject(it) }
         override fun getObject() = lazy { obj }

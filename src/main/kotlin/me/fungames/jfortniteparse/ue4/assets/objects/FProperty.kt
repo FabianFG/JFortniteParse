@@ -197,7 +197,7 @@ sealed class FProperty {
                             val enumValue = Ar.provider!!.mappingsProvider.getEnum(typeData.enumName)?.getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${typeData.enumName}", Ar)
                             val fakeName = (typeData.enumName.text + "::" + enumValue)
-                            EnumProperty(FName.dummy(fakeName))
+                            EnumProperty(FName(fakeName))
                         }
                     } else {
                         EnumProperty(Ar.readFName())
@@ -232,7 +232,7 @@ sealed class FProperty {
                 }
                 is DelegateProperty -> tag.delegate.serialize(Ar)
                 is DoubleProperty -> Ar.writeDouble(tag.number)
-                is EnumProperty -> if (tag.name !is FName.FNameDummy) Ar.writeFName(tag.name)
+                is EnumProperty -> Ar.writeFName(tag.name)
                 //is FieldPathProperty -> tag.fieldPath.serialize(Ar)
                 is FloatProperty -> Ar.writeFloat32(tag.float)
                 is Int16Property -> Ar.writeInt16(tag.number)

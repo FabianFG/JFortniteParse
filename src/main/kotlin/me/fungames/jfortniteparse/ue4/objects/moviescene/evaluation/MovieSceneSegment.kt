@@ -49,7 +49,7 @@ class FMovieSceneSegment {
         range = TRange(Ar) { FFrameNumber(Ar) }
         id = Ar.readInt32()
         allowEmpty = Ar.readBoolean()
-        impls = Ar.readTArray { FStructFallback(Ar, FName.dummy("SectionEvaluationData")) }
+        impls = Ar.readTArray { FStructFallback(Ar, FName("SectionEvaluationData")) }
     }
 
     constructor(range: TRange<FFrameNumber>, id: Int, allowEmpty: Boolean, impls: Array<FStructFallback>) {

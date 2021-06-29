@@ -16,7 +16,10 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.asyncloading2.*
 import me.fungames.jfortniteparse.ue4.locres.Locres
-import me.fungames.jfortniteparse.ue4.objects.uobject.*
+import me.fungames.jfortniteparse.ue4.objects.uobject.EPackageFlags
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
+import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
@@ -249,7 +252,7 @@ class IoPackage : Package {
                 if (enumValues != null) {
                     val enum = UEnum()
                     enum.name = name.text
-                    enum.names = Array(enumValues.size) { FName.dummy("$name::${enumValues[it]}") to it.toLong() }
+                    enum.names = Array(enumValues.size) { FName("$name::${enumValues[it]}") to it.toLong() }
                     enum
                 } else null
             }

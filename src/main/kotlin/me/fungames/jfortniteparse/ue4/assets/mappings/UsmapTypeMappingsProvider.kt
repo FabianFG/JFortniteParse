@@ -57,7 +57,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
 
     private fun deserializePropData(Ar: FUsmapNameTableArchive): PropertyType {
         val propType = values()[Ar.read()]
-        val type = PropertyType(FName.dummy(propType.name))
+        val type = PropertyType(FName(propType.name))
         when (propType) {
             EnumProperty -> {
                 type.innerType = deserializePropData(Ar).also {
@@ -79,7 +79,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
     }
 
     private fun parseData(Ar: FUsmapNameTableArchive) {
-        Ar.nameMap = Ar.readTArray { String(Ar.read(Ar.read())) }
+        Ar.nameMap = Ar.readArray { String(Ar.read(Ar.read())) }
         mappings.enums = Ar.readTMap {
             val enumName = Ar.readFName().text
             val enumValues = List(Ar.read()) { Ar.readFName().text }
@@ -104,7 +104,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
     }
 
     class FUsmapNameTableArchive(data: ByteArray) : FByteArchive(data) {
-        lateinit var nameMap: Array<String>
+        lateinit var nameMap: List<String>
 
         override fun readFName(): FName {
             val nameIndex = readInt32()
@@ -114,7 +114,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
             if (!nameMap.indices.contains(nameIndex)) {
                 throw ParserException("FName could not be read, requested index $nameIndex, name map size ${nameMap.size}", this)
             }
-            return FName.dummy(nameMap[nameIndex])
+            return FName(nameMap, nameIndex)
         }
     }
 

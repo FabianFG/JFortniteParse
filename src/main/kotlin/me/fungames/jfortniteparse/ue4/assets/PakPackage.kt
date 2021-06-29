@@ -41,7 +41,7 @@ class PakPackage(
     )
 
     val info: FPackageFileSummary
-    val nameMap: MutableList<FNameEntry>
+    val nameMap: MutableList<String>
     val importMap: MutableList<FObjectImport>
     val exportMap: MutableList<FObjectExport>
 
@@ -63,10 +63,6 @@ class PakPackage(
         ubulkAr?.ver = game.version
         ubulkAr?.owner = this
 
-        nameMap = mutableListOf()
-        importMap = mutableListOf()
-        exportMap = mutableListOf()
-
         info = FPackageFileSummary(uassetAr)
         if (info.tag != packageMagic)
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
@@ -80,16 +76,17 @@ class PakPackage(
         packageFlags = info.packageFlags.toInt()
 
         uassetAr.seek(info.nameOffset)
-        for (i in 0 until info.nameCount)
-            nameMap.add(FNameEntry(uassetAr))
+        nameMap = MutableList(info.nameCount) {
+            val name = uassetAr.readString()
+            uassetAr.skip(4) // skip nonCasePreservingHash (uint16) and casePreservingHash (uint16)
+            name
+        }
 
         uassetAr.seek(info.importOffset)
-        for (i in 0 until info.importCount)
-            importMap.add(FObjectImport(uassetAr))
+        importMap = MutableList(info.importCount) { FObjectImport(uassetAr) }
 
         uassetAr.seek(info.exportOffset)
-        for (i in 0 until info.exportCount)
-            exportMap.add(FObjectExport(uassetAr))
+        exportMap = MutableList(info.exportCount) { FObjectExport(uassetAr) }
 
         //Setup uexp reader
         if (uexp != null) {
@@ -101,7 +98,7 @@ class PakPackage(
         //If attached also setup the ubulk reader
         if (ubulkAr != null) {
             ubulkAr.uassetSize = info.totalHeaderSize
-            ubulkAr.uexpSize = exportMap.sumBy { it.serialSize.toInt() }
+            ubulkAr.uexpSize = exportMap.sumOf { it.serialSize.toInt() }
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
@@ -201,7 +198,7 @@ class PakPackage(
         "import_map" to gson.toJsonTree(importMap),
         "export_map" to gson.toJsonTree(exportMap),
         "export_properties" to gson.toJsonTree(exports.map {
-            it.takeIf { it is UObject }?.toJson(gson, locres)
+            it.toJson(gson, locres)
         })
     )
 
@@ -217,7 +214,11 @@ class PakPackage(
         val nameMapOffset = uassetWriter.pos()
         if (info.nameCount != nameMap.size)
             throw ParserException("Invalid name count, summary says ${info.nameCount} names but name map is ${nameMap.size} entries long")
-        nameMap.forEach { it.serialize(uassetWriter) }
+        nameMap.forEach {
+            uassetWriter.writeString(it)
+            uassetWriter.writeUInt16(0u)
+            uassetWriter.writeUInt16(0u)
+        }
         val importMapOffset = uassetWriter.pos()
         if (info.importCount != importMap.size)
             throw ParserException("Invalid import count, summary says ${info.importCount} imports but import map is ${importMap.size} entries long")
@@ -255,7 +256,11 @@ class PakPackage(
             uassetWriter.write(ByteArray(nameMapPadding))
         if (info.nameCount != nameMap.size)
             throw ParserException("Invalid name count, summary says ${info.nameCount} names but name map is ${nameMap.size} entries long")
-        nameMap.forEach { it.serialize(uassetWriter) }
+        nameMap.forEach {
+            uassetWriter.writeString(it)
+            uassetWriter.writeUInt16(0u)
+            uassetWriter.writeUInt16(0u)
+        }
 
         val importMapPadding = info.importOffset - uassetWriter.pos()
         if (importMapPadding > 0)
