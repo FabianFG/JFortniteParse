@@ -45,7 +45,6 @@ class IoPackage : Package {
 
     constructor(uasset: ByteArray,
                 packageId: FPackageId,
-                storeEntry: FPackageStoreEntry,
                 globalPackageStore: FPackageStore,
                 provider: FileProvider,
                 game: Ue4Version = provider.game) : super("", provider, game) {
@@ -69,21 +68,31 @@ class IoPackage : Package {
 
         // Import map
         Ar.seek(summary.importMapOffset)
-        val importMapSize = summary.exportMapOffset - summary.importMapOffset
-        val importCount = importMapSize / 8
+        val importCount = (summary.exportMapOffset - summary.importMapOffset) / 8
         importMap = Array(importCount) { FPackageObjectIndex(Ar) }
 
         // Export map
         Ar.seek(summary.exportMapOffset)
-        val exportCount = storeEntry.exportCount
+        val exportCount = (summary.exportBundlesOffset - summary.exportMapOffset) / 72
         exportMap = Array(exportCount) { FExportMapEntry(Ar) }
         exportsLazy = (arrayOfNulls<Lazy<UObject>>(exportCount) as Array<Lazy<UObject>>).toMutableList()
 
         // Export bundles
         Ar.seek(summary.exportBundlesOffset)
-        val exportBundleCount = storeEntry.exportBundleCount
-        exportBundleHeaders = Array(exportBundleCount) { FExportBundleHeader(Ar) }
-        exportBundleEntries = Array(exportCount * 2) { FExportBundleEntry(Ar) }
+        var remainingBundleEntryCount = (summary.graphDataOffset - summary.exportBundlesOffset) / 8
+        var foundBundlesCount = 0
+        val foundBundleHeaders = mutableListOf<FExportBundleHeader>()
+        while (foundBundlesCount < remainingBundleEntryCount) {
+            // This location is occupied by header, so it is not a bundle entry
+            remainingBundleEntryCount--
+            val bundleHeader = FExportBundleHeader(Ar)
+            foundBundlesCount += bundleHeader.entryCount.toInt()
+            foundBundleHeaders.add(bundleHeader)
+        }
+        check(foundBundlesCount == remainingBundleEntryCount)
+        // Load export bundles into arrays
+        exportBundleHeaders = foundBundleHeaders.toTypedArray()
+        exportBundleEntries = Array(foundBundlesCount) { FExportBundleEntry(Ar) }
 
         // Graph data
         Ar.seek(summary.graphDataOffset)

@@ -31,8 +31,8 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         val globalPackageStore = FPackageStore(this, globalNameMap)
         globalNameMap.loadGlobal(this)
         globalPackageStore.setupInitialLoadData()
-        globalPackageStore.setupCulture()
-        globalPackageStore.loadContainers(mountedIoStoreReaders.map { FIoDispatcherMountedContainer(it.environment, it.containerId) })
+        //globalPackageStore.setupCulture()
+        //globalPackageStore.loadContainers(mountedIoStoreReaders.map { FIoDispatcherMountedContainer(it.environment, it.containerId) })
         globalPackageStore
     }
     open fun keys(): Map<FGuid, ByteArray> = keys
@@ -90,9 +90,9 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
                 ioStoreReader.initialize(ioStoreEnvironment, ioStoreTocReadOptions, keys)
                 ioStoreReader.files.associateByTo(files) { it.path.toLowerCase() }
                 mountedIoStoreReaders.add(ioStoreReader)
-                if (globalPackageStore.isInitialized()) {
+                /*if (globalPackageStore.isInitialized()) {
                     globalPackageStore.value.onContainerMounted(FIoDispatcherMountedContainer(ioStoreEnvironment, ioStoreReader.containerId))
-                }
+                }*/
             } catch (e: FIoStatusException) {
                 PakFileReader.logger.warn("Failed to mount IoStore environment \"{}\" [{}]", ioStoreEnvironment.path, e.message)
             }
@@ -102,10 +102,9 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     }
 
     override fun loadGameFile(packageId: FPackageId): IoPackage? = runCatching {
-        val storeEntry = globalPackageStore.value.findStoreEntry(packageId)
+        val ioBuffer = runCatching { saveChunk(FIoChunkId(packageId.value(), 0u, EIoChunkType.ExportBundleData)) }.getOrNull()
             ?: return null//throw NotFoundException("The package to load does not exist on disk or in the loader")
-        val ioBuffer = saveChunk(FIoChunkId(packageId.value(), 0u, EIoChunkType.ExportBundleData))
-        return IoPackage(ioBuffer, packageId, storeEntry, globalPackageStore.value, this, game)
+        return IoPackage(ioBuffer, packageId, globalPackageStore.value, this, game)
     }.onFailure { logger.error(it) { "Failed to load package with id 0x%016X".format(packageId.value().toLong()) } }.getOrNull()
 
     override fun saveGameFile(filePath: String): ByteArray? {
