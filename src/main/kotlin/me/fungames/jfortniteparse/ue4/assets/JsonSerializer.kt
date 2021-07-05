@@ -67,7 +67,7 @@ object JsonSerializer {
             is FName -> JsonPrimitive(ob.text)
             is FText -> jsonObject("historyType" to ob.historyType.toJson(context), "finalText" to ob.textForLocres(locres), "value" to context.toJsonTree(ob.textHistory))
             is FPackageIndex -> JsonPrimitive(ob.name.text)
-            is UInterfaceProperty -> JsonPrimitive(ob.interfaceNumber.toInt())
+            is FScriptInterface -> ob.`object`.toJson(context)
             is FSoftObjectPath -> jsonObject("assetPath" to ob.assetPathName.text, "subPath" to ob.subPathString)
             is FGuid -> JsonPrimitive(ob.toString())
             is Double -> JsonPrimitive(ob)

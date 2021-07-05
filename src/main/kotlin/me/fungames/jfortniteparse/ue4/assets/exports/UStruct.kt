@@ -66,6 +66,7 @@ open class FField {
             "ClassProperty" -> FClassProperty()
             "DelegateProperty" -> FDelegateProperty()
             "EnumProperty" -> FEnumProperty()
+            "FieldPathProperty" -> FFieldPathProperty()
             "FloatProperty" -> FFloatProperty()
             "Int16Property" -> FInt16Property()
             "Int64Property" -> FInt64Property()
@@ -173,6 +174,15 @@ class FEnumProperty : FPropertySerialized() {
         super.deserialize(Ar)
         enum = Ar.readObject()
         underlyingProp = serializeSingleField(Ar) as FNumericProperty?
+    }
+}
+
+class FFieldPathProperty : FPropertySerialized() {
+    var propertyClass = NAME_None
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        propertyClass = Ar.readFName()
     }
 }
 

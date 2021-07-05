@@ -97,7 +97,7 @@ sealed class FProperty {
         is Int64Property -> this.number
         is Int8Property -> this.number
         is IntProperty -> this.number
-        is InterfaceProperty -> this.interfaceProperty
+        is InterfaceProperty -> this.`interface`
         is LazyObjectProperty -> this.guid
         is MapProperty -> this.map
         is MulticastDelegateProperty -> this.delegate
@@ -130,7 +130,7 @@ sealed class FProperty {
             is Int64Property -> this.number = value as Long
             is Int8Property -> this.number = value as Byte
             is IntProperty -> this.number = value as Int
-            is InterfaceProperty -> this.interfaceProperty = value as UInterfaceProperty
+            is InterfaceProperty -> this.`interface` = value as FScriptInterface
             is LazyObjectProperty -> this.guid = value as FUniqueObjectGuid
             is MapProperty -> this.map = value as UScriptMap
             is MulticastDelegateProperty -> this.delegate = value as FMulticastScriptDelegate
@@ -161,7 +161,7 @@ sealed class FProperty {
                 "WeakObjectProperty" -> WeakObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "LazyObjectProperty" -> LazyObjectProperty(valueOr({ FUniqueObjectGuid(Ar) }, { FUniqueObjectGuid(FGuid()) }, type))
                 "ClassProperty" -> ClassProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
-                "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type))
+                "InterfaceProperty" -> InterfaceProperty(valueOr({ FScriptInterface(Ar) }, { FScriptInterface() }, type))
                 "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type))
                 "TextProperty" -> TextProperty(valueOr({ FText(Ar) }, { FText(0u, ETextHistoryType.None, FTextHistory.None()) }, type))
                 "StrProperty" -> StrProperty(valueOr({ Ar.readString() }, { "" }, type))
@@ -239,7 +239,7 @@ sealed class FProperty {
                 is Int64Property -> Ar.writeInt64(tag.number)
                 is Int8Property -> Ar.writeInt8(tag.number)
                 is IntProperty -> Ar.writeInt32(tag.number)
-                is InterfaceProperty -> tag.interfaceProperty.serialize(Ar)
+                is InterfaceProperty -> tag.`interface`.serialize(Ar)
                 is LazyObjectProperty -> tag.guid.serialize(Ar)
                 is MapProperty -> tag.map.serialize(Ar)
                 is MulticastDelegateProperty -> tag.delegate.serialize(Ar)
@@ -274,7 +274,7 @@ sealed class FProperty {
     class Int64Property(var number: Long) : FProperty()
     class Int8Property(var number: Byte) : FProperty()
     class IntProperty(var number: Int) : FProperty()
-    class InterfaceProperty(var interfaceProperty: UInterfaceProperty) : FProperty()
+    class InterfaceProperty(var `interface`: FScriptInterface) : FProperty()
     class LazyObjectProperty(var guid: FUniqueObjectGuid) : FProperty()
     class MapProperty(var map: UScriptMap) : FProperty()
     class MulticastDelegateProperty(var delegate: FMulticastScriptDelegate) : FProperty()

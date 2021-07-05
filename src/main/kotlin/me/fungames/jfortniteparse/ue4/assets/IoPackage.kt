@@ -8,7 +8,6 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import me.fungames.jfortniteparse.GFatalObjectSerializationErrors
 import me.fungames.jfortniteparse.LOG_STREAMING
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UEnum
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -161,7 +160,7 @@ class IoPackage : Package {
         val toExportBundleIndex = Ar.readInt32()
     }
 
-    fun resolveObjectIndex(index: FPackageObjectIndex?, throwIfNotFound: Boolean = true): ResolvedObject? {
+    fun resolveObjectIndex(index: FPackageObjectIndex?): ResolvedObject? {
         if (index == null) {
             return null
         }
@@ -177,13 +176,11 @@ class IoPackage : Package {
             }
             index.isNull() -> return null
         }
-        if (throwIfNotFound) {
-            throw ParserException("Missing %s import 0x%016X for package %s".format(
-                if (index.isScriptImport()) "script" else "package",
-                index.value().toLong(),
-                fileName
-            ))
-        }
+        LOG_STREAMING.warn("Missing %s import 0x%016X for package %s".format(
+            if (index.isScriptImport()) "script" else "package",
+            index.value().toLong(),
+            fileName
+        ))
         return null
     }
 
@@ -271,7 +268,7 @@ class IoPackage : Package {
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
         index.isExport() -> exportsLazy.getOrNull(index.toExport())
-        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it, false) }?.getObject()
+        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it) }?.getObject()
     } as Lazy<T>?
 
     override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
@@ -292,7 +289,7 @@ class IoPackage : Package {
     fun findObjectMinimal(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
         index.isExport() -> ResolvedExportObject(index.toExport(), this)
-        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it, false) }
+        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it) }
     }
 
     fun dumpHeaderToJson(): JsonObject {
