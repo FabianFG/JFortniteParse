@@ -7,7 +7,6 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 class FEngineVersion : FEngineVersionBase {
     /** Branch name. */
     var branch: String
-        //get() = field.replace("+", "/")
 
     constructor(Ar: FArchive) {
         major = Ar.readUInt16()
@@ -48,4 +47,7 @@ class FEngineVersion : FEngineVersionBase {
         }
         return result
     }
+
+    /** Returns the branch name corresponding to this version. */
+    val branchFormatted get() = branch.replace("+", "/")
 }

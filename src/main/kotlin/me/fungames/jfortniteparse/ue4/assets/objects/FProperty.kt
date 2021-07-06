@@ -6,6 +6,7 @@ import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.reader.FObjectAndNameAsStringAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
@@ -157,7 +158,7 @@ sealed class FProperty {
                     ReadType.ZERO -> typeData.bool
                 })
                 "StructProperty" -> StructProperty(UScriptStruct(Ar, typeData, type))
-                "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
+                "ObjectProperty" -> if (Ar is FObjectAndNameAsStringAssetArchive) StrProperty(Ar.readString()) else ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "WeakObjectProperty" -> WeakObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
                 "LazyObjectProperty" -> LazyObjectProperty(valueOr({ FUniqueObjectGuid(Ar) }, { FUniqueObjectGuid(FGuid()) }, type))
                 "ClassProperty" -> ClassProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
