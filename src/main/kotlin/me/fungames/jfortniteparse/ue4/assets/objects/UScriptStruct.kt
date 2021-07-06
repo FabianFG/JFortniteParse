@@ -67,6 +67,7 @@ class UScriptStruct {
             "PerPlatformBool" -> FPerPlatformBool(Ar)
             "PerPlatformFloat" -> FPerPlatformFloat(Ar)
             "PerPlatformInt" -> FPerPlatformInt(Ar)
+            "PerQualityLevelInt" -> FPerQualityLevelInt(Ar)
             "Quat" -> FQuat(Ar)
             "RichCurveKey" -> FRichCurveKey(Ar)
             "Rotator" -> if (nz) FRotator(Ar) else FRotator()
