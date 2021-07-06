@@ -150,30 +150,31 @@ sealed class FProperty {
     }
 
     companion object {
-        fun readPropertyValue(Ar: FAssetArchive, typeData: PropertyType, type: ReadType) =
-            when (val propertyType = typeData.type.text) {
+        fun readPropertyValue(Ar: FAssetArchive, typeData: PropertyType, type: ReadType): FProperty? {
+            val nz /*nonZero*/ = type != ReadType.ZERO
+            return when (val propertyType = typeData.type.text) {
                 "BoolProperty" -> BoolProperty(when (type) {
                     ReadType.NORMAL -> if (Ar.useUnversionedPropertySerialization) Ar.readFlag() else typeData.bool
                     ReadType.MAP, ReadType.ARRAY -> Ar.readFlag()
                     ReadType.ZERO -> typeData.bool
                 })
                 "StructProperty" -> StructProperty(UScriptStruct(Ar, typeData, type))
-                "ObjectProperty" -> if (Ar is FObjectAndNameAsStringAssetArchive) StrProperty(Ar.readString()) else ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
-                "WeakObjectProperty" -> WeakObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
-                "LazyObjectProperty" -> LazyObjectProperty(valueOr({ FUniqueObjectGuid(Ar) }, { FUniqueObjectGuid(FGuid()) }, type))
-                "ClassProperty" -> ClassProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
-                "InterfaceProperty" -> InterfaceProperty(valueOr({ FScriptInterface(Ar) }, { FScriptInterface() }, type))
-                "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type))
-                "TextProperty" -> TextProperty(valueOr({ FText(Ar) }, { FText(0u, ETextHistoryType.None, FTextHistory.None()) }, type))
-                "StrProperty" -> StrProperty(valueOr({ Ar.readString() }, { "" }, type))
-                "NameProperty" -> NameProperty(valueOr({ Ar.readFName() }, { FName.NAME_None }, type))
-                "IntProperty" -> IntProperty(valueOr({ Ar.readInt32() }, { 0 }, type))
-                "UInt16Property" -> UInt16Property(valueOr({ Ar.readUInt16() }, { 0u }, type))
-                "UInt32Property" -> UInt32Property(valueOr({ Ar.readUInt32() }, { 0u }, type))
-                "UInt64Property" -> UInt64Property(valueOr({ Ar.readUInt64() }, { 0u }, type))
-                "ArrayProperty" -> ArrayProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
-                "SetProperty" -> SetProperty(valueOr({ UScriptSet(Ar, typeData) }, { UScriptSet(mutableListOf(), mutableListOf()) }, type))
-                "MapProperty" -> MapProperty(valueOr({ UScriptMap(Ar, typeData) }, { UScriptMap(mutableListOf(), mutableMapOf()) }, type))
+                "ObjectProperty" -> if (Ar is FObjectAndNameAsStringAssetArchive) StrProperty(Ar.readString()) else ObjectProperty(if (nz) FPackageIndex(Ar) else FPackageIndex(0, Ar.owner))
+                "WeakObjectProperty" -> WeakObjectProperty(if (nz) FPackageIndex(Ar) else FPackageIndex(0, Ar.owner))
+                "LazyObjectProperty" -> LazyObjectProperty(if (nz) FUniqueObjectGuid(Ar) else FUniqueObjectGuid(FGuid()))
+                "ClassProperty" -> ClassProperty(if (nz) FPackageIndex(Ar) else FPackageIndex(0, Ar.owner))
+                "InterfaceProperty" -> InterfaceProperty(if (nz) FScriptInterface(Ar) else FScriptInterface())
+                "FloatProperty" -> FloatProperty(if (nz) Ar.readFloat32() else 0f)
+                "TextProperty" -> TextProperty(if (nz) FText(Ar) else FText(0u, ETextHistoryType.None, FTextHistory.None()))
+                "StrProperty" -> StrProperty(if (nz) Ar.readString() else "")
+                "NameProperty" -> NameProperty(if (nz) Ar.readFName() else FName.NAME_None)
+                "IntProperty" -> IntProperty(if (nz) Ar.readInt32() else 0)
+                "UInt16Property" -> UInt16Property(if (nz) Ar.readUInt16() else 0u)
+                "UInt32Property" -> UInt32Property(if (nz) Ar.readUInt32() else 0u)
+                "UInt64Property" -> UInt64Property(if (nz) Ar.readUInt64() else 0u)
+                "ArrayProperty" -> ArrayProperty(if (nz) UScriptArray(Ar, typeData) else UScriptArray(null, mutableListOf()))
+                "SetProperty" -> SetProperty(if (nz) UScriptSet(Ar, typeData) else UScriptSet(mutableListOf(), mutableListOf()))
+                "MapProperty" -> MapProperty(if (nz) UScriptMap(Ar, typeData) else UScriptMap(mutableListOf(), mutableMapOf()))
                 "ByteProperty" ->
                     if (Ar.useUnversionedPropertySerialization && type == ReadType.NORMAL) {
                         ByteProperty(Ar.readUInt8())
@@ -188,7 +189,7 @@ sealed class FProperty {
                     if (type == ReadType.NORMAL && typeData.enumName.isNone()) {
                         EnumProperty(FName.NAME_None)
                     } else if (type != ReadType.MAP && type != ReadType.ARRAY && Ar.useUnversionedPropertySerialization) {
-                        val ordinal = valueOr({ if (typeData.isEnumAsByte) Ar.read() else Ar.readInt32() }, { 0 }, type)
+                        val ordinal = if (nz) if (typeData.isEnumAsByte) Ar.read() else Ar.readInt32() else 0
                         val enumClass = typeData.enumClass?.value
                         if (enumClass != null) { // serialized or reflection
                             val enumValue = enumClass.names.firstOrNull { it.second == ordinal.toLong() }
@@ -203,21 +204,22 @@ sealed class FProperty {
                     } else {
                         EnumProperty(Ar.readFName())
                     }
-                "SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type).apply { owner = Ar.owner })
-                "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type).apply { owner = Ar.owner })
-                "DelegateProperty" -> DelegateProperty(valueOr({ FScriptDelegate(Ar) }, { FScriptDelegate(FPackageIndex(), FName.NAME_None) }, type))
-                "MulticastDelegateProperty" -> MulticastDelegateProperty(valueOr({ FMulticastScriptDelegate(Ar) }, { FMulticastScriptDelegate(mutableListOf()) }, type))
-                "DoubleProperty" -> DoubleProperty(valueOr({ Ar.readDouble() }, { 0.0 }, type))
-                "Int8Property" -> Int8Property(valueOr({ Ar.readInt8() }, { 0 }, type))
-                "Int16Property" -> Int16Property(valueOr({ Ar.readInt16() }, { 0 }, type))
-                "Int64Property" -> Int64Property(valueOr({ Ar.readInt64() }, { 0 }, type))
-                "FieldPathProperty" -> FieldPathProperty(valueOr({ FFieldPath(Ar) }, { FFieldPath() }, type))
+                "SoftObjectProperty" -> SoftObjectProperty((if (nz) FSoftObjectPath(Ar) else FSoftObjectPath()).apply { owner = Ar.owner })
+                "SoftClassProperty" -> SoftClassProperty((if (nz) FSoftClassPath(Ar) else FSoftClassPath()).apply { owner = Ar.owner })
+                "DelegateProperty" -> DelegateProperty(if (nz) FScriptDelegate(Ar) else FScriptDelegate(FPackageIndex(), FName.NAME_None))
+                "MulticastDelegateProperty" -> MulticastDelegateProperty(if (nz) FMulticastScriptDelegate(Ar) else FMulticastScriptDelegate(mutableListOf()))
+                "DoubleProperty" -> DoubleProperty(if (nz) Ar.readDouble() else 0.0)
+                "Int8Property" -> Int8Property(if (nz) Ar.readInt8() else 0)
+                "Int16Property" -> Int16Property(if (nz) Ar.readInt16() else 0)
+                "Int64Property" -> Int64Property(if (nz) Ar.readInt64() else 0)
+                "FieldPathProperty" -> FieldPathProperty(if (nz) FFieldPath(Ar) else FFieldPath())
 
                 else -> {
                     LOG_JFP.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
                     null
                 }
             }
+        }
 
         fun writePropertyValue(Ar: FAssetArchiveWriter, tag: FProperty, type: ReadType) {
             when (tag) {
@@ -257,9 +259,6 @@ sealed class FProperty {
                 is UInt64Property -> Ar.writeUInt64(tag.number)
             }
         }
-
-        inline fun <T> valueOr(valueIfNonzero: () -> T, valueIfZero: () -> T, type: ReadType) =
-            if (type != ReadType.ZERO) valueIfNonzero() else valueIfZero()
     }
 
     class ArrayProperty(var array: UScriptArray) : FProperty()

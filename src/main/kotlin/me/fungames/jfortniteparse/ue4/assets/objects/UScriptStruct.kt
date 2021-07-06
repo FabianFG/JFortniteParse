@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.fort.objects.FFortActorRecord
-import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.Companion.valueOr
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -34,20 +33,21 @@ class UScriptStruct {
 
     constructor(Ar: FAssetArchive, typeData: PropertyType, type: ReadType = ReadType.NORMAL) {
         structName = typeData.structName
+        val nz = type != ReadType.ZERO
         structType = when (structName.text) {
-            "Box" -> valueOr({ FBox(Ar) }, { FBox(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f)) }, type)
-            "Box2D" -> valueOr({ FBox2D(Ar) }, { FBox2D(FVector2D(0f, 0f), FVector2D(0f, 0f)) }, type)
-            "Color" -> valueOr({ FColor(Ar) }, { FColor() }, type)
+            "Box" -> if (nz) FBox(Ar) else FBox(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f))
+            "Box2D" -> if (nz) FBox2D(Ar) else FBox2D(FVector2D(0f, 0f), FVector2D(0f, 0f))
+            "Color" -> if (nz) FColor(Ar) else FColor()
             "ColorMaterialInput" -> FColorMaterialInput(Ar)
-            "DateTime", "Timespan" -> valueOr({ FDateTime(Ar) }, { FDateTime() }, type)
+            "DateTime", "Timespan" -> if (nz) FDateTime(Ar) else FDateTime()
             "ExpressionInput" -> FExpressionInput(Ar)
             "FrameNumber" -> FFrameNumber(Ar)
-            "GameplayTagContainer" -> valueOr({ FGameplayTagContainer(Ar) }, { FGameplayTagContainer() }, type)
-            "Guid", "GUID" -> valueOr({ FGuid(Ar) }, { FGuid() }, type)
+            "GameplayTagContainer" -> if (nz) FGameplayTagContainer(Ar) else FGameplayTagContainer()
+            "Guid", "GUID" -> if (nz) FGuid(Ar) else FGuid()
             "IntPoint" -> FIntPoint(Ar)
             "IntVector" -> FIntVector(Ar)
             "LevelSequenceObjectReferenceMap" -> FLevelSequenceObjectReferenceMap(Ar)
-            "LinearColor" -> valueOr({ FLinearColor(Ar) }, { FLinearColor() }, type)
+            "LinearColor" -> if (nz) FLinearColor(Ar) else FLinearColor()
             "MaterialAttributesInput" -> FMaterialAttributesInput(Ar)
             "MovieSceneEvalTemplatePtr" -> FMovieSceneEvalTemplatePtr(Ar)
             "MovieSceneEvaluationFieldEntityTree" -> FMovieSceneEvaluationFieldEntityTree(Ar)
@@ -69,18 +69,18 @@ class UScriptStruct {
             "PerPlatformInt" -> FPerPlatformInt(Ar)
             "Quat" -> FQuat(Ar)
             "RichCurveKey" -> FRichCurveKey(Ar)
-            "Rotator" -> valueOr({ FRotator(Ar) }, { FRotator() }, type)
+            "Rotator" -> if (nz) FRotator(Ar) else FRotator()
             "ScalarMaterialInput" -> FScalarMaterialInput(Ar)
             "SectionEvaluationDataTree" -> FSectionEvaluationDataTree(Ar)
             "SimpleCurveKey" -> FSimpleCurveKey(Ar)
             "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
             "SmartName" -> FSmartName(Ar)
-            "SoftObjectPath" -> valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type).apply { owner = Ar.owner }
-            "SoftClassPath" -> valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type).apply { owner = Ar.owner }
-            "Vector" -> valueOr({ FVector(Ar) }, { FVector() }, type)
-            "Vector2D" -> valueOr({ FVector2D(Ar) }, { FVector2D() }, type)
+            "SoftObjectPath" -> (if (nz) FSoftObjectPath(Ar) else FSoftObjectPath()).apply { owner = Ar.owner }
+            "SoftClassPath" -> (if (nz) FSoftClassPath(Ar) else FSoftClassPath()).apply { owner = Ar.owner }
+            "Vector" -> if (nz) FVector(Ar) else FVector()
+            "Vector2D" -> if (nz) FVector2D(Ar) else FVector2D()
             "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
-            "Vector4" -> valueOr({ FVector4(Ar) }, { FVector4() }, type)
+            "Vector4" -> if (nz) FVector4(Ar) else FVector4()
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)
             "FortActorRecord" -> FFortActorRecord(Ar)
 
