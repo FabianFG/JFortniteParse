@@ -17,12 +17,12 @@ class FDistanceFieldVolumeData {
     var builtAsIfTwoSided: Boolean
     var meshWasPlane: Boolean
     // 4.16+
-    var compressedDistanceFieldVolume: Array<Byte>
+    var compressedDistanceFieldVolume: ByteArray
     var distanceMinMax: FVector2D
 
     constructor(Ar: FArchive) {
         if (Ar.game >= GAME_UE4(16)) {
-            compressedDistanceFieldVolume = Ar.readTArray { Ar.readInt8() }
+            compressedDistanceFieldVolume = Ar.read(Ar.readInt32())
             size = FIntVector(Ar)
             localBoundingBox = FBox(Ar)
             distanceMinMax = FVector2D(Ar)
@@ -43,7 +43,7 @@ class FDistanceFieldVolumeData {
                 Ar.readBoolean()
             else
                 false
-            compressedDistanceFieldVolume = emptyArray()
+            compressedDistanceFieldVolume = ByteArray(0)
             distanceMinMax = FVector2D(0f, 0f)
         }
     }
@@ -57,7 +57,7 @@ class FDistanceFieldVolumeData {
         meshWasClosed: Boolean,
         builtAsIfTwoSided: Boolean,
         meshWasPlane: Boolean,
-        compressedDistanceFieldVolume: Array<Byte>,
+        compressedDistanceFieldVolume: ByteArray,
         distanceMinMax: FVector2D
     ) {
         this.distanceFieldVolume = distanceFieldVolume
