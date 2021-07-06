@@ -1,4 +1,4 @@
-package me.fungames.jfortniteparse.ue4.assets.objects
+package me.fungames.jfortniteparse.ue4.objects.engine
 
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
