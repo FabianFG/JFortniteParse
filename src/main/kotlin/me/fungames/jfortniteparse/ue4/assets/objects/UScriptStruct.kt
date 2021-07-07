@@ -14,6 +14,7 @@ import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurveKey
+import me.fungames.jfortniteparse.ue4.objects.engine.gameframework.FUniqueNetIdRepl
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
 import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceObjectReferenceMap
 import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
@@ -78,6 +79,7 @@ class UScriptStruct {
             "SmartName" -> FSmartName(Ar)
             "SoftObjectPath" -> (if (nz) FSoftObjectPath(Ar) else FSoftObjectPath()).apply { owner = Ar.owner }
             "SoftClassPath" -> (if (nz) FSoftClassPath(Ar) else FSoftClassPath()).apply { owner = Ar.owner }
+            "UniqueNetIdRepl" -> FUniqueNetIdRepl(Ar)
             "Vector" -> if (nz) FVector(Ar) else FVector()
             "Vector2D" -> if (nz) FVector2D(Ar) else FVector2D()
             "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
