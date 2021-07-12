@@ -81,43 +81,48 @@ class FIoChunkId {
     companion object {
         val INVALID_CHUNK_ID = createEmptyId()
 
-        private inline fun createEmptyId() = FIoChunkId(ByteArray(12))
+        private inline fun createEmptyId() = FIoChunkId(0u, 0u, 0u)
     }
 
     val chunkId: ULong
-        get() = ByteBuffer.wrap(id).order(ByteOrder.LITTLE_ENDIAN).long.toULong()
-    val chunkType: EIoChunkType
-        get() = EIoChunkType.values()[id[11].toInt()]
+    val chunkIndex: UShort
+    val chunkType: UByte
 
-    /*private*/ var id = ByteArray(12)
+    val id: ByteArray get() = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
+        .putLong(chunkId.toLong())
+        .putShort(chunkIndex.toShort())
+        .put(11, chunkType.toByte())
+        .array()
 
-    constructor(id: ByteArray) {
-        check(id.size == 12)
-        this.id = id
+    constructor(chunkId: ULong, chunkIndex: UShort, chunkType: UByte) {
+        this.chunkId = chunkId
+        this.chunkIndex = chunkIndex
+        this.chunkType = chunkType
     }
 
-    constructor(chunkId: ULong, chunkIndex: UShort, ioChunkType: EIoChunkType) : this(
-        ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
-            .putLong(chunkId.toLong())
-            .putShort(chunkIndex.toShort())
-            .put(11, ioChunkType.ordinal.toByte())
-            .array())
+    constructor(chunkId: ULong, chunkIndex: UShort, chunkType: Enum<*>) : this(chunkId, chunkIndex, chunkType.ordinal.toUByte())
 
     constructor(Ar: FArchive) {
-        Ar.read(id)
+        chunkId = Ar.readUInt64()
+        chunkIndex = Ar.readUInt16()
+        Ar.skip(1)
+        chunkType = Ar.readUInt8()
     }
 
     override fun hashCode(): Int {
-        return id.contentHashCode()
+        var result = chunkId.hashCode()
+        result = 31 * result + chunkIndex.hashCode()
+        result = 31 * result + chunkType.hashCode()
+        return result
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+        if (other !is FIoChunkId) return false
 
-        other as FIoChunkId
-
-        if (!id.contentEquals(other.id)) return false
+        if (chunkId != other.chunkId) return false
+        if (chunkIndex != other.chunkIndex) return false
+        if (chunkType != other.chunkType) return false
 
         return true
     }
@@ -127,6 +132,8 @@ class FIoChunkId {
 
 /**
  * Addressable chunk types.
+ *
+ * @warning Only use this when UE ver is 4.26
  */
 enum class EIoChunkType {
     Invalid,
@@ -142,15 +149,29 @@ enum class EIoChunkType {
     ContainerHeader
 }
 
+/**
+ * Addressable chunk types.
+ *
+ * @warning Only use this when UE ver is >= 5.0
+ */
+enum class EIoChunkType5 {
+    Invalid,
+    ExportBundleData,
+    BulkData,
+    OptionalBulkData,
+    MemoryMappedBulkData,
+    ScriptObjects,
+    ContainerHeader,
+    ExternalFile,
+    ShaderCodeLibrary,
+    ShaderCode,
+    PackageStoreEntry
+}
+
 //////////////////////////////////////////////////////////////////////////
 
-class FIoDispatcherMountedContainer(
-    val environment: FIoStoreEnvironment,
-    val containerId: FIoContainerId
-)
-
 interface FOnContainerMountedListener {
-    fun onContainerMounted(container: FIoDispatcherMountedContainer)
+    fun onContainerMounted(container: FIoContainerId)
 }
 
 class FIoDirectoryIndexHandle private constructor(val handle: UInt) {

@@ -1,18 +1,20 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
 import me.fungames.jfortniteparse.LOG_STREAMING
-import me.fungames.jfortniteparse.fileprovider.FileProvider
+import me.fungames.jfortniteparse.fileprovider.PakFileProvider
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FMappedName
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FNameMap
+import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
 import me.fungames.jfortniteparse.util.await
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 
-class FPackageStore(
-    val provider: FileProvider,
-    val globalNameMap: FNameMap) : FOnContainerMountedListener {
+class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener {
     val loadedContainers = hashMapOf<FIoContainerId, FLoadedContainer>()
 
     val currentCultureNames = mutableListOf<String>()
@@ -22,34 +24,40 @@ class FPackageStore(
     val storeEntriesMap = hashMapOf<FPackageId, FPackageStoreEntry>()
     val redirectsPackageMap = hashMapOf<FPackageId, FPackageId>()
 
-    // Temporary initial load data
-    val scriptObjectEntries = arrayListOf<FScriptObjectEntry>()
-    val scriptObjectEntriesMap = hashMapOf<FPackageObjectIndex, FScriptObjectEntry>()
+    val scriptObjectEntriesMap: Map<FPackageObjectIndex, FScriptObjectEntry>
 
-    fun setupCulture() {
-        currentCultureNames.clear()
-        currentCultureNames.add(Locale.getDefault().toString().replace('_', '-'))
-    }
+    init {
+        val initialLoadArchive: FArchive
+        val globalNameMap = FNameMap()
+        if (provider.game.game >= GAME_UE5_BASE) {
+            initialLoadArchive = FByteArchive(provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType5.ScriptObjects)))
+            globalNameMap.load(initialLoadArchive, FMappedName.EType.Global)
+        } else {
+            val nameBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNames))
+            val hashBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNameHashes))
+            globalNameMap.load(nameBuffer, hashBuffer, FMappedName.EType.Global)
 
-    fun setupInitialLoadData() {
-        val initialLoadIoBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta))
-        val initialLoadArchive = FByteArchive(initialLoadIoBuffer)
-        val numScriptObjects = initialLoadArchive.readInt32()
-        scriptObjectEntries.ensureCapacity(numScriptObjects)
-
-        repeat(numScriptObjects) {
-            scriptObjectEntries.add(FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries).also {
-                val mappedName = FMappedName.fromMinimalName(it.objectName)
-                check(mappedName.isGlobal())
-                it.objectName = globalNameMap.getMinimalName(mappedName)
-
-                scriptObjectEntriesMap[it.globalIndex] = it
-            })
+            initialLoadArchive = FByteArchive(provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta)))
         }
+
+        initialLoadArchive.game = provider.game.game
+        val numScriptObjects = initialLoadArchive.readInt32()
+        scriptObjectEntriesMap = HashMap(numScriptObjects)
+        repeat(numScriptObjects) {
+            val entry = FScriptObjectEntry(initialLoadArchive, globalNameMap.nameEntries)
+            val mappedName = FMappedName.fromMinimalName(entry.objectName)
+            check(mappedName.isGlobal())
+            entry.objectName = globalNameMap.getMinimalName(mappedName)
+
+            scriptObjectEntriesMap[entry.globalIndex] = entry
+        }
+
+        currentCultureNames.add(Locale.getDefault().toString().replace('_', '-'))
+        loadContainers(provider.mountedIoStoreReaders().map { it.containerId })
     }
 
-    fun loadContainers(containers: Iterable<FIoDispatcherMountedContainer>) {
-        val containersToLoad = containers.filter { it.containerId.isValid() }
+    fun loadContainers(containers: Iterable<FIoContainerId>) {
+        val containersToLoad = containers.filter { it.isValid() }
 
         if (containersToLoad.isEmpty()) {
             return
@@ -58,32 +66,16 @@ class FPackageStore(
         val remaining = AtomicInteger(containersToLoad.size)
         val event = CompletableFuture<Void>()
 
-        for (container in containersToLoad) {
-            val containerId = container.containerId
+        for (containerId in containersToLoad) {
             val loadedContainer = loadedContainers.getOrPut(containerId) { FLoadedContainer() }
-            if (loadedContainer.bValid && loadedContainer.order >= container.environment.order) {
-                LOG_STREAMING.debug("Skipping loading mounted container ID '0x%016X', already loaded with higher order".format(containerId.value().toLong()))
-                if (remaining.decrementAndGet() == 0) {
-                    event.complete(null)
-                }
-                continue
-            }
-
             LOG_STREAMING.debug("Loading mounted container ID '0x%016X'".format(containerId.value().toLong()))
-            loadedContainer.bValid = true
-            loadedContainer.order = container.environment.order
 
-            val headerChunkId = FIoChunkId(containerId.value(), 0u, EIoChunkType.ContainerHeader)
+            val headerChunkId = FIoChunkId(containerId.value(), 0u, if (provider.game.game >= GAME_UE5_BASE) EIoChunkType5.ContainerHeader else EIoChunkType.ContainerHeader)
             val ioBuffer = provider.saveChunk(headerChunkId)
 
             Thread {
-                val containerHeader = FContainerHeader(FByteArchive(ioBuffer))
-
-                val bHasContainerLocalNameMap = containerHeader.names.isNotEmpty()
-                if (bHasContainerLocalNameMap) {
-                    loadedContainer.containerNameMap.load(containerHeader.names, containerHeader.nameHashes, FMappedName.EType.Container)
-                }
-
+                val containerHeader = FContainerHeader(FByteArchive(ioBuffer).apply { game = provider.game.game })
+                loadedContainer.containerNameMap = containerHeader.containerNameMap
                 loadedContainer.packageCount = containerHeader.packageCount
                 loadedContainer.storeEntries = containerHeader.storeEntries
                 synchronized(packageNameMapsCritical) {
@@ -92,18 +84,9 @@ class FPackageStore(
                         storeEntriesMap[packageId] = containerEntry
                     }
 
-                    var localizedPackages: FSourceToLocalizedPackageIdMap? = null
-                    for (cultureName in currentCultureNames) {
-                        localizedPackages = containerHeader.culturePackageMap[cultureName]
-                        if (localizedPackages != null) {
-                            break
-                        }
-                    }
-
+                    val localizedPackages = currentCultureNames.firstNotNullOfOrNull { containerHeader.culturePackageMap[it] }
                     if (localizedPackages != null) {
-                        for (pair in localizedPackages) {
-                            val sourceId = pair.first
-                            val localizedId = pair.second
+                        for ((sourceId, localizedId) in localizedPackages) {
                             redirectsPackageMap[sourceId] = localizedId
                         }
                     }
@@ -121,10 +104,10 @@ class FPackageStore(
 
         event.await()
 
-        applyRedirects(redirectsPackageMap)
+        //applyRedirects(redirectsPackageMap)
     }
 
-    override fun onContainerMounted(container: FIoDispatcherMountedContainer) {
+    override fun onContainerMounted(container: FIoContainerId) {
         loadContainers(listOf(container))
     }
 
@@ -161,10 +144,8 @@ class FPackageStore(
     }
 
     class FLoadedContainer {
-        val containerNameMap = FNameMap()
+        lateinit var containerNameMap: FNameMap
         lateinit var storeEntries: Array<FPackageStoreEntry>
         var packageCount = 0u
-        var order = 0
-        var bValid = false
     }
 }

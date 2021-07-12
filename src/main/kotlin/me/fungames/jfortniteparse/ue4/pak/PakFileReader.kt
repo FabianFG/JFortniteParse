@@ -14,8 +14,8 @@ import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
+import me.fungames.jfortniteparse.ue4.versions.getArVer
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.align
 import me.fungames.jfortniteparse.util.printAesKey
@@ -34,7 +34,7 @@ private typealias FPakDirectory = Map<String, Int>
 private typealias FDirectoryIndex = Map<String, FPakDirectory>
 
 class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
-    constructor(file : File, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(FPakFileArchive(RandomAccessFile(file, "r"), file).apply { this.game = game; this.ver = GAME_UE4_GET_AR_VER(game) })
+    constructor(file : File, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(FPakFileArchive(RandomAccessFile(file, "r"), file).apply { this.game = game; this.ver = getArVer(game) })
     constructor(filePath : String, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(File(filePath), game)
 
     //var encodedPakEntries: ByteArray = byteArrayOf()

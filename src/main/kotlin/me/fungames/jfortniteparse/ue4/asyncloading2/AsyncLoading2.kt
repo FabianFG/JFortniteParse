@@ -1,100 +1,21 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FMappedName
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FNameMap
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
 import me.fungames.jfortniteparse.util.CityHash.cityHash64
-import me.fungames.jfortniteparse.util.get
 
 typealias FSourceToLocalizedPackageIdMap = Array<Pair<FPackageId, FPackageId>>
 typealias FCulturePackageMap = Map<String, FSourceToLocalizedPackageIdMap>
 
-class FMappedName {
-    companion object {
-        private val INVALID_INDEX = 0u.inv()
-        private val INDEX_BITS = 30u
-        private val INDEX_MASK = (1u shl INDEX_BITS.toInt()) - 1u
-        private val TYPE_MASK = INDEX_MASK.inv()
-        private val TYPE_SHIFT = INDEX_BITS
-
-        @JvmStatic
-        fun create(index: UInt, number: UInt, type: EType, Ar: FArchive? = null): FMappedName {
-            if (index > Int.MAX_VALUE.toUInt()) {
-                if (Ar != null) throw ParserException("Bad name index", Ar)
-                else throw ParserException("Bad name index")
-            }
-            return FMappedName((type.ordinal.toUInt() shl TYPE_SHIFT.toInt()) or index, number)
-        }
-
-        @JvmStatic
-        fun fromMinimalName(minimalName: FMinimalName) =
-            FMappedName(minimalName.index.value, minimalName.number.toUInt())
-
-        @JvmStatic
-        inline fun isResolvedToMinimalName(minimalName: FMinimalName): Boolean {
-            // Not completely safe, relies on that no FName will have its Index and Number equal to Max_uint32
-            val mappedName = fromMinimalName(minimalName)
-            return mappedName.isValid()
-        }
-
-        /*@JvmStatic
-        inline fun safeMinimalNameToName(minimalName: FMinimalName): FName {
-            return if (isResolvedToMinimalName(minimalName)) minimalNameToName(minimalName) else NAME_None;
-        }*/
-    }
-
-    enum class EType {
-        Package,
-        Container,
-        Global
-    }
-
-    private val index: UInt
-    val number: UInt
-
-    private constructor(index: UInt = INVALID_INDEX, number: UInt = INVALID_INDEX) {
-        this.index = index
-        this.number = number
-    }
-
-    constructor(Ar: FArchive) : this(Ar.readUInt32(), Ar.readUInt32())
-
-    //fun toUnresolvedMinimalName() = FMinimalName(index, number.toInt())
-
-    fun isValid() = index != INVALID_INDEX && number != INVALID_INDEX
-
-    fun getType() = EType.values()[(index and TYPE_MASK) shr TYPE_SHIFT.toInt()]
-
-    fun isGlobal() = ((index and TYPE_MASK) shr TYPE_SHIFT.toInt()) != 0u
-
-    fun getIndex() = index and INDEX_MASK
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as FMappedName
-
-        if (index != other.index) return false
-        if (number != other.number) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = index.hashCode()
-        result = 31 * result + number.hashCode()
-        return result
-    }
-}
-
 class FContainerHeader {
     var containerId: FIoContainerId
     var packageCount = 0u
-    var names: ByteArray
-    var nameHashes: ByteArray
+    val containerNameMap = FNameMap()
     var packageIds: Array<FPackageId>
     var storeEntries: Array<FPackageStoreEntry>
     var culturePackageMap: FCulturePackageMap
@@ -103,8 +24,13 @@ class FContainerHeader {
     constructor(Ar: FArchive) {
         containerId = FIoContainerId(Ar)
         packageCount = Ar.readUInt32()
-        names = Ar.read(Ar.readInt32())
-        nameHashes = Ar.read(Ar.readInt32())
+        if (Ar.game < GAME_UE5_BASE) {
+            val names = Ar.read(Ar.readInt32())
+            val nameHashes = Ar.read(Ar.readInt32())
+            if (names.isNotEmpty()) {
+                containerNameMap.load(names, nameHashes, FMappedName.EType.Container)
+            }
+        }
         packageIds = Ar.readTArray { FPackageId(Ar) }
         val storeEntriesNum = Ar.readInt32()
         val storeEntriesEnd = Ar.pos() + storeEntriesNum
@@ -238,6 +164,35 @@ class FPackageSummary {
 }
 
 /**
+ * Package summary.
+ */
+class FPackageSummary5 {
+    var headerSize: UInt
+    var name: FMappedName
+    var sourceName: FMappedName
+    var packageFlags: UInt
+    var cookedHeaderSize: UInt
+    var importMapOffset: Int
+    var exportMapOffset: Int
+    var exportBundleEntriesOffset: Int
+    var graphDataOffset: Int
+    var pad: Int /*= 0*/
+
+    constructor(Ar: FArchive) {
+        headerSize = Ar.readUInt32()
+        name = FMappedName(Ar)
+        sourceName = FMappedName(Ar)
+        packageFlags = Ar.readUInt32()
+        cookedHeaderSize = Ar.readUInt32()
+        importMapOffset = Ar.readInt32()
+        exportMapOffset = Ar.readInt32()
+        exportBundleEntriesOffset = Ar.readInt32()
+        graphDataOffset = Ar.readInt32()
+        pad = Ar.readInt32()
+    }
+}
+
+/**
  * Export bundle entry.
  */
 class FExportBundleEntry {
@@ -256,6 +211,7 @@ class FExportBundleEntry {
     }
 }
 
+// Actual name: FFilePackageStoreEntry
 class FPackageStoreEntry {
     var exportBundlesSize = 0uL
     var exportCount = 0
@@ -263,6 +219,7 @@ class FPackageStoreEntry {
     var loadOrder = 0u
     var pad = 0u
     var importedPackages: Array<FPackageId>
+    //var shaderMapHashes: Array<ByteArray>
 
     constructor(Ar: FArchive) {
         exportBundlesSize = Ar.readUInt64()
@@ -271,6 +228,9 @@ class FPackageStoreEntry {
         loadOrder = Ar.readUInt32()
         pad = Ar.readUInt32()
         importedPackages = Ar.readCArrayView { FPackageId(Ar) }
+        if (Ar.game >= GAME_UE5_BASE) {
+            Ar.skip(8) //shaderMapHashes = Ar.readCArrayView { Ar.read(20) }
+        }
     }
 
     private inline fun <reified T> FArchive.readCArrayView(init: (FArchive) -> T): Array<T> {
@@ -292,12 +252,14 @@ class FPackageStoreEntry {
  * Export bundle header
  */
 class FExportBundleHeader {
+    var serialOffset: ULong
     var firstEntryIndex: UInt
     var entryCount: UInt
 
     constructor(Ar: FArchive) {
-        this.firstEntryIndex = Ar.readUInt32()
-        this.entryCount = Ar.readUInt32()
+        serialOffset = if (Ar.game >= GAME_UE5_BASE) Ar.readUInt64() else ULong.MAX_VALUE
+        firstEntryIndex = Ar.readUInt32()
+        entryCount = Ar.readUInt32()
     }
 }
 

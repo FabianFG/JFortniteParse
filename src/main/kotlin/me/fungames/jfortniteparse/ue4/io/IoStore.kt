@@ -10,6 +10,8 @@ import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
+import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import me.fungames.jfortniteparse.util.align
 import java.io.File
 import java.io.FileNotFoundException
@@ -220,7 +222,7 @@ class FIoStoreTocCompressedBlockEntry {
 
 // class FIoStoreWriterImpl
 
-class FIoStoreReaderImpl {
+class FIoStoreReaderImpl(var game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
     val tocResource = FIoStoreTocResource()
     private var decryptionKey: ByteArray? = null
     private val containerFileHandles = mutableListOf<FPakArchive>()
@@ -401,9 +403,10 @@ class FIoStoreReaderImpl {
         synchronized(filesLock) {
             _files?.let { return it }
             val files = ArrayList<GameFile>()
+            val exportBundleDataChunkType = (if (game.game >= GAME_UE5_BASE) EIoChunkType5.ExportBundleData else EIoChunkType.ExportBundleData).ordinal.toUByte()
             directoryIndexReader?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
                 val chunkId = tocResource.chunkIds[tocEntryIndex.toInt()]
-                if (chunkId.chunkType == EIoChunkType.ExportBundleData) {
+                if (chunkId.chunkType == exportBundleDataChunkType) {
                     files.add(GameFile(filename, pakFileName = environment.path, ioChunkId = chunkId, ioStoreReader = this))
                 }
                 true

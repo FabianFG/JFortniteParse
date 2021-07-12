@@ -3,15 +3,15 @@ package me.fungames.jfortniteparse.ue4.writer
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
 import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
+import me.fungames.jfortniteparse.ue4.versions.getArVer
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
 abstract class FArchiveWriter : OutputStream() {
     var game = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)
-    var ver = GAME_UE4_GET_AR_VER(game)
+    var ver = getArVer(game)
     abstract var littleEndian: Boolean
     abstract fun pos() : Int
     abstract override fun write(buffer : ByteArray)

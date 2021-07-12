@@ -4,7 +4,6 @@ import kotlinx.coroutines.*
 import me.fungames.jfortniteparse.encryption.aes.Aes
 import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
-import me.fungames.jfortniteparse.ue4.asyncloading2.FNameMap
 import me.fungames.jfortniteparse.ue4.asyncloading2.FPackageStore
 import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
@@ -12,6 +11,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
 import me.fungames.jfortniteparse.util.printAesKey
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -26,15 +26,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     protected abstract val requiredKeys: MutableList<FGuid>
     protected abstract val keys: MutableMap<FGuid, ByteArray>
     protected val mountListeners = mutableListOf<PakMountListener>()
-    open val globalPackageStore = lazy {
-        val globalNameMap = FNameMap()
-        val globalPackageStore = FPackageStore(this, globalNameMap)
-        globalNameMap.loadGlobal(this)
-        globalPackageStore.setupInitialLoadData()
-        //globalPackageStore.setupCulture()
-        //globalPackageStore.loadContainers(mountedIoStoreReaders.map { FIoDispatcherMountedContainer(it.environment, it.containerId) })
-        globalPackageStore
-    }
+    open val globalPackageStore = lazy { FPackageStore(this) }
     open fun keys(): Map<FGuid, ByteArray> = keys
     fun keysStr(): Map<FGuid, String> = keys.mapValues { it.value.printAesKey() }
     open fun requiredKeys(): List<FGuid> = requiredKeys
@@ -85,14 +77,14 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         if (globalDataLoaded && reader.Ar is FPakFileArchive) {
             val ioStoreEnvironment = FIoStoreEnvironment(reader.Ar.file.path.substringBeforeLast('.'))
             try {
-                val ioStoreReader = FIoStoreReaderImpl()
+                val ioStoreReader = FIoStoreReaderImpl(game)
                 ioStoreReader.concurrent = reader.concurrent
                 ioStoreReader.initialize(ioStoreEnvironment, ioStoreTocReadOptions, keys)
                 ioStoreReader.files.associateByTo(files) { it.path.toLowerCase() }
                 mountedIoStoreReaders.add(ioStoreReader)
-                /*if (globalPackageStore.isInitialized()) {
-                    globalPackageStore.value.onContainerMounted(FIoDispatcherMountedContainer(ioStoreEnvironment, ioStoreReader.containerId))
-                }*/
+                if (globalPackageStore.isInitialized()) {
+                    globalPackageStore.value.onContainerMounted(ioStoreReader.containerId)
+                }
             } catch (e: FIoStatusException) {
                 PakFileReader.logger.warn("Failed to mount IoStore environment \"{}\" [{}]", ioStoreEnvironment.path, e.message)
             }
@@ -102,9 +94,11 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     }
 
     override fun loadGameFile(packageId: FPackageId): IoPackage? = runCatching {
-        val ioBuffer = runCatching { saveChunk(FIoChunkId(packageId.value(), 0u, EIoChunkType.ExportBundleData)) }.getOrNull()
+        val storeEntry = globalPackageStore.value.findStoreEntry(packageId)
             ?: return null//throw NotFoundException("The package to load does not exist on disk or in the loader")
-        return IoPackage(ioBuffer, packageId, globalPackageStore.value, this, game)
+        val chunkType = if (game.game >= GAME_UE5_BASE) EIoChunkType5.ExportBundleData else EIoChunkType.ExportBundleData
+        val ioBuffer = saveChunk(FIoChunkId(packageId.value(), 0u, chunkType))
+        return IoPackage(ioBuffer, packageId, storeEntry, globalPackageStore.value, this, game)
     }.onFailure { logger.error(it) { "Failed to load package with id 0x%016X".format(packageId.value().toLong()) } }.getOrNull()
 
     override fun saveGameFile(filePath: String): ByteArray? {
@@ -136,7 +130,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     protected fun loadGlobalData(globalTocFile: File) {
         globalDataLoaded = true
         try {
-            val ioStoreReader = FIoStoreReaderImpl()
+            val ioStoreReader = FIoStoreReaderImpl(game)
             ioStoreReader.initialize(FIoStoreEnvironment(globalTocFile.path.substringBeforeLast('.')), ioStoreTocReadOptions, keys)
             mountedIoStoreReaders.add(ioStoreReader)
             PakFileReader.logger.info("Initialized I/O store")
