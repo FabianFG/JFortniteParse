@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.fort.objects
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.objects.FStructFallback
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -18,20 +19,28 @@ enum class EFortBuildingPersistentState {
 
 class FFortActorRecord(Ar: FAssetArchive) {
     @UProperty("ActorGuid")
-    val actorGuid = FGuid(Ar)
+    var actorGuid = FGuid(Ar)
     @UProperty("ActorState")
-    val actorState = EFortBuildingPersistentState.values()[Ar.read()]
+    var actorState = EFortBuildingPersistentState.values()[Ar.read()]
     @UProperty("ActorClass")
-    val actorClass = Ar.readString() // actually UClass*
+    var actorClass = Ar.readString() // actually UClass*
     @UProperty("ActorTransform")
-    val actorTransform = FTransform(Ar)
+    var actorTransform = FTransform(Ar)
     @UProperty("bSpawnedActor")
-    val spawnedActor = Ar.readBoolean()
+    var spawnedActor = Ar.readBoolean()
     @UProperty("ActorData")
-    val actorData: FStructFallback?
+    var actorData: FStructFallback? = null
 
     init {
         val actorDataNum = Ar.readInt32()
-        actorData = if (actorDataNum > 0) FStructFallback(Ar, FName.NAME_None) else null
+        if (actorDataNum > 0) {
+            val pos = Ar.pos()
+            val validPos = pos + actorDataNum
+            actorData = FStructFallback(Ar, FName.NAME_None)
+            if (Ar.pos() != validPos) {
+                LOG_JFP.debug { "Did not read FortActorRecord.ActorData correctly, ${validPos - Ar.pos()} bytes remaining" }
+                Ar.seek(pos + actorDataNum)
+            }
+        }
     }
 }
