@@ -66,7 +66,7 @@ enum class EGuidFormats {
     Base36Encoded,
 }
 
-class FGuid {
+class FGuid : Comparable<FGuid> {
     companion object {
         @JvmStatic
         val mainGuid = FGuid()
@@ -125,6 +125,12 @@ class FGuid {
 
         return ((a xor other.a) or (b xor other.b) or (c xor other.c) or (d xor other.d)) == 0u
     }
+
+    override operator fun compareTo(other: FGuid) =
+        (if (a < other.a) -1 else (if (a > other.a) 1 else
+        (if (b < other.b) -1 else (if (b > other.b) 1 else
+        (if (c < other.c) -1 else (if (c > other.c) 1 else
+        (if (d < other.d) -1 else (if (d > other.d) 1 else 1))))))))
 
     /**
      * Provides read-only access to the GUIDs components.
