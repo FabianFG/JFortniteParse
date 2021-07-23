@@ -7,7 +7,7 @@ import me.fungames.jfortniteparse.util.ref
 import java.util.*
 import kotlin.jvm.internal.Ref.ObjectRef
 
-class FDependsNode {
+class FDependsNode(private val index: Int) {
     companion object {
         const val packageFlagWidth = 3
         const val packageFlagSetWidth = 1 shr packageFlagWidth

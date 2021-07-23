@@ -54,8 +54,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
 
     lateinit var mountPrefix : String
 
-    var fileCount = 0
-        private set
+    val fileCount get() = files.size
     var encryptedFileCount = 0
         private set
     lateinit var files : List<GameFile>
@@ -443,7 +442,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             mountPoint = mountPoint.substring(1)
         this.mountPrefix = mountPoint
 
-        this.fileCount = indexAr.readInt32()
+        val fileCount = indexAr.readInt32()
         this.encryptedFileCount = 0
 
         val tempMap = mutableMapOf<String, GameFile>()
@@ -548,7 +547,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
             mountPoint = mountPoint.substring(1)
         this.mountPrefix = mountPoint
 
-        this.fileCount = primaryIndexAr.readInt32()
+        val fileCount = primaryIndexAr.readInt32()
         this.encryptedFileCount = 0
         val pathHashSeed = primaryIndexAr.readUInt64()
 

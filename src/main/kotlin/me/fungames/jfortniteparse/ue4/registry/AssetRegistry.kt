@@ -33,7 +33,7 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
 
         if (version < FAssetRegistryVersion.Type.AddedDependencyFlags) {
             val localNumDependsNodes = Ar.readInt32()
-            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode() }
+            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode(it) }
             if (localNumDependsNodes > 0) {
                 loadDependenciesBeforeFlags(Ar, version)
             }
@@ -41,7 +41,7 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
             val dependencySectionSize = Ar.readInt64()
             val dependencySectionEnd = Ar.pos() + dependencySectionSize.toInt()
             val localNumDependsNodes = Ar.readInt32()
-            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode() }
+            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode(it) }
             if (localNumDependsNodes > 0) {
                 loadDependencies(Ar)
             }
@@ -53,15 +53,8 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
     }
 
     private fun loadDependencies(Ar: FArchive) {
-        fun getNodeFromSerializeIndex(index: Int): FDependsNode? {
-            if (index < 0 || preallocatedDependsNodeDataBuffer.size <= index) {
-                return null
-            }
-            return preallocatedDependsNodeDataBuffer[index]
-        }
-
         for (dependsNode in preallocatedDependsNodeDataBuffer) {
-            dependsNode.serializeLoad(Ar, ::getNodeFromSerializeIndex)
+            dependsNode.serializeLoad(Ar) { preallocatedDependsNodeDataBuffer.getOrNull(it) }
         }
     }
 

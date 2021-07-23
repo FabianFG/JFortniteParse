@@ -242,7 +242,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                         val start = Ar.pos()
                         properties.add(serializer.deserialize(Ar, ReadType.ZERO))
                         if (Ar.pos() != start) {
-                            throw ParserException("Zero property #${it.schemaIt} should not advance the archive's position", Ar)
+                            throw ParserException("Zero property $serializer should not advance the archive's position", Ar)
                         }
                     }
                 } else {

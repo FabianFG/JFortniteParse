@@ -37,7 +37,7 @@ open class FVector {
         Ar.writeFloat32(z)
     }
 
-    /** Default constructor (no initialization). */
+    /** Default constructor. */
     constructor() : this(0f, 0f, 0f)
 
     /**

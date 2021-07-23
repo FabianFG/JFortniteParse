@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /**
  * Structure for three dimensional planes.
@@ -15,6 +16,35 @@ class FPlane : FVector {
 
     constructor(Ar: FArchive) : super(Ar) {
         w = Ar.readFloat32()
+    }
+
+    override fun serialize(Ar: FArchiveWriter) {
+        super.serialize(Ar)
+        Ar.writeFloat32(w)
+    }
+
+    /** Default constructor. */
+    constructor() : this(0f, 0f, 0f, 0f)
+
+    /**
+     * Constructor.
+     *
+     * @param v 4D vector to set up plane.
+     */
+    constructor(v: FVector4) : super(v) {
+        w = v.w
+    }
+
+    /**
+     * Constructor.
+     *
+     * @param x X-coefficient.
+     * @param y Y-coefficient.
+     * @param z Z-coefficient.
+     * @param w W-coefficient.
+     */
+    constructor(x: Float, y: Float, z: Float, w: Float) : super(x, y, z) {
+        this.w = w
     }
 
     /**

@@ -92,16 +92,14 @@ class FPropertyTag {
                 try {
                     prop = FProperty.readPropertyValue(Ar, typeData!!, FProperty.ReadType.NORMAL)
                     if (finalPos != Ar.pos()) {
-                        LOG_JFP.warn("FPropertyTagType $name (${type}) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
+                        LOG_JFP.warn("FPropertyTagType $typeData $name was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
                     }
-                    //Even if the property wasn't read properly
-                    //we don't need to crash here because we know the expected size
-                    Ar.seek(finalPos)
                 } catch (e: ParserException) {
                     if (finalPos != Ar.pos()) {
-                        LOG_JFP.warn("Failed to read FPropertyTagType $name (${type}), skipping it, please report", e)
+                        LOG_JFP.warn("Failed to read FPropertyTagType $typeData $name, skipping it", e)
                     }
-                    //Also no need to crash here, just seek to the desired offset
+                } finally {
+                    // Always seek to calculated position, no need to crash
                     Ar.seek(finalPos)
                 }
             }

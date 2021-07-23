@@ -69,6 +69,7 @@ class UScriptStruct {
             "PerPlatformFloat" -> FPerPlatformFloat(Ar)
             "PerPlatformInt" -> FPerPlatformInt(Ar)
             "PerQualityLevelInt" -> FPerQualityLevelInt(Ar)
+            "Plane" -> if (nz) FPlane(Ar) else FPlane()
             "Quat" -> FQuat(Ar)
             "RichCurveKey" -> FRichCurveKey(Ar)
             "Rotator" -> if (nz) FRotator(Ar) else FRotator()
@@ -85,6 +86,10 @@ class UScriptStruct {
             "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
             "Vector4" -> if (nz) FVector4(Ar) else FVector4()
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)
+            "Vector_NetQuantize" -> if (nz) FVector(Ar) else FVector()
+            "Vector_NetQuantize10" -> if (nz) FVector(Ar) else FVector()
+            "Vector_NetQuantize100" -> if (nz) FVector(Ar) else FVector()
+            "Vector_NetQuantizeNormal" -> if (nz) FVector(Ar) else FVector()
             "FortActorRecord" -> FFortActorRecord(Ar)
 
             else -> {

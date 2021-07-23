@@ -31,7 +31,7 @@ class FRotator {
     }
 
     /**
-     * Default constructor (no initialization).
+     * Default constructor.
      */
     constructor() : this(0f)
 
