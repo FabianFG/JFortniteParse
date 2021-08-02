@@ -3,9 +3,7 @@ package me.fungames.jfortniteparse.ue4.pak.objects
 import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_FNameBasedCompressionMethod
-import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_FrozenIndex
-import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_PathHashIndex
+import me.fungames.jfortniteparse.ue4.pak.enums.*
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
@@ -58,8 +56,8 @@ class FPakInfo {
 
     constructor(Ar: FArchive, maxNumCompressionMethods: Int = 4) {
         // New FPakInfo fields
-        encryptionKeyGuid = FGuid(Ar)
-        encryptedIndex = Ar.readFlag()
+        encryptionKeyGuid = FGuid(Ar) // PakFile_Version_EncryptionKeyGuid
+        encryptedIndex = Ar.readUInt8().toInt() != 0 // Do not replace by ReadFlag
 
         // Old FPakInfoFields
         val magic = Ar.readUInt32()
@@ -85,6 +83,14 @@ class FPakInfo {
                     break
                 compressionMethods.add(str)
             }
+        }
+
+        // Reset new fields to their default states when serializing older pak format.
+        if (version < PakVersion_IndexEncryption) {
+            encryptedIndex = false
+        }
+        if (version < PakVersion_EncryptionKeyGuid) {
+            encryptionKeyGuid = FGuid.mainGuid
         }
     }
 }
