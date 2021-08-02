@@ -136,6 +136,7 @@ object FReleaseObjectVersion {
     // -----<new versions can be added above this line>-------------------------------------------------
     const val LatestVersion = AddedSubSequenceEntryWarpCounter
 
+    @JvmStatic
     fun get(Ar: FArchive): Int {
         val game = Ar.game
         return when {

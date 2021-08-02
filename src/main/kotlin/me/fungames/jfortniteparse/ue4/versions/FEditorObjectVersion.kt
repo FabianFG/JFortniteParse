@@ -90,6 +90,7 @@ object FEditorObjectVersion {
     // -----<new versions can be added above this line>-------------------------------------------------
     const val LatestVersion = SkeletalMeshSourceDataSupport16bitOfMaterialNumber
 
+    @JvmStatic
     fun get(Ar: FArchive): Int {
         val game = Ar.game
         return when {

@@ -123,8 +123,9 @@ object FRenderingObjectVersion {
     const val VirtualTexturedLightmapsV3 = 45
 
     // -----<new versions can be added above this line>-------------------------------------------------
-    const val LatestVersion = StaticMeshSectionForceOpaqueField
+    const val LatestVersion = VirtualTexturedLightmapsV3
 
+    @JvmStatic
     fun get(Ar: FArchive): Int {
         val game = Ar.game
         return when {
