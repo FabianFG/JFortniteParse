@@ -13,6 +13,8 @@ import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FFormatContainer
+import me.fungames.jfortniteparse.ue4.versions.FFrameworkObjectVersion
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_SOUND_COMPRESSION_TYPE_ADDED
 
 @OnlyAnnotated
 class USoundWave : USoundBase() {
@@ -54,6 +56,11 @@ class USoundWave : USoundBase() {
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
         bCooked = Ar.readBoolean()
+
+        if (Ar.ver >= VER_UE4_SOUND_COMPRESSION_TYPE_ADDED && FFrameworkObjectVersion.get(Ar) < FFrameworkObjectVersion.RemoveSoundWaveCompressionName) {
+            val dummyCompressionName = Ar.readFName()
+        }
+
         val bShouldStreamSound = isStreaming()
 
         if (bCooked) {

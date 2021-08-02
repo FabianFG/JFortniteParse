@@ -24,7 +24,8 @@ abstract class AbstractFileProvider : FileProvider() {
 
     override fun findGameFile(filePath: String): GameFile? {
         val path = fixPath(filePath)
-        return files[path]
+        files[path]?.let { return it }
+        return files[path.substringBeforeLast('.') + ".umap"]
     }
 
     override fun loadGameFile(filePath: String): Package? = runCatching {

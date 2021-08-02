@@ -9,6 +9,8 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.versions.FCoreObjectVersion
+import me.fungames.jfortniteparse.ue4.versions.FFrameworkObjectVersion
 
 @OnlyAnnotated
 open class UStruct : UObject() {
@@ -23,8 +25,15 @@ open class UStruct : UObject() {
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
         superStruct = Ar.readObject()
-        children = Ar.readTArray { FPackageIndex(Ar) }
-        serializeProperties(Ar)
+        children = if (FFrameworkObjectVersion.get(Ar) < FFrameworkObjectVersion.RemoveUField_Next) {
+            val firstChild = FPackageIndex(Ar)
+            if (firstChild.isNull()) emptyArray() else arrayOf(firstChild)
+        } else {
+            Ar.readTArray { FPackageIndex(Ar) }
+        }
+        if (FCoreObjectVersion.get(Ar) >= FCoreObjectVersion.FProperties) {
+            deserializeProperties(Ar)
+        }
         // region FStructScriptLoader::FStructScriptLoader
         val bytecodeBufferSize = Ar.readInt32()
         val serializedScriptSize = Ar.readInt32()
@@ -36,7 +45,7 @@ open class UStruct : UObject() {
         // endregion
     }
 
-    protected fun serializeProperties(Ar: FAssetArchive) {
+    protected fun deserializeProperties(Ar: FAssetArchive) {
         childProperties = Ar.readTArray {
             val propertyTypeName = Ar.readFName()
             val prop = FField.construct(propertyTypeName)

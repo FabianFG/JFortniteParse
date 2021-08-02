@@ -37,7 +37,7 @@ class FNameTableArchiveReader : FAssetRegistryArchive {
             val maxReservation = size() - pos() / minFNameEntrySize
             val nameMap = MutableList(min(nameCount, maxReservation)) {
                 val name = wrappedAr.readString()
-                //uassetAr.skip(4) // skip nonCasePreservingHash (uint16) and casePreservingHash (uint16)
+                wrappedAr.skip(4) // skip nonCasePreservingHash (uint16) and casePreservingHash (uint16)
                 name
             }
             wrappedAr.seek(originalOffset)

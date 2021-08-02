@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.FFrameworkObjectVersion
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 open class FExpressionInput {
@@ -20,8 +21,11 @@ open class FExpressionInput {
     var expressionName: FName
 
     constructor(Ar: FArchive) {
+        /*if (FCoreObjectVersion.get(Ar) < FCoreObjectVersion.MaterialInputNativeSerialize) {
+            // TODO use property serialization instead
+        }*/
         outputIndex = Ar.readInt32()
-        inputName = Ar.readFName()
+        inputName = if (FFrameworkObjectVersion.get(Ar) >= FFrameworkObjectVersion.PinsStoreFName) Ar.readFName() else FName(Ar.readString())
         mask = Ar.readInt32()
         maskR = Ar.readInt32()
         maskG = Ar.readInt32()
