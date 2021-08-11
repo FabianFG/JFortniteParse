@@ -23,7 +23,6 @@ import me.fungames.jfortniteparse.ue4.versions.Ue4Version
 import me.fungames.jfortniteparse.util.get
 import java.nio.ByteBuffer
 
-
 /**
  * Linker for I/O Store packages
  */
@@ -50,7 +49,6 @@ class IoPackage : Package {
         val Ar = FByteArchive(uasset)
         Ar.game = game.game
 
-        val importedPackageIds: Array<FPackageId>
         val allExportDataOffset: Int
 
         if (game.game >= GAME_UE5_BASE) {
@@ -72,7 +70,7 @@ class IoPackage : Package {
 
             // Export map
             Ar.seek(summary.exportMapOffset)
-            val exportCount = storeEntry.exportCount //(summary.exportBundleEntriesOffset - summary.exportMapOffset) / 72
+            val exportCount = storeEntry.exportCount //(summary.exportBundleEntriesOffset - summary.exportMapOffset) / FExportMapEntry.SIZE
             exportMap = Array(exportCount) { FExportMapEntry(Ar) }
             exportsLazy = (arrayOfNulls<Lazy<UObject>>(exportCount) as Array<Lazy<UObject>>).toMutableList()
 
@@ -108,7 +106,7 @@ class IoPackage : Package {
 
             // Export map
             Ar.seek(summary.exportMapOffset)
-            val exportCount = storeEntry.exportCount //(summary.exportBundlesOffset - summary.exportMapOffset) / 72
+            val exportCount = storeEntry.exportCount //(summary.exportBundlesOffset - summary.exportMapOffset) / FExportMapEntry.SIZE
             exportMap = Array(exportCount) { FExportMapEntry(Ar) }
             exportsLazy = (arrayOfNulls<Lazy<UObject>>(exportCount) as Array<Lazy<UObject>>).toMutableList()
 
@@ -121,7 +119,7 @@ class IoPackage : Package {
         }
 
         // Preload dependencies
-        importedPackageIds = storeEntry.importedPackages
+        val importedPackageIds = storeEntry.importedPackages
         importedPackages = lazy { importedPackageIds.map { provider.loadGameFile(it) } }
 
         // Populate lazy exports
@@ -174,20 +172,39 @@ class IoPackage : Package {
     }
 
     fun resolveObjectIndex(index: FPackageObjectIndex?): ResolvedObject? {
-        if (index == null) {
+        if (index == null || index.isNull()) {
             return null
         }
         when {
             index.isExport() -> return ResolvedExportObject(index.toExport().toInt(), this@IoPackage)
-            index.isScriptImport() -> return globalPackageStore.scriptObjectEntriesMap[index]?.let { ResolvedScriptObject(it, this@IoPackage) }
-            index.isPackageImport() -> for (pkg in importedPackages.value) {
-                pkg?.exportMap?.forEachIndexed { exportIndex, exportMapEntry ->
-                    if (exportMapEntry.globalImportIndex == index) {
-                        return ResolvedExportObject(exportIndex, pkg)
+            index.isScriptImport() -> {
+                val scriptObjectEntry = globalPackageStore.scriptObjectEntriesMap[index]
+                if (scriptObjectEntry != null) {
+                    return ResolvedScriptObject(scriptObjectEntry, this@IoPackage)
+                }
+            }
+            index.isPackageImport() -> {
+                val localProvider = provider
+                if (localProvider != null) {
+                    if (localProvider.game.game >= GAME_UE5_BASE) {
+                        val packageImportRef = index.toPackageImportRef()
+                        val pkg = importedPackages.value.getOrNull(packageImportRef.importedPackageIndex.toInt())
+                        pkg?.exportMap?.forEachIndexed { exportIndex, exportMapEntry ->
+                            if (exportMapEntry.exportHash == packageImportRef.exportHash) {
+                                return ResolvedExportObject(exportIndex, pkg)
+                            }
+                        }
+                    } else {
+                        for (pkg in importedPackages.value) {
+                            pkg?.exportMap?.forEachIndexed { exportIndex, exportMapEntry ->
+                                if (exportMapEntry.globalImportIndex == index) {
+                                    return ResolvedExportObject(exportIndex, pkg)
+                                }
+                            }
+                        }
                     }
                 }
             }
-            index.isNull() -> return null
         }
         LOG_STREAMING.warn("Missing %s import 0x%016X for package %s".format(
             if (index.isScriptImport()) "script" else "package",

@@ -120,9 +120,9 @@ open class UObject : IPropertyHolder {
 
     fun getFullName(stopOuter: UObject?, resultString: StringBuilder, includeClassPackage: Boolean = false) {
         if (includeClassPackage) {
-            resultString.append(clazz!!.getPathName())
+            resultString.append(clazz?.getPathName() ?: "???")
         } else {
-            resultString.append(clazz!!.name)
+            resultString.append(clazz?.name ?: "???")
         }
         resultString.append(' ')
         getPathName(stopOuter, resultString)

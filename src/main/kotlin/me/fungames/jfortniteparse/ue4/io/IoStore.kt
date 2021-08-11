@@ -30,10 +30,10 @@ enum class EIoStoreTocVersion {
     PartitionSize
 }
 
-const val IO_CONTAINER_FLAG_COMPRESSED = 0x1
-const val IO_CONTAINER_FLAG_ENCRYPTED = 0x2
-const val IO_CONTAINER_FLAG_SIGNED = 0x3
-const val IO_CONTAINER_FLAG_INDEXED = 0x4
+const val IO_CONTAINER_FLAG_COMPRESSED = 1 shl 0
+const val IO_CONTAINER_FLAG_ENCRYPTED  = 1 shl 1
+const val IO_CONTAINER_FLAG_SIGNED     = 1 shl 2
+const val IO_CONTAINER_FLAG_INDEXED    = 1 shl 3
 
 /**
  * I/O Store TOC header.
