@@ -6,20 +6,18 @@ import me.fungames.jfortniteparse.exceptions.InvalidAesKeyException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_Latest
 import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_PathHashIndex
-import me.fungames.jfortniteparse.ue4.pak.enums.PakVersion_RelativeChunkOffsets
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakCompressedBlock
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakEntry
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakInfo
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
-import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
-import me.fungames.jfortniteparse.ue4.versions.getArVer
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.align
 import me.fungames.jfortniteparse.util.printAesKey
 import mu.KotlinLogging
+import java.io.Closeable
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -33,9 +31,9 @@ private typealias FPathHashIndex = Map<ULong, Int>
 private typealias FPakDirectory = Map<String, Int>
 private typealias FDirectoryIndex = Map<String, FPakDirectory>
 
-class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
-    constructor(file : File, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(FPakFileArchive(RandomAccessFile(file, "r"), file).apply { this.game = game; this.ver = getArVer(game) })
-    constructor(filePath : String, game : Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)) : this(File(filePath), game)
+class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : Closeable {
+    constructor(file: File, versions: VersionContainer = VersionContainer.DEFAULT) : this(FPakFileArchive(RandomAccessFile(file, "r"), file, versions))
+    constructor(filePath: String, versions: VersionContainer = VersionContainer.DEFAULT) : this(File(filePath), versions)
 
     //var encodedPakEntries: ByteArray = byteArrayOf()
     //    private set
@@ -284,7 +282,7 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         return files
     }
 
-    private fun readBitEntry(Ar : FByteArchive): FPakEntry {
+    private fun readBitEntry(Ar: FByteArchive): FPakEntry {
         // Grab the big bitfield value:
         // Bit 31 = Offset 32-bit safe?
         // Bit 30 = Uncompressed size 32-bit safe?
@@ -294,15 +292,22 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         // Bits 21-6 = Compression blocks count
         // Bits 5-0 = Compression block size
 
-        val compressionMethodIndex : UInt
-        var compressionBlockSize : UInt
-        val offset : Long
-        val uncompressedSize : Long
-        val size : Long
-        val encrypted : Boolean
-        val compressionBlocks : Array<FPakCompressedBlock>
+        val compressionMethodIndex: UInt
+        var compressionBlockSize: UInt
+        val offset: Long
+        val uncompressedSize: Long
+        val size: Long
+        val encrypted: Boolean
+        val compressionBlocks: Array<FPakCompressedBlock>
 
         val value = Ar.readUInt32()
+
+        val localCompressionBlockSize = if ((value and 0x3fu) == 0x3fu) {
+            Ar.readUInt32()
+        } else {
+            // for backwards compatibility with old paks :
+            (value and 0x3fu) shl 11
+        }
 
         // Filter out the CompressionMethod.
         compressionMethodIndex = (value shr 23) and 0x3fu
@@ -311,7 +316,6 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
         // to avoid alignment exceptions on platforms requiring 64-bit alignment
         // for 64-bit variables.
         //
-
         // Read the Offset.
         val isOffset32BitSafe = (value and (1u shl 31)) != 0u
         offset = if (isOffset32BitSafe) {
@@ -352,45 +356,37 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
 
         compressionBlocks = Array(compressionBlocksCount.toInt()) { FPakCompressedBlock(0L, 0L) }
 
-        // Filter the compression block size or use the UncompressedSize if less that 64k.
         compressionBlockSize = 0u
         if (compressionBlocksCount > 0u) {
-            compressionBlockSize = if (uncompressedSize < 65536) uncompressedSize.toUInt() else ((value and 0x3fu) shl 11)
+            compressionBlockSize = localCompressionBlockSize
+            // Per the comment in Encode, if CompressionBlocksCount == 1, we use UncompressedSize for CompressionBlockSize
+            if (compressionBlocksCount == 1u) {
+                compressionBlockSize = uncompressedSize.toUInt()
+            }
+            check(compressionBlockSize != 0u)
         }
 
-        // Set bDeleteRecord to false, because it obviously isn't deleted if we are here.
-        //deleted = false Not needed
-
-        // Base offset to the compressed data
-        val baseOffset = if (pakInfo.version >= PakVersion_RelativeChunkOffsets) 0 else offset
+        // Compute StructSize: each file still have FPakEntry data prepended, and it should be skipped.
+        val structSize = FPakEntry.getSerializedSize(pakInfo.version, compressionMethodIndex.toInt(), compressionBlocksCount.toInt()) // 73 if latest, nonzero, 1
 
         // Handle building of the CompressionBlocks array.
         if (compressionBlocks.size == 1 && !encrypted) {
             // If the number of CompressionBlocks is 1, we didn't store any extra information.
             // Derive what we can from the entry's file offset and size.
             val compressedBlock = compressionBlocks[0]
-            compressedBlock.compressedStart = baseOffset + FPakEntry.getSerializedSize(pakInfo.version, compressionMethodIndex.toInt(), compressionBlocksCount.toInt())
+            compressedBlock.compressedStart = offset + structSize
             compressedBlock.compressedEnd = compressedBlock.compressedStart + size
         } else if (compressionBlocks.isNotEmpty()) {
-            // Get the right pointer to start copying the CompressionBlocks information from.
-
             // Alignment of the compressed blocks
             val compressedBlockAlignment = if (encrypted) Aes.BLOCK_SIZE else 1
 
             // CompressedBlockOffset is the starting offset. Everything else can be derived from there.
-            var compressedBlockOffset = baseOffset + FPakEntry.getSerializedSize(pakInfo.version, compressionMethodIndex.toInt(), compressionBlocksCount.toInt())
-            for (compressionBlockIndex in compressionBlocks.indices) {
-                val compressedBlock = compressionBlocks[compressionBlockIndex]
+            var compressedBlockOffset = offset + structSize
+            for (compressedBlock in compressionBlocks) {
                 compressedBlock.compressedStart = compressedBlockOffset
                 compressedBlock.compressedEnd = (compressedBlockOffset.toUInt() + Ar.readUInt32()).toLong()
-                val align = compressedBlock.compressedEnd - compressedBlock.compressedStart
-                compressedBlockOffset += align + compressedBlockAlignment - (align % compressedBlockAlignment)
+                compressedBlockOffset += align(compressedBlock.compressedEnd - compressedBlock.compressedStart, compressedBlockAlignment.toLong())
             }
-        }
-        //TODO There is some kind of issue here, compression blocks are sometimes going to far by one byte
-        compressionBlocks.forEach {
-            it.compressedStart += offset
-            it.compressedEnd += offset
         }
         return FPakEntry(pakInfo, "", offset, size, uncompressedSize, compressionMethodIndex.toInt(), compressionBlocks, encrypted, compressionBlockSize.toInt())
     }
@@ -706,4 +702,6 @@ class PakFileReader(val Ar : FPakArchive, val keepIndexData : Boolean = false) {
 
         return this.files
     }
+
+    override fun close() = Ar.close()
 }

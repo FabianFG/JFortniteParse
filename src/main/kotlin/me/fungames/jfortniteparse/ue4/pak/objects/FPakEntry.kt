@@ -9,15 +9,15 @@ import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_VALORANT
 
 class FPakEntry {
-    var name : String
-    var pos : Long
-    var size : Long
-    var uncompressedSize : Long
-    var compressionMethod : CompressionMethod
-    //var hash : ByteArray
-    var compressionBlocks : Array<FPakCompressedBlock>
-    var isEncrypted : Boolean = false
-    var compressionBlockSize : Int = 0
+    var name: String
+    var pos: Long
+    var size: Long
+    var uncompressedSize: Long
+    var compressionMethod: CompressionMethod
+    //var hash: ByteArray
+    var compressionBlocks: Array<FPakCompressedBlock>
+    var isEncrypted: Boolean = false
+    var compressionBlockSize: Int = 0
 
     companion object {
         @JvmStatic

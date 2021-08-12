@@ -66,8 +66,9 @@ fun String.pathAppend(str: String, strLength: Int = str.length): String {
 
 inline operator fun String.div(other: String) = pathAppend(other)
 inline fun align(value: Int, alignment: Int) = value + alignment - 1 and (alignment - 1).inv()
-inline fun align(value: ULong, alignment: ULong) = value + alignment - 1u and (alignment - 1u).inv()
+inline fun align(value: Long, alignment: Long) = value + alignment - 1 and (alignment - 1).inv()
 inline fun align(value: UInt, alignment: UInt) = value + alignment - 1u and (alignment - 1u).inv()
+inline fun align(value: ULong, alignment: ULong) = value + alignment - 1u and (alignment - 1u).inv()
 inline fun isAligned(value: Int, alignment: Int) = value and (alignment - 1) <= 0
 
 fun BitSet.indexOfFirst(value: Boolean): Int {

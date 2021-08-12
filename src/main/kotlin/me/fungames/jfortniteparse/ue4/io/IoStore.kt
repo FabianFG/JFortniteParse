@@ -11,8 +11,9 @@ import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
-import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import me.fungames.jfortniteparse.util.align
+import java.io.Closeable
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.RandomAccessFile
@@ -222,7 +223,17 @@ class FIoStoreTocCompressedBlockEntry {
 
 // class FIoStoreWriterImpl
 
-class FIoStoreReaderImpl(var game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
+class FIoStoreReaderImpl(var versions: VersionContainer = VersionContainer.DEFAULT) : Closeable {
+    var game: Int
+        inline get() = versions.game
+        set(value) {
+            versions.game = value
+        }
+    var ver: Int
+        inline get() = versions.ver
+        set(value) {
+            versions.ver = value
+        }
     val tocResource = FIoStoreTocResource()
     private var decryptionKey: ByteArray? = null
     private val containerFileHandles = mutableListOf<FPakArchive>()
@@ -255,6 +266,7 @@ class FIoStoreReaderImpl(var game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
     fun initialize(utocReader: FArchive, ucasReader: FPakArchive, decryptionKeys: Map<FGuid, ByteArray>) {
         this.environment = FIoStoreEnvironment(ucasReader.fileName.substringBeforeLast('.'))
         tocResource.read(utocReader, TOC_READ_OPTION_READ_ALL)
+        utocReader.close()
         if (tocResource.header.partitionCount > 1u) {
             throw FIoStatusException(EIoErrorCode.CorruptToc, "This method does not support IoStore environments with multiple partitions")
         }
@@ -403,7 +415,7 @@ class FIoStoreReaderImpl(var game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
         synchronized(filesLock) {
             _files?.let { return it }
             val files = ArrayList<GameFile>()
-            val exportBundleDataChunkType = (if (game.game >= GAME_UE5_BASE) EIoChunkType5.ExportBundleData else EIoChunkType.ExportBundleData).ordinal.toUByte()
+            val exportBundleDataChunkType = (if (game >= GAME_UE5_BASE) EIoChunkType5.ExportBundleData else EIoChunkType.ExportBundleData).ordinal.toUByte()
             directoryIndexReader?.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
                 val chunkId = tocResource.chunkIds[tocEntryIndex.toInt()]
                 if (chunkId.chunkType == exportBundleDataChunkType) {
@@ -474,6 +486,10 @@ class FIoStoreReaderImpl(var game: Ue4Version = Ue4Version.GAME_UE4_LATEST) {
     class FThreadBuffers {
         var compressedBuffer: ByteArray? = null
         var uncompressedBuffer: ByteArray? = null
+    }
+
+    override fun close() {
+        containerFileHandles.forEach { it.close() }
     }
 }
 

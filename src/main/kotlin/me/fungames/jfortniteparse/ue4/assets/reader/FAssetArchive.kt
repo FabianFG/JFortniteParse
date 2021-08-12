@@ -34,8 +34,7 @@ open class FAssetArchive(data: ByteBuffer, val provider: FileProvider?, val pkgN
 
     public override fun clone(): FAssetArchive {
         val c = FAssetArchive(data.duplicate(), provider, pkgName)
-        c.game = game
-        c.ver = ver
+        c.versions = versions
         c.useUnversionedPropertySerialization = useUnversionedPropertySerialization
         c.isFilterEditorOnly = isFilterEditorOnly
         c.littleEndian = littleEndian

@@ -1,5 +1,7 @@
 package me.fungames.jfortniteparse.ue4.versions
 
+internal const val VER_UE4_DETERMINE_BY_GAME = -1
+
 // Pre-release UE4 file versions
 internal const val VER_UE4_ASSET_REGISTRY_TAGS = 112
 internal const val VER_UE4_TEXTURE_DERIVED_DATA2 = 124

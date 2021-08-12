@@ -19,7 +19,7 @@ abstract class AbstractFileProvider : FileProvider() {
         val uasset = saveGameFile(file)
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
-        return PakPackage(uasset, uexp, ubulk, file.path, this, game)
+        return PakPackage(uasset, uexp, ubulk, file.path, this, versions)
     }.onFailure { logger.error(it) { "Failed to load package ${file.path}" } }.getOrNull()
 
     override fun findGameFile(filePath: String): GameFile? {

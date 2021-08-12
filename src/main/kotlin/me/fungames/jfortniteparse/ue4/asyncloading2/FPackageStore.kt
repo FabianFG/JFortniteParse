@@ -30,18 +30,17 @@ class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener
     init {
         val initialLoadArchive: FArchive
         val globalNameMap = FNameMap()
-        if (provider.game.game >= GAME_UE5_BASE) {
-            initialLoadArchive = FByteArchive(provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType5.ScriptObjects)))
+        if (provider.game >= GAME_UE5_BASE) {
+            initialLoadArchive = FByteArchive(provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType5.ScriptObjects)), provider.versions)
             globalNameMap.load(initialLoadArchive, FMappedName.EType.Global)
         } else {
             val nameBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNames))
             val hashBuffer = provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderGlobalNameHashes))
             globalNameMap.load(nameBuffer, hashBuffer, FMappedName.EType.Global)
 
-            initialLoadArchive = FByteArchive(provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta)))
+            initialLoadArchive = FByteArchive(provider.saveChunk(FIoChunkId(0u, 0u, EIoChunkType.LoaderInitialLoadMeta)), provider.versions)
         }
 
-        initialLoadArchive.game = provider.game.game
         val numScriptObjects = initialLoadArchive.readInt32()
         scriptObjectEntriesMap = HashMap(numScriptObjects)
         repeat(numScriptObjects) {
@@ -71,11 +70,11 @@ class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener
             val loadedContainer = loadedContainers.getOrPut(containerId) { FLoadedContainer() }
             LOG_STREAMING.debug("Loading mounted container ID '0x%016X'".format(containerId.value().toLong()))
 
-            val headerChunkId = FIoChunkId(containerId.value(), 0u, if (provider.game.game >= GAME_UE5_BASE) EIoChunkType5.ContainerHeader else EIoChunkType.ContainerHeader)
+            val headerChunkId = FIoChunkId(containerId.value(), 0u, if (provider.game >= GAME_UE5_BASE) EIoChunkType5.ContainerHeader else EIoChunkType.ContainerHeader)
             val ioBuffer = provider.saveChunk(headerChunkId)
 
             Thread {
-                val containerHeader = FContainerHeader(FByteArchive(ioBuffer).apply { game = provider.game.game })
+                val containerHeader = FContainerHeader(FByteArchive(ioBuffer, provider.versions))
                 loadedContainer.containerNameMap = containerHeader.containerNameMap
                 loadedContainer.packageCount = containerHeader.packageCount
                 loadedContainer.storeEntries = containerHeader.storeEntries

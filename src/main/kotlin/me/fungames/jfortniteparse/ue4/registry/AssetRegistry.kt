@@ -60,7 +60,7 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
 
     private fun loadDependenciesBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion) {
         for (dependsNode in preallocatedDependsNodeDataBuffer) {
-            dependsNode.serializeLoadBeforeFlags(Ar, version, preallocatedDependsNodeDataBuffer, preallocatedDependsNodeDataBuffer.size)
+            dependsNode.serializeLoadBeforeFlags(Ar, version, preallocatedDependsNodeDataBuffer)
         }
     }
 }

@@ -19,7 +19,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FMappedName
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FNameMap
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
-import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import me.fungames.jfortniteparse.util.get
 import java.nio.ByteBuffer
 
@@ -43,15 +43,14 @@ class IoPackage : Package {
                 storeEntry: FPackageStoreEntry,
                 globalPackageStore: FPackageStore,
                 provider: FileProvider,
-                game: Ue4Version = provider.game) : super("", provider, game) {
+                versions: VersionContainer = provider.versions) : super("", provider, versions) {
         this.packageId = packageId
         this.globalPackageStore = globalPackageStore
-        val Ar = FByteArchive(uasset)
-        Ar.game = game.game
+        val Ar = FByteArchive(uasset, versions)
 
         val allExportDataOffset: Int
 
-        if (game.game >= GAME_UE5_BASE) {
+        if (versions.game >= GAME_UE5_BASE) {
             val summary = FPackageSummary5(Ar)
 
             // Name map
@@ -186,7 +185,7 @@ class IoPackage : Package {
             index.isPackageImport() -> {
                 val localProvider = provider
                 if (localProvider != null) {
-                    if (localProvider.game.game >= GAME_UE5_BASE) {
+                    if (localProvider.game >= GAME_UE5_BASE) {
                         val packageImportRef = index.toPackageImportRef()
                         val pkg = importedPackages.value.getOrNull(packageImportRef.importedPackageIndex.toInt())
                         pkg?.exportMap?.forEachIndexed { exportIndex, exportMapEntry ->

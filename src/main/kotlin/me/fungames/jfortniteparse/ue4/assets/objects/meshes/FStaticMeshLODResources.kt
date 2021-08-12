@@ -54,10 +54,8 @@ class FStaticMeshLODResources {
             } else {
                 val bulk = FByteBulkData(Ar)
                 if (bulk.header.elementCount > 0) {
-                    val tempAr = FByteArchive(bulk.data)
+                    val tempAr = FByteArchive(bulk.data, Ar.versions)
                     tempAr.littleEndian = Ar.littleEndian
-                    tempAr.game = Ar.game
-                    tempAr.ver = Ar.ver
                     serializeBuffers(tempAr)
                 }
 
@@ -77,11 +75,11 @@ class FStaticMeshLODResources {
 				WireframeIndexBuffer
 				AdjacencyIndexBuffer */
             }
+            // FStaticMeshBuffersSize
+            Ar.readUInt32() // SerializedBuffersSize
+            Ar.readUInt32() // DepthOnlyIBSize
+            Ar.readUInt32() // ReversedIBsSize
         }
-        // FStaticMeshBuffersSize
-        Ar.readUInt32() // SerializedBuffersSize
-        Ar.readUInt32() // DepthOnlyIBSize
-        Ar.readUInt32() // ReversedIBsSize
     }
 
     private fun serializeBuffersLegacy(Ar: FArchive) {

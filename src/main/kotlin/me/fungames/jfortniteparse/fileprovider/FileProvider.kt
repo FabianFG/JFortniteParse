@@ -14,7 +14,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
 import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.registry.AssetRegistry
-import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import mu.KotlinLogging
 
 abstract class FileProvider {
@@ -22,7 +22,17 @@ abstract class FileProvider {
         val logger = KotlinLogging.logger("FileProvider")
     }
 
-    abstract var game: Ue4Version
+    abstract var versions: VersionContainer
+    var game: Int
+        inline get() = versions.game
+        set(value) {
+            versions.game = value
+        }
+    var ver: Int
+        inline get() = versions.ver
+        set(value) {
+            versions.ver = value
+        }
     var mappingsProvider: TypeMappingsProvider = ReflectionTypeMappingsProvider()
     var ioStoreTocReadOptions = TOC_READ_OPTION_READ_ALL
     protected abstract val files: MutableMap<String, GameFile>
@@ -32,7 +42,14 @@ abstract class FileProvider {
     /**
      * @return the name of the game that is loaded by the provider
      */
-    open val gameName get() = files.keys.firstOrNull { it.substringBefore('/').endsWith("game") }?.substringBefore("game") ?: ""
+    open val gameName: String
+        get() {
+            if (_gameName.isEmpty()) {
+                _gameName = files.keys.firstOrNull { !it.substringBefore('/').endsWith("engine") }?.substringBefore("game") ?: ""
+            }
+            return _gameName
+        }
+    private var _gameName = ""
 
     /**
      * Searches for a game file by its path

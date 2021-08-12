@@ -14,8 +14,7 @@ import java.nio.ByteBuffer
 
 class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : FAssetArchive(data, pkg.provider, pkg.fileName) {
     init {
-        game = pkg.game.game
-        ver = pkg.game.version
+        versions = pkg.versions
         owner = pkg
     }
 
@@ -38,8 +37,7 @@ class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : F
 
     override fun clone(): FExportArchive {
         val c = FExportArchive(data.duplicate(), obj, pkg)
-        c.game = game
-        c.ver = ver
+        c.versions = versions
         c.useUnversionedPropertySerialization = useUnversionedPropertySerialization
         c.isFilterEditorOnly = isFilterEditorOnly
         c.littleEndian = littleEndian

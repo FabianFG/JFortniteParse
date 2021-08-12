@@ -15,12 +15,12 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FNameMap
-import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import java.math.BigInteger
 
 abstract class Package(var fileName: String,
                        val provider: FileProvider? = null,
-                       val game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : UObject() {
+                       val versions: VersionContainer = provider?.versions ?: VersionContainer.DEFAULT) : UObject() {
     abstract val exportsLazy: List<Lazy<UObject>>
     open val exports: List<UObject>
         get() = exportsLazy.map { it.value }

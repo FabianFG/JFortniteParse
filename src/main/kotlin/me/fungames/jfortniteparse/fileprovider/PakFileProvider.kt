@@ -77,7 +77,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
         if (globalDataLoaded && reader.Ar is FPakFileArchive) {
             val ioStoreEnvironment = FIoStoreEnvironment(reader.Ar.file.path.substringBeforeLast('.'))
             try {
-                val ioStoreReader = FIoStoreReaderImpl(game)
+                val ioStoreReader = FIoStoreReaderImpl(versions)
                 ioStoreReader.concurrent = reader.concurrent
                 ioStoreReader.initialize(ioStoreEnvironment, ioStoreTocReadOptions, keys)
                 ioStoreReader.files.associateByTo(files) { it.path.toLowerCase() }
@@ -96,9 +96,9 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     override fun loadGameFile(packageId: FPackageId): IoPackage? = runCatching {
         val storeEntry = globalPackageStore.value.findStoreEntry(packageId)
             ?: return null//throw NotFoundException("The package to load does not exist on disk or in the loader")
-        val chunkType = if (game.game >= GAME_UE5_BASE) EIoChunkType5.ExportBundleData else EIoChunkType.ExportBundleData
+        val chunkType = if (game >= GAME_UE5_BASE) EIoChunkType5.ExportBundleData else EIoChunkType.ExportBundleData
         val ioBuffer = saveChunk(FIoChunkId(packageId.value(), 0u, chunkType))
-        return IoPackage(ioBuffer, packageId, storeEntry, globalPackageStore.value, this, game)
+        return IoPackage(ioBuffer, packageId, storeEntry, globalPackageStore.value, this, versions)
     }.onFailure { logger.error(it) { "Failed to load package with id 0x%016X".format(packageId.value().toLong()) } }.getOrNull()
 
     override fun saveGameFile(filePath: String): ByteArray? {
@@ -130,7 +130,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     protected fun loadGlobalData(globalTocFile: File) {
         globalDataLoaded = true
         try {
-            val ioStoreReader = FIoStoreReaderImpl(game)
+            val ioStoreReader = FIoStoreReaderImpl(versions)
             ioStoreReader.initialize(FIoStoreEnvironment(globalTocFile.path.substringBeforeLast('.')), ioStoreTocReadOptions, keys)
             mountedIoStoreReaders.add(ioStoreReader)
             PakFileReader.logger.info("Initialized I/O store")

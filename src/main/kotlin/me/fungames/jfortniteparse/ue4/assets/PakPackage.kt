@@ -15,7 +15,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
-import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import java.io.File
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -26,18 +26,18 @@ class PakPackage(
     ubulk: ByteBuffer? = null,
     fileName: String,
     provider: FileProvider? = null,
-    game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST
-) : Package(fileName, provider, game) {
+    versions: VersionContainer = provider?.versions ?: VersionContainer.DEFAULT
+) : Package(fileName, provider, versions) {
     companion object {
         val packageMagic = 0x9E2A83C1u
     }
 
-    constructor(uasset: ByteArray, uexp: ByteArray? = null, ubulk: ByteArray? = null, name: String, provider: FileProvider? = null, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) :
-        this(ByteBuffer.wrap(uasset), uexp?.let { ByteBuffer.wrap(it) }, ubulk?.let { ByteBuffer.wrap(it) }, name, provider, game)
+    constructor(uasset: ByteArray, uexp: ByteArray? = null, ubulk: ByteArray? = null, name: String, provider: FileProvider? = null, versions: VersionContainer = VersionContainer.DEFAULT) :
+        this(ByteBuffer.wrap(uasset), uexp?.let { ByteBuffer.wrap(it) }, ubulk?.let { ByteBuffer.wrap(it) }, name, provider, versions)
 
-    constructor(uasset: File, uexp: File, ubulk: File?, provider: FileProvider? = null, game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : this(
+    constructor(uasset: File, uexp: File, ubulk: File?, provider: FileProvider? = null, versions: VersionContainer = provider?.versions ?: VersionContainer.DEFAULT) : this(
         uasset.readBytes(), uexp.readBytes(), ubulk?.readBytes(),
-        uasset.nameWithoutExtension, provider, game
+        uasset.nameWithoutExtension, provider, versions
     )
 
     val info: FPackageFileSummary
@@ -53,14 +53,11 @@ class PakPackage(
         val uassetAr = FAssetArchive(uasset, provider, fileName)
         val uexpAr = if (uexp != null) FAssetArchive(uexp, provider, fileName) else uassetAr
         val ubulkAr = ubulk?.let { FAssetArchive(it, provider, fileName) }
-        uassetAr.game = game.game
-        uassetAr.ver = game.version
+        uassetAr.versions = versions
         uassetAr.owner = this
-        uexpAr.game = game.game
-        uexpAr.ver = game.version
+        uexpAr.versions = versions
         uexpAr.owner = this
-        ubulkAr?.game = game.game
-        ubulkAr?.ver = game.version
+        ubulkAr?.versions = versions
         ubulkAr?.owner = this
 
         info = FPackageFileSummary(uassetAr)
@@ -68,7 +65,7 @@ class PakPackage(
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
 
         val ver = info.fileVersionUE4
-        if (ver > 0) {
+        if (ver > 0) { // TODO IMPORTANT
             uassetAr.ver = ver
             uexpAr.ver = ver
             ubulkAr?.ver = ver
@@ -205,8 +202,7 @@ class PakPackage(
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
     private fun updateHeader() {
         val uassetWriter = FByteArchiveWriter()
-        uassetWriter.game = game.game
-        uassetWriter.ver = game.version
+        uassetWriter.versions = versions
         uassetWriter.nameMap = nameMap
         uassetWriter.importMap = importMap
         uassetWriter.exportMap = exportMap
@@ -236,8 +232,7 @@ class PakPackage(
     fun write(uassetOutputStream: OutputStream, uexpOutputStream: OutputStream, ubulkOutputStream: OutputStream?) {
         updateHeader()
         val uexpWriter = writer(uexpOutputStream)
-        uexpWriter.game = game.game
-        uexpWriter.ver = game.version
+        uexpWriter.versions = versions
         uexpWriter.uassetSize = info.totalHeaderSize
         exports.forEach {
             val beginPos = uexpWriter.relativePos()
@@ -248,8 +243,7 @@ class PakPackage(
         }
         uexpWriter.writeUInt32(packageMagic)
         val uassetWriter = writer(uassetOutputStream)
-        uassetWriter.game = game.game
-        uassetWriter.ver = game.version
+        uassetWriter.versions = versions
         info.serialize(uassetWriter)
         val nameMapPadding = info.nameOffset - uassetWriter.pos()
         if (nameMapPadding > 0)

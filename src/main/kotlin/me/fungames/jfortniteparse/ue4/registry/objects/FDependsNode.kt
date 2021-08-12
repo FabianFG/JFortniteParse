@@ -93,7 +93,7 @@ class FDependsNode(private val index: Int) {
         referencers = referencersRef.element
     }
 
-    fun serializeLoadBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion, preallocatedDependsNodeDataBuffer: Array<FDependsNode>, numDependsNodes: Int) {
+    fun serializeLoadBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion, preallocatedDependsNodeDataBuffer: Array<FDependsNode>) {
         identifier = FAssetIdentifier(Ar)
 
         val numHard = Ar.readInt32()
@@ -109,31 +109,21 @@ class FDependsNode(private val index: Int) {
         manageDependencies = ArrayList(numSoftManage + numHardManage)
         referencers = ArrayList(numReferencers)
 
-        fun serializeNodeArray(num: Int, outNodes: ObjectRef<MutableList<FDependsNode>?>) {
-            for (i in 0 until num) {
+        fun serializeNodeArray(num: Int, outNodes: MutableList<FDependsNode>) {
+            repeat(num) {
                 val index = Ar.readInt32()
-                if (index < 0 || index >= numDependsNodes) {
-                    throw ParserException("Invalid DependencyType index")
-                }
-                val dependsNode = preallocatedDependsNodeDataBuffer[index]
-                outNodes.element!!.add(index, dependsNode)
+                val dependsNode = preallocatedDependsNodeDataBuffer.getOrNull(index)
+                    ?: throw ParserException("Invalid DependencyType index")
+                outNodes.add(/*index, */dependsNode) // We cannot assign by index without hacks :(
             }
         }
 
         // Read the bits for each type, but don't write anything if serializing that type isn't allowed
-        val packageDependenciesRef = packageDependencies.ref()
-        val nameDependenciesRef = nameDependencies.ref()
-        val manageDependenciesRef = manageDependencies.ref()
-        val referencersRef = referencers.ref()
-        serializeNodeArray(numHard, packageDependenciesRef)
-        serializeNodeArray(numSoft, packageDependenciesRef)
-        serializeNodeArray(numName, nameDependenciesRef)
-        serializeNodeArray(numSoftManage, manageDependenciesRef)
-        serializeNodeArray(numHardManage, manageDependenciesRef)
-        serializeNodeArray(numReferencers, referencersRef)
-        packageDependencies = packageDependenciesRef.element
-        nameDependencies = nameDependenciesRef.element
-        manageDependencies = manageDependenciesRef.element
-        referencers = referencersRef.element
+        serializeNodeArray(numHard, packageDependencies!!)
+        serializeNodeArray(numSoft, packageDependencies!!)
+        serializeNodeArray(numName, nameDependencies!!)
+        serializeNodeArray(numSoftManage, manageDependencies!!)
+        serializeNodeArray(numHardManage, manageDependencies!!)
+        serializeNodeArray(numReferencers, referencers!!)
     }
 }
