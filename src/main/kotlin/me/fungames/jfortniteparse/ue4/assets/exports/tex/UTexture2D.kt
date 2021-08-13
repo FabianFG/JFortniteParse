@@ -10,7 +10,6 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.FIntPoint
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 
 @OnlyAnnotated
 class UTexture2D : UTexture() {
@@ -89,7 +88,7 @@ class FTexturePlatformData {
         val mipCount = Ar.readInt32()
         mips = Array(mipCount) { FTexture2DMipMap(Ar) }
 
-        if (Ar.game >= GAME_UE4(23)) {
+        if (Ar.versions["VirtualTextures"]) {
             isVirtual = Ar.readBoolean()
             if (isVirtual) {
                 throw ParserException("Texture is virtual, not implemented", Ar)
@@ -108,7 +107,7 @@ class FTexturePlatformData {
         Ar.writeString(pixelFormat)
         Ar.writeInt32(firstMip)
         Ar.writeTArray(mips) { it.serialize(Ar) }
-        if (Ar.game >= GAME_UE4(23)) {
+        if (Ar.versions["VirtualTextures"]) {
             Ar.writeBoolean(isVirtual)
             if (isVirtual)
                 throw ParserException("Texture is virtual, not implemented", Ar)

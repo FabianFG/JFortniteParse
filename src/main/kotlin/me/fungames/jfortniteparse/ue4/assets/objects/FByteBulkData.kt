@@ -7,7 +7,7 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
-class FByteBulkData {
+open class FByteBulkData {
     var header: FByteBulkDataHeader
     var data: ByteArray
     val isBulkDataLoaded get() = data.isNotEmpty()

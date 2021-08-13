@@ -8,48 +8,16 @@ import me.fungames.jfortniteparse.ue4.converters.meshes.CStaticMeshLod
 import me.fungames.jfortniteparse.ue4.converters.meshes.CVertexShare
 import me.fungames.jfortniteparse.ue4.converters.meshes.psk.common.VChunkHeader
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-
-class StaticMeshExport(val fileName: String, val pskx: ByteArray, val materials: MutableList<MaterialExport>) {
-    fun writeToDir(dir: File) {
-        dir.mkdirs()
-        File(dir.absolutePath + "/$fileName").writeBytes(pskx)
-        materials.forEach { it.writeToDir(dir) }
-    }
-
-    fun appendToZip(zos: ZipOutputStream) {
-        runCatching {
-            val mat = ZipEntry(fileName)
-            zos.putNextEntry(mat)
-            zos.write(pskx)
-            zos.flush()
-            zos.closeEntry()
-        }
-        materials.forEach { it.appendToZip(zos) }
-    }
-
-    fun toZip(): ByteArray {
-        val bos = ByteArrayOutputStream()
-        val zos = ZipOutputStream(bos)
-        zos.setMethod(ZipOutputStream.DEFLATED)
-        appendToZip(zos)
-        zos.close()
-        return bos.toByteArray()
-    }
-}
 
 fun CStaticMesh.export(exportLods: Boolean = false, exportMaterials: Boolean = true) = exportLods(exportLods, exportMaterials).firstOrNull()
 
-fun CStaticMesh.exportLods(exportLods: Boolean = false, exportMaterials: Boolean = true): List<StaticMeshExport> {
+fun CStaticMesh.exportLods(exportLods: Boolean = false, exportMaterials: Boolean = true): List<MeshExport> {
     if (lods.isEmpty()) {
         LOG_JFP.warn { "Mesh ${originalMesh.name} has 0 lods" }
         return emptyList()
     }
 
-    val exports = mutableListOf<StaticMeshExport>()
+    val exports = mutableListOf<MeshExport>()
     val maxLod = if (exportLods) lods.size else 1
     for (lod in 0 until maxLod) {
         if (lods[lod].sections.isEmpty()) {
@@ -68,7 +36,7 @@ fun CStaticMesh.exportLods(exportLods: Boolean = false, exportMaterials: Boolean
 
         exportStaticMeshLod(lods[lod], writer, materialExports)
 
-        exports.add(StaticMeshExport(fileName, writer.toByteArray(), materialExports ?: mutableListOf()))
+        exports.add(MeshExport(fileName, writer.toByteArray(), materialExports ?: mutableListOf()))
     }
     return exports
 }

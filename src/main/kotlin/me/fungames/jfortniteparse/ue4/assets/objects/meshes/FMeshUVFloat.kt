@@ -17,7 +17,7 @@ class FMeshUVFloat {
         Ar.writeFloat32(v)
     }
 
-    constructor(u: Float, v: Float) {
+    constructor(u: Float = 0f, v: Float = 0f) {
         this.u = u
         this.v = v
     }

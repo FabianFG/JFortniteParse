@@ -28,7 +28,7 @@ class FStaticMeshSection {
             Ar.readBoolean()
         else
             false
-        visibleInRayTracing = if (Ar.game >= GAME_UE4(26))
+        visibleInRayTracing = if (Ar.versions["StaticMesh.HasVisibleInRayTracing"])
             Ar.readBoolean()
         else
             false

@@ -6,41 +6,37 @@ import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_FTEXT_HISTORY
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_SOUND_CONCURRENCY_PACKAGE
+import me.fungames.jfortniteparse.ue4.versions.*
 
-internal val CDSF_AdjancencyData : UByte = 1u
+internal val CDSF_AdjancencyData: UByte = 1u
 // UE4.20+
-internal val CDSF_MinLodData : UByte = 2u
-internal val CDSF_ReversedIndexBuffer : UByte = 4u
-internal val CDSF_RaytracingResources : UByte = 8u
+internal val CDSF_MinLodData: UByte = 2u
+internal val CDSF_ReversedIndexBuffer: UByte = 4u
+internal val CDSF_RaytracingResources: UByte = 8u
 
 class FStaticMeshLODResources {
-    var stripFlags : FStripDataFlags
     var sections: Array<FStaticMeshSection>
-    var vertexBuffer = FStaticMeshVertexBuffer(FStripDataFlags(0u, 0u), 0, 0, 0, false, false, emptyArray())
-    var positionVertexBuffer = FPositionVertexBuffer(emptyArray(), 0, 0)
-    var colorVertexBuffer = FColorVertexBuffer(FStripDataFlags(0u, 0u), 0, 0, emptyArray())
-    var indexBuffer = FRawStaticIndexBuffer()
+    lateinit var vertexBuffer: FStaticMeshVertexBuffer
+    lateinit var positionVertexBuffer: FPositionVertexBuffer
+    lateinit var colorVertexBuffer: FColorVertexBuffer
+    lateinit var indexBuffer: FRawStaticIndexBuffer
     var reversedIndexBuffer = FRawStaticIndexBuffer()
-    var depthOnlyIndexBuffer = FRawStaticIndexBuffer()
+    lateinit var depthOnlyIndexBuffer: FRawStaticIndexBuffer
     var reversedDepthOnlyIndexBuffer = FRawStaticIndexBuffer()
     var wireframeIndexBuffer = FRawStaticIndexBuffer()
     var adjacencyIndexBuffer = FRawStaticIndexBuffer()
-    var maxDeviation : Float
+    var maxDeviation: Float
     var isLODCookedOut = false
     var inlined = false
 
     constructor(Ar: FAssetArchive) {
-        stripFlags = FStripDataFlags(Ar)
+        val stripFlags = FStripDataFlags(Ar)
         sections = Ar.readTArray { FStaticMeshSection(Ar) }
         maxDeviation = Ar.readFloat32()
 
-        if (Ar.game < GAME_UE4(23)) {
+        if (!Ar.versions["StaticMesh.UseNewCookedFormat"]) {
             if (!stripFlags.isDataStrippedForServer() && !stripFlags.isClassDataStripped(CDSF_MinLodData))
-                serializeBuffersLegacy(Ar)
+                serializeBuffersLegacy(Ar, stripFlags)
             return
         }
 
@@ -63,17 +59,19 @@ class FStaticMeshLODResources {
                 Ar.readUInt32() // DepthOnlyNumTriangles
                 Ar.readUInt32() // PackedData
 
-                // ... SerializeMetaData() for all arrays
-                Ar.seek(Ar.pos() + 4*4 + 2*4 + 2*4 + 6*(2*4))
-/*				StaticMeshVertexBuffer = 2x int32, 2x bool
-				PositionVertexBuffer = 2x int32
-				ColorVertexBuffer = 2x int32
-				IndexBuffer = int32 + bool
-				ReversedIndexBuffer
-				DepthOnlyIndexBuffer
-				ReversedDepthOnlyIndexBuffer
-				WireframeIndexBuffer
-				AdjacencyIndexBuffer */
+                // ... SerializeMetaData() for all buffers
+                Ar.skip(4*4 + 2*4 + 2*4 + 5*(2*4))
+                // StaticMeshVertexBuffer = 2x int32, 2x bool
+                // PositionVertexBuffer = 2x int32
+                // ColorVertexBuffer = 2x int32
+                // IndexBuffer = int32 + bool
+                // ReversedIndexBuffer
+                // DepthOnlyIndexBuffer
+                // ReversedDepthOnlyIndexBuffer
+                // WireframeIndexBuffer
+                if (FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.RemovingTessellation) {
+                    Ar.skip(2*4) // AdjacencyIndexBuffer
+                }
             }
             // FStaticMeshBuffersSize
             Ar.readUInt32() // SerializedBuffersSize
@@ -82,7 +80,7 @@ class FStaticMeshLODResources {
         }
     }
 
-    private fun serializeBuffersLegacy(Ar: FArchive) {
+    private fun serializeBuffersLegacy(Ar: FArchive, stripFlags: FStripDataFlags) {
         positionVertexBuffer = FPositionVertexBuffer(Ar)
         vertexBuffer = FStaticMeshVertexBuffer(Ar)
         colorVertexBuffer = FColorVertexBuffer(Ar)
@@ -132,12 +130,12 @@ class FStaticMeshLODResources {
         if (!stripFlags.isEditorDataStripped())
             wireframeIndexBuffer = FRawStaticIndexBuffer(Ar)
 
-        if (!stripFlags.isClassDataStripped(CDSF_AdjancencyData))
+        if (FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.RemovingTessellation && !stripFlags.isClassDataStripped(CDSF_AdjancencyData))
             adjacencyIndexBuffer = FRawStaticIndexBuffer(Ar)
 
         // UE4.25+
-        if (Ar.game >= GAME_UE4(25) && !stripFlags.isClassDataStripped(CDSF_RaytracingResources))
-            Ar.readBulkTArray { Ar.readUInt8() } // Raw data
+        if (Ar.versions["StaticMesh.HasRayTracingGeometry"] && !stripFlags.isClassDataStripped(CDSF_RaytracingResources))
+            Ar.readBulkByteArray() // Raw data
 
         // AreaWeightedSectionSamplers
         for (i in sections.indices)

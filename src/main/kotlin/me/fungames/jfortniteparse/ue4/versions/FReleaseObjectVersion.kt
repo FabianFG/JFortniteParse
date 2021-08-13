@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.versions
 
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 // Custom serialization version for changes made in Release streams.
@@ -136,8 +137,14 @@ object FReleaseObjectVersion {
     // -----<new versions can be added above this line>-------------------------------------------------
     const val LatestVersion = AddedSubSequenceEntryWarpCounter
 
+    @JvmField val GUID = FGuid(0x9C54D522u, 0xA8264FBEu, 0x94210746u, 0x61B482D0u)
+
     @JvmStatic
     fun get(Ar: FArchive): Int {
+        val ver = Ar.customVer(GUID)
+        if (ver >= 0) {
+            return ver
+        }
         val game = Ar.game
         return when {
             game < GAME_UE4(11) -> BeforeCustomVersionWasAdded

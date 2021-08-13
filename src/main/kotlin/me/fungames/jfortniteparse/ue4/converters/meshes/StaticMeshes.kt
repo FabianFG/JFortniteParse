@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.ue4.converters.meshes
 import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh
+import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FMeshUVFloat
 import me.fungames.jfortniteparse.ue4.objects.core.math.FBox
 import me.fungames.jfortniteparse.ue4.objects.core.math.FSphere
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
@@ -17,7 +18,7 @@ class CStaticMeshLod : CBaseMeshLod() {
     var verts = emptyArray<CMeshVertex>()
 
     fun allocateVerts(count: Int) {
-        verts = Array(count) { CStaticMeshVertex(FVector(), CPackedNormal(), CPackedNormal(), CMeshUVFloat()) }
+        verts = Array(count) { CStaticMeshVertex(FVector(), CPackedNormal(), CPackedNormal(), FMeshUVFloat()) }
         numVerts = count
         allocateUVBuffers()
     }
@@ -29,11 +30,9 @@ class CStaticMeshLod : CBaseMeshLod() {
     }
 }
 
-class CStaticMeshVertex(position: FVector, normal: CPackedNormal, tangent: CPackedNormal, uv: CMeshUVFloat) :
-    CMeshVertex(position, normal, tangent, uv)
+class CStaticMeshVertex(position: FVector, normal: CPackedNormal, tangent: CPackedNormal, uv: FMeshUVFloat) : CMeshVertex(position, normal, tangent, uv)
 
 fun UStaticMesh.convertMesh(): CStaticMesh {
-
     // convert bounds
     val boundingSphere = FSphere(0f, 0f, 0f, bounds.sphereRadius / 2) //?? UE3 meshes has radius 2 times larger than mesh itself; verify for UE4
     val boundingBox = FBox(bounds.origin - bounds.boxExtent, bounds.origin + bounds.boxExtent)
@@ -79,7 +78,7 @@ fun UStaticMesh.convertMesh(): CStaticMesh {
             v.position = srcLod.positionVertexBuffer.verts[i].run { FVector(x, y, z) }
             unpackNormals(suv.normal, v)
             // copy UV
-            v.uv = CMeshUVFloat(suv.uv[0])
+            v.uv = suv.uv[0]
             for (texCoordIndex in 1 until numTexCoords) {
                 lod.extraUV[texCoordIndex - 1][i].u = suv.uv[texCoordIndex].u
                 lod.extraUV[texCoordIndex - 1][i].v = suv.uv[texCoordIndex].v
@@ -96,4 +95,3 @@ fun UStaticMesh.convertMesh(): CStaticMesh {
     mesh.finalizeMesh()
     return mesh
 }
-

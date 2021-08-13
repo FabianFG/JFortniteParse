@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.versions
 
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 // Custom serialization version for changes made in Dev-Editor stream
@@ -90,8 +91,14 @@ object FEditorObjectVersion {
     // -----<new versions can be added above this line>-------------------------------------------------
     const val LatestVersion = SkeletalMeshSourceDataSupport16bitOfMaterialNumber
 
+    @JvmField val GUID = FGuid(0xE4B068EDu, 0xF49442E9u, 0xA231DA0Bu, 0x2E46BB41u)
+
     @JvmStatic
     fun get(Ar: FArchive): Int {
+        val ver = Ar.customVer(GUID)
+        if (ver >= 0) {
+            return ver
+        }
         val game = Ar.game
         return when {
             game < GAME_UE4(12) -> BeforeCustomVersionWasAdded

@@ -29,4 +29,10 @@ class FQuat {
         this.z = z
         this.w = w
     }
+
+    fun conjugate() {
+        x = -x
+        y = -y
+        z = -z
+    }
 }

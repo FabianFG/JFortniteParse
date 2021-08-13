@@ -31,13 +31,13 @@ class VersionContainer {
 
     var explicitVer = false
         private set
-    var customVersions: MutableList<FCustomVersion>?
+    var customVersions: List<FCustomVersion>?
     val options = hashMapOf<String, Boolean>()
     private val optionOverrides: Map<String, Boolean>?
 
     constructor(game: Int = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION),
                 ver: Int = VER_UE4_DETERMINE_BY_GAME,
-                customVersions: MutableList<FCustomVersion>? = null,
+                customVersions: List<FCustomVersion>? = null,
                 optionOverrides: Map<String, Boolean>? = null) {
         this.optionOverrides = optionOverrides
         this.game = game
@@ -60,7 +60,6 @@ class VersionContainer {
         options["StaticMesh.HasVisibleInRayTracing"] = game >= GAME_UE4(26)
         options["StaticMesh.KeepMobileMinLODSettingOnDesktop"] = game >= GAME_UE4(27)
         options["StaticMesh.UseNewCookedFormat"] = game >= GAME_UE4(23)
-        options["Texture.64BitSkipOffsets"] = game >= GAME_UE4(20) // TODO check other occurrences of Game >= GAME_UE4(20) and rename this
         options["VirtualTextures"] = game >= GAME_UE4(23)
 
         if (optionOverrides != null) {
@@ -70,5 +69,5 @@ class VersionContainer {
         }
     }
 
-    inline operator fun get(optionKey: String) = options[optionKey]
+    inline operator fun get(optionKey: String) = options.getOrDefault(optionKey, false)
 }

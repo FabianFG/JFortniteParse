@@ -21,7 +21,7 @@ class CVertexShare {
     val hash = IntArray(16384) { -1 }
     lateinit var hashNext: IntArray
 
-    fun prepare(verts: Array<CMeshVertex>) {
+    fun prepare(verts: Array<out CMeshVertex>) {
         vertToWedge = IntArray(verts.size)
 
         // compute bounds for better hashing
@@ -32,7 +32,7 @@ class CVertexShare {
         hashNext = IntArray(verts.size) { -1 }
     }
 
-    fun computeBounds(verts: Array<CMeshVertex>, updateBounds: Boolean = false) {
+    fun computeBounds(verts: Array<out CMeshVertex>, updateBounds: Boolean = false) {
         if (verts.isEmpty()) {
             if (!updateBounds) {
                 mins.set(0f, 0f, 0f)

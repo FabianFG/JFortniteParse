@@ -2,7 +2,6 @@ package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_SUPPORT_32BIT_STATIC_MESH_INDICES
 
 class FRawStaticIndexBuffer {
@@ -16,8 +15,8 @@ class FRawStaticIndexBuffer {
         } else {
             // serialize all indices as byte array
             val is32Bit = Ar.readBoolean()
-            val data = Ar.readBulkTArray { Ar.readInt8() }.toByteArray()
-            if (Ar.game >= GAME_UE4(25))
+            val data = Ar.readBulkByteArray()
+            if (Ar.versions["RawIndexBuffer.HasShouldExpandTo32Bit"])
                 Ar.readBoolean() // shouldExpandTo32Bit
 
             if (data.isEmpty()) {

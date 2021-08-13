@@ -5,8 +5,8 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.toFloat16
 
 class FMeshUVHalf {
-    var u : UShort
-    var v : UShort
+    var u: UShort
+    var v: UShort
 
     constructor(Ar: FArchive) {
         u = Ar.readUInt16()
@@ -18,7 +18,7 @@ class FMeshUVHalf {
         Ar.writeUInt16(v)
     }
 
-    constructor(u: UShort, v: UShort) {
+    constructor(u: UShort = 0u, v: UShort = 0u) {
         this.u = u
         this.v = v
     }

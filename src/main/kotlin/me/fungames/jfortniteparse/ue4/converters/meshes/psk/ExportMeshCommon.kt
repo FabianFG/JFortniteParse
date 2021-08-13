@@ -1,9 +1,13 @@
 package me.fungames.jfortniteparse.ue4.converters.meshes.psk
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.assets.objects.meshes.FMeshUVFloat
 import me.fungames.jfortniteparse.ue4.converters.MaterialExport
 import me.fungames.jfortniteparse.ue4.converters.export
-import me.fungames.jfortniteparse.ue4.converters.meshes.*
+import me.fungames.jfortniteparse.ue4.converters.meshes.CIndexBuffer
+import me.fungames.jfortniteparse.ue4.converters.meshes.CMeshSection
+import me.fungames.jfortniteparse.ue4.converters.meshes.CMeshVertex
+import me.fungames.jfortniteparse.ue4.converters.meshes.CVertexShare
 import me.fungames.jfortniteparse.ue4.converters.meshes.psk.common.VChunkHeader
 import me.fungames.jfortniteparse.ue4.converters.meshes.psk.psk.VMaterial
 import me.fungames.jfortniteparse.ue4.converters.meshes.psk.psk.VMeshUV
@@ -13,8 +17,40 @@ import me.fungames.jfortniteparse.ue4.converters.meshes.psk.pskx.VTriangle32
 import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.MIRROR_MESH
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
-fun exportCommonMeshData(Ar: FArchiveWriter, sections: Array<CMeshSection>, verts: Array<CMeshVertex>, indices: CIndexBuffer, share: CVertexShare, materialExports: MutableList<MaterialExport>?) {
+class MeshExport(val fileName: String, val data: ByteArray, val materials: MutableList<MaterialExport>) {
+    fun writeToDir(dir: File) {
+        dir.mkdirs()
+        File(dir.absolutePath + "/$fileName").writeBytes(data)
+        materials.forEach { it.writeToDir(dir) }
+    }
+
+    fun appendToZip(zos: ZipOutputStream) {
+        runCatching {
+            val mat = ZipEntry(fileName)
+            zos.putNextEntry(mat)
+            zos.write(data)
+            zos.flush()
+            zos.closeEntry()
+        }
+        materials.forEach { it.appendToZip(zos) }
+    }
+
+    fun toZip(): ByteArray {
+        val bos = ByteArrayOutputStream()
+        val zos = ZipOutputStream(bos)
+        zos.setMethod(ZipOutputStream.DEFLATED)
+        appendToZip(zos)
+        zos.close()
+        return bos.toByteArray()
+    }
+}
+
+fun exportCommonMeshData(Ar: FArchiveWriter, sections: Array<CMeshSection>, verts: Array<out CMeshVertex>, indices: CIndexBuffer, share: CVertexShare, materialExports: MutableList<MaterialExport>?) {
     val mainHdr = VChunkHeader()
     val ptsHdr = VChunkHeader()
     val wedgHdr = VChunkHeader()
@@ -137,7 +173,7 @@ fun exportVertexColors(Ar: FArchiveWriter, colors: Array<FColor>?, numVerts: Int
         colors[i].serialize(Ar)
 }
 
-fun exportExtraUV(Ar: FArchiveWriter, extraUV: Array<Array<CMeshUVFloat>>, numVerts: Int, numTexCoords: Int) {
+fun exportExtraUV(Ar: FArchiveWriter, extraUV: Array<Array<FMeshUVFloat>>, numVerts: Int, numTexCoords: Int) {
     val uvHdr = VChunkHeader()
     uvHdr.dataCount = numVerts
     uvHdr.dataSize = 8 // sizeof(VMeshUV)

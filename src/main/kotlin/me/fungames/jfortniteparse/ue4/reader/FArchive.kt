@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import me.fungames.jfortniteparse.util.toFloat16
@@ -142,20 +143,16 @@ abstract class FArchive : Cloneable, InputStream {
     open fun readFloat32() = java.lang.Float.intBitsToFloat(readInt32())
     open fun readDouble() = java.lang.Double.longBitsToDouble(readInt64())
 
-    fun readBoolean(): Boolean {
-        val int = readInt32()
-        if (int != 0 && int != 1) {
-            throw ParserException("Invalid bool value ($int)", this)
-        }
-        return int != 0
+    fun readBoolean() = when (val i = readInt32()) {
+        0 -> false
+        1 -> true
+        else -> throw ParserException("Invalid bool value ($i)", this)
     }
 
-    fun readFlag(): Boolean {
-        val int = readUInt8().toInt()
-        if (int != 0 && int != 1) {
-            throw ParserException("Invalid bool value ($int)", this)
-        }
-        return int != 0
+    fun readFlag() = when (val i = readUInt8().toInt()) {
+        0 -> false
+        1 -> true
+        else -> throw ParserException("Invalid bool value ($i)", this)
     }
 
     open fun readIntPacked(): UInt {
@@ -210,14 +207,34 @@ abstract class FArchive : Cloneable, InputStream {
 
     inline fun <reified T> readBulkTArray(init: (Int) -> T): Array<T> {
         val elementSize = readInt32()
+        val elementCount = readInt32()
         val savePos = pos()
-        val array = readTArray(init)
-        if (pos() != savePos + 4 + array.size * elementSize)
+        val array = Array(elementCount) { init(it) }
+        if (pos() != savePos + array.size * elementSize)
             throw ParserException("RawArray item size mismatch: expected %d, serialized %d".format(elementSize, (pos() - savePos) / array.size))
         return array
+    }
+
+    inline fun readBulkByteArray(): ByteArray {
+        val elementSize = readInt32()
+        val elementCount = readInt32()
+        return read(elementCount)
+    }
+
+    inline fun skipBulkArray() {
+        val elementSize = readInt32()
+        val elementCount = readInt32()
+        skip((elementSize * elementCount).toLong())
+    }
+
+    inline fun skipFixedArray(size: Int) {
+        val elementCount = readInt32()
+        skip((elementCount * size).toLong())
     }
 
     inline fun <reified T> readArray(init: (Int) -> T) = MutableList(readInt32()) { init(it) }
 
     open fun readFName() = FName.NAME_None
+
+    fun customVer(guid: FGuid) = versions.customVersions?.firstOrNull { it.key == guid }?.version ?: -1
 }

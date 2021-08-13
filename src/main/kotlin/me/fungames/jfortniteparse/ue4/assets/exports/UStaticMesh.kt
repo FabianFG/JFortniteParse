@@ -56,7 +56,7 @@ class UStaticMesh : UStaticMesh_Properties() {
 
         // serialize FStaticMeshRenderData
         if (cooked) {
-            if (Ar.game >= GAME_UE4(27)) {
+            if (Ar.versions["StaticMesh.KeepMobileMinLODSettingOnDesktop"]) {
                 // The serialization of this variable is cvar-dependent in UE4, so there's no clear way to understand
                 // if it should be serialize in our code or not.
                 Ar.readInt32() // MinMobileLODIdx
@@ -97,7 +97,7 @@ class UStaticMesh : UStaticMesh_Properties() {
             bounds = FBoxSphereBounds(Ar)
 
             // Note: bLODsShareStaticLighting field exists in all engine versions except UE4.15.
-            if (Ar.game <= GAME_UE4(14) || Ar.game >= GAME_UE4(16))
+            if (Ar.versions["StaticMesh.HasLODsShareStaticLighting"])
                 lodsShareStaticLighting = Ar.readBoolean()
 
             if (Ar.game < GAME_UE4(14))

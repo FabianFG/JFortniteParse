@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.rendercore
 
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
+import me.fungames.jfortniteparse.ue4.objects.core.math.FVector4
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
@@ -17,8 +18,15 @@ class FPackedNormal {
 
     constructor(vector: FVector) {
         data = (((vector.x + 1) * 127.5f).toInt()
-                + (((vector.y + 1) * 127.5f).toInt() shl 8)
-                + (((vector.z + 1) * 127.5f).toInt() shl 16)).toUInt()
+             + (((vector.y + 1) * 127.5f).toInt() shl 8)
+             + (((vector.z + 1) * 127.5f).toInt() shl 16)).toUInt()
+    }
+
+    constructor(vector: FVector4) {
+        data = (((vector.x + 1) * 127.5f).toInt()
+             + (((vector.y + 1) * 127.5f).toInt() shl 8)
+             + (((vector.z + 1) * 127.5f).toInt() shl 16)
+             + (((vector.w + 1) * 127.5f).toInt() shl 24)).toUInt()
     }
 
     fun serialize(Ar: FArchiveWriter) {
