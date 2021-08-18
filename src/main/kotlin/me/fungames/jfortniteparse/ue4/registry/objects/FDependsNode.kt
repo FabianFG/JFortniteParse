@@ -10,9 +10,9 @@ import kotlin.jvm.internal.Ref.ObjectRef
 class FDependsNode(private val index: Int) {
     companion object {
         const val packageFlagWidth = 3
-        const val packageFlagSetWidth = 1 shr packageFlagWidth
+        const val packageFlagSetWidth = 5 // FPropertyCombinationPack3::StorageBitCount
         const val manageFlagWidth = 1
-        const val manageFlagSetWidth = 1 shr manageFlagWidth
+        const val manageFlagSetWidth = 1 // TPropertyCombinationSet<1>::StorageBitCount
     }
 
     /** The name of the package/object this node represents */
@@ -30,7 +30,7 @@ class FDependsNode(private val index: Int) {
     var manageFlags: BitSet? = null
         private set
 
-    fun serializeLoad(Ar: FArchive, getNodeFromSerializeIndex: (Int) -> FDependsNode?) {
+    fun serializeLoad(Ar: FArchive, preallocatedDependsNodeDataBuffer: Array<FDependsNode>) {
         identifier = FAssetIdentifier(Ar)
 
         fun readDependencies(outDependencies: ObjectRef<MutableList<FDependsNode>?>, outFlagBits: ObjectRef<BitSet?>?, flagSetWidth: Int) {
@@ -39,16 +39,16 @@ class FDependsNode(private val index: Int) {
             val sortIndexes = mutableListOf<Int>()
             var numFlagBits = 0
 
-            val inDependencies = Ar.readTArray { Ar.readInt32() }
-            val numDependencies = inDependencies.size
+            val numDependencies = Ar.readInt32()
+            val inDependencies = IntArray(numDependencies) { Ar.readInt32() }
             if (outFlagBits != null) {
                 numFlagBits = flagSetWidth * numDependencies
                 val numFlagWords = numFlagBits.toUInt().divideAndRoundUp(32u)
-                inFlagBits = BitSet.valueOf(Ar.read(numFlagWords.toInt()))
+                inFlagBits = BitSet.valueOf(Ar.read(numFlagWords.toInt() * 4))
             }
 
             for (serializeIndex in inDependencies) {
-                val dependsNode = getNodeFromSerializeIndex(serializeIndex)
+                val dependsNode = preallocatedDependsNodeDataBuffer.getOrNull(serializeIndex)
                     ?: throw ParserException("Invalid index of preallocatedDependsNodeDataBuffer")
                 pointerDependencies.add(dependsNode)
             }
@@ -57,7 +57,7 @@ class FDependsNode(private val index: Int) {
                 sortIndexes.add(index)
             }
 
-            //sortIndexes.sortBy { pointerDependencies[it] }
+            sortIndexes.sortBy { pointerDependencies[it].index }
 
             outDependencies.element = ArrayList(numDependencies)
             for (sortIndex in sortIndexes) {

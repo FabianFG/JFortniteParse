@@ -40,7 +40,11 @@ class FAssetRegistryVersion(Ar: FArchive) : Comparable<FAssetRegistryVersion.Typ
          * * Removed global tag storage, a tag map reference-counts one store per asset registry
          * * All configs can mix fixed and loose tag maps
          */
-        FixedTags
+        FixedTags,
+        /** Added Version information to AssetPackageData */
+        WorkspaceDomain,
+        /** Added ImportedClasses to AssetPackageData */
+        PackageImportedClasses,
     }
 
     val guid = FGuid(Ar)

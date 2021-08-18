@@ -48,13 +48,12 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
             Ar.seek(dependencySectionEnd)
         }
 
-        val serializeHash = version < FAssetRegistryVersion.Type.AddedCookedMD5Hash
-        preallocatedPackageDataBuffer = Ar.readTArray { FAssetPackageData(Ar, serializeHash) }
+        preallocatedPackageDataBuffer = Ar.readTArray { FAssetPackageData(Ar, version) }
     }
 
     private fun loadDependencies(Ar: FArchive) {
         for (dependsNode in preallocatedDependsNodeDataBuffer) {
-            dependsNode.serializeLoad(Ar) { preallocatedDependsNodeDataBuffer.getOrNull(it) }
+            dependsNode.serializeLoad(Ar, preallocatedDependsNodeDataBuffer)
         }
     }
 
