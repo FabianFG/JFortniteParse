@@ -87,7 +87,7 @@ abstract class FileProvider {
 
     fun loadObject(objectPath: String?): UObject? {
         if (objectPath == null || objectPath == "None") return null
-        var packagePath = objectPath
+        var packagePath = if (objectPath.endsWith(".uasset") || objectPath.endsWith(".umap")) objectPath.substringBeforeLast('.') else objectPath
         val objectName: String
         val dotIndex = packagePath.indexOf('.')
         if (dotIndex == -1) { // use the package name as object name
