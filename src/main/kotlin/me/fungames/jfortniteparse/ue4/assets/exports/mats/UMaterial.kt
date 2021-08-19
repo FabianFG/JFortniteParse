@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.mats
 
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
-import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.converters.CMaterialParams
@@ -21,17 +20,26 @@ class UMaterial : UMaterial_Properties() {
             // scan package's imports for UTexture objects instead
             scanForTextures(Ar)
             if (validPos > 0) Ar.seek(validPos)
+            /*if (Ar.ver >= 260) { // VER_UE4_PURGED_FMATERIAL_COMPILE_OUTPUTS
+                val numLoadedResources = Ar.readInt32()
+                if (numLoadedResources > 0) {
+                    val resourceAr = FMaterialResourceProxyReader(Ar)
+                    repeat(numLoadedResources) { resourceIndex ->
+                        FMaterialResource().serializeInlineShaderMap(resourceAr)
+                    }
+                }
+            }*/
         }
     }
 
     fun scanForTextures(Ar: FAssetArchive) {
         //!! NOTE: this code will not work when textures are located in the same package - they don't present in import table
         //!! but could be found in export table. That's true for Simplygon-generated materials.
-        val owner = (Ar.owner as? PakPackage) ?: return
+        /*val owner = (Ar.owner as? PakPackage) ?: return
         for (imp in owner.importMap) {
             if (imp.className.text.startsWith("Texture", true))
                 owner.loadImport<UTexture>(imp)?.let { referencedTextures.add(it) }
-        }
+        }*/
     }
 
     override fun getParams(params: CMaterialParams) {
@@ -133,7 +141,7 @@ class UMaterial : UMaterial_Properties() {
 
         // do not allow normal map became a diffuse
         if ((params.diffuse == params.normal && diffWeight < normWeight) ||
-            (params.diffuse != null && params.diffuse!!.isTextureCube()))
+            (params.diffuse != null && params.diffuse!!.isTextureCube))
             params.diffuse = null
     }
 
