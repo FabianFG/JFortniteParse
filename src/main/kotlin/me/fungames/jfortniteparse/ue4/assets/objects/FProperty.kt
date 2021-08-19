@@ -196,7 +196,7 @@ sealed class FProperty {
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.name}", Ar)
                             EnumProperty(enumValue.first)
                         } else { // loaded from mappings provider
-                            val enumValue = Ar.provider!!.mappingsProvider.getEnum(typeData.enumName)?.getOrNull(ordinal)
+                            val enumValue = Ar.provider!!.mappingsProvider.getEnumValues(typeData.enumName)?.getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${typeData.enumName}", Ar)
                             val fakeName = (typeData.enumName.text + "::" + enumValue)
                             EnumProperty(FName(fakeName))

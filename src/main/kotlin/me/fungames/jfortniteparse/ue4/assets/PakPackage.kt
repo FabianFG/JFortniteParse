@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.GFatalObjectSerializationErrors
 import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.ue4.assets.exports.UEnum
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -197,7 +196,7 @@ class PakPackage(
         return ResolvedImportObject(import, this)
     }
 
-    private class ResolvedExportObject(exportIndex: Int, pkg: PakPackage) : ResolvedObject(pkg, exportIndex) {
+    class ResolvedExportObject(exportIndex: Int, pkg: PakPackage) : ResolvedObject(pkg, exportIndex) {
         val export = pkg.exportMap[exportIndex]
         override fun getName() = export.objectName
         override fun getOuter() = pkg.findObjectMinimal(export.outerIndex) ?: ResolvedLoadedObject(pkg)
@@ -207,23 +206,15 @@ class PakPackage(
     }
 
     /** Fallback if we cannot resolve the export in another package */
-    private class ResolvedImportObject(val import: FObjectImport, pkg: PakPackage) : ResolvedObject(pkg) {
+    class ResolvedImportObject(val import: FObjectImport, pkg: PakPackage) : ResolvedObject(pkg) {
         override fun getName() = import.objectName
         override fun getOuter() = pkg.findObjectMinimal(import.outerIndex)
-        override fun getClazz() = ResolvedLoadedObject(UScriptStruct(getName()))
+        override fun getClazz() = ResolvedLoadedObject(UScriptStruct(import.className))
         override fun getObject() = lazy {
-            val name = getName()
-            val struct = pkg.provider?.mappingsProvider?.getStruct(name)
-            if (struct != null) {
-                struct
-            } else {
-                val enumValues = pkg.provider?.mappingsProvider?.getEnum(name)
-                if (enumValues != null) {
-                    val enum = UEnum()
-                    enum.name = name.text
-                    enum.names = Array(enumValues.size) { FName("$name::${enumValues[it]}") to it.toLong() }
-                    enum
-                } else null
+            when (import.className.text) {
+                "Class", "ScriptStruct" -> pkg.provider?.mappingsProvider?.getStruct(import.objectName)
+                "Enum" -> pkg.provider?.mappingsProvider?.getEnum(import.objectName)
+                else -> null
             }
         }
     }

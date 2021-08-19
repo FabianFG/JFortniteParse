@@ -5,7 +5,6 @@ import com.google.gson.Gson
 import me.fungames.jfortniteparse.GFatalObjectSerializationErrors
 import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.fileprovider.FileProvider
-import me.fungames.jfortniteparse.ue4.assets.exports.UEnum
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
@@ -234,7 +233,7 @@ class IoPackage : Package {
         return null
     }
 
-    private class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg, exportIndex) {
+    class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg, exportIndex) {
         val exportMapEntry = pkg.exportMap[exportIndex]
         val exportObject = pkg.exportsLazy[exportIndex]
         override fun getName() = (pkg as IoPackage).nameMap.getName(exportMapEntry.objectName)
@@ -244,7 +243,7 @@ class IoPackage : Package {
         override fun getObject() = exportObject
     }
 
-    private class ResolvedScriptObject(val scriptImport: FScriptObjectEntry, pkg: IoPackage) : ResolvedObject(pkg) {
+    class ResolvedScriptObject(val scriptImport: FScriptObjectEntry, pkg: IoPackage) : ResolvedObject(pkg) {
         override fun getName() = scriptImport.objectName.toName()
         override fun getOuter() = (pkg as IoPackage).resolveObjectIndex(scriptImport.outerIndex)
         // This means we'll have UScriptStruct's shown as UClass which is wrong.
@@ -252,18 +251,7 @@ class IoPackage : Package {
         override fun getClazz() = ResolvedLoadedObject(UScriptStruct(FName("Class")))
         override fun getObject() = lazy {
             val name = getName()
-            val struct = pkg.provider?.mappingsProvider?.getStruct(name)
-            if (struct != null) {
-                struct
-            } else {
-                val enumValues = pkg.provider?.mappingsProvider?.getEnum(name)
-                if (enumValues != null) {
-                    val enum = UEnum()
-                    enum.name = name.text
-                    enum.names = Array(enumValues.size) { FName("$name::${enumValues[it]}") to it.toLong() }
-                    enum
-                } else null
-            }
+            pkg.provider?.mappingsProvider?.getStruct(name) ?: pkg.provider?.mappingsProvider?.getEnum(name)
         }
     }
     // endregion

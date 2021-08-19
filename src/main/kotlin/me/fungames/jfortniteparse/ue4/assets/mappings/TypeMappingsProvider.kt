@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.mappings
 
 import me.fungames.jfortniteparse.ue4.assets.ObjectTypeRegistry
+import me.fungames.jfortniteparse.ue4.assets.exports.UEnum
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
@@ -18,5 +19,16 @@ abstract class TypeMappingsProvider {
         return struct
     }
 
-    open fun getEnum(enumName: FName) = mappings.enums[enumName.text]
+    open fun getEnumValues(enumName: FName) = mappings.enums[enumName.text]
+
+    fun getEnum(enumName: FName): UEnum? {
+        val enumValues = getEnumValues(enumName)
+        if (enumValues != null) {
+            val enum = UEnum()
+            enum.name = enumName.text
+            enum.names = Array(enumValues.size) { FName("$enumName::${enumValues[it]}") to it.toLong() }
+            return enum
+        }
+        return null
+    }
 }
