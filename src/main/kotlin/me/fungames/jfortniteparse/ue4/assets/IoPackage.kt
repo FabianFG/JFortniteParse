@@ -7,6 +7,7 @@ import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UEnum
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
+import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.asyncloading2.*
@@ -170,6 +171,26 @@ class IoPackage : Package {
         //logger.info { "Successfully parsed package : $name" }
     }
 
+    // region Object resolvers
+    override fun <T : UObject> findObject(index: FPackageIndex?) = when {
+        index == null || index.isNull() -> null
+        index.isImport() -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it) }?.getObject()
+        else -> exportsLazy.getOrNull(index.toExport())
+    } as Lazy<T>?
+
+    override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
+        val exportIndex = exportMap.indexOfFirst {
+            nameMap.getName(it.objectName).text.equals(objectName, true) && (className == null || resolveObjectIndex(it.classIndex)?.getName()?.text == className)
+        }
+        return if (exportIndex != -1) exportsLazy[exportIndex] else null
+    }
+
+    override fun findObjectMinimal(index: FPackageIndex?) = when {
+        index == null || index.isNull() -> null
+        index.isImport() -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it) }
+        else -> ResolvedExportObject(index.toExport(), this)
+    }
+
     fun resolveObjectIndex(index: FPackageObjectIndex?): ResolvedObject? {
         if (index == null || index.isNull()) {
             return null
@@ -213,70 +234,22 @@ class IoPackage : Package {
         return null
     }
 
-    abstract class ResolvedObject(val pkg: IoPackage) {
-        abstract fun getName(): FName
-        open fun getOuter(): ResolvedObject? = null
-        open fun getClazz(): ResolvedObject? = null
-        open fun getSuper(): ResolvedObject? = null
-        open fun getObject(): Lazy<UObject?>? = null
-
-        @JvmOverloads
-        fun getFullName(stopOuter: ResolvedObject? = null, includeClassPackage: Boolean = false): String {
-            val result = StringBuilder(128)
-            getFullName(stopOuter, result, includeClassPackage)
-            return result.toString()
-        }
-
-        fun getFullName(stopOuter: ResolvedObject?, resultString: StringBuilder, includeClassPackage: Boolean = false) {
-            if (includeClassPackage) {
-                resultString.append(getClazz()?.getPathName())
-            } else {
-                resultString.append(getClazz()?.getName())
-            }
-            resultString.append(' ')
-            getPathName(stopOuter, resultString)
-        }
-
-        @JvmOverloads
-        fun getPathName(stopOuter: ResolvedObject? = null): String {
-            val result = StringBuilder()
-            getPathName(stopOuter, result)
-            return result.toString()
-        }
-
-        fun getPathName(stopOuter: ResolvedObject?, resultString: StringBuilder) {
-            if (this != stopOuter) {
-                val objOuter = getOuter()
-                if (objOuter != null && objOuter != stopOuter) {
-                    objOuter.getPathName(stopOuter, resultString)
-
-                    // SUBOBJECT_DELIMITER_CHAR is used to indicate that this object's outer is not a UPackage
-                    if (objOuter.getOuter()?.getClazz()?.getName()?.text == "Package") {
-                        resultString.append(':')
-                    } else {
-                        resultString.append('.')
-                    }
-                }
-                resultString.append(getName())
-            } else {
-                resultString.append("None")
-            }
-        }
-    }
-
-    class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg) {
+    private class ResolvedExportObject(exportIndex: Int, pkg: IoPackage) : ResolvedObject(pkg, exportIndex) {
         val exportMapEntry = pkg.exportMap[exportIndex]
         val exportObject = pkg.exportsLazy[exportIndex]
-        override fun getName() = pkg.nameMap.getName(exportMapEntry.objectName)
-        override fun getOuter() = pkg.resolveObjectIndex(exportMapEntry.outerIndex) ?: ResolvedLoadedObject(pkg)
-        override fun getClazz() = pkg.resolveObjectIndex(exportMapEntry.classIndex)
-        override fun getSuper() = pkg.resolveObjectIndex(exportMapEntry.superIndex)
+        override fun getName() = (pkg as IoPackage).nameMap.getName(exportMapEntry.objectName)
+        override fun getOuter() = (pkg as IoPackage).resolveObjectIndex(exportMapEntry.outerIndex) ?: ResolvedLoadedObject(pkg)
+        override fun getClazz() = (pkg as IoPackage).resolveObjectIndex(exportMapEntry.classIndex)
+        override fun getSuper() = (pkg as IoPackage).resolveObjectIndex(exportMapEntry.superIndex)
         override fun getObject() = exportObject
     }
 
-    class ResolvedScriptObject(val scriptImport: FScriptObjectEntry, pkg: IoPackage) : ResolvedObject(pkg) {
+    private class ResolvedScriptObject(val scriptImport: FScriptObjectEntry, pkg: IoPackage) : ResolvedObject(pkg) {
         override fun getName() = scriptImport.objectName.toName()
-        override fun getOuter() = pkg?.resolveObjectIndex(scriptImport.outerIndex)
+        override fun getOuter() = (pkg as IoPackage).resolveObjectIndex(scriptImport.outerIndex)
+        // This means we'll have UScriptStruct's shown as UClass which is wrong.
+        // Unfortunately because the mappings format does not distinguish between classes and structs, there's no other way around :(
+        override fun getClazz() = ResolvedLoadedObject(UScriptStruct(FName("Class")))
         override fun getObject() = lazy {
             val name = getName()
             val struct = pkg.provider?.mappingsProvider?.getStruct(name)
@@ -293,19 +266,7 @@ class IoPackage : Package {
             }
         }
     }
-
-    override fun <T : UObject> findObject(index: FPackageIndex?) = when {
-        index == null || index.isNull() -> null
-        index.isExport() -> exportsLazy.getOrNull(index.toExport())
-        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it) }?.getObject()
-    } as Lazy<T>?
-
-    override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
-        val exportIndex = exportMap.indexOfFirst {
-            nameMap.getName(it.objectName).text.equals(objectName, true) && (className == null || resolveObjectIndex(it.classIndex)?.getName()?.text == className)
-        }
-        return if (exportIndex != -1) exportsLazy[exportIndex] else null
-    }
+    // endregion
 
     override fun toJson(context: Gson, locres: Locres?) = jsonObject(
         "import_map" to gson.toJsonTree(importMap),
@@ -314,12 +275,6 @@ class IoPackage : Package {
             it.toJson(gson, locres)
         })
     )
-
-    fun findObjectMinimal(index: FPackageIndex?) = when {
-        index == null || index.isNull() -> null
-        index.isExport() -> ResolvedExportObject(index.toExport(), this)
-        else -> importMap.getOrNull(index.toImport())?.let { resolveObjectIndex(it) }
-    }
 
     /*fun dumpHeaderToJson(): JsonObject {
         val gson = gson.newBuilder().registerTypeAdapter(jsonSerializer<FMappedName> { JsonPrimitive(nameMap.getNameOrNull(it.src)?.text) }).create()

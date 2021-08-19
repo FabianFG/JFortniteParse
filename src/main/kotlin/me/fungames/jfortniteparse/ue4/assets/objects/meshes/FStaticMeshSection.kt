@@ -24,14 +24,8 @@ class FStaticMeshSection {
         maxVertexIndex = Ar.readInt32()
         enableCollision = Ar.readBoolean()
         castShadow = Ar.readBoolean()
-        forceOpaque = if (FRenderingObjectVersion.get(Ar) >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField)
-            Ar.readBoolean()
-        else
-            false
-        visibleInRayTracing = if (Ar.versions["StaticMesh.HasVisibleInRayTracing"])
-            Ar.readBoolean()
-        else
-            false
+        forceOpaque = FRenderingObjectVersion.get(Ar) >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField && Ar.readBoolean()
+        visibleInRayTracing = Ar.versions["StaticMesh.HasVisibleInRayTracing"] && Ar.readBoolean()
     }
 
     fun serialize(Ar: FArchiveWriter) {

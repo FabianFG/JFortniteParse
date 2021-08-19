@@ -31,6 +31,7 @@ class FSkeletalMeshLODModel {
     lateinit var colorVertexBuffer: FSkeletalMeshVertexColorBuffer
     lateinit var adjacencyIndexBuffer: FMultisizeIndexContainer
     lateinit var clothVertexBuffer: FSkeletalMeshVertexClothBuffer
+    val skipLod get() = !::indices.isInitialized || indices.indices16.isEmpty() && indices.indices32.isEmpty()
 
     constructor() {
         chunks = emptyArray()

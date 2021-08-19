@@ -64,6 +64,7 @@ open class CBaseMeshLod {
     lateinit var extraUV: Array<Array<FMeshUVFloat>>
     var vertexColors: Array<FColor>? = null
     lateinit var indices: CIndexBuffer
+    val skipLod get() = !::sections.isInitialized || sections.isEmpty() || !::indices.isInitialized
 
     fun allocateUVBuffers() {
         extraUV = Array(numTexCoords - 1) {

@@ -46,6 +46,7 @@ abstract class Package(var fileName: String,
     abstract fun <T : UObject> findObject(index: FPackageIndex?): Lazy<T>?
     fun <T : UObject> loadObject(index: FPackageIndex?) = findObject<T>(index)?.value
     abstract fun findObjectByName(objectName: String, className: String? = null): Lazy<UObject>?
+    abstract fun findObjectMinimal(index: FPackageIndex?): ResolvedObject?
 
     companion object {
         fun constructExport(struct: UStruct?): UObject {
@@ -78,11 +79,56 @@ abstract class Package(var fileName: String,
             })
             .create()
     }
+}
 
-    class ResolvedLoadedObject(val obj: UObject) : IoPackage.ResolvedObject(obj as? IoPackage ?: obj.owner as IoPackage) {
-        override fun getName() = FName(obj.name)
-        override fun getOuter() = obj.outer?.let { ResolvedLoadedObject(it) }
-        override fun getClazz() = obj.clazz?.let { ResolvedLoadedObject(it) }
-        override fun getObject() = lazy { obj }
+abstract class ResolvedObject(val pkg: Package, val exportIndex: Int = -1) {
+    abstract fun getName(): FName
+    open fun getOuter(): ResolvedObject? = null
+    open fun getClazz(): ResolvedObject? = null
+    open fun getSuper(): ResolvedObject? = null
+    open fun getObject(): Lazy<UObject?>? = null
+
+    @JvmOverloads
+    fun getFullName(includePackageName: Boolean = true, includeClassPackage: Boolean = false): String {
+        val result = StringBuilder(128)
+        getFullName(includePackageName, result, includeClassPackage)
+        return result.toString()
     }
+
+    fun getFullName(includePackageName: Boolean, resultString: StringBuilder, includeClassPackage: Boolean = false) {
+        if (includeClassPackage) {
+            resultString.append(getClazz()?.getPathName())
+        } else {
+            resultString.append(getClazz()?.getName())
+        }
+        resultString.append(' ')
+        getPathName(includePackageName, resultString)
+    }
+
+    @JvmOverloads
+    fun getPathName(includePackageName: Boolean = true): String {
+        val result = StringBuilder()
+        getPathName(includePackageName, result)
+        return result.toString()
+    }
+
+    fun getPathName(includePackageName: Boolean, resultString: StringBuilder) {
+        val objOuter = getOuter()
+        if (objOuter != null) {
+            val objOuterOuter = objOuter.getOuter()
+            if (objOuterOuter != null || includePackageName) {
+                objOuter.getPathName(includePackageName, resultString)
+                // SUBOBJECT_DELIMITER_CHAR is used to indicate that this object's outer is not a UPackage
+                resultString.append(if (objOuterOuter != null && objOuterOuter.getOuter() == null) ':' else '.')
+            }
+        }
+        resultString.append(getName())
+    }
+}
+
+class ResolvedLoadedObject(val obj: UObject) : ResolvedObject(obj as? Package ?: obj.owner!!) {
+    override fun getName() = FName(obj.name)
+    override fun getOuter() = obj.outer?.let { ResolvedLoadedObject(it) }
+    override fun getClazz() = obj.clazz?.let { ResolvedLoadedObject(it) }
+    override fun getObject() = lazy { obj }
 }

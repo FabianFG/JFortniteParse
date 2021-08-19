@@ -24,8 +24,8 @@ fun CSkeletalMesh.exportLods(exportLods: Boolean = false, exportMaterials: Boole
     val exports = mutableListOf<MeshExport>()
     val maxLod = if (exportLods) lods.size else 1
     for (lod in 0 until maxLod) {
-        if (lods[lod].sections.isEmpty()) {
-            LOG_JFP.warn { "Mesh ${originalMesh.name} Lod $lod has no sections" }
+        if (lods[lod].skipLod) {
+            LOG_JFP.warn { "LOD $lod in mesh '${originalMesh.name}' should be skipped" }
             continue
         }
         val usePskx = lods[lod].numVerts > 65536

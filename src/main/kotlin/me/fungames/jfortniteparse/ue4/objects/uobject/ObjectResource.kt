@@ -1,8 +1,6 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
-import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.Package
-import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -28,27 +26,8 @@ class FPackageIndex {
      */
     var index: Int
     var owner: Package? = null
-    /*val importObject: FObjectImport?
-        get() = if (isImport()) owner?.importMap?.getOrNull(toImport()) else null
-    val outerImportObject: FObjectImport?
-        get() = this.importObject?.outerIndex?.importObject ?: this.importObject
-
-    val exportObject: FObjectExport?
-        get() = if (isExport()) owner?.exportMap?.getOrNull(toExport()) else null
-
-    val name: String
-        get() = importObject?.objectName?.text
-            ?: exportObject?.objectName?.text
-            ?: "null"
-
-    val resource: FObjectResource?
-        get() = importObject ?: exportObject*/
-    val name: FName
-        get() = when (owner) {
-            is PakPackage -> (owner as PakPackage).run { getResource() }?.objectName
-            is IoPackage -> (owner as IoPackage).findObjectMinimal(this)?.getName()
-            else -> null
-        } ?: FName.NAME_None
+    val resolvedObject get() = owner?.findObjectMinimal(this)
+    val name get() = resolvedObject?.getName() ?: FName.NAME_None
 
     constructor(Ar: FAssetArchive) {
         index = Ar.readInt32()

@@ -59,9 +59,9 @@ fun USkeletalMesh.convertMesh(): CSkeletalMesh {
 
     val lods = mutableListOf<CSkelMeshLod>()
     for (srcLod in lodModels) {
-        /*if (srcLod.skipLod) {
+        if (srcLod.skipLod) {
             continue
-        }*/
+        }
 
         val numTexCoords = srcLod.numTexCoords
         if (numTexCoords > MAX_MESH_UV_SETS) {

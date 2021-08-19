@@ -41,6 +41,9 @@ fun UStaticMesh.convertMesh(): CStaticMesh {
     val lods = mutableListOf<CStaticMeshLod>()
     for (lodIndex in this.lods.indices) {
         val srcLod = this.lods[lodIndex]
+        if (srcLod.skipLod) {
+            continue
+        }
 
         val numTexCoords = srcLod.vertexBuffer.numTexCoords
         val numVerts = srcLod.positionVertexBuffer.verts.size

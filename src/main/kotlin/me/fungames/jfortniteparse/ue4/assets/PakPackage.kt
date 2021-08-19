@@ -4,9 +4,9 @@ import com.github.salomonbrys.kotson.jsonObject
 import com.google.gson.Gson
 import me.fungames.jfortniteparse.GFatalObjectSerializationErrors
 import me.fungames.jfortniteparse.LOG_STREAMING
-import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
+import me.fungames.jfortniteparse.ue4.assets.exports.UEnum
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -132,63 +132,101 @@ class PakPackage(
         //logger.info { "Successfully parsed package : $name" }
     }
 
-    // Load object by FPackageIndex
+    // region Object resolvers
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
-        index.isImport() -> findImport(importMap.getOrNull(index.toImport()))
-        index.isExport() -> exportMap.getOrNull(index.toExport())?.exportObject
-        else -> null
+        index.isImport() -> resolveImport(index).getObject()
+        else -> exportMap.getOrNull(index.toExport())?.exportObject
     } as Lazy<T>?
-
-    // Load object by FObjectImport
-    inline fun <reified T> loadImport(import: FObjectImport?): T? {
-        if (import == null) return null
-        val loaded = findImport(import)?.value ?: return null
-        return if (loaded is T) loaded else null
-    }
-
-    fun findImport(import: FObjectImport?): Lazy<UObject>? {
-        if (import == null) return null
-        if (import.className.text == "Class") {
-            return lazy {
-                val structName = import.objectName
-                var struct = provider?.mappingsProvider?.getStruct(structName)
-                if (struct == null) {
-                    if (packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
-                        throw MissingSchemaException("Unknown struct $structName")
-                    }
-                    struct = UScriptStruct(ObjectTypeRegistry.get(structName.text), structName)
-                }
-                struct
-            }
-        }
-        //The needed export is located in another asset, try to load it
-        if (import.outerIndex.getImportObject() == null) return null
-        if (provider == null) return null
-        val pkg = import.outerIndex.getImportObject()?.run { provider.loadGameFile(objectName.text) }
-        if (pkg != null) return pkg.findObjectByName(import.objectName.text, import.className.text)
-        else LOG_STREAMING.warn { "Failed to load referenced import" }
-        return null
-    }
 
     override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
         val export = exportMap.firstOrNull {
-            it.objectName.text.equals(objectName, true) && (className == null || it.classIndex.getImportObject()?.objectName?.text == className)
+            it.objectName.text.equals(objectName, true) && (className == null || it.classIndex.name.text == className)
         }
         return export?.exportObject
     }
 
-    // region FPackageIndex methods
-    fun FPackageIndex.getImportObject() = if (isImport()) importMap[toImport()] else null
-
-    fun FPackageIndex.getOuterImportObject(): FObjectImport? {
-        val importObject = getImportObject()
-        return importObject?.outerIndex?.getImportObject() ?: importObject
+    override fun findObjectMinimal(index: FPackageIndex?) = when {
+        index == null || index.isNull() -> null
+        index.isImport() -> resolveImport(index)
+        else -> ResolvedExportObject(index.toExport(), this)
     }
 
-    fun FPackageIndex.getExportObject() = if (isExport()) exportMap[toExport()] else null
+    fun resolveImport(importIndex: FPackageIndex): ResolvedObject {
+        val import = importMap[importIndex.toImport()]
+        var outerMostIndex = importIndex
+        var outerMostImport: FObjectImport
+        while (true) {
+            outerMostImport = importMap[outerMostIndex.toImport()]
+            if (outerMostImport.outerIndex.isNull())
+                break
+            outerMostIndex = outerMostImport.outerIndex
+        }
 
-    fun FPackageIndex.getResource() = getImportObject() ?: getExportObject()
+        outerMostImport = importMap[outerMostIndex.toImport()]
+        // We don't support loading script packages, so just return a fallback
+        if (outerMostImport.objectName.text.startsWith("/Script/")) {
+            return ResolvedImportObject(import, this)
+        }
+
+        val importPackage = provider?.loadGameFile(outerMostImport.objectName.text) as? PakPackage
+        if (importPackage == null) {
+            LOG_STREAMING.warn("Missing native package ({}) for import of {} in {}.", outerMostImport.objectName, import.objectName, name)
+            return ResolvedImportObject(import, this)
+        }
+
+        var outer: String? = null
+        if (outerMostIndex != import.outerIndex && import.outerIndex.isImport()) {
+            //var outerImport = importMap[import.outerIndex.toImport()]
+            outer = resolveImport(import.outerIndex).getPathName()
+            /*if (outer == null) {
+                LOG_STREAMING.warn("Missing outer for import of ({}): {} in {} was not found, but the package exists.", name, outerImport.objectName, importPackage.getFullName())
+                return ResolvedImportObject(import, this)
+            }*/
+        }
+
+        for ((i, export) in importPackage.exportMap.withIndex()) {
+            if (export.objectName != import.objectName)
+                continue
+            val thisOuter = importPackage.findObjectMinimal(export.outerIndex)
+            if (thisOuter?.getPathName() == outer)
+                return ResolvedExportObject(i, importPackage)
+        }
+
+        LOG_STREAMING.warn("Missing import of ({}): {} in {} was not found, but the package exists.", name, import.objectName, importPackage.getFullName())
+        return ResolvedImportObject(import, this)
+    }
+
+    private class ResolvedExportObject(exportIndex: Int, pkg: PakPackage) : ResolvedObject(pkg, exportIndex) {
+        val export = pkg.exportMap[exportIndex]
+        override fun getName() = export.objectName
+        override fun getOuter() = pkg.findObjectMinimal(export.outerIndex) ?: ResolvedLoadedObject(pkg)
+        override fun getClazz() = pkg.findObjectMinimal(export.classIndex)
+        override fun getSuper() = pkg.findObjectMinimal(export.superIndex)
+        override fun getObject() = export.exportObject
+    }
+
+    /** Fallback if we cannot resolve the export in another package */
+    private class ResolvedImportObject(val import: FObjectImport, pkg: PakPackage) : ResolvedObject(pkg) {
+        override fun getName() = import.objectName
+        override fun getOuter() = pkg.findObjectMinimal(import.outerIndex)
+        override fun getClazz() = ResolvedLoadedObject(UScriptStruct(getName()))
+        override fun getObject() = lazy {
+            val name = getName()
+            val struct = pkg.provider?.mappingsProvider?.getStruct(name)
+            if (struct != null) {
+                struct
+            } else {
+                val enumValues = pkg.provider?.mappingsProvider?.getEnum(name)
+                if (enumValues != null) {
+                    val enum = UEnum()
+                    enum.name = name.text
+                    enum.names = Array(enumValues.size) { FName("$name::${enumValues[it]}") to it.toLong() }
+                    enum
+                } else null
+            }
+        }
+    }
     // endregion
 
     override fun toJson(context: Gson, locres: Locres?) = jsonObject(

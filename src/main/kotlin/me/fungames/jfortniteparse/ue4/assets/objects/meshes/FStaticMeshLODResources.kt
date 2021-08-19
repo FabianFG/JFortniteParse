@@ -28,6 +28,7 @@ class FStaticMeshLODResources {
     var maxDeviation: Float
     var isLODCookedOut = false
     var inlined = false
+    val skipLod get() = !::vertexBuffer.isInitialized || !::indexBuffer.isInitialized || !::positionVertexBuffer.isInitialized || !::colorVertexBuffer.isInitialized
 
     constructor(Ar: FAssetArchive) {
         val stripFlags = FStripDataFlags(Ar)
