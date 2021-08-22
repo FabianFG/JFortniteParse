@@ -45,7 +45,7 @@ abstract class FileProvider {
     open val gameName: String
         get() {
             if (_gameName.isEmpty()) {
-                _gameName = files.keys.firstOrNull { !it.substringBefore('/').endsWith("engine") }?.substringBefore("game") ?: ""
+                _gameName = files.keys.firstOrNull { !it.substringBefore('/').endsWith("engine") }?.substringBefore('/') ?: ""
             }
             return _gameName
         }
@@ -96,7 +96,7 @@ abstract class FileProvider {
             objectName = packagePath.substring(dotIndex + 1)
             packagePath = packagePath.substring(0, dotIndex)
         }
-        val pkg = loadGameFile(packagePath) // TODO allow reading umaps via this route, currently fixPath() only appends .uasset. EDIT(2020-12-15): This works with IoStore assets, but not PAK assets.
+        val pkg = loadGameFile(packagePath)
         return pkg?.findObjectByName(objectName)?.value
     }
 
@@ -216,14 +216,14 @@ abstract class FileProvider {
         if (path.startsWith("game/")) {
             val gameName = gameName
             path = when {
-                path.startsWith("game/content/") -> path.replaceFirst("game/content/", gameName + "game/content/")
-                path.startsWith("game/config/") -> path.replaceFirst("game/config/", gameName + "game/config/")
-                path.startsWith("game/plugins") -> path.replaceFirst("game/plugins/", gameName + "game/plugins/")
+                path.startsWith("game/content/") -> path.replaceFirst("game/content/", "$gameName/content/")
+                path.startsWith("game/config/") -> path.replaceFirst("game/config/", "$gameName/config/")
+                path.startsWith("game/plugins") -> path.replaceFirst("game/plugins/", "$gameName/plugins/")
                 // For files like Game/AssetRegistry.bin
                 // path.startsWith("game/") && path.substringAfter('/').substringBefore('/').contains('.') -> ...
                 // ^ didn't work that way for normal assets at root, hacky fix below
-                path.contains("assetregistry") || path.endsWith(".uproject") -> path.replace("game/", "${gameName}game/")
-                else -> path.replaceFirst("game/", gameName + "game/content/")
+                path.contains("assetregistry") || path.endsWith(".uproject") -> path.replace("game/", "$gameName/")
+                else -> path.replaceFirst("game/", "$gameName/content/")
             }
         } else if (path.startsWith("engine/")) {
             path = when {
