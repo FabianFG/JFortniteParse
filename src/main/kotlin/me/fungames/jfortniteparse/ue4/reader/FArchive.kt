@@ -234,7 +234,7 @@ abstract class FArchive : Cloneable, InputStream {
 
     inline fun <reified T> readArray(init: (Int) -> T) = MutableList(readInt32()) { init(it) }
 
-    open fun readFName() = FName.NAME_None
+    open fun readFName() = FName(readString())
 
     fun customVer(guid: FGuid) = versions.customVersions?.firstOrNull { it.key == guid }?.version ?: -1
 }

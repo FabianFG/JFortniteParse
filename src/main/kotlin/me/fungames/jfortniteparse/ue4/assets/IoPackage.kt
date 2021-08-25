@@ -136,7 +136,7 @@ class IoPackage : Package {
                         val obj = constructExport(resolveObjectIndex(export.classIndex)?.getObject()?.value as UStruct?)
                         obj.name = objectName.text
                         obj.outer = (resolveObjectIndex(export.outerIndex) as? ResolvedExportObject)?.exportObject?.value ?: this
-                        obj.template = (resolveObjectIndex(export.templateIndex) as? ResolvedExportObject)?.exportObject
+                        obj.template = resolveObjectIndex(export.templateIndex)
                         obj.flags = export.objectFlags.toInt()
 
                         // Serialize

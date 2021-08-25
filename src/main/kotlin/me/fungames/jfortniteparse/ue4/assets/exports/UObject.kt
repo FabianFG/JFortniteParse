@@ -7,6 +7,7 @@ import com.google.gson.JsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.ResolvedObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -24,7 +25,7 @@ open class UObject : IPropertyHolder {
     var name = ""
     var outer: UObject? = null
     var clazz: UStruct? = null
-    var template: Lazy<UObject>? = null
+    var template: ResolvedObject? = null
     final override var properties: MutableList<FPropertyTag>
     var objectGuid: FGuid? = null
     var flags = 0

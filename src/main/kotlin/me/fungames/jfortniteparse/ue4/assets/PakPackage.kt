@@ -104,7 +104,7 @@ class PakPackage(
                 obj.export = export
                 obj.name = export.objectName.text
                 obj.outer = export.outerIndex.load() ?: this
-                //obj.template = findObject(export.templateIndex)
+                obj.template = findObjectMinimal(export.templateIndex)
                 obj.flags = export.objectFlags.toInt()
 
                 val uexpAr = uexpAr.clone()

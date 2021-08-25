@@ -81,7 +81,9 @@ abstract class Package(var fileName: String,
     }
 }
 
-abstract class ResolvedObject(val pkg: Package, val exportIndex: Int = -1) {
+abstract class ResolvedObject(private val _pkg: Package?, val exportIndex: Int = -1) {
+    val pkg get() = _pkg!!
+
     abstract fun getName(): FName
     open fun getOuter(): ResolvedObject? = null
     open fun getClazz(): ResolvedObject? = null
@@ -124,9 +126,11 @@ abstract class ResolvedObject(val pkg: Package, val exportIndex: Int = -1) {
         }
         resultString.append(getName())
     }
+
+    override fun toString() = getFullName()
 }
 
-class ResolvedLoadedObject(val obj: UObject) : ResolvedObject(obj as? Package ?: obj.owner!!) {
+class ResolvedLoadedObject(val obj: UObject) : ResolvedObject(obj as? Package ?: obj.owner) {
     override fun getName() = FName(obj.name)
     override fun getOuter() = obj.outer?.let { ResolvedLoadedObject(it) }
     override fun getClazz() = obj.clazz?.let { ResolvedLoadedObject(it) }

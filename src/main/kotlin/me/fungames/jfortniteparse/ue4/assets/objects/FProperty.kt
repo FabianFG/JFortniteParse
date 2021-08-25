@@ -207,7 +207,7 @@ sealed class FProperty {
                 "SoftObjectProperty" -> SoftObjectProperty((if (nz) FSoftObjectPath(Ar) else FSoftObjectPath()).apply { owner = Ar.owner })
                 "SoftClassProperty" -> SoftClassProperty((if (nz) FSoftClassPath(Ar) else FSoftClassPath()).apply { owner = Ar.owner })
                 "DelegateProperty" -> DelegateProperty(if (nz) FScriptDelegate(Ar) else FScriptDelegate(FPackageIndex(), FName.NAME_None))
-                "MulticastDelegateProperty" -> MulticastDelegateProperty(if (nz) FMulticastScriptDelegate(Ar) else FMulticastScriptDelegate(mutableListOf()))
+                "MulticastDelegateProperty", "MulticastInlineDelegateProperty", "MulticastSparseDelegateProperty" -> MulticastDelegateProperty(if (nz) FMulticastScriptDelegate(Ar) else FMulticastScriptDelegate(mutableListOf()))
                 "DoubleProperty" -> DoubleProperty(if (nz) Ar.readDouble() else 0.0)
                 "Int8Property" -> Int8Property(if (nz) Ar.readInt8() else 0)
                 "Int16Property" -> Int16Property(if (nz) Ar.readInt16() else 0)

@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.misc.FEngineVersion
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.core.serialization.FCustomVersion
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.GAME_VALORANT
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ADDED_PACKAGE_OWNER
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_NON_OUTER_PACKAGE_IMPORT
@@ -112,6 +113,9 @@ class FPackageFileSummary {
         softPackageReferencesOffset = Ar.readInt32()
         searchableNamesOffset = Ar.readInt32()
         thumbnailTableOffset = Ar.readInt32()
+        if (Ar.game == GAME_VALORANT) {
+            Ar.skip(8)
+        }
         guid = FGuid(Ar)
         if (!Ar.isFilterEditorOnly) {
             if (fileVersionUE4 >= VER_UE4_ADDED_PACKAGE_OWNER) {
