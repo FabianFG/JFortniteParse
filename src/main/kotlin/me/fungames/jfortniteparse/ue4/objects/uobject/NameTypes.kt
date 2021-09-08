@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.util.get
 
 const val NAME_NO_NUMBER_INTERNAL = 0
 
@@ -24,5 +23,5 @@ class FMinimalName(
     private val nameMap: List<String>) {
     constructor(Ar: FArchive, nameMap: List<String>) : this(FNameEntryId(Ar), Ar.readInt32(), nameMap)
 
-    fun toName() = FName.dummy(nameMap[index.value], number)
+    fun toName() = FName(nameMap, index.value.toInt(), number)
 }

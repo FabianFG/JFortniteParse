@@ -7,7 +7,10 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchiveProxy
 import me.fungames.jfortniteparse.ue4.registry.objects.*
-import me.fungames.jfortniteparse.util.get
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.mutableMapOf
+import kotlin.collections.set
 
 val ASSET_REGISTRY_NUMBERED_NAME_BIT = 0x80000000u
 
@@ -41,7 +44,7 @@ class FAssetRegistryReader : FAssetRegistryArchive {
         }
 
         if (index >= 0u && index < names.size.toUInt()) {
-            return FName.dummy(names[index], number)
+            return FName(names, index.toInt(), number)
         } else {
             throw ParserException("FName could not be read, requested index $index, name map size ${names.size}", this)
         }
@@ -55,8 +58,8 @@ class FAssetRegistryReader : FAssetRegistryArchive {
     private fun loadTags(): Map<FName, String> {
         val mapHandle = readUInt64()
         val out = mutableMapOf<FName, String>()
-        FPartialMapHandle(mapHandle).makeFullHandle(tags).forEachPair {
-            out[it.key] = FValueHandle(tags, it.value).asString()
+        FPartialMapHandle(mapHandle).makeFullHandle(tags).forEachPair { (key, value) ->
+            out[key] = FValueHandle(tags, value).asString()
         }
         return out
     }

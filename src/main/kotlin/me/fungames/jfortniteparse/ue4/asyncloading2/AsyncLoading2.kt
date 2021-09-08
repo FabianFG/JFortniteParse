@@ -1,118 +1,62 @@
 package me.fungames.jfortniteparse.ue4.asyncloading2
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.io.FIoContainerId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FMappedName
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FNameMap
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.util.get
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
+import me.fungames.jfortniteparse.util.CityHash.cityHash64
 
-typealias FSourceToLocalizedPackageIdMap = Array<Pair<FPackageId, FPackageId>>
-typealias FCulturePackageMap = Map<String, FSourceToLocalizedPackageIdMap>
+class FContainerHeaderPackageRedirect {
+    var sourcePackageId: FPackageId
+    var targetPackageId: FPackageId
+    var sourcePackageName: FMappedName?
 
-class FMappedName {
-    companion object {
-        private val INVALID_INDEX = 0u.inv()
-        private val INDEX_BITS = 30u
-        private val INDEX_MASK = (1u shl INDEX_BITS.toInt()) - 1u
-        private val TYPE_MASK = INDEX_MASK.inv()
-        private val TYPE_SHIFT = INDEX_BITS
-
-        @JvmStatic
-        fun create(index: UInt, number: UInt, type: EType, Ar: FArchive? = null): FMappedName {
-            if (index > Int.MAX_VALUE.toUInt()) {
-                if (Ar != null) throw ParserException("Bad name index", Ar)
-                else throw ParserException("Bad name index")
-            }
-            return FMappedName((type.ordinal.toUInt() shl TYPE_SHIFT.toInt()) or index, number)
-        }
-
-        @JvmStatic
-        fun fromMinimalName(minimalName: FMinimalName) =
-            FMappedName(minimalName.index.value, minimalName.number.toUInt())
-
-        @JvmStatic
-        inline fun isResolvedToMinimalName(minimalName: FMinimalName): Boolean {
-            // Not completely safe, relies on that no FName will have its Index and Number equal to Max_uint32
-            val mappedName = fromMinimalName(minimalName)
-            return mappedName.isValid()
-        }
-
-        /*@JvmStatic
-        inline fun safeMinimalNameToName(minimalName: FMinimalName): FName {
-            return if (isResolvedToMinimalName(minimalName)) minimalNameToName(minimalName) else NAME_None;
-        }*/
-    }
-
-    enum class EType {
-        Package,
-        Container,
-        Global
-    }
-
-    private val index: UInt
-    val number: UInt
-
-    private constructor(index: UInt = INVALID_INDEX, number: UInt = INVALID_INDEX) {
-        this.index = index
-        this.number = number
-    }
-
-    constructor(Ar: FArchive) : this(Ar.readUInt32(), Ar.readUInt32())
-
-    //fun toUnresolvedMinimalName() = FMinimalName(index, number.toInt())
-
-    fun isValid() = index != INVALID_INDEX && number != INVALID_INDEX
-
-    fun getType() = EType.values()[(index and TYPE_MASK) shr TYPE_SHIFT.toInt()]
-
-    fun isGlobal() = ((index and TYPE_MASK) shr TYPE_SHIFT.toInt()) != 0u
-
-    fun getIndex() = index and INDEX_MASK
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as FMappedName
-
-        if (index != other.index) return false
-        if (number != other.number) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = index.hashCode()
-        result = 31 * result + number.hashCode()
-        return result
+    constructor(Ar: FArchive) {
+        sourcePackageId = FPackageId(Ar)
+        targetPackageId = FPackageId(Ar)
+        sourcePackageName = if (Ar.game >= GAME_UE5_BASE) FMappedName(Ar) else null
     }
 }
+
+typealias FSourceToLocalizedPackageIdMap = Array<FContainerHeaderPackageRedirect>
+typealias FCulturePackageMap = Map<String, FSourceToLocalizedPackageIdMap>
 
 class FContainerHeader {
     var containerId: FIoContainerId
     var packageCount = 0u
-    var names: ByteArray
-    var nameHashes: ByteArray
+    val containerNameMap = FNameMap()
     var packageIds: Array<FPackageId>
     var storeEntries: Array<FPackageStoreEntry>
     var culturePackageMap: FCulturePackageMap
-    var packageRedirects: Array<Pair<FPackageId, FPackageId>>
+    var packageRedirects: Array<FContainerHeaderPackageRedirect>
 
     constructor(Ar: FArchive) {
         containerId = FIoContainerId(Ar)
         packageCount = Ar.readUInt32()
-        names = Ar.read(Ar.readInt32())
-        nameHashes = Ar.read(Ar.readInt32())
+        if (Ar.game < GAME_UE5_BASE) {
+            val names = Ar.read(Ar.readInt32())
+            val nameHashes = Ar.read(Ar.readInt32())
+            if (names.isNotEmpty()) {
+                containerNameMap.load(names, nameHashes, FMappedName.EType.Container)
+            }
+        }
         packageIds = Ar.readTArray { FPackageId(Ar) }
         val storeEntriesNum = Ar.readInt32()
         val storeEntriesEnd = Ar.pos() + storeEntriesNum
         storeEntries = Array(packageCount.toInt()) { FPackageStoreEntry(Ar) }
         Ar.seek(storeEntriesEnd)
-        culturePackageMap = Ar.readTMap { Ar.readString() to Ar.readTArray { FPackageId(Ar) to FPackageId(Ar) } }
-        packageRedirects = Ar.readTArray { FPackageId(Ar) to FPackageId(Ar) }
+        if (Ar.game >= GAME_UE5_BASE) {
+            containerNameMap.load(Ar, FMappedName.EType.Container)
+        }
+        culturePackageMap = Ar.readTMap { Ar.readString() to Ar.readTArray { FContainerHeaderPackageRedirect(Ar) } }
+        packageRedirects = Ar.readTArray { FContainerHeaderPackageRedirect(Ar) }
     }
 }
+
+class FPackageImportReference(val importedPackageIndex: UInt, val exportHash: UInt)
 
 class FPackageObjectIndex {
     companion object {
@@ -123,7 +67,18 @@ class FPackageObjectIndex {
         val INVALID = 0uL.inv()
 
         fun generateImportHashFromObjectPath(objectPath: String): ULong {
-            return 0uL
+            val fullImportPath = StringBuilder(objectPath)
+            fullImportPath.forEachIndexed { i, c ->
+                if (c == '.' || c == ':') {
+                    fullImportPath[i] = '/'
+                } else {
+                    fullImportPath[i] = c.toLowerCase()
+                }
+            }
+            val data = fullImportPath.toString().toByteArray(Charsets.UTF_16LE)
+            var hash = cityHash64(data, 0, data.size).toULong()
+            hash = hash and (3uL shl 62).inv()
+            return hash
         }
 
         fun fromExportIndex(index: Int) =
@@ -168,6 +123,12 @@ class FPackageObjectIndex {
     fun toExport(): UInt {
         check(isExport())
         return typeAndId.toUInt()
+    }
+
+    fun toPackageImportRef(): FPackageImportReference {
+        val importedPackageIndex = ((typeAndId and INDEX_MASK) shr 32).toUInt()
+        val exportHash = typeAndId.toUInt()
+        return FPackageImportReference(importedPackageIndex, exportHash)
     }
 
     fun type() = EType.values()[(typeAndId shr TYPE_SHIFT).toInt()] // custom
@@ -226,6 +187,35 @@ class FPackageSummary {
 }
 
 /**
+ * Package summary.
+ */
+class FPackageSummary5 {
+    var headerSize: UInt
+    var name: FMappedName
+    //var sourceName: FMappedName
+    var packageFlags: UInt
+    var cookedHeaderSize: UInt
+    var importMapOffset: Int
+    var exportMapOffset: Int
+    var exportBundleEntriesOffset: Int
+    var graphDataOffset: Int
+    var pad: Int /*= 0*/
+
+    constructor(Ar: FArchive) {
+        headerSize = Ar.readUInt32()
+        name = FMappedName(Ar)
+        //sourceName = FMappedName(Ar)
+        packageFlags = Ar.readUInt32()
+        cookedHeaderSize = Ar.readUInt32()
+        importMapOffset = Ar.readInt32()
+        exportMapOffset = Ar.readInt32()
+        exportBundleEntriesOffset = Ar.readInt32()
+        graphDataOffset = Ar.readInt32()
+        pad = Ar.readInt32()
+    }
+}
+
+/**
  * Export bundle entry.
  */
 class FExportBundleEntry {
@@ -244,6 +234,7 @@ class FExportBundleEntry {
     }
 }
 
+// Actual name: FFilePackageStoreEntry
 class FPackageStoreEntry {
     var exportBundlesSize = 0uL
     var exportCount = 0
@@ -251,6 +242,7 @@ class FPackageStoreEntry {
     var loadOrder = 0u
     var pad = 0u
     var importedPackages: Array<FPackageId>
+    //var shaderMapHashes: Array<ByteArray>
 
     constructor(Ar: FArchive) {
         exportBundlesSize = Ar.readUInt64()
@@ -259,6 +251,9 @@ class FPackageStoreEntry {
         loadOrder = Ar.readUInt32()
         pad = Ar.readUInt32()
         importedPackages = Ar.readCArrayView { FPackageId(Ar) }
+        if (Ar.game >= GAME_UE5_BASE) {
+            Ar.skip(8) //shaderMapHashes = Ar.readCArrayView { Ar.read(20) }
+        }
     }
 
     private inline fun <reified T> FArchive.readCArrayView(init: (FArchive) -> T): Array<T> {
@@ -280,12 +275,14 @@ class FPackageStoreEntry {
  * Export bundle header
  */
 class FExportBundleHeader {
+    var serialOffset: ULong
     var firstEntryIndex: UInt
     var entryCount: UInt
 
     constructor(Ar: FArchive) {
-        this.firstEntryIndex = Ar.readUInt32()
-        this.entryCount = Ar.readUInt32()
+        serialOffset = if (Ar.game >= GAME_UE5_BASE) Ar.readUInt64() else ULong.MAX_VALUE
+        firstEntryIndex = Ar.readUInt32()
+        entryCount = Ar.readUInt32()
     }
 }
 
@@ -304,6 +301,10 @@ class FScriptObjectEntry {
 }
 
 class FExportMapEntry {
+    companion object {
+        const val SIZE = 72
+    }
+
     var cookedSerialOffset = 0uL
     var cookedSerialSize = 0uL
     var objectName: FMappedName
@@ -312,11 +313,12 @@ class FExportMapEntry {
     var superIndex: FPackageObjectIndex
     var templateIndex: FPackageObjectIndex
     var globalImportIndex: FPackageObjectIndex
+    var exportHash: UInt
     var objectFlags: UInt
     var filterFlags: UByte
-    //uint8 Pad[3] = {};
 
     constructor(Ar: FArchive) {
+        val start = Ar.pos()
         cookedSerialOffset = Ar.readUInt64()
         cookedSerialSize = Ar.readUInt64()
         objectName = FMappedName(Ar)
@@ -324,9 +326,15 @@ class FExportMapEntry {
         classIndex = FPackageObjectIndex(Ar)
         superIndex = FPackageObjectIndex(Ar)
         templateIndex = FPackageObjectIndex(Ar)
-        globalImportIndex = FPackageObjectIndex(Ar)
+        if (Ar.game >= GAME_UE5_BASE) {
+            globalImportIndex = FPackageObjectIndex()
+            exportHash = Ar.readUInt32()
+        } else {
+            globalImportIndex = FPackageObjectIndex(Ar)
+            exportHash = 0u
+        }
         objectFlags = Ar.readUInt32()
         filterFlags = Ar.readUInt8()
-        Ar.skip(3)
+        Ar.seek(start + SIZE)
     }
 }

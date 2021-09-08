@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
@@ -9,8 +8,7 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
  *
  * All rotation values are stored in degrees.
  */
-@ExperimentalUnsignedTypes
-class FRotator : UClass {
+class FRotator {
     /** Rotation around the right axis (around Y axis), Looking up and down (0=Straight Ahead, +Up, -Down) */
     var pitch: Float
 
@@ -21,23 +19,19 @@ class FRotator : UClass {
     var roll: Float
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         pitch = Ar.readFloat32()
         yaw = Ar.readFloat32()
         roll = Ar.readFloat32()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeFloat32(pitch)
         Ar.writeFloat32(yaw)
         Ar.writeFloat32(roll)
-        super.completeWrite(Ar)
     }
 
     /**
-     * Default constructor (no initialization).
+     * Default constructor.
      */
     constructor() : this(0f)
 

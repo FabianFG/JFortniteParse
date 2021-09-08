@@ -1,12 +1,10 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.rendercore.FPackedNormal
 import me.fungames.jfortniteparse.ue4.objects.rendercore.FPackedRGBA16N
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
-@ExperimentalUnsignedTypes
-class FStaticMeshUVItem : UClass {
+class FStaticMeshUVItem {
     companion object {
         fun serializeTangents(Ar: FArchive, useHighPrecisionTangents: Boolean): Array<FPackedNormal> {
             return if (!useHighPrecisionTangents) {
@@ -33,12 +31,10 @@ class FStaticMeshUVItem : UClass {
     var uv: Array<FMeshUVFloat>
 
     constructor(Ar: FArchive, useHighPrecisionTangents: Boolean, numStaticUVSets: Int, useStaticFloatUVs: Boolean) {
-        super.init(Ar)
         //Serialize Tangents
         normal = serializeTangents(Ar, useHighPrecisionTangents)
         //Serialize Texcoords
         uv = serializeTexcoords(Ar, numStaticUVSets, useStaticFloatUVs)
-        super.complete(Ar)
     }
 
     constructor(normal: Array<FPackedNormal>, uv: Array<FMeshUVFloat>) {

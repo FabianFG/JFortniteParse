@@ -141,7 +141,7 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 val vf = (v - offset) / 255.0f * 2 - 1
                 val t = 1.0f - uf * uf - vf * vf
                 if (t >= 0)
-                    d[2] = (255 - 255 * floor(sqrt(t))).toByte()
+                    d[2] = (255 - 255 * floor(sqrt(t))).toInt().toByte()
                 else
                     d[2] = 255.toByte()
                 d[3] = 255.toByte()

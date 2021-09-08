@@ -4,7 +4,6 @@ import com.github.salomonbrys.kotson.jsonObject
 import com.google.gson.Gson
 import me.fungames.jfortniteparse.GFatalObjectSerializationErrors
 import me.fungames.jfortniteparse.LOG_STREAMING
-import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
@@ -15,7 +14,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.*
-import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import java.io.File
 import java.io.OutputStream
 import java.nio.ByteBuffer
@@ -26,22 +25,22 @@ class PakPackage(
     ubulk: ByteBuffer? = null,
     fileName: String,
     provider: FileProvider? = null,
-    game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST,
-) : Package(fileName, provider, game) {
+    versions: VersionContainer = provider?.versions ?: VersionContainer.DEFAULT
+) : Package(fileName, provider, versions) {
     companion object {
         val packageMagic = 0x9E2A83C1u
     }
 
-    constructor(uasset: ByteArray, uexp: ByteArray? = null, ubulk: ByteArray? = null, name: String, provider: FileProvider? = null, game: Ue4Version = Ue4Version.GAME_UE4_LATEST) :
-        this(ByteBuffer.wrap(uasset), uexp?.let { ByteBuffer.wrap(it) }, ubulk?.let { ByteBuffer.wrap(it) }, name, provider, game)
+    constructor(uasset: ByteArray, uexp: ByteArray? = null, ubulk: ByteArray? = null, name: String, provider: FileProvider? = null, versions: VersionContainer = VersionContainer.DEFAULT) :
+        this(ByteBuffer.wrap(uasset), uexp?.let { ByteBuffer.wrap(it) }, ubulk?.let { ByteBuffer.wrap(it) }, name, provider, versions)
 
-    constructor(uasset: File, uexp: File, ubulk: File?, provider: FileProvider? = null, game: Ue4Version = provider?.game ?: Ue4Version.GAME_UE4_LATEST) : this(
+    constructor(uasset: File, uexp: File, ubulk: File?, provider: FileProvider? = null, versions: VersionContainer = provider?.versions ?: VersionContainer.DEFAULT) : this(
         uasset.readBytes(), uexp.readBytes(), ubulk?.readBytes(),
-        uasset.nameWithoutExtension, provider, game
+        uasset.nameWithoutExtension, provider, versions
     )
 
     val info: FPackageFileSummary
-    val nameMap: MutableList<FNameEntry>
+    val nameMap: MutableList<String>
     val importMap: MutableList<FObjectImport>
     val exportMap: MutableList<FObjectExport>
 
@@ -53,26 +52,19 @@ class PakPackage(
         val uassetAr = FAssetArchive(uasset, provider, fileName)
         val uexpAr = if (uexp != null) FAssetArchive(uexp, provider, fileName) else uassetAr
         val ubulkAr = ubulk?.let { FAssetArchive(it, provider, fileName) }
-        uassetAr.game = game.game
-        uassetAr.ver = game.version
+        uassetAr.versions = versions
         uassetAr.owner = this
-        uexpAr.game = game.game
-        uexpAr.ver = game.version
+        uexpAr.versions = versions
         uexpAr.owner = this
-        ubulkAr?.game = game.game
-        ubulkAr?.ver = game.version
+        ubulkAr?.versions = versions
         ubulkAr?.owner = this
-
-        nameMap = mutableListOf()
-        importMap = mutableListOf()
-        exportMap = mutableListOf()
 
         info = FPackageFileSummary(uassetAr)
         if (info.tag != packageMagic)
             throw ParserException("Invalid uasset magic, ${info.tag} != $packageMagic")
 
         val ver = info.fileVersionUE4
-        if (ver > 0) {
+        if (ver > 0) { // TODO IMPORTANT
             uassetAr.ver = ver
             uexpAr.ver = ver
             ubulkAr?.ver = ver
@@ -80,16 +72,17 @@ class PakPackage(
         packageFlags = info.packageFlags.toInt()
 
         uassetAr.seek(info.nameOffset)
-        for (i in 0 until info.nameCount)
-            nameMap.add(FNameEntry(uassetAr))
+        nameMap = MutableList(info.nameCount) {
+            val name = uassetAr.readString()
+            uassetAr.skip(4) // skip nonCasePreservingHash (uint16) and casePreservingHash (uint16)
+            name
+        }
 
         uassetAr.seek(info.importOffset)
-        for (i in 0 until info.importCount)
-            importMap.add(FObjectImport(uassetAr))
+        importMap = MutableList(info.importCount) { FObjectImport(uassetAr) }
 
         uassetAr.seek(info.exportOffset)
-        for (i in 0 until info.exportCount)
-            exportMap.add(FObjectExport(uassetAr))
+        exportMap = MutableList(info.exportCount) { FObjectExport(uassetAr) }
 
         //Setup uexp reader
         if (uexp != null) {
@@ -101,7 +94,7 @@ class PakPackage(
         //If attached also setup the ubulk reader
         if (ubulkAr != null) {
             ubulkAr.uassetSize = info.totalHeaderSize
-            ubulkAr.uexpSize = exportMap.sumBy { it.serialSize.toInt() }
+            ubulkAr.uexpSize = exportMap.sumOf { it.serialSize.toInt() }
             uexpAr.addPayload(PayloadType.UBULK, ubulkAr)
         }
 
@@ -111,7 +104,8 @@ class PakPackage(
                 obj.export = export
                 obj.name = export.objectName.text
                 obj.outer = export.outerIndex.load() ?: this
-                //obj.template = findObject(export.templateIndex)
+                obj.template = findObjectMinimal(export.templateIndex)
+                obj.flags = export.objectFlags.toInt()
 
                 val uexpAr = uexpAr.clone()
                 uexpAr.seekRelative(export.serialOffset.toInt())
@@ -137,78 +131,107 @@ class PakPackage(
         //logger.info { "Successfully parsed package : $name" }
     }
 
-    // Load object by FPackageIndex
+    // region Object resolvers
     override fun <T : UObject> findObject(index: FPackageIndex?) = when {
         index == null || index.isNull() -> null
-        index.isImport() -> findImport(importMap.getOrNull(index.toImport()))
-        index.isExport() -> exportMap.getOrNull(index.toExport())?.exportObject
-        else -> null
+        index.isImport() -> resolveImport(index).getObject()
+        else -> exportMap.getOrNull(index.toExport())?.exportObject
     } as Lazy<T>?
-
-    // Load object by FObjectImport
-    inline fun <reified T> loadImport(import: FObjectImport?): T? {
-        if (import == null) return null
-        val loaded = findImport(import)?.value ?: return null
-        return if (loaded is T) loaded else null
-    }
-
-    fun findImport(import: FObjectImport?): Lazy<UObject>? {
-        if (import == null) return null
-        if (import.className.text == "Class") {
-            return lazy {
-                val structName = import.objectName
-                var struct = provider?.mappingsProvider?.getStruct(structName)
-                if (struct == null) {
-                    if (packageFlags and EPackageFlags.PKG_UnversionedProperties.value != 0) {
-                        throw MissingSchemaException("Unknown struct $structName")
-                    }
-                    struct = UScriptStruct(ObjectTypeRegistry.get(structName.text), structName)
-                }
-                struct
-            }
-        }
-        //The needed export is located in another asset, try to load it
-        if (import.outerIndex.getImportObject() == null) return null
-        if (provider == null) return null
-        val pkg = import.outerIndex.getImportObject()?.run { provider.loadGameFile(objectName.text) }
-        if (pkg != null) return pkg.findObjectByName(import.objectName.text, import.className.text)
-        else LOG_STREAMING.warn { "Failed to load referenced import" }
-        return null
-    }
 
     override fun findObjectByName(objectName: String, className: String?): Lazy<UObject>? {
         val export = exportMap.firstOrNull {
-            it.objectName.text.equals(objectName, true) && (className == null || it.classIndex.getImportObject()?.objectName?.text == className)
+            it.objectName.text.equals(objectName, true) && (className == null || it.classIndex.name.text == className)
         }
         return export?.exportObject
     }
 
-    // region FPackageIndex methods
-    fun FPackageIndex.getImportObject() = if (isImport()) importMap[toImport()] else null
-
-    fun FPackageIndex.getOuterImportObject(): FObjectImport? {
-        val importObject = getImportObject()
-        return importObject?.outerIndex?.getImportObject() ?: importObject
+    override fun findObjectMinimal(index: FPackageIndex?) = when {
+        index == null || index.isNull() -> null
+        index.isImport() -> resolveImport(index)
+        else -> ResolvedExportObject(index.toExport(), this)
     }
 
-    fun FPackageIndex.getExportObject() = if (isExport()) exportMap[toExport()] else null
+    fun resolveImport(importIndex: FPackageIndex): ResolvedObject {
+        val import = importMap[importIndex.toImport()]
+        var outerMostIndex = importIndex
+        var outerMostImport: FObjectImport
+        while (true) {
+            outerMostImport = importMap[outerMostIndex.toImport()]
+            if (outerMostImport.outerIndex.isNull())
+                break
+            outerMostIndex = outerMostImport.outerIndex
+        }
 
-    fun FPackageIndex.getResource() = getImportObject() ?: getExportObject()
+        outerMostImport = importMap[outerMostIndex.toImport()]
+        // We don't support loading script packages, so just return a fallback
+        if (outerMostImport.objectName.text.startsWith("/Script/")) {
+            return ResolvedImportObject(import, this)
+        }
+
+        val importPackage = provider?.loadGameFile(outerMostImport.objectName.text) as? PakPackage
+        if (importPackage == null) {
+            LOG_STREAMING.warn("Missing native package ({}) for import of {} in {}.", outerMostImport.objectName, import.objectName, name)
+            return ResolvedImportObject(import, this)
+        }
+
+        var outer: String? = null
+        if (outerMostIndex != import.outerIndex && import.outerIndex.isImport()) {
+            //var outerImport = importMap[import.outerIndex.toImport()]
+            outer = resolveImport(import.outerIndex).getPathName()
+            /*if (outer == null) {
+                LOG_STREAMING.warn("Missing outer for import of ({}): {} in {} was not found, but the package exists.", name, outerImport.objectName, importPackage.getFullName())
+                return ResolvedImportObject(import, this)
+            }*/
+        }
+
+        for ((i, export) in importPackage.exportMap.withIndex()) {
+            if (export.objectName != import.objectName)
+                continue
+            val thisOuter = importPackage.findObjectMinimal(export.outerIndex)
+            if (thisOuter?.getPathName() == outer)
+                return ResolvedExportObject(i, importPackage)
+        }
+
+        LOG_STREAMING.warn("Missing import of ({}): {} in {} was not found, but the package exists.", name, import.objectName, importPackage.getFullName())
+        return ResolvedImportObject(import, this)
+    }
+
+    class ResolvedExportObject(exportIndex: Int, pkg: PakPackage) : ResolvedObject(pkg, exportIndex) {
+        val export = pkg.exportMap[exportIndex]
+        override fun getName() = export.objectName
+        override fun getOuter() = pkg.findObjectMinimal(export.outerIndex) ?: ResolvedLoadedObject(pkg)
+        override fun getClazz() = pkg.findObjectMinimal(export.classIndex)
+        override fun getSuper() = pkg.findObjectMinimal(export.superIndex)
+        override fun getObject() = export.exportObject
+    }
+
+    /** Fallback if we cannot resolve the export in another package */
+    class ResolvedImportObject(val import: FObjectImport, pkg: PakPackage) : ResolvedObject(pkg) {
+        override fun getName() = import.objectName
+        override fun getOuter() = pkg.findObjectMinimal(import.outerIndex)
+        override fun getClazz() = ResolvedLoadedObject(UScriptStruct(import.className))
+        override fun getObject() = lazy {
+            when (import.className.text) {
+                "Class", "ScriptStruct" -> pkg.provider?.mappingsProvider?.getStruct(import.objectName)
+                "Enum" -> pkg.provider?.mappingsProvider?.getEnum(import.objectName)
+                else -> null
+            }
+        }
+    }
     // endregion
 
     override fun toJson(context: Gson, locres: Locres?) = jsonObject(
         "import_map" to gson.toJsonTree(importMap),
         "export_map" to gson.toJsonTree(exportMap),
         "export_properties" to gson.toJsonTree(exports.map {
-            it.takeIf { it is UObject }?.toJson(gson, locres)
+            it.toJson(gson, locres)
         })
     )
 
     //Not really efficient because the uasset gets serialized twice but this is the only way to calculate the new header size
     private fun updateHeader() {
         val uassetWriter = FByteArchiveWriter()
-        uassetWriter.game = game.game
-        uassetWriter.ver = game.version
+        uassetWriter.versions = versions
         uassetWriter.nameMap = nameMap
         uassetWriter.importMap = importMap
         uassetWriter.exportMap = exportMap
@@ -216,7 +239,11 @@ class PakPackage(
         val nameMapOffset = uassetWriter.pos()
         if (info.nameCount != nameMap.size)
             throw ParserException("Invalid name count, summary says ${info.nameCount} names but name map is ${nameMap.size} entries long")
-        nameMap.forEach { it.serialize(uassetWriter) }
+        nameMap.forEach {
+            uassetWriter.writeString(it)
+            uassetWriter.writeUInt16(0u)
+            uassetWriter.writeUInt16(0u)
+        }
         val importMapOffset = uassetWriter.pos()
         if (info.importCount != importMap.size)
             throw ParserException("Invalid import count, summary says ${info.importCount} imports but import map is ${importMap.size} entries long")
@@ -234,8 +261,7 @@ class PakPackage(
     fun write(uassetOutputStream: OutputStream, uexpOutputStream: OutputStream, ubulkOutputStream: OutputStream?) {
         updateHeader()
         val uexpWriter = writer(uexpOutputStream)
-        uexpWriter.game = game.game
-        uexpWriter.ver = game.version
+        uexpWriter.versions = versions
         uexpWriter.uassetSize = info.totalHeaderSize
         exports.forEach {
             val beginPos = uexpWriter.relativePos()
@@ -246,15 +272,18 @@ class PakPackage(
         }
         uexpWriter.writeUInt32(packageMagic)
         val uassetWriter = writer(uassetOutputStream)
-        uassetWriter.game = game.game
-        uassetWriter.ver = game.version
+        uassetWriter.versions = versions
         info.serialize(uassetWriter)
         val nameMapPadding = info.nameOffset - uassetWriter.pos()
         if (nameMapPadding > 0)
             uassetWriter.write(ByteArray(nameMapPadding))
         if (info.nameCount != nameMap.size)
             throw ParserException("Invalid name count, summary says ${info.nameCount} names but name map is ${nameMap.size} entries long")
-        nameMap.forEach { it.serialize(uassetWriter) }
+        nameMap.forEach {
+            uassetWriter.writeString(it)
+            uassetWriter.writeUInt16(0u)
+            uassetWriter.writeUInt16(0u)
+        }
 
         val importMapPadding = info.importOffset - uassetWriter.pos()
         if (importMapPadding > 0)

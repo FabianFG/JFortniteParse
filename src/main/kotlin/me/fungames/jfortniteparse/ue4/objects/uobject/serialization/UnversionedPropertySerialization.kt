@@ -3,22 +3,20 @@ package me.fungames.jfortniteparse.ue4.objects.uobject.serialization
 import androidx.collection.SparseArrayCompat
 import androidx.collection.set
 import me.fungames.jfortniteparse.GDebugProperties
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.MissingSchemaException
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.exceptions.UnknownPropertyException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.exports.FPropertySerialized
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
-import me.fungames.jfortniteparse.ue4.assets.objects.FProperty
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.divideAndRoundUp
@@ -27,24 +25,8 @@ import java.lang.reflect.Modifier
 import java.util.*
 
 class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int) {
-    fun deserialize(Ar: FAssetArchive, type: ReadType): FPropertyTag {
-        val tag = FPropertyTag(FName.dummy(info.name))
-        /*if (true) {
-            tag.name = FName.dummy(data.name!!)
-            tag.type = data.type.type
-            tag.structName = data.type.structType
-            tag.boolVal = data.type.bool
-            tag.enumName = data.type.enumName
-            tag.enumType = data.type.enumType
-            tag.innerType = data.type.innerType?.type ?: FName.NAME_None
-            tag.valueType = data.type.valueType?.type ?: FName.NAME_None
-        }*/
-        tag.arrayIndex = arrayIndex
-        tag.prop = FProperty.readPropertyValue(Ar, info.type, type)
-        return tag
-    }
-
-    override fun toString() = (info.field?.type?.simpleName ?: info.type.toString()) + ' ' + info.name
+    fun deserialize(Ar: FAssetArchive, type: ReadType) = FPropertyTag(Ar, info, arrayIndex, type)
+    override fun toString() = "${info.type} ${info.name}"
 }
 
 /**
@@ -60,13 +42,13 @@ class FUnversionedStructSchema {
             if (struct is UScriptStruct && struct.useClassProperties) {
                 val clazz = struct.structClass
                     ?: throw MissingSchemaException("Missing schema for $struct")
-                val bOnlyAnnotated = clazz.isAnnotationPresent(OnlyAnnotated::class.java)
+                val onlyAnnotated = clazz.isAnnotationPresent(OnlyAnnotated::class.java)
                 for (field in clazz.declaredFields) { // Reflection
                     if (Modifier.isStatic(field.modifiers)) {
                         continue
                     }
                     val ann = field.getAnnotation(UProperty::class.java)
-                    if (bOnlyAnnotated && ann == null) {
+                    if (onlyAnnotated && ann == null) {
                         continue
                     }
                     index += ann?.skipPrevious ?: 0
@@ -101,7 +83,7 @@ class FUnversionedStructSchema {
     }
 }
 
-val schemaCache = mutableMapOf<Class<*>, FUnversionedStructSchema>()
+val schemaCache = hashMapOf<Class<*>, FUnversionedStructSchema>()
 
 fun getOrCreateUnversionedSchema(struct: UStruct): FUnversionedStructSchema {
     return if (struct is UScriptStruct && struct.useClassProperties && struct.structClass != null) {
@@ -118,7 +100,7 @@ fun getOrCreateUnversionedSchema(struct: UStruct): FUnversionedStructSchema {
  */
 class FUnversionedHeader {
     protected val fragments = mutableListOf<FFragment>()
-    var bHasNonZeroValues = false
+    var hasNonZeroValues = false
         protected set
     protected lateinit var zeroMask: BitSet
 
@@ -132,23 +114,23 @@ class FUnversionedHeader {
 
             fragments.add(fragment)
 
-            if (fragment.bHasAnyZeroes) {
+            if (fragment.hasAnyZeroes) {
                 zeroMaskNum += fragment.valueNum
             } else {
                 unmaskedNum += fragment.valueNum
             }
-        } while (!fragment.bIsLast)
+        } while (!fragment.isLast)
 
         if (zeroMaskNum > 0u) {
             zeroMask = loadZeroMaskData(Ar, zeroMaskNum)
-            bHasNonZeroValues = unmaskedNum > 0u || zeroMask.indexOfFirst(false) != INDEX_NONE
+            hasNonZeroValues = unmaskedNum > 0u || zeroMask.indexOfFirst(false) != INDEX_NONE
         } else {
             zeroMask = BitSet(0)
-            bHasNonZeroValues = unmaskedNum > 0u
+            hasNonZeroValues = unmaskedNum > 0u
         }
     }
 
-    fun hasValues() = bHasNonZeroValues || (zeroMask.size() > 0)
+    fun hasValues() = hasNonZeroValues || (zeroMask.size() > 0)
 
     protected fun loadZeroMaskData(Ar: FArchive, numBits: UInt) =
         BitSet.valueOf(Ar.read(when {
@@ -170,17 +152,17 @@ class FUnversionedHeader {
 
         /** Number of properties to skip before values */
         var skipNum: UByte = 0u
-        var bHasAnyZeroes = false
+        var hasAnyZeroes = false
         /** Number of subsequent property values stored */
         var valueNum: UByte = 0u
         /** Is this the last fragment of the header? */
-        var bIsLast = false
+        var isLast = false
 
         constructor(int: UShort) {
             skipNum = (int and SKIP_NUM_MASK).toUByte()
-            bHasAnyZeroes = (int and HAS_ZERO_MASK) != 0u.toUShort()
+            hasAnyZeroes = (int and HAS_ZERO_MASK) != 0u.toUShort()
             valueNum = (int.toUInt() shr VALUE_NUM_SHIFT).toUByte()
-            bIsLast = (int and IS_LAST_MASK) != 0u.toUShort()
+            isLast = (int and IS_LAST_MASK) != 0u.toUShort()
         }
     }
 
@@ -189,12 +171,12 @@ class FUnversionedHeader {
         private val zeroMask = header.zeroMask
         private val fragments = header.fragments
         private var fragmentIt = 0
-        internal var bDone = !header.hasValues()
+        internal var done = !header.hasValues()
         private var zeroMaskIndex = 0u
         private var remainingFragmentValues = 0u
 
         init {
-            if (!bDone) {
+            if (!done) {
                 skip()
             }
         }
@@ -202,13 +184,13 @@ class FUnversionedHeader {
         fun next() {
             ++schemaIt
             --remainingFragmentValues
-            if (fragments[fragmentIt].bHasAnyZeroes) {
+            if (fragments[fragmentIt].hasAnyZeroes) {
                 ++zeroMaskIndex
             }
 
             if (remainingFragmentValues == 0u) {
-                if (fragments[fragmentIt].bIsLast) {
-                    bDone = true
+                if (fragments[fragmentIt].isLast) {
+                    done = true
                 } else {
                     ++fragmentIt
                     skip()
@@ -218,13 +200,13 @@ class FUnversionedHeader {
 
         val serializer get() = schemas[schemaIt]
 
-        fun isNonZero() = !fragments[fragmentIt].bHasAnyZeroes || !zeroMask[zeroMaskIndex.toInt()]
+        fun isNonZero() = !fragments[fragmentIt].hasAnyZeroes || !zeroMask[zeroMaskIndex.toInt()]
 
         private fun skip() {
             schemaIt += fragments[fragmentIt].skipNum.toInt()
 
             while (fragments[fragmentIt].valueNum == 0u.toUByte()) {
-                check(!fragments[fragmentIt].bIsLast)
+                check(!fragments[fragmentIt].isLast)
                 ++fragmentIt
                 schemaIt += fragments[fragmentIt].skipNum.toInt()
             }
@@ -234,8 +216,10 @@ class FUnversionedHeader {
     }
 }
 
-fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: UStruct, Ar: FAssetArchive) {
-    //check(canUseUnversionedPropertySerialization())
+fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: UStruct?, Ar: FAssetArchive) {
+    if (struct == null) {
+        throw ParserException("Cannot read unversioned properties without a struct", Ar)
+    }
 
     if (GDebugProperties) println("Load: ${struct.name}")
     val header = FUnversionedHeader()
@@ -244,11 +228,9 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
     if (header.hasValues()) {
         val schemas = getOrCreateUnversionedSchema(struct).serializers
 
-        if (header.bHasNonZeroValues) {
-            //val defaults = FDefaultStruct(defaultsData, defaultsStruct)
-
+        if (header.hasNonZeroValues) {
             val it = FUnversionedHeader.FIterator(header, schemas)
-            while (!it.bDone) {
+            while (!it.done) {
                 val serializer = it.serializer
                 if (serializer != null) {
                     if (GDebugProperties) println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
@@ -260,23 +242,23 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                         val start = Ar.pos()
                         properties.add(serializer.deserialize(Ar, ReadType.ZERO))
                         if (Ar.pos() != start) {
-                            throw ParserException("Zero property #${it.schemaIt} should not advance the archive's position", Ar)
+                            throw ParserException("Zero property $serializer should not advance the archive's position", Ar)
                         }
                     }
                 } else {
                     if (it.isNonZero()) {
                         throw UnknownPropertyException("${struct.name}: Unknown property with value ${it.schemaIt}. Can't proceed with serialization (Serialized ${properties.size} properties until now)", Ar)
                     }
-                    UClass.logger.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
+                    LOG_JFP.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
                 }
                 it.next()
             }
         } else {
             val it = FUnversionedHeader.FIterator(header, schemas)
-            while (!it.bDone) {
+            while (!it.done) {
                 check(!it.isNonZero())
                 it.serializer?.run { properties.add(deserialize(Ar, ReadType.ZERO)) }
-                    ?: UClass.logger.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
+                    ?: LOG_JFP.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
                 it.next()
             }
         }

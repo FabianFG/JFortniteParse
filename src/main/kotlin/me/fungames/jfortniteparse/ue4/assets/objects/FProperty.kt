@@ -1,11 +1,12 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.assets.reader.FObjectAndNameAsStringAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.FFieldPath
@@ -53,7 +54,7 @@ sealed class FProperty {
                 val keyType = typeArgs[0]
                 val valueType = typeArgs[1]
                 val map = linkedMapOf<Any?, Any?>()
-                value.mapData.forEach { (k, v) ->
+                value.entries.forEach { (k, v) ->
                     val mappedKey = if (keyType is ParameterizedType) {
                         k.getTagTypeValue(keyType.rawType as Class<*>, keyType)
                     } else {
@@ -97,13 +98,13 @@ sealed class FProperty {
         is Int64Property -> this.number
         is Int8Property -> this.number
         is IntProperty -> this.number
-        is InterfaceProperty -> this.interfaceProperty
+        is InterfaceProperty -> this.`interface`
         is LazyObjectProperty -> this.guid
         is MapProperty -> this.map
         is MulticastDelegateProperty -> this.delegate
         is NameProperty -> this.name
         is ObjectProperty -> this.index
-        is SetProperty -> this.array
+        is SetProperty -> this.set
         is SoftClassProperty -> this.`object`
         is SoftObjectProperty -> this.`object`
         is StrProperty -> this.str
@@ -130,13 +131,13 @@ sealed class FProperty {
             is Int64Property -> this.number = value as Long
             is Int8Property -> this.number = value as Byte
             is IntProperty -> this.number = value as Int
-            is InterfaceProperty -> this.interfaceProperty = value as UInterfaceProperty
+            is InterfaceProperty -> this.`interface` = value as FScriptInterface
             is LazyObjectProperty -> this.guid = value as FUniqueObjectGuid
             is MapProperty -> this.map = value as UScriptMap
             is MulticastDelegateProperty -> this.delegate = value as FMulticastScriptDelegate
             is NameProperty -> this.name = value as FName
             is ObjectProperty -> this.index = value as FPackageIndex
-            is SetProperty -> this.array = value as UScriptArray
+            is SetProperty -> this.set = value as UScriptSet
             is SoftClassProperty -> this.`object` = value as FSoftClassPath
             is SoftObjectProperty -> this.`object` = value as FSoftObjectPath
             is StrProperty -> this.str = value as String
@@ -149,30 +150,31 @@ sealed class FProperty {
     }
 
     companion object {
-        fun readPropertyValue(Ar: FAssetArchive, typeData: PropertyType, type: ReadType) =
-            when (val propertyType = typeData.type.text) {
+        fun readPropertyValue(Ar: FAssetArchive, typeData: PropertyType, type: ReadType): FProperty? {
+            val nz /*nonZero*/ = type != ReadType.ZERO
+            return when (val propertyType = typeData.type.text) {
                 "BoolProperty" -> BoolProperty(when (type) {
                     ReadType.NORMAL -> if (Ar.useUnversionedPropertySerialization) Ar.readFlag() else typeData.bool
                     ReadType.MAP, ReadType.ARRAY -> Ar.readFlag()
                     ReadType.ZERO -> typeData.bool
                 })
                 "StructProperty" -> StructProperty(UScriptStruct(Ar, typeData, type))
-                "ObjectProperty" -> ObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
-                "WeakObjectProperty" -> WeakObjectProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
-                "LazyObjectProperty" -> LazyObjectProperty(valueOr({ FUniqueObjectGuid(Ar) }, { FUniqueObjectGuid(FGuid()) }, type))
-                "ClassProperty" -> ClassProperty(valueOr({ FPackageIndex(Ar) }, { FPackageIndex(0, Ar.owner) }, type))
-                "InterfaceProperty" -> InterfaceProperty(valueOr({ UInterfaceProperty(Ar) }, { UInterfaceProperty(0u) }, type))
-                "FloatProperty" -> FloatProperty(valueOr({ Ar.readFloat32() }, { 0f }, type))
-                "TextProperty" -> TextProperty(valueOr({ FText(Ar) }, { FText(0u, ETextHistoryType.None, FTextHistory.None()) }, type))
-                "StrProperty" -> StrProperty(valueOr({ Ar.readString() }, { "" }, type))
-                "NameProperty" -> NameProperty(valueOr({ Ar.readFName() }, { FName.NAME_None }, type))
-                "IntProperty" -> IntProperty(valueOr({ Ar.readInt32() }, { 0 }, type))
-                "UInt16Property" -> UInt16Property(valueOr({ Ar.readUInt16() }, { 0u }, type))
-                "UInt32Property" -> UInt32Property(valueOr({ Ar.readUInt32() }, { 0u }, type))
-                "UInt64Property" -> UInt64Property(valueOr({ Ar.readUInt64() }, { 0u }, type))
-                "ArrayProperty" -> ArrayProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
-                "SetProperty" -> SetProperty(valueOr({ UScriptArray(Ar, typeData) }, { UScriptArray(null, mutableListOf()) }, type))
-                "MapProperty" -> MapProperty(valueOr({ UScriptMap(Ar, typeData) }, { UScriptMap(0, mutableMapOf()) }, type))
+                "ObjectProperty" -> if (Ar is FObjectAndNameAsStringAssetArchive) StrProperty(Ar.readString()) else ObjectProperty(if (nz) FPackageIndex(Ar) else FPackageIndex(0, Ar.owner))
+                "WeakObjectProperty" -> WeakObjectProperty(if (nz) FPackageIndex(Ar) else FPackageIndex(0, Ar.owner))
+                "LazyObjectProperty" -> LazyObjectProperty(if (nz) FUniqueObjectGuid(Ar) else FUniqueObjectGuid(FGuid()))
+                "ClassProperty" -> ClassProperty(if (nz) FPackageIndex(Ar) else FPackageIndex(0, Ar.owner))
+                "InterfaceProperty" -> InterfaceProperty(if (nz) FScriptInterface(Ar) else FScriptInterface())
+                "FloatProperty" -> FloatProperty(if (nz) Ar.readFloat32() else 0f)
+                "TextProperty" -> TextProperty(if (nz) FText(Ar) else FText(0u, ETextHistoryType.None, FTextHistory.None()))
+                "StrProperty" -> StrProperty(if (nz) Ar.readString() else "")
+                "NameProperty" -> NameProperty(if (nz) Ar.readFName() else FName.NAME_None)
+                "IntProperty" -> IntProperty(if (nz) Ar.readInt32() else 0)
+                "UInt16Property" -> UInt16Property(if (nz) Ar.readUInt16() else 0u)
+                "UInt32Property" -> UInt32Property(if (nz) Ar.readUInt32() else 0u)
+                "UInt64Property" -> UInt64Property(if (nz) Ar.readUInt64() else 0u)
+                "ArrayProperty" -> ArrayProperty(if (nz) UScriptArray(Ar, typeData) else UScriptArray(null, mutableListOf()))
+                "SetProperty" -> SetProperty(if (nz) UScriptSet(Ar, typeData) else UScriptSet(mutableListOf(), mutableListOf()))
+                "MapProperty" -> MapProperty(if (nz) UScriptMap(Ar, typeData) else UScriptMap(mutableListOf(), mutableMapOf()))
                 "ByteProperty" ->
                     if (Ar.useUnversionedPropertySerialization && type == ReadType.NORMAL) {
                         ByteProperty(Ar.readUInt8())
@@ -187,36 +189,37 @@ sealed class FProperty {
                     if (type == ReadType.NORMAL && typeData.enumName.isNone()) {
                         EnumProperty(FName.NAME_None)
                     } else if (type != ReadType.MAP && type != ReadType.ARRAY && Ar.useUnversionedPropertySerialization) {
-                        val ordinal = valueOr({ if (typeData.isEnumAsByte) Ar.read() else Ar.readInt32() }, { 0 }, type)
+                        val ordinal = if (nz) if (typeData.isEnumAsByte) Ar.read() else Ar.readInt32() else 0
                         val enumClass = typeData.enumClass?.value
                         if (enumClass != null) { // serialized or reflection
                             val enumValue = enumClass.names.firstOrNull { it.second == ordinal.toLong() }
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${enumClass.name}", Ar)
                             EnumProperty(enumValue.first)
                         } else { // loaded from mappings provider
-                            val enumValue = Ar.provider!!.mappingsProvider.getEnum(typeData.enumName)?.getOrNull(ordinal)
+                            val enumValue = Ar.provider!!.mappingsProvider.getEnumValues(typeData.enumName)?.getOrNull(ordinal)
                                 ?: throw ParserException("Failed to get enum index $ordinal for enum ${typeData.enumName}", Ar)
                             val fakeName = (typeData.enumName.text + "::" + enumValue)
-                            EnumProperty(FName.dummy(fakeName))
+                            EnumProperty(FName(fakeName))
                         }
                     } else {
                         EnumProperty(Ar.readFName())
                     }
-                "SoftObjectProperty" -> SoftObjectProperty(valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type).apply { owner = Ar.owner })
-                "SoftClassProperty" -> SoftClassProperty(valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type).apply { owner = Ar.owner })
-                "DelegateProperty" -> DelegateProperty(valueOr({ FScriptDelegate(Ar) }, { FScriptDelegate(FPackageIndex(), FName.NAME_None) }, type))
-                "MulticastDelegateProperty" -> MulticastDelegateProperty(valueOr({ FMulticastScriptDelegate(Ar) }, { FMulticastScriptDelegate(mutableListOf()) }, type))
-                "DoubleProperty" -> DoubleProperty(valueOr({ Ar.readDouble() }, { 0.0 }, type))
-                "Int8Property" -> Int8Property(valueOr({ Ar.readInt8() }, { 0 }, type))
-                "Int16Property" -> Int16Property(valueOr({ Ar.readInt16() }, { 0 }, type))
-                "Int64Property" -> Int64Property(valueOr({ Ar.readInt64() }, { 0 }, type))
-                "FieldPathProperty" -> FieldPathProperty(valueOr({ FFieldPath(Ar) }, { FFieldPath() }, type))
+                "SoftObjectProperty" -> SoftObjectProperty((if (nz) FSoftObjectPath(Ar) else FSoftObjectPath()).apply { owner = Ar.owner })
+                "SoftClassProperty" -> SoftClassProperty((if (nz) FSoftClassPath(Ar) else FSoftClassPath()).apply { owner = Ar.owner })
+                "DelegateProperty" -> DelegateProperty(if (nz) FScriptDelegate(Ar) else FScriptDelegate(FPackageIndex(), FName.NAME_None))
+                "MulticastDelegateProperty", "MulticastInlineDelegateProperty", "MulticastSparseDelegateProperty" -> MulticastDelegateProperty(if (nz) FMulticastScriptDelegate(Ar) else FMulticastScriptDelegate(mutableListOf()))
+                "DoubleProperty" -> DoubleProperty(if (nz) Ar.readDouble() else 0.0)
+                "Int8Property" -> Int8Property(if (nz) Ar.readInt8() else 0)
+                "Int16Property" -> Int16Property(if (nz) Ar.readInt16() else 0)
+                "Int64Property" -> Int64Property(if (nz) Ar.readInt64() else 0)
+                "FieldPathProperty" -> FieldPathProperty(if (nz) FFieldPath(Ar) else FFieldPath())
 
                 else -> {
-                    UClass.logger.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
+                    LOG_JFP.warn("Couldn't read property type $propertyType at ${Ar.pos()}")
                     null
                 }
             }
+        }
 
         fun writePropertyValue(Ar: FAssetArchiveWriter, tag: FProperty, type: ReadType) {
             when (tag) {
@@ -232,20 +235,20 @@ sealed class FProperty {
                 }
                 is DelegateProperty -> tag.delegate.serialize(Ar)
                 is DoubleProperty -> Ar.writeDouble(tag.number)
-                is EnumProperty -> if (tag.name !is FName.FNameDummy) Ar.writeFName(tag.name)
+                is EnumProperty -> Ar.writeFName(tag.name)
                 //is FieldPathProperty -> tag.fieldPath.serialize(Ar)
                 is FloatProperty -> Ar.writeFloat32(tag.float)
                 is Int16Property -> Ar.writeInt16(tag.number)
                 is Int64Property -> Ar.writeInt64(tag.number)
                 is Int8Property -> Ar.writeInt8(tag.number)
                 is IntProperty -> Ar.writeInt32(tag.number)
-                is InterfaceProperty -> tag.interfaceProperty.serialize(Ar)
+                is InterfaceProperty -> tag.`interface`.serialize(Ar)
                 is LazyObjectProperty -> tag.guid.serialize(Ar)
                 is MapProperty -> tag.map.serialize(Ar)
                 is MulticastDelegateProperty -> tag.delegate.serialize(Ar)
                 is NameProperty -> Ar.writeFName(tag.name)
                 is ObjectProperty -> tag.index.serialize(Ar)
-                is SetProperty -> tag.array.serialize(Ar)
+                is SetProperty -> tag.set.serialize(Ar)
                 is SoftClassProperty -> tag.`object`.serialize(Ar)
                 is SoftObjectProperty -> tag.`object`.serialize(Ar)
                 is StrProperty -> Ar.writeString(tag.str)
@@ -256,9 +259,6 @@ sealed class FProperty {
                 is UInt64Property -> Ar.writeUInt64(tag.number)
             }
         }
-
-        inline fun <T> valueOr(valueIfNonzero: () -> T, valueIfZero: () -> T, type: ReadType) =
-            if (type != ReadType.ZERO) valueIfNonzero() else valueIfZero()
     }
 
     class ArrayProperty(var array: UScriptArray) : FProperty()
@@ -274,13 +274,13 @@ sealed class FProperty {
     class Int64Property(var number: Long) : FProperty()
     class Int8Property(var number: Byte) : FProperty()
     class IntProperty(var number: Int) : FProperty()
-    class InterfaceProperty(var interfaceProperty: UInterfaceProperty) : FProperty()
+    class InterfaceProperty(var `interface`: FScriptInterface) : FProperty()
     class LazyObjectProperty(var guid: FUniqueObjectGuid) : FProperty()
     class MapProperty(var map: UScriptMap) : FProperty()
     class MulticastDelegateProperty(var delegate: FMulticastScriptDelegate) : FProperty()
     class NameProperty(var name: FName) : FProperty()
     open class ObjectProperty(var index: FPackageIndex) : FProperty()
-    class SetProperty(var array: UScriptArray) : FProperty()
+    class SetProperty(var set: UScriptSet) : FProperty()
     class SoftClassProperty(var `object`: FSoftClassPath) : FProperty()
     class SoftObjectProperty(var `object`: FSoftObjectPath) : FProperty()
     class StrProperty(var str: String) : FProperty()

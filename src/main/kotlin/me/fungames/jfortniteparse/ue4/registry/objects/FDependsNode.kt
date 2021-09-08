@@ -5,15 +5,14 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.ref
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.jvm.internal.Ref.ObjectRef
 
-class FDependsNode {
+class FDependsNode(private val index: Int) {
     companion object {
         const val packageFlagWidth = 3
-        const val packageFlagSetWidth = 1 shr packageFlagWidth
+        const val packageFlagSetWidth = 5 // FPropertyCombinationPack3::StorageBitCount
         const val manageFlagWidth = 1
-        const val manageFlagSetWidth = 1 shr manageFlagWidth
+        const val manageFlagSetWidth = 1 // TPropertyCombinationSet<1>::StorageBitCount
     }
 
     /** The name of the package/object this node represents */
@@ -31,7 +30,7 @@ class FDependsNode {
     var manageFlags: BitSet? = null
         private set
 
-    fun serializeLoad(Ar: FArchive, getNodeFromSerializeIndex: (Int) -> FDependsNode?) {
+    fun serializeLoad(Ar: FArchive, preallocatedDependsNodeDataBuffer: Array<FDependsNode>) {
         identifier = FAssetIdentifier(Ar)
 
         fun readDependencies(outDependencies: ObjectRef<MutableList<FDependsNode>?>, outFlagBits: ObjectRef<BitSet?>?, flagSetWidth: Int) {
@@ -40,16 +39,16 @@ class FDependsNode {
             val sortIndexes = mutableListOf<Int>()
             var numFlagBits = 0
 
-            val inDependencies = Ar.readTArray { Ar.readInt32() }
-            val numDependencies = inDependencies.size
+            val numDependencies = Ar.readInt32()
+            val inDependencies = IntArray(numDependencies) { Ar.readInt32() }
             if (outFlagBits != null) {
                 numFlagBits = flagSetWidth * numDependencies
                 val numFlagWords = numFlagBits.toUInt().divideAndRoundUp(32u)
-                inFlagBits = BitSet.valueOf(Ar.read(numFlagWords.toInt()))
+                inFlagBits = BitSet.valueOf(Ar.read(numFlagWords.toInt() * 4))
             }
 
             for (serializeIndex in inDependencies) {
-                val dependsNode = getNodeFromSerializeIndex(serializeIndex)
+                val dependsNode = preallocatedDependsNodeDataBuffer.getOrNull(serializeIndex)
                     ?: throw ParserException("Invalid index of preallocatedDependsNodeDataBuffer")
                 pointerDependencies.add(dependsNode)
             }
@@ -58,7 +57,7 @@ class FDependsNode {
                 sortIndexes.add(index)
             }
 
-            //sortIndexes.sortBy { pointerDependencies[it] }
+            sortIndexes.sortBy { pointerDependencies[it].index }
 
             outDependencies.element = ArrayList(numDependencies)
             for (sortIndex in sortIndexes) {
@@ -94,7 +93,7 @@ class FDependsNode {
         referencers = referencersRef.element
     }
 
-    fun serializeLoadBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion, preallocatedDependsNodeDataBuffer: Array<FDependsNode>, numDependsNodes: Int) {
+    fun serializeLoadBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion, preallocatedDependsNodeDataBuffer: Array<FDependsNode>) {
         identifier = FAssetIdentifier(Ar)
 
         val numHard = Ar.readInt32()
@@ -110,31 +109,21 @@ class FDependsNode {
         manageDependencies = ArrayList(numSoftManage + numHardManage)
         referencers = ArrayList(numReferencers)
 
-        fun serializeNodeArray(num: Int, outNodes: ObjectRef<MutableList<FDependsNode>?>) {
-            for (i in 0 until num) {
+        fun serializeNodeArray(num: Int, outNodes: MutableList<FDependsNode>) {
+            repeat(num) {
                 val index = Ar.readInt32()
-                if (index < 0 || index >= numDependsNodes) {
-                    throw ParserException("Invalid DependencyType index")
-                }
-                val dependsNode = preallocatedDependsNodeDataBuffer[index]
-                outNodes.element!!.add(index, dependsNode)
+                val dependsNode = preallocatedDependsNodeDataBuffer.getOrNull(index)
+                    ?: throw ParserException("Invalid DependencyType index")
+                outNodes.add(/*index, */dependsNode) // We cannot assign by index without hacks :(
             }
         }
 
         // Read the bits for each type, but don't write anything if serializing that type isn't allowed
-        val packageDependenciesRef = packageDependencies.ref()
-        val nameDependenciesRef = nameDependencies.ref()
-        val manageDependenciesRef = manageDependencies.ref()
-        val referencersRef = referencers.ref()
-        serializeNodeArray(numHard, packageDependenciesRef)
-        serializeNodeArray(numSoft, packageDependenciesRef)
-        serializeNodeArray(numName, nameDependenciesRef)
-        serializeNodeArray(numSoftManage, manageDependenciesRef)
-        serializeNodeArray(numHardManage, manageDependenciesRef)
-        serializeNodeArray(numReferencers, referencersRef)
-        packageDependencies = packageDependenciesRef.element
-        nameDependencies = nameDependenciesRef.element
-        manageDependencies = manageDependenciesRef.element
-        referencers = referencersRef.element
+        serializeNodeArray(numHard, packageDependencies!!)
+        serializeNodeArray(numSoft, packageDependencies!!)
+        serializeNodeArray(numName, nameDependencies!!)
+        serializeNodeArray(numSoftManage, manageDependencies!!)
+        serializeNodeArray(numHardManage, manageDependencies!!)
+        serializeNodeArray(numReferencers, referencers!!)
     }
 }

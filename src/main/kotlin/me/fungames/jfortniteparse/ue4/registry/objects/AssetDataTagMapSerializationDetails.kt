@@ -57,8 +57,8 @@ class FStore(Ar: FAssetRegistryReader) {
         ansiStrings = Ar.read(nums[7])
         wideStrings = Ar.read(nums[8] * 2)
 
-        numberlessPairs = Array(nums[9]) { FNumberlessPair(Ar) }
-        pairs = Array(nums[10]) { FNumberedPair(Ar) }
+        numberlessPairs = Array(nums[9]) { FNameEntryId(Ar) to FValueId(Ar) }
+        pairs = Array(nums[10]) { Ar.readFName() to FValueId(Ar) }
         check(Ar.readUInt32() == END_MAGIC)
     }
 

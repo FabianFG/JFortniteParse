@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.KINDA_SMALL_NUMBER
@@ -16,7 +15,7 @@ const val THRESH_VECTOR_NORMALIZED = 0.01f
  * A vector in 3-D space composed of components (X, Y, Z) with floating point precision.
  */
 @Suppress("NOTHING_TO_INLINE")
-open class FVector : UClass {
+open class FVector {
     /** Vector's X component. */
     var x: Float
 
@@ -27,22 +26,18 @@ open class FVector : UClass {
     var z: Float
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         x = Ar.readFloat32()
         y = Ar.readFloat32()
         z = Ar.readFloat32()
-        super.complete(Ar)
     }
 
     open fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeFloat32(x)
         Ar.writeFloat32(y)
         Ar.writeFloat32(z)
-        super.completeWrite(Ar)
     }
 
-    /** Default constructor (no initialization). */
+    /** Default constructor. */
     constructor() : this(0f, 0f, 0f)
 
     /**
@@ -160,7 +155,7 @@ open class FVector : UClass {
      * @param bias How much to add to each component.
      * @return The result of addition.
      */
-    inline operator fun plus(bias: Float) = FVector(x - bias, y - bias, z - bias)
+    inline operator fun plus(bias: Float) = FVector(x + bias, y + bias, z + bias)
 
     /**
      * Gets the result of scaling the vector (multiplying each component by a value).

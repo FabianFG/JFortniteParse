@@ -4,35 +4,40 @@ import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
-import me.fungames.jfortniteparse.ue4.asyncloading2.FMappedName
 import me.fungames.jfortniteparse.ue4.io.EIoChunkType
+import me.fungames.jfortniteparse.ue4.io.EIoChunkType5
 import me.fungames.jfortniteparse.ue4.io.FIoChunkId
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FMappedName
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
 import java.nio.ByteBuffer
 
 class FExportArchive(data: ByteBuffer, val obj: UObject, val pkg: IoPackage) : FAssetArchive(data, pkg.provider, pkg.fileName) {
     init {
-        game = pkg.game.game
-        ver = pkg.game.version
+        versions = pkg.versions
         owner = pkg
     }
 
     override fun getPayload(type: PayloadType) = payloads.getOrPut(type) {
         if (provider == null)
             throw ParserException("Lazy loading a $type requires a file provider")
-        val payloadChunkId = FIoChunkId(pkg.packageId.value(), 0u, when (type) {
+        val chunkType = if (game >= GAME_UE5_BASE) when (type) {
+            PayloadType.UBULK -> EIoChunkType5.BulkData
+            PayloadType.M_UBULK -> EIoChunkType5.MemoryMappedBulkData
+            PayloadType.UPTNL -> EIoChunkType5.OptionalBulkData
+        } else when (type) {
             PayloadType.UBULK -> EIoChunkType.BulkData
             PayloadType.M_UBULK -> EIoChunkType.MemoryMappedBulkData
             PayloadType.UPTNL -> EIoChunkType.OptionalBulkData
-        })
+        }
+        val payloadChunkId = FIoChunkId(pkg.packageId.value(), 0u, chunkType)
         val ioBuffer = runCatching { provider!!.saveChunk(payloadChunkId) }.getOrElse { ByteArray(0) }
         FAssetArchive(ioBuffer, provider, pkgName)
     }
 
     override fun clone(): FExportArchive {
         val c = FExportArchive(data.duplicate(), obj, pkg)
-        c.game = game
-        c.ver = ver
+        c.versions = versions
         c.useUnversionedPropertySerialization = useUnversionedPropertySerialization
         c.isFilterEditorOnly = isFilterEditorOnly
         c.littleEndian = littleEndian

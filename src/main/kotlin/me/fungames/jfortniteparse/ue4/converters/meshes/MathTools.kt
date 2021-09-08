@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
-
 package me.fungames.jfortniteparse.ue4.converters.meshes
 
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
@@ -23,18 +21,18 @@ class CVertexShare {
     val hash = IntArray(16384) { -1 }
     lateinit var hashNext: IntArray
 
-    fun prepare(verts: Array<CMeshVertex>) {
+    fun prepare(verts: Array<out CMeshVertex>) {
         vertToWedge = IntArray(verts.size)
 
         // compute bounds for better hashing
         computeBounds(verts)
         extents = maxs - mins
-        extents[0] += 1f; extents[1] += 1f; extents[2] += 1f; // avoid zero divide
+        extents[0] += 1f; extents[1] += 1f; extents[2] += 1f // avoid zero divide
         // initialize Hash and HashNext with -1
         hashNext = IntArray(verts.size) { -1 }
     }
 
-    fun computeBounds(verts: Array<CMeshVertex>, updateBounds: Boolean = false) {
+    fun computeBounds(verts: Array<out CMeshVertex>, updateBounds: Boolean = false) {
         if (verts.isEmpty()) {
             if (!updateBounds) {
                 mins.set(0f, 0f, 0f)

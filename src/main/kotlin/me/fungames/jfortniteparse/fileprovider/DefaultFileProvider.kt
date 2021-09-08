@@ -9,13 +9,15 @@ import me.fungames.jfortniteparse.ue4.pak.GameFile
 import me.fungames.jfortniteparse.ue4.pak.PakFileReader
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.versions.Ue4Version
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
+import java.io.Closeable
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
-open class DefaultFileProvider : PakFileProvider {
+open class DefaultFileProvider : PakFileProvider, Closeable {
     val folder: File
-    final override var game: Ue4Version
+    final override var versions: VersionContainer
     private val localFiles = mutableMapOf<String, File>()
     override val files = ConcurrentHashMap<String, GameFile>()
     override val unloadedPaks = CopyOnWriteArrayList<PakFileReader>()
@@ -25,15 +27,19 @@ open class DefaultFileProvider : PakFileProvider {
     override val mountedIoStoreReaders = CopyOnWriteArrayList<FIoStoreReaderImpl>()
 
     @JvmOverloads
-    constructor(folder: File, game: Ue4Version = Ue4Version.GAME_UE4_LATEST, mappingsProvider: TypeMappingsProvider = ReflectionTypeMappingsProvider()) {
+    constructor(folder: File, versions: VersionContainer = VersionContainer.DEFAULT) {
         this.folder = folder
-        this.game = game
-        this.mappingsProvider = mappingsProvider
+        this.versions = versions
         scanFiles(folder)
     }
 
+    @JvmOverloads
+    constructor(folder: File, game: Ue4Version, mappingsProvider: TypeMappingsProvider = ReflectionTypeMappingsProvider()) : this(folder, VersionContainer(game.game)) {
+        this.mappingsProvider = mappingsProvider
+    }
+
     private fun scanFiles(folder: File) {
-        if (game.game >= GAME_UE4(26) && !globalDataLoaded && folder.name == "Paks") {
+        if (game >= GAME_UE4(26) && !globalDataLoaded && folder.name == "Paks") {
             val globalTocFile = File(folder, "global.utoc")
             if (globalTocFile.exists()) {
                 loadGlobalData(globalTocFile)
@@ -45,7 +51,7 @@ open class DefaultFileProvider : PakFileProvider {
             } else if (file.isFile) {
                 if (file.extension.toLowerCase() == "pak") {
                     try {
-                        val reader = PakFileReader(file, game.game)
+                        val reader = PakFileReader(file, versions)
                         if (!reader.isEncrypted()) {
                             mount(reader)
                         } else {
@@ -85,5 +91,18 @@ open class DefaultFileProvider : PakFileProvider {
             }.values.firstOrNull()
         }
         return file?.readBytes()
+    }
+
+    override fun close() {
+        files.clear()
+        unloadedPaks.forEach { it.close() }
+        unloadedPaks.clear()
+        mountedPaks.forEach { it.close() }
+        mountedPaks.clear()
+        mountedIoStoreReaders.forEach { it.close() }
+        mountedIoStoreReaders.clear()
+        keys.clear()
+        requiredKeys.clear()
+        globalDataLoaded = false
     }
 }

@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
@@ -16,7 +16,7 @@ import java.lang.reflect.Type
 /**
  * A tag describing a class property, to aid in serialization.
  */
-class FPropertyTag : UClass {
+class FPropertyTag {
     // Transient.
     var prop: FProperty? = null // prop: FProperty
 
@@ -47,12 +47,7 @@ class FPropertyTag : UClass {
 
     var typeData: PropertyType? = null
 
-    constructor(name: FName) {
-        this.name = name
-    }
-
     constructor(Ar: FAssetArchive, readData: Boolean) {
-        super.init(Ar)
         name = Ar.readFName()
         if (!name.isNone()) {
             type = Ar.readFName()
@@ -95,27 +90,34 @@ class FPropertyTag : UClass {
                 val pos = Ar.pos()
                 val finalPos = pos + size
                 try {
-                    prop =
-                        FProperty.readPropertyValue(
-                            Ar, typeData!!,
-                            FProperty.ReadType.NORMAL
-                        )
+                    prop = FProperty.readPropertyValue(Ar, typeData!!, FProperty.ReadType.NORMAL)
                     if (finalPos != Ar.pos()) {
-                        logger.warn("FPropertyTagType $name (${type}) was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
+                        LOG_JFP.warn("FPropertyTagType $typeData $name was not read properly, pos ${Ar.pos()}, calculated pos $finalPos")
                     }
-                    //Even if the property wasn't read properly
-                    //we don't need to crash here because we know the expected size
-                    Ar.seek(finalPos)
                 } catch (e: ParserException) {
                     if (finalPos != Ar.pos()) {
-                        logger.warn("Failed to read FPropertyTagType $name (${type}), skipping it, please report", e)
+                        LOG_JFP.warn("Failed to read FPropertyTagType $typeData $name, skipping it", e)
                     }
-                    //Also no need to crash here, just seek to the desired offset
+                } finally {
+                    // Always seek to calculated position, no need to crash
                     Ar.seek(finalPos)
                 }
             }
         }
-        super.complete(Ar)
+    }
+
+    constructor(Ar: FAssetArchive, info: PropertyInfo, arrayIndex: Int, type: FProperty.ReadType) {
+        name = FName(info.name)
+        this.arrayIndex = arrayIndex
+        val typeData = info.type
+        this.typeData = typeData
+        val pos = Ar.pos()
+        try {
+            prop = FProperty.readPropertyValue(Ar, typeData, type)
+        } catch (e: ParserException) {
+            throw ParserException("Failed to read FPropertyTagType $typeData $name", e)
+        }
+        size = Ar.pos() - pos
     }
 
     fun <T> getTagTypeValue(clazz: Class<T>, type: Type? = null): T? {
@@ -136,7 +138,6 @@ class FPropertyTag : UClass {
     fun setTagTypeValue(value: Any?) = prop?.setTagTypeValue(value)
 
     fun serialize(Ar: FAssetArchiveWriter, writeData: Boolean) {
-        super.initWrite(Ar)
         Ar.writeFName(name)
         if (name.text != "None") {
             Ar.writeFName(type)
@@ -171,7 +172,6 @@ class FPropertyTag : UClass {
                 }
             }
         }
-        super.completeWrite(Ar)
     }
 
     override fun toString() = "${name.text}   -->   ${if (prop != null) getTagTypeValueLegacy() else "Failed to parse"}"

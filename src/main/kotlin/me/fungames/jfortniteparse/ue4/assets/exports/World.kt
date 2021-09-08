@@ -6,13 +6,13 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 @OnlyAnnotated
 class UWorld : UObject() {
     var persistentLevel: Lazy<ULevel>? = null
-    var extraReferencedObjects: Lazy<UObject>? = null
-    var streamingLevels: Lazy<UObject>? = null
+    lateinit var extraReferencedObjects: Array<Lazy<UObject>?>
+    lateinit var streamingLevels: Array<Lazy<UObject>?>
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
         persistentLevel = Ar.readObject()
-        extraReferencedObjects = Ar.readObject()
-        streamingLevels = Ar.readObject()
+        extraReferencedObjects = Ar.readTArray { Ar.readObject() }
+        streamingLevels = Ar.readTArray { Ar.readObject() }
     }
 }

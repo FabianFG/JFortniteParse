@@ -1,25 +1,21 @@
 package me.fungames.jfortniteparse.ue4.manifests.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FManifestMeta : UClass {
+class FManifestMeta {
+    var isFileDataInt: Boolean
+    var appId: UInt
+    var appName: String
+    var buildVersion: String
+    var launchExe: String
+    var launchCommand: String
+    var prereqIds: Array<String>
+    var prereqName: String
+    var prereqPath: String
+    var prereqArgs: String
 
-    var isFileDataInt : Boolean
-    var appId : UInt
-    var appName : String
-    var buildVersion : String
-    var launchExe : String
-    var launchCommand : String
-    var prereqIds : Array<String>
-    var prereqName : String
-    var prereqPath : String
-    var prereqArgs : String
-
-
-    constructor(Ar : FArchive) {
-        super.init(Ar)
+    constructor(Ar: FArchive) {
         val startPos = Ar.pos()
         val dataSize = Ar.readUInt32()
         /*val dataVersionInt = */Ar.readUInt8()
@@ -36,10 +32,7 @@ class FManifestMeta : UClass {
         prereqArgs = Ar.readString()
 
         Ar.seek(startPos + dataSize.toInt())
-        super.complete(Ar)
     }
 
-    fun serialize(Ar : FArchive) {
-
-    }
+    fun serialize(Ar: FArchiveWriter) {}
 }

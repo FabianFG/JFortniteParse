@@ -1,11 +1,9 @@
 package me.fungames.jfortniteparse.ue4.objects.engine
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
 /** URL structure. */
-@ExperimentalUnsignedTypes
-class FURL : UClass {
+class FURL {
     /*companion object {
         val urlConfig = FUrlConfig()
     }*/
@@ -123,7 +121,7 @@ class FURL : UClass {
     /**
      * Helper for obtaining the default Url configuration
      */
-    class FUrlConfig : UClass {
+    class FUrlConfig {
         var defaultProtocol: String
         var defaultName: String
         var defaultHost: String

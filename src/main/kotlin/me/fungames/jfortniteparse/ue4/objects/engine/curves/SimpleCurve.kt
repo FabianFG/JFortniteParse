@@ -1,36 +1,34 @@
 package me.fungames.jfortniteparse.ue4.objects.engine.curves
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.objects.core.math.isNearlyZero
 import me.fungames.jfortniteparse.ue4.objects.core.math.lerp
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.ERichCurveExtrapolation.*
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.ERichCurveInterpMode.RCIM_Constant
+import me.fungames.jfortniteparse.ue4.objects.engine.curves.ERichCurveInterpMode.RCIM_Linear
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
-import kotlin.jvm.internal.Ref
 import kotlin.jvm.internal.Ref.FloatRef
+import kotlin.jvm.internal.Ref.IntRef
 import kotlin.math.max
 import kotlin.math.min
 
 /** One key in a rich, editable float curve */
-class FSimpleCurveKey : UClass {
+class FSimpleCurveKey {
     /** Time at this key */
     var time: Float = 0f
     /** Value at this key */
     var value: Float = 0f
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         time = Ar.readFloat32()
         value = Ar.readFloat32()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeFloat32(time)
         Ar.writeFloat32(value)
-        super.completeWrite(Ar)
     }
 
     constructor(time: Float, value: Float) {
@@ -45,7 +43,7 @@ class FSimpleCurve : FRealCurve() {
     /** Interpolation mode between this key and the next */
     @JvmField
     @UProperty("InterpMode")
-    var interpMode = ERichCurveInterpMode.RCIM_Linear
+    var interpMode = RCIM_Linear
     /** Sorted array of keys */
     @JvmField
     @UProperty("Keys")
@@ -85,7 +83,7 @@ class FSimpleCurve : FRealCurve() {
     }
 
     /** Remap inTime based on pre and post infinity extrapolation values */
-    fun remapTimeValue(inTime: FloatRef, cycleValueOffset: FloatRef) {
+    override fun remapTimeValue(inTime: FloatRef, cycleValueOffset: FloatRef) {
         val numKeys = keys.size
 
         if (numKeys < 2) {
@@ -93,34 +91,34 @@ class FSimpleCurve : FRealCurve() {
         }
 
         if (inTime.element <= keys[0].time) {
-            if (preInfinityExtrap != ERichCurveExtrapolation.RCCE_Linear && preInfinityExtrap != ERichCurveExtrapolation.RCCE_Constant) {
+            if (preInfinityExtrap != RCCE_Linear && preInfinityExtrap != RCCE_Constant) {
                 val minTime = keys[0].time
                 val maxTime = keys[numKeys - 1].time
 
-                val cycleCount = Ref.IntRef().apply { element = 0 }
+                val cycleCount = IntRef().apply { element = 0 }
                 cycleTime(minTime, maxTime, inTime, cycleCount)
 
-                if (preInfinityExtrap == ERichCurveExtrapolation.RCCE_CycleWithOffset) {
+                if (preInfinityExtrap == RCCE_CycleWithOffset) {
                     val dv = keys[0].value - keys[numKeys - 1].value
                     cycleValueOffset.element = dv * cycleCount.element
-                } else if (preInfinityExtrap == ERichCurveExtrapolation.RCCE_Oscillate) {
+                } else if (preInfinityExtrap == RCCE_Oscillate) {
                     if (cycleCount.element % 2 == 1) {
                         inTime.element = minTime + (maxTime - inTime.element)
                     }
                 }
             }
         } else if (inTime.element >= keys[numKeys - 1].time) {
-            if (postInfinityExtrap != ERichCurveExtrapolation.RCCE_Linear && postInfinityExtrap != ERichCurveExtrapolation.RCCE_Constant) {
+            if (postInfinityExtrap != RCCE_Linear && postInfinityExtrap != RCCE_Constant) {
                 val minTime = keys[0].time
                 val maxTime = keys[numKeys - 1].time
 
-                val cycleCount = Ref.IntRef().apply { element = 0 }
+                val cycleCount = IntRef().apply { element = 0 }
                 cycleTime(minTime, maxTime, inTime, cycleCount)
 
-                if (postInfinityExtrap == ERichCurveExtrapolation.RCCE_CycleWithOffset) {
+                if (postInfinityExtrap == RCCE_CycleWithOffset) {
                     val dv = keys[numKeys - 1].value - keys[0].value
                     cycleValueOffset.element = dv * cycleCount.element
-                } else if (postInfinityExtrap == ERichCurveExtrapolation.RCCE_Oscillate) {
+                } else if (postInfinityExtrap == RCCE_Oscillate) {
                     if (cycleCount.element % 2 == 1) {
                         inTime.element = minTime + (maxTime - inTime.element)
                     }
@@ -148,7 +146,7 @@ class FSimpleCurve : FRealCurve() {
         if (numKeys == 0) {
             // If no keys in curve, return the Default value.
         } else if (numKeys < 2 || (inTime <= keys[0].time)) {
-            if (preInfinityExtrap == ERichCurveExtrapolation.RCCE_Linear && numKeys > 1) {
+            if (preInfinityExtrap == RCCE_Linear && numKeys > 1) {
                 val dt = keys[1].time - keys[0].time
 
                 if (isNearlyZero(dt)) {
@@ -183,7 +181,7 @@ class FSimpleCurve : FRealCurve() {
 
             interpVal = evalForTwoKeys(keys[first - 1], keys[first], inTime)
         } else {
-            if (postInfinityExtrap == ERichCurveExtrapolation.RCCE_Linear) {
+            if (postInfinityExtrap == RCCE_Linear) {
                 val dt = keys[numKeys - 2].time - keys[numKeys - 1].time
 
                 if (isNearlyZero(dt)) {
@@ -206,7 +204,7 @@ class FSimpleCurve : FRealCurve() {
     private fun evalForTwoKeys(key1: FSimpleCurveKey, key2: FSimpleCurveKey, inTime: Float): Float {
         val diff = key2.time - key1.time
 
-        if (diff > 0f && interpMode != ERichCurveInterpMode.RCIM_Constant) {
+        if (diff > 0f && interpMode != RCIM_Constant) {
             val alpha = (inTime - key1.time) / diff
             val p0 = key1.value
             val p3 = key2.value

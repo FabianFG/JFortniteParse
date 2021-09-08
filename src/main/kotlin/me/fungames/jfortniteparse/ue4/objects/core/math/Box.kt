@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import kotlin.math.max
@@ -12,7 +11,7 @@ import kotlin.math.min
  * Boxes describe an axis-aligned extent in three dimensions. They are used for many different things in the
  * Engine and in games, such as bounding volumes, collision detection and visibility calculation.
  */
-class FBox : UClass {
+class FBox {
     /** Holds the box's minimum point. */
     val min: FVector
 
@@ -23,19 +22,15 @@ class FBox : UClass {
     var isValid: Boolean
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         min = FVector(Ar)
         max = FVector(Ar)
         isValid = Ar.readFlag()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         min.serialize(Ar)
         max.serialize(Ar)
         Ar.writeFlag(isValid)
-        super.completeWrite(Ar)
     }
 
     /**
@@ -328,18 +323,18 @@ class FBox : UClass {
      */
     fun intersect(other: FBox): Boolean {
         if ((min.x > other.max.x) || (other.min.x > max.x)) {
-            return false;
+            return false
         }
 
         if ((min.y > other.max.y) || (other.min.y > max.y)) {
-            return false;
+            return false
         }
 
         if ((min.z > other.max.z) || (other.min.z > max.z)) {
-            return false;
+            return false
         }
 
-        return true;
+        return true
     }
 
     /**
@@ -350,14 +345,14 @@ class FBox : UClass {
      */
     fun intersectXY(other: FBox): Boolean {
         if ((min.x > other.max.x) || (other.min.x > max.x)) {
-            return false;
+            return false
         }
 
         if ((min.y > other.max.y) || (other.min.y > max.y)) {
-            return false;
+            return false
         }
 
-        return true;
+        return true
     }
 
     /**

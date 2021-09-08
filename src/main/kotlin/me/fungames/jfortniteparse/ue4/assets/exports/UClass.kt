@@ -6,7 +6,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 
 @OnlyAnnotated
-open class UClassReal : UStruct() {
+open class UClass : UStruct() {
     /** Used to check if the class was cooked or not */
     var bCooked = false
 

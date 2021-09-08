@@ -5,9 +5,9 @@ import com.github.salomonbrys.kotson.set
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.JsonSerializer.toJson
 import me.fungames.jfortniteparse.ue4.assets.Package
+import me.fungames.jfortniteparse.ue4.assets.ResolvedObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
@@ -16,15 +16,16 @@ import me.fungames.jfortniteparse.ue4.assets.util.mapToClass
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
+import me.fungames.jfortniteparse.ue4.objects.uobject.EObjectFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
-open class UObject : UClass, IPropertyHolder {
+open class UObject : IPropertyHolder {
     var name = ""
     var outer: UObject? = null
     var clazz: UStruct? = null
-    var template: Lazy<UObject>? = null
+    var template: ResolvedObject? = null
     final override var properties: MutableList<FPropertyTag>
     var objectGuid: FGuid? = null
     var flags = 0
@@ -32,13 +33,11 @@ open class UObject : UClass, IPropertyHolder {
     var export: FObjectExport? = null
     val owner: Package?
         get() {
-            var current = outer
-            var next = current?.outer
-            while (next != null) {
-                current = next
-                next = current.outer
+            var top = this
+            while (true) {
+                top = top.outer ?: break
             }
-            return current as? Package
+            return top as? Package
         }
     val exportType get() = clazz?.name ?: javaClass.simpleName.unprefix()
 
@@ -64,28 +63,24 @@ open class UObject : UClass, IPropertyHolder {
     inline fun <reified T> get(name: String): T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
 
     open fun deserialize(Ar: FAssetArchive, validPos: Int) {
-        super.init(Ar)
         properties = mutableListOf()
-        if (javaClass != UClassReal::class.java) {
+        if (javaClass != UClass::class.java) {
             if (Ar.useUnversionedPropertySerialization) {
-                deserializeUnversionedProperties(properties, clazz!!, Ar)
+                deserializeUnversionedProperties(properties, clazz, Ar)
             } else {
                 deserializeVersionedTaggedProperties(properties, Ar)
             }
         }
         //FLazyObjectPtr::PossiblySerializeObjectGuid
-        if (Ar.pos() + 4 <= validPos && Ar.readBoolean() && Ar.pos() + 16 <= validPos)
+        if ((flags and EObjectFlags.RF_ClassDefaultObject.value) == 0 && Ar.readBoolean())
             objectGuid = FGuid(Ar)
-        super.complete(Ar)
         mapToClass(properties, javaClass, this)
     }
 
     open fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         serializeProperties(Ar, properties)
         Ar.writeBoolean(objectGuid != null)
         objectGuid?.serialize(Ar)
-        super.completeWrite(Ar)
     }
 
     open fun toJson(context: Gson = Package.gson, locres: Locres? = null): JsonObject {
@@ -118,7 +113,8 @@ open class UObject : UClass, IPropertyHolder {
      * @param   stopOuter   if specified, indicates that the output string should be relative to this object.  if StopOuter
      *                      does not exist in this object's Outer chain, the result would be the same as passing NULL.
      */
-    fun getFullName(stopOuter: UObject?, includeClassPackage: Boolean = false): String {
+    @JvmOverloads
+    fun getFullName(stopOuter: UObject? = null, includeClassPackage: Boolean = false): String {
         val result = StringBuilder(128)
         getFullName(stopOuter, result, includeClassPackage)
         return result.toString()
@@ -126,9 +122,9 @@ open class UObject : UClass, IPropertyHolder {
 
     fun getFullName(stopOuter: UObject?, resultString: StringBuilder, includeClassPackage: Boolean = false) {
         if (includeClassPackage) {
-            resultString.append(clazz!!.getPathName())
+            resultString.append(clazz?.getPathName() ?: "???")
         } else {
-            resultString.append(clazz!!.name)
+            resultString.append(clazz?.name ?: "???")
         }
         resultString.append(' ')
         getPathName(stopOuter, resultString)

@@ -24,7 +24,5 @@ class UFunction : UStruct() {
             eventGraphFunction = Ar.readObject()
             eventGraphCallOffset = Ar.readInt32()
         }
-
-        super.complete(Ar)
     }
 }

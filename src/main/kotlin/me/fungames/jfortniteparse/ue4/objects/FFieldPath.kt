@@ -1,12 +1,13 @@
 package me.fungames.jfortniteparse.ue4.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.versions.FFortniteMainBranchObjectVersion
+import me.fungames.jfortniteparse.ue4.versions.FReleaseObjectVersion
 
-class FFieldPath : UClass {
+class FFieldPath {
     var path: MutableList<FName>
     var resolvedOwner: FPackageIndex /*UStruct*/
 
@@ -16,9 +17,11 @@ class FFieldPath : UClass {
         if (path.size == 1 && path[0] == NAME_None) {
             path.clear()
         }
-        //if (Ar.customVer(FFortniteMainBranchObjectVersion.GUID) >= FFortniteMainBranchObjectVersion.FFieldPathOwnerSerialization || Ar.customVer(FReleaseObjectVersion.GUID) >= FReleaseObjectVersion.FFieldPathOwnerSerialization) {
-        resolvedOwner = FPackageIndex(Ar)
-        //}
+        resolvedOwner = if (FFortniteMainBranchObjectVersion.get(Ar) >= FFortniteMainBranchObjectVersion.FFieldPathOwnerSerialization || FReleaseObjectVersion.get(Ar) >= FReleaseObjectVersion.FFieldPathOwnerSerialization) {
+            FPackageIndex(Ar)
+        } else {
+            FPackageIndex()
+        }
     }
 
     constructor() {

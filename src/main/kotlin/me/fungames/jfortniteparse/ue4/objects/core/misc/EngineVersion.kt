@@ -7,26 +7,21 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 class FEngineVersion : FEngineVersionBase {
     /** Branch name. */
     var branch: String
-        //get() = field.replace("+", "/")
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         major = Ar.readUInt16()
         minor = Ar.readUInt16()
         patch = Ar.readUInt16()
         changelist = Ar.readUInt32()
         branch = Ar.readString()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeUInt16(major)
         Ar.writeUInt16(minor)
         Ar.writeUInt16(patch)
         Ar.writeUInt32(changelist)
         Ar.writeString(branch)
-        super.completeWrite(Ar)
     }
 
     constructor(major: UShort, minor: UShort, patch: UShort, changelist: UInt, branch: String) : super(major, minor, patch, changelist) {
@@ -50,6 +45,9 @@ class FEngineVersion : FEngineVersionBase {
                 }
             }
         }
-        return result;
+        return result
     }
+
+    /** Returns the branch name corresponding to this version. */
+    val branchFormatted get() = branch.replace("+", "/")
 }

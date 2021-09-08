@@ -56,12 +56,16 @@ class UStaticMesh : UStaticMesh_Properties() {
 
         // serialize FStaticMeshRenderData
         if (cooked) {
+            if (Ar.versions["StaticMesh.KeepMobileMinLODSettingOnDesktop"]) {
+                // The serialization of this variable is cvar-dependent in UE4, so there's no clear way to understand
+                // if it should be serialize in our code or not.
+                Ar.readInt32() // MinMobileLODIdx
+            }
             if (!cooked) {
                 Ar.readTArray { Ar.readInt32() } // WedgeMap
                 Ar.readTArray { Ar.readInt32() } // MaterialIndexToImportIndex
             }
 
-            if (Ar.useUnversionedPropertySerialization) Ar.skip(4) // TODO what is this
             lods = Ar.readTArray { FStaticMeshLODResources(Ar) }
 
             if (Ar.game >= GAME_UE4(23))
@@ -93,7 +97,7 @@ class UStaticMesh : UStaticMesh_Properties() {
             bounds = FBoxSphereBounds(Ar)
 
             // Note: bLODsShareStaticLighting field exists in all engine versions except UE4.15.
-            if (Ar.game <= GAME_UE4(14) || Ar.game >= GAME_UE4(16))
+            if (Ar.versions["StaticMesh.HasLODsShareStaticLighting"])
                 lodsShareStaticLighting = Ar.readBoolean()
 
             if (Ar.game < GAME_UE4(14))
@@ -146,7 +150,6 @@ class UStaticMesh : UStaticMesh_Properties() {
 
         //Drop remaining SpeedTree data
         if (validPos > 0) Ar.seek(validPos)
-        super.complete(Ar)
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {

@@ -11,7 +11,7 @@ class Locres(val locres: ByteArray, val fileName: String, val language: FnLangua
 
     init {
         val locresAr = FByteArchive(locres)
-        texts = FTextLocalizationResource(locresAr)
+        texts = FTextLocalizationResource(locresAr, fileName)
     }
 
     fun mergeInto(target: Locres) {

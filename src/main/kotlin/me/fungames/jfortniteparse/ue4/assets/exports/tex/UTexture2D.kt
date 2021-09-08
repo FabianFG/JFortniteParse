@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.exports.tex
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
@@ -10,7 +10,6 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.FIntPoint
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 
 @OnlyAnnotated
 class UTexture2D : UTexture() {
@@ -38,12 +37,11 @@ class UTexture2D : UTexture() {
                 val skipOffset = Ar.readInt64()
                 textures[FTexturePlatformData(Ar)] = pixelFormat
                 if (Ar.relativePos().toLong() != skipOffset) {
-                    logger.warn("Texture read incorrectly. Current relative pos ${Ar.relativePos()}, skip offset $skipOffset")
+                    LOG_JFP.warn("Texture read incorrectly. Current relative pos ${Ar.relativePos()}, skip offset $skipOffset")
                     Ar.seekRelative(skipOffset.toInt())
                 }
             }
         }
-        super.complete(Ar)
     }
 
     fun getFirstMip() = getFirstTexture().getFirstMip()
@@ -63,7 +61,6 @@ class UTexture2D : UTexture() {
             Ar.write(textureData)
         }
         Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
-        super.completeWrite(Ar)
     }
 }
 
@@ -73,7 +70,7 @@ enum class ETextureAddress {
     TA_Mirror
 }
 
-class FTexturePlatformData : UClass {
+class FTexturePlatformData {
     var sizeX: Int
     var sizeY: Int
     var numSlices: Int
@@ -83,7 +80,6 @@ class FTexturePlatformData : UClass {
     var isVirtual: Boolean = false
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         sizeX = Ar.readInt32()
         sizeY = Ar.readInt32()
         numSlices = Ar.readInt32()
@@ -92,13 +88,12 @@ class FTexturePlatformData : UClass {
         val mipCount = Ar.readInt32()
         mips = Array(mipCount) { FTexture2DMipMap(Ar) }
 
-        if (Ar.game >= GAME_UE4(23)) {
+        if (Ar.versions["VirtualTextures"]) {
             isVirtual = Ar.readBoolean()
             if (isVirtual) {
                 throw ParserException("Texture is virtual, not implemented", Ar)
             }
         }
-        super.complete(Ar)
     }
 
     fun getFirstMip() = mips[firstMip]
@@ -106,19 +101,17 @@ class FTexturePlatformData : UClass {
     fun getFirstLoadedMip() = mips.first { it.data.isBulkDataLoaded }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeInt32(sizeX)
         Ar.writeInt32(sizeY)
         Ar.writeInt32(numSlices)
         Ar.writeString(pixelFormat)
         Ar.writeInt32(firstMip)
         Ar.writeTArray(mips) { it.serialize(Ar) }
-        if (Ar.game >= GAME_UE4(23)) {
+        if (Ar.versions["VirtualTextures"]) {
             Ar.writeBoolean(isVirtual)
             if (isVirtual)
                 throw ParserException("Texture is virtual, not implemented", Ar)
         }
-        super.completeWrite(Ar)
     }
 
     constructor(sizeX: Int, sizeY: Int, numSlices: Int, pixelFormat: String, firstMip: Int, mips: Array<FTexture2DMipMap>, isVirtual: Boolean) {
@@ -132,7 +125,7 @@ class FTexturePlatformData : UClass {
     }
 }
 
-class FTexture2DMipMap : UClass {
+class FTexture2DMipMap {
     var cooked: Boolean
     var data: FByteBulkData
     var sizeX: Int
@@ -141,7 +134,6 @@ class FTexture2DMipMap : UClass {
     var u: String? = null
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         cooked = Ar.readBoolean()
         data = FByteBulkData(Ar)
         sizeX = Ar.readInt32()
@@ -149,17 +141,14 @@ class FTexture2DMipMap : UClass {
         sizeZ = Ar.readInt32()
         if (!cooked)
             u = Ar.readString()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeBoolean(cooked)
         data.serialize(Ar)
         Ar.writeInt32(sizeX)
         Ar.writeInt32(sizeY)
         Ar.writeInt32(sizeZ)
-        super.completeWrite(Ar)
     }
 
     constructor(cooked: Boolean, data: FByteBulkData, sizeX: Int, sizeY: Int, sizeZ: Int, u: String?) {

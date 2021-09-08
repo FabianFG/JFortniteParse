@@ -1,9 +1,10 @@
 package me.fungames.jfortniteparse.ue4.pak.reader
 
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import java.io.File
 import java.io.RandomAccessFile
 
-class FPakFileArchive(val rafile: RandomAccessFile, val file: File) : FPakArchive(file.name) {
+class FPakFileArchive(val rafile: RandomAccessFile, val file: File, versions: VersionContainer = VersionContainer.DEFAULT) : FPakArchive(file.name, versions) {
     override var littleEndian = true
 
     override fun clone(): FPakFileArchive {
@@ -31,6 +32,8 @@ class FPakFileArchive(val rafile: RandomAccessFile, val file: File) : FPakArchiv
     override fun read() = rafile.read()
     override fun read(b: ByteArray, off: Int, len: Int) = rafile.read(b, off, len)
     override fun read(b: ByteArray) = rafile.read(b)
+
+    override fun close() = rafile.close()
 
     override fun printError() = "FPakArchive Info: pos ${pakPos()}, stopper ${pakSize()}, file $file"
 }

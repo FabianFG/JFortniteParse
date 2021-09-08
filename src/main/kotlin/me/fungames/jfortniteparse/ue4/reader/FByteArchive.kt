@@ -1,15 +1,16 @@
 package me.fungames.jfortniteparse.ue4.reader
 
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.min
 
-open class FByteArchive(val data: ByteBuffer) : FArchive() {
+open class FByteArchive(val data: ByteBuffer, versions: VersionContainer = VersionContainer.DEFAULT) : FArchive(versions) {
     init {
         data.order(ByteOrder.LITTLE_ENDIAN)
     }
 
-    constructor(data: ByteArray) : this(ByteBuffer.wrap(data))
+    constructor(data: ByteArray, versions: VersionContainer = VersionContainer.DEFAULT) : this(ByteBuffer.wrap(data), versions)
 
     override var littleEndian: Boolean
         get() = data.order() == ByteOrder.LITTLE_ENDIAN

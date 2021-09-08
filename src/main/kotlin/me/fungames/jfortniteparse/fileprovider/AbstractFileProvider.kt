@@ -13,19 +13,19 @@ abstract class AbstractFileProvider : FileProvider() {
     protected var globalDataLoaded = false
 
     override fun loadGameFile(file: GameFile): Package? = runCatching {
-        if (file.ioPackageId != null)
-            return loadGameFile(file.ioPackageId)
+        file.ioPackageId?.let { return loadGameFile(it) }
         if (!file.isUE4Package() || !file.hasUexp())
             throw IllegalArgumentException("The provided file is not a package file")
         val uasset = saveGameFile(file)
         val uexp = saveGameFile(file.uexp)
         val ubulk = if (file.hasUbulk()) saveGameFile(file.ubulk!!) else null
-        return PakPackage(uasset, uexp, ubulk, file.path, this, game)
+        return PakPackage(uasset, uexp, ubulk, file.path, this, versions)
     }.onFailure { logger.error(it) { "Failed to load package ${file.path}" } }.getOrNull()
 
     override fun findGameFile(filePath: String): GameFile? {
         val path = fixPath(filePath)
-        return files[path]
+        files[path]?.let { return it }
+        return files[path.substringBeforeLast('.') + ".umap"]
     }
 
     override fun loadGameFile(filePath: String): Package? = runCatching {
@@ -37,7 +37,7 @@ abstract class AbstractFileProvider : FileProvider() {
         // try load from IoStore
         if (globalDataLoaded) {
             val name = compactFilePath(filePath)
-            val packageId = FPackageId.fromName(FName.dummy(name))
+            val packageId = FPackageId.fromName(FName(name))
             try {
                 val ioFile = loadGameFile(packageId)
                 if (ioFile != null)
@@ -54,7 +54,7 @@ abstract class AbstractFileProvider : FileProvider() {
         val uexp = saveGameFile(path.substringBeforeLast(".") + ".uexp")
             ?: return null//throw NotFoundException("uexp not found")
         val ubulk = saveGameFile(path.substringBeforeLast(".") + ".ubulk")
-        return PakPackage(uasset, uexp, ubulk, path, this, game)
+        return PakPackage(uasset, uexp, ubulk, path, this, versions)
     }.onFailure { logger.error(it) { "Failed to load package $filePath" } }.getOrNull()
 
     override fun loadLocres(filePath: String): Locres? = runCatching {

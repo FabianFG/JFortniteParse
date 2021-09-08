@@ -25,7 +25,7 @@ open class UScriptStruct : UStruct {
     }
 
     @JvmOverloads
-    constructor(clazz: Class<*>?, name: FName = clazz?.let { FName.dummy(it.simpleName.unprefix()) } ?: FName.NAME_None) : this(name) {
+    constructor(clazz: Class<*>?, name: FName = clazz?.let { FName(it.simpleName.unprefix()) } ?: FName.NAME_None) : this(name) {
         structClass = clazz
         useClassProperties = true
     }

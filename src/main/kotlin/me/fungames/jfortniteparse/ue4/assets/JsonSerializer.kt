@@ -53,7 +53,8 @@ object JsonSerializer {
             is Array<*> -> jsonArray(ob.map { it?.toJson(context) })
             is Iterable<*> -> jsonArray(ob.map { it?.toJson(context) })
             is UScriptArray -> jsonArray(ob.contents.map { it.toJson(context) })
-            is UScriptMap -> jsonArray(ob.mapData.map { jsonObject("key" to it.key.toJson(context), "value" to it.value.toJson(context)) })
+            is UScriptMap -> jsonArray(ob.entries.map { jsonObject("key" to it.key.toJson(context), "value" to it.value.toJson(context)) })
+            is UScriptSet -> jsonArray(ob.elements.map { it.toJson(context) })
             is UScriptStruct -> ob.structType.toJson(context)
             is Boolean -> JsonPrimitive(ob)
             is Int -> JsonPrimitive(ob)
@@ -66,7 +67,7 @@ object JsonSerializer {
             is FName -> JsonPrimitive(ob.text)
             is FText -> jsonObject("historyType" to ob.historyType.toJson(context), "finalText" to ob.textForLocres(locres), "value" to context.toJsonTree(ob.textHistory))
             is FPackageIndex -> JsonPrimitive(ob.name.text)
-            is UInterfaceProperty -> JsonPrimitive(ob.interfaceNumber.toInt())
+            is FScriptInterface -> ob.`object`.toJson(context)
             is FSoftObjectPath -> jsonObject("assetPath" to ob.assetPathName.text, "subPath" to ob.subPathString)
             is FGuid -> JsonPrimitive(ob.toString())
             is Double -> JsonPrimitive(ob)
@@ -191,7 +192,6 @@ object JsonSerializer {
                 "trackId" to ob.trackId,
                 "sectionIndex" to ob.sectionIndex.toLong()
             )
-            is FMovieSceneEvaluationTemplate -> JsonPrimitive(ob.value.toLong())
             else -> throw ParserException("Unknown tag value ${ob::class.java.simpleName}, cannot be serialized to json")
         }
     }

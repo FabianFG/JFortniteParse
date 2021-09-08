@@ -1,78 +1,86 @@
 package me.fungames.jfortniteparse.ue4.objects.core.i18n
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FTextLocalizationResource : UClass {
-    companion object {
-        // val locMetaMagic = FGuid(0xA14CEE4Fu, 0x83554868u, 0xBD464C6Cu, 0x7C50DA70u)
-        val locResMagic = FGuid(0x7574140Eu, 0xFC034A67u, 0x9D90154Au, 0x1B7F37C3u)
-        const val indexNone = -1L
-    }
-
-    var version: UByte
-    var strArrayOffset: Long
+class FTextLocalizationResource {
     val stringData: MutableMap<String, MutableMap<String, String>>
 
-    constructor(Ar: FArchive) {
-        super.init(Ar)
-        val magic = FGuid(Ar)
-        if (magic != locResMagic)
-            throw ParserException("Wrong locres guid")
-        version = Ar.readUInt8()
-        strArrayOffset = Ar.readInt64()
-        if (strArrayOffset == indexNone)
-            throw ParserException("No offset found")
-
-        //Only works for version 'optimized'
-        val cOffset = Ar.pos()
-
-        Ar.seek(strArrayOffset.toInt())
-        val localizedStrings = Ar.readTArray { FTextLocalizationResourceString(Ar) }
-        Ar.seek(cOffset)
-
-        Ar.readUInt32() // entryCount
-        val nameSpaceCount = Ar.readUInt32()
-        stringData = mutableMapOf()
-        for (i in 0 until nameSpaceCount.toInt()) {
-            val nameSpace = FTextKey(Ar)
-            val keyCount = Ar.readUInt32()
-
-            val strings = mutableMapOf<String, String>()
-            for (j in 0 until keyCount.toInt()) {
-                val textKey = FTextKey(Ar)
-                Ar.readUInt32() // source hash
-                val stringIndex = Ar.readInt32()
-                if (stringIndex > 0 && stringIndex < localizedStrings.size)
-                    strings[textKey.text] = localizedStrings[stringIndex].data
+    constructor(Ar: FArchive, fileName: String = "Unnamed LocRes") {
+        val magicNumber = FGuid(Ar)
+        var version = FTextLocalizationResourceVersion.ELocResVersion.Legacy
+        if (magicNumber == FTextLocalizationResourceVersion.LOC_RES_MAGIC) {
+            version = FTextLocalizationResourceVersion.ELocResVersion.values().getOrElse(Ar.read()) {
+                throw ParserException("LocRes '$fileName' is too new to be loaded (File Version: $version, Loader Version: ${FTextLocalizationResourceVersion.ELocResVersion.values().size - 1})")
             }
-            stringData[nameSpace.text] = strings
+        } else {
+            // Legacy LocRes files lack the magic number, assume that's what we're dealing with, and seek back to the start of the file
+            Ar.seek(0)
+            LOG_JFP.warn("LocRes '$fileName' failed the magic number check! Assuming this is a legacy resource")
         }
-        super.complete(Ar)
+
+        var localizedStringArray = emptyList<FTextLocalizationResourceString>()
+        if (version >= FTextLocalizationResourceVersion.ELocResVersion.Compact) {
+            val localizedStringArrayOffset = Ar.readInt64()
+            if (localizedStringArrayOffset != -1L) {
+                val currentFileOffset = Ar.pos()
+                Ar.seek(localizedStringArrayOffset.toInt())
+                localizedStringArray = if (version >= FTextLocalizationResourceVersion.ELocResVersion.Optimized_CRC32) {
+                    Ar.readArray { FTextLocalizationResourceString(Ar) }
+                } else {
+                    val tmpLocalizedStringArray = Ar.readTArray { Ar.readString() }
+                    tmpLocalizedStringArray.map { FTextLocalizationResourceString(it, -1) }
+                }
+                Ar.seek(currentFileOffset)
+            }
+        }
+
+        // Read entries count
+        if (version >= FTextLocalizationResourceVersion.ELocResVersion.Optimized_CRC32) {
+            var entriesCount = Ar.readInt32()
+        }
+
+        // Read namespace count
+        val namespaceCount = Ar.readInt32()
+        stringData = LinkedHashMap(namespaceCount)
+        repeat(namespaceCount) {
+            val namespace = FTextKey(Ar, version)
+            val keyCount = Ar.readInt32()
+            val keyValue = LinkedHashMap<String, String>(keyCount)
+            repeat(keyCount) {
+                val key = FTextKey(Ar, version)
+                var sourceHash = Ar.readUInt32()
+                if (version >= FTextLocalizationResourceVersion.ELocResVersion.Compact) {
+                    val localizedStringIndex = Ar.readInt32()
+                    if (localizedStringIndex >= 0 && localizedStringIndex < localizedStringArray.size) {
+                        keyValue[key.str] = localizedStringArray[localizedStringIndex].data
+                    } else {
+                        LOG_JFP.warn("LocRes '$fileName' has an invalid localized string index for namespace '${namespace.str}' and key '${key.str}'. This entry will have no translation.")
+                    }
+                } else {
+                    keyValue[key.str] = Ar.readString()
+                }
+            }
+            stringData[namespace.str] = keyValue
+        }
     }
 }
 
-@ExperimentalUnsignedTypes
-class FTextLocalizationResourceString : UClass {
+class FTextLocalizationResourceString {
     var data: String
     var refCount: Int
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         data = Ar.readString()
         refCount = Ar.readInt32()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeString(data)
         Ar.writeInt32(refCount)
-        super.completeWrite(Ar)
     }
 
     constructor(data: String, refCount: Int) {
@@ -81,27 +89,22 @@ class FTextLocalizationResourceString : UClass {
     }
 }
 
-@ExperimentalUnsignedTypes
-class FTextKey : UClass {
-    var stringHash: UInt
-    var text: String
+class FTextKey {
+    var str: String
+    var strHash: UInt
 
-    constructor(Ar: FArchive) {
-        super.init(Ar)
-        stringHash = Ar.readUInt32()
-        text = Ar.readString()
-        super.complete(Ar)
+    constructor(Ar: FArchive, version: FTextLocalizationResourceVersion.ELocResVersion) {
+        strHash = if (version >= FTextLocalizationResourceVersion.ELocResVersion.Optimized_CRC32) Ar.readUInt32() else 0u
+        str = Ar.readString()
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
-        Ar.writeUInt32(stringHash)
-        Ar.writeString(text)
-        super.completeWrite(Ar)
+        Ar.writeUInt32(strHash)
+        Ar.writeString(str)
     }
 
-    constructor(stringHash: UInt, text: String) {
-        this.stringHash = stringHash
-        this.text = text
+    constructor(str: String, strHash: UInt) {
+        this.str = str
+        this.strHash = strHash
     }
 }

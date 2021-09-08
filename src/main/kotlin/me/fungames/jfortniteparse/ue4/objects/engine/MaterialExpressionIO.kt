@@ -1,14 +1,14 @@
 package me.fungames.jfortniteparse.ue4.objects.engine
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.objects.core.math.FColor
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector2D
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.FFrameworkObjectVersion
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-open class FExpressionInput : UClass {
+open class FExpressionInput {
     /** Index into Expression's outputs array that this input is connected to. */
     var outputIndex: Int
     var inputName: FName
@@ -21,16 +21,17 @@ open class FExpressionInput : UClass {
     var expressionName: FName
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
+        /*if (FCoreObjectVersion.get(Ar) < FCoreObjectVersion.MaterialInputNativeSerialize) {
+            // TODO use property serialization instead
+        }*/
         outputIndex = Ar.readInt32()
-        inputName = Ar.readFName()
+        inputName = if (FFrameworkObjectVersion.get(Ar) >= FFrameworkObjectVersion.PinsStoreFName) Ar.readFName() else FName(Ar.readString())
         mask = Ar.readInt32()
         maskR = Ar.readInt32()
         maskG = Ar.readInt32()
         maskB = Ar.readInt32()
         maskA = Ar.readInt32()
         expressionName = Ar.readFName()
-        super.complete(Ar)
     }
 
     constructor(
@@ -54,7 +55,6 @@ open class FExpressionInput : UClass {
     }
 
     open fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeInt32(outputIndex)
         Ar.writeFName(inputName)
         Ar.writeInt32(mask)
@@ -63,7 +63,6 @@ open class FExpressionInput : UClass {
         Ar.writeInt32(maskB)
         Ar.writeInt32(maskA)
         Ar.writeFName(expressionName)
-        super.completeWrite(Ar)
     }
 }
 
@@ -74,7 +73,6 @@ open class FMaterialInput<InputType> : FExpressionInput {
     constructor(Ar: FArchive, init: () -> InputType) : super(Ar) {
         useConstant = Ar.readUInt32() != 0u
         constant = init()
-        super.complete(Ar)
     }
 
     constructor(
@@ -97,7 +95,6 @@ open class FMaterialInput<InputType> : FExpressionInput {
         super.serialize(Ar)
         Ar.writeUInt32(if (useConstant) 1u else 0u)
         write(constant)
-        super.completeWrite(Ar)
     }
 }
 

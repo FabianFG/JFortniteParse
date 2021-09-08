@@ -10,7 +10,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import java.util.List;
 
 public class USCS_Node extends UObject {
-    public Lazy<UClassReal> ComponentClass;
+    public Lazy<UClass> ComponentClass;
     public Lazy<UActorComponent> ComponentTemplate;
     public FBlueprintCookedComponentInstancingData CookedComponentInstancingData;
     public FName AttachToName;

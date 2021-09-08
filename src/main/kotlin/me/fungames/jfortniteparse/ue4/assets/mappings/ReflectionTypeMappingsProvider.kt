@@ -6,6 +6,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 class ReflectionTypeMappingsProvider : TypeMappingsProvider() {
     override fun getStruct(structName: FName) = UScriptStruct(ObjectTypeRegistry.get(structName.text), structName)
-    override fun getEnum(enumName: FName) = emptyList<String>()
+    override fun getEnumValues(enumName: FName) = emptyList<String>()
     override fun reload() = true
 }

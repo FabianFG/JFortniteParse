@@ -1,12 +1,12 @@
 package me.fungames.jfortniteparse.fort.converters
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.fort.*
 import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.fort.exports.FortMtxOfferData.EFortMtxOfferDisplaySize
 import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariantBackedByArray
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
@@ -188,14 +188,14 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
 
     if (numChannels > 2) {
         numChannels = 2
-        UClass.logger.warn("Dropped ${numChannels - 2} cosmetic channel(s)")
+        LOG_JFP.warn("Dropped ${numChannels - 2} cosmetic channel(s)")
     }
     val availableX = variantsX - (numChannels * g.fontMetrics.height)
 
-    val totalRows = vars.sumBy {
+    val totalRows = vars.sumOf {
         var count = it.variants?.size ?: 0
         if (count < variantsMaxPerRow)
-            return@sumBy 1
+            return@sumOf 1
         while (count % variantsMaxPerRow != 0)
             count++
         count / variantsMaxPerRow
@@ -289,7 +289,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
         }
         if (lines.size > 2) {
             lines = lines.subList(0, 2)
-            UClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
+            LOG_JFP.warn("Dropped ${lines.size - 2} description line(s)")
         }
 
         if (lines.size == 1)
@@ -371,7 +371,7 @@ private fun getImageNoVariants(container: ItemDefinitionContainer, locres: Locre
         }
         if (lines.size > 2) {
             lines = lines.subList(0, 2)
-            UClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
+            LOG_JFP.warn("Dropped ${lines.size - 2} description line(s)")
         }
 
         lines.forEach {

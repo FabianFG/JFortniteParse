@@ -2,9 +2,10 @@ package me.fungames.jfortniteparse.ue4.pak.reader
 
 import me.fungames.jfortniteparse.ue4.pak.objects.FPakInfo
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
+import me.fungames.jfortniteparse.ue4.versions.getArVer
 
-abstract class FPakArchive(val fileName: String) : FArchive() {
+abstract class FPakArchive(val fileName: String, versions: VersionContainer = VersionContainer.DEFAULT) : FArchive(versions) {
     val hasPakInfo: Boolean
         get() = ::pakInfo.isInitialized
     lateinit var pakInfo: FPakInfo
@@ -30,5 +31,5 @@ abstract class FPakArchive(val fileName: String) : FArchive() {
     }
 
     fun createReader(data: ByteArray, offset: Long) =
-        FBytePakArchive(data, fileName, offset, pakSize()).also { it.game = game; it.ver = GAME_UE4_GET_AR_VER(game) }
+        FBytePakArchive(data, fileName, offset, pakSize()).also { it.game = game; it.ver = getArVer(game) }
 }

@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.objects.core.i18n
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.enums.EDateTimeStyle
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextHistoryType
 import me.fungames.jfortniteparse.ue4.assets.exports.UStringTable
@@ -15,14 +14,13 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 enum class EFormatArgumentType { Int, UInt, Float, Double, Text, Gender }
 
-class FText : UClass {
+class FText {
     var flags: UInt
     var historyType: ETextHistoryType
     var textHistory: FTextHistory
     var text: String
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         flags = Ar.readUInt32()
         historyType = ETextHistoryType.valueOfByte(Ar.readInt8())
         textHistory = when (historyType) {
@@ -42,17 +40,14 @@ class FText : UClass {
             ETextHistoryType.TextGenerator -> TODO()
         }
         text = textHistory.text
-        super.complete(Ar)
     }
 
     fun copy() = FText(flags, historyType, textHistory)
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeUInt32(flags)
         Ar.writeInt8(historyType.value)
         textHistory.serialize(Ar)
-        super.completeWrite(Ar)
     }
 
     override fun toString() = text
@@ -79,7 +74,7 @@ class FText : UClass {
     }
 }
 
-sealed class FTextHistory : UClass() {
+sealed class FTextHistory {
     class None : FTextHistory {
         var cultureInvariantString: String? = null
         override val text: String
@@ -88,22 +83,18 @@ sealed class FTextHistory : UClass() {
         constructor()
 
         constructor(Ar: FArchive) {
-            super.init(Ar)
             val bHasCultureInvariantString = Ar.readBoolean()
             if (bHasCultureInvariantString) {
                 cultureInvariantString = Ar.readString()
             }
-            super.complete(Ar)
         }
 
         override fun serialize(Ar: FArchiveWriter) {
-            super.initWrite(Ar)
             val bHasCultureInvariantString = cultureInvariantString.isNullOrEmpty()
             Ar.writeBoolean(bHasCultureInvariantString)
             if (bHasCultureInvariantString) {
                 Ar.writeString(cultureInvariantString!!)
             }
-            super.completeWrite(Ar)
         }
     }
 
@@ -115,11 +106,9 @@ sealed class FTextHistory : UClass() {
             get() = sourceString
 
         constructor(Ar: FArchive) {
-            super.init(Ar)
             this.namespace = Ar.readString()
             this.key = Ar.readString()
             this.sourceString = Ar.readString()
-            super.complete(Ar)
         }
 
         constructor(namespace: String, key: String, sourceString: String) {
@@ -129,11 +118,9 @@ sealed class FTextHistory : UClass() {
         }
 
         override fun serialize(Ar: FArchiveWriter) {
-            super.initWrite(Ar)
             Ar.writeString(namespace)
             Ar.writeString(key)
             Ar.writeString(sourceString)
-            super.completeWrite(Ar)
         }
     }
 
@@ -147,13 +134,11 @@ sealed class FTextHistory : UClass() {
             get() = "$timeZone: ${sourceDateTime.date}"
 
         constructor(Ar: FArchive) {
-            super.init(Ar)
             this.sourceDateTime = FDateTime(Ar)
             this.dateStyle = EDateTimeStyle.values()[Ar.readInt8().toInt()]
             this.timeStyle = EDateTimeStyle.values()[Ar.readInt8().toInt()]
             this.timeZone = Ar.readString()
             this.targetCulture = Ar.readString()
-            super.complete(Ar)
         }
 
         constructor(
@@ -171,13 +156,11 @@ sealed class FTextHistory : UClass() {
         }
 
         override fun serialize(Ar: FArchiveWriter) {
-            super.initWrite(Ar)
             sourceDateTime.serialize(Ar)
             Ar.writeInt8(dateStyle.ordinal.toByte())
             Ar.writeInt8(timeStyle.ordinal.toByte())
             Ar.writeString(timeZone)
             Ar.writeString(targetCulture)
-            super.completeWrite(Ar)
         }
     }
 
@@ -189,10 +172,8 @@ sealed class FTextHistory : UClass() {
             get() = sourceFmt.text //TODO
 
         constructor(Ar: FArchive) {
-            super.init(Ar)
             this.sourceFmt = FText(Ar)
             this.arguments = Ar.readTArray { FFormatArgumentValue(Ar) }
-            super.complete(Ar)
         }
 
         constructor(sourceFmt: FText, arguments: Array<FFormatArgumentValue>) {
@@ -201,10 +182,8 @@ sealed class FTextHistory : UClass() {
         }
 
         override fun serialize(Ar: FArchiveWriter) {
-            super.initWrite(Ar)
             sourceFmt.serialize(Ar)
             Ar.writeTArray(arguments) { it.serialize(Ar) }
-            super.completeWrite(Ar)
         }
     }
 
@@ -219,11 +198,9 @@ sealed class FTextHistory : UClass() {
             get() = sourceValue.toString()
 
         constructor(Ar: FArchive) {
-            super.init(Ar)
             this.sourceValue = FFormatArgumentValue(Ar)
             this.timeZone = Ar.readString()
             this.targetCulture = Ar.readString()
-            super.complete(Ar)
         }
 
         constructor(sourceValue: FFormatArgumentValue, timeZone: String, targetCulture: String) {
@@ -233,11 +210,9 @@ sealed class FTextHistory : UClass() {
         }
 
         override fun serialize(Ar: FArchiveWriter) {
-            super.initWrite(Ar)
             sourceValue.serialize(Ar)
             Ar.writeString(timeZone)
             Ar.writeString(targetCulture)
-            super.completeWrite(Ar)
         }
     }
 
@@ -253,12 +228,10 @@ sealed class FTextHistory : UClass() {
             if (Ar !is FAssetArchive) {
                 throw ParserException("Tried to load a string table entry with wrong archive type")
             }
-            super.init(Ar)
             this.tableId = Ar.readFName()
             this.key = Ar.readString()
             val table = Ar.provider?.loadObject<UStringTable>(tableId.text) ?: throw ParserException("Failed to load string table '$tableId'")
             text = table.entries[key] ?: throw ParserException("Didn't find needed in key in string table")
-            super.complete(Ar)
         }
 
         constructor(tableId: FName, key: String, text: String) {
@@ -271,10 +244,8 @@ sealed class FTextHistory : UClass() {
             if (Ar !is FAssetArchiveWriter) {
                 throw ParserException("Tried to save a string table entry with wrong archive type")
             }
-            super.initWrite(Ar)
             Ar.writeFName(tableId)
             Ar.writeString(key)
-            super.completeWrite(Ar)
         }
     }
 
@@ -282,12 +253,11 @@ sealed class FTextHistory : UClass() {
     abstract val text: String
 }
 
-class FFormatArgumentValue : UClass {
+class FFormatArgumentValue {
     var type: EFormatArgumentType
     var value: Any
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         type = EFormatArgumentType.values()[Ar.readInt8().toInt()]
         value = when (type) {
             EFormatArgumentType.Int -> Ar.readInt64()
@@ -297,7 +267,6 @@ class FFormatArgumentValue : UClass {
             EFormatArgumentType.Text -> FText(Ar)
             EFormatArgumentType.Gender -> TODO("Gender Argument not supported yet")
         }
-        super.complete(Ar)
     }
 
     constructor(type: EFormatArgumentType, value: Any) {
@@ -306,7 +275,6 @@ class FFormatArgumentValue : UClass {
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeInt8(type.ordinal.toByte())
         when (type) {
             EFormatArgumentType.Int -> Ar.writeInt64(value as Long)
@@ -316,6 +284,5 @@ class FFormatArgumentValue : UClass {
             EFormatArgumentType.Text -> (value as FText).serialize(Ar)
             EFormatArgumentType.Gender -> TODO("Gender Argument not supported yet")
         }
-        super.completeWrite(Ar)
     }
 }
