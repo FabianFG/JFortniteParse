@@ -21,7 +21,7 @@ class PropertyInfo {
     constructor(json: JsonObject) {
         index = json["index"].asInt
         name = json["name"].asString
-        type = PropertyType(json)
+        type = PropertyType(json["mappingType"].asJsonObject)
         json["arraySize"]?.run { arrayDim = asInt }
     }
 
@@ -38,5 +38,5 @@ class PropertyInfo {
         type.setupWithField(field)
     }
 
-    override fun toString() = "$index = $name"
+    override fun toString() = "$index = $type $name"
 }

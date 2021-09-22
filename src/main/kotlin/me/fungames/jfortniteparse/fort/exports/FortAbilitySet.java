@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.fort.exports;
 
 import me.fungames.jfortniteparse.fort.objects.GameplayEffectApplicationInfo;
+import me.fungames.jfortniteparse.fort.objects.GameplayEffectApplicationInfoHard;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.UPrimaryDataAsset;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
@@ -21,12 +22,6 @@ public class FortAbilitySet extends UPrimaryDataAsset {
     public List<FPackageIndex /*FortItemDefinition*/> AdditionalItemsToAdd;
     public List<GameplayEffectApplicationInfo> PassiveGameplayEffects;
     public FGameplayTagContainer AnalyticsTags;
-
-    @UStruct
-    public static class GameplayEffectApplicationInfoHard {
-        public FPackageIndex /*UGameplayEffect*/ GameplayEffect;
-        public Float Level;
-    }
 
     @UStruct
     public static class AbilityActivatedByInputData {

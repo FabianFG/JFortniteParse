@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.GDebugProperties
+import me.fungames.jfortniteparse.GReadScriptData
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
@@ -8,6 +9,8 @@ import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName.Companion.NAME_None
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.versions.FCoreObjectVersion
+import me.fungames.jfortniteparse.ue4.versions.FFrameworkObjectVersion
 
 @OnlyAnnotated
 open class UStruct : UObject() {
@@ -17,26 +20,36 @@ open class UStruct : UObject() {
     var childProperties = emptyArray<FField>()
     var childProperties2 = emptyList<PropertyInfo>()
     var propertyCount = 0
+    var script: ByteArray? = null
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
         superStruct = Ar.readObject()
-        children = Ar.readTArray { FPackageIndex(Ar) }
-        serializeProperties(Ar)
+        children = if (FFrameworkObjectVersion.get(Ar) < FFrameworkObjectVersion.RemoveUField_Next) {
+            val firstChild = FPackageIndex(Ar)
+            if (firstChild.isNull()) emptyArray() else arrayOf(firstChild)
+        } else {
+            Ar.readTArray { FPackageIndex(Ar) }
+        }
+        if (FCoreObjectVersion.get(Ar) >= FCoreObjectVersion.FProperties) {
+            deserializeProperties(Ar)
+        }
         // region FStructScriptLoader::FStructScriptLoader
         val bytecodeBufferSize = Ar.readInt32()
         val serializedScriptSize = Ar.readInt32()
-        Ar.skip(serializedScriptSize.toLong())
-        if (serializedScriptSize > 0) {
-            logger.info("Skipped $serializedScriptSize bytes of bytecode data")
+        if (GReadScriptData) {
+            script = Ar.read(serializedScriptSize)
+        } else {
+            Ar.skip(serializedScriptSize.toLong())
         }
         // endregion
     }
 
-    protected fun serializeProperties(Ar: FAssetArchive) {
+    protected fun deserializeProperties(Ar: FAssetArchive) {
         childProperties = Ar.readTArray {
             val propertyTypeName = Ar.readFName()
             val prop = FField.construct(propertyTypeName)
+                ?: throw ParserException("Unsupported serialized property type $propertyTypeName", Ar)
             prop.deserialize(Ar)
             if (GDebugProperties) println("$it = $propertyTypeName ${prop.name}")
             prop
@@ -61,17 +74,29 @@ open class FField {
             "ByteProperty" -> FByteProperty()
             "ClassProperty" -> FClassProperty()
             "DelegateProperty" -> FDelegateProperty()
+            "EnumProperty" -> FEnumProperty()
+            "FieldPathProperty" -> FFieldPathProperty()
             "FloatProperty" -> FFloatProperty()
+            "Int16Property" -> FInt16Property()
+            "Int64Property" -> FInt64Property()
+            "Int8Property" -> FInt8Property()
             "IntProperty" -> FIntProperty()
+            "InterfaceProperty" -> FInterfaceProperty()
             "MapProperty" -> FMapProperty()
             "MulticastDelegateProperty" -> FMulticastDelegateProperty()
             "MulticastInlineDelegateProperty" -> FMulticastInlineDelegateProperty()
             "NameProperty" -> FNameProperty()
             "ObjectProperty" -> FObjectProperty()
+            "SetProperty" -> FSetProperty()
+            "SoftClassProperty" -> FSoftClassProperty()
+            "SoftObjectProperty" -> FSoftObjectProperty()
             "StrProperty" -> FStrProperty()
             "StructProperty" -> FStructProperty()
             "TextProperty" -> FTextProperty()
-            else -> throw ParserException("Unsupported serialized property type $fieldTypeName")
+            "UInt16Property" -> FUInt16Property()
+            "UInt32Property" -> FUInt32Property()
+            "UInt64Property" -> FUInt64Property()
+            else -> null
         }
     }
 }
@@ -79,7 +104,7 @@ open class FField {
 open class FPropertySerialized : FField() {
     var arrayDim: Int = 1
     var elementSize: Int = 0
-    var saveFlags: ULong = 0u
+    var propertyFlags: ULong = 0u
     var repIndex: UShort = 0u
     var repNotifyFunc: FName = NAME_None
     var blueprintReplicationCondition: UByte = 0u
@@ -88,7 +113,7 @@ open class FPropertySerialized : FField() {
         super.deserialize(Ar)
         arrayDim = Ar.readInt32()
         elementSize = Ar.readInt32()
-        saveFlags = Ar.readUInt64()
+        propertyFlags = Ar.readUInt64()
         repIndex = Ar.readUInt16()
         repNotifyFunc = Ar.readFName()
         blueprintReplicationCondition = Ar.readUInt8()
@@ -123,17 +148,17 @@ class FArrayProperty : FPropertySerialized() {
     }
 }
 
-class FByteProperty : FPropertySerialized() {
-    var enum: FPackageIndex = FPackageIndex()
+class FByteProperty : FNumericProperty() {
+    var enum: Lazy<UEnum>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
-        this.enum = FPackageIndex(Ar)
+        this.enum = Ar.readObject()
     }
 }
 
 class FClassProperty : FObjectProperty() {
-    var metaClass: Lazy<UClassReal>? = null
+    var metaClass: Lazy<UClass>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
@@ -150,9 +175,44 @@ class FDelegateProperty : FPropertySerialized() {
     }
 }
 
-class FFloatProperty : FPropertySerialized()
+class FEnumProperty : FPropertySerialized() {
+    var underlyingProp: FNumericProperty? = null
+    var enum: Lazy<UEnum>? = null
 
-class FIntProperty : FPropertySerialized()
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        enum = Ar.readObject()
+        underlyingProp = serializeSingleField(Ar) as FNumericProperty?
+    }
+}
+
+class FFieldPathProperty : FPropertySerialized() {
+    var propertyClass = NAME_None
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        propertyClass = Ar.readFName()
+    }
+}
+
+class FFloatProperty : FNumericProperty()
+
+class FInt16Property : FNumericProperty()
+
+class FInt64Property : FNumericProperty()
+
+class FInt8Property : FNumericProperty()
+
+class FIntProperty : FNumericProperty()
+
+class FInterfaceProperty : FPropertySerialized() {
+    var interfaceClass: Lazy<UClass>? = null
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        interfaceClass = Ar.readObject()
+    }
+}
 
 class FMapProperty : FPropertySerialized() {
     var keyProp: FPropertySerialized? = null
@@ -185,8 +245,10 @@ class FMulticastInlineDelegateProperty : FPropertySerialized() {
 
 class FNameProperty : FPropertySerialized()
 
+open class FNumericProperty : FPropertySerialized()
+
 open class FObjectProperty : FPropertySerialized() {
-    var propertyClass: Lazy<UClassReal>? = null
+    var propertyClass: Lazy<UStruct>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
@@ -194,10 +256,30 @@ open class FObjectProperty : FPropertySerialized() {
     }
 }
 
+class FSoftClassProperty : FObjectProperty() {
+    var metaClass: Lazy<UClass>? = null
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        metaClass = Ar.readObject()
+    }
+}
+
+class FSoftObjectProperty : FObjectProperty()
+
+class FSetProperty : FPropertySerialized() {
+    var elementProp: FPropertySerialized? = null
+
+    override fun deserialize(Ar: FAssetArchive) {
+        super.deserialize(Ar)
+        elementProp = serializeSingleField(Ar) as FPropertySerialized?
+    }
+}
+
 class FStrProperty : FPropertySerialized()
 
 class FStructProperty : FPropertySerialized() {
-    var struct: Lazy<UScriptStruct>? = null
+    var struct: Lazy<UStruct>? = null
 
     override fun deserialize(Ar: FAssetArchive) {
         super.deserialize(Ar)
@@ -207,9 +289,18 @@ class FStructProperty : FPropertySerialized() {
 
 class FTextProperty : FPropertySerialized()
 
+class FUInt16Property : FNumericProperty()
+
+class FUInt32Property : FNumericProperty()
+
+class FUInt64Property : FNumericProperty()
+
 fun serializeSingleField(Ar: FAssetArchive): FField? {
     val propertyTypeName = Ar.readFName()
     return if (propertyTypeName != NAME_None) {
-        FField.construct(propertyTypeName).apply { deserialize(Ar) }
+        val field = FField.construct(propertyTypeName)
+            ?: throw ParserException("Unsupported serialized property type $propertyTypeName", Ar)
+        field.deserialize(Ar)
+        field
     } else null
 }

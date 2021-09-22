@@ -4,9 +4,10 @@ import com.google.gson.annotations.SerializedName
 import com.google.gson.internal.`$Gson$Types`
 import com.google.gson.internal.reflect.ReflectionAccessor
 import com.google.gson.reflect.TypeToken
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UProperty
+import me.fungames.jfortniteparse.ue4.assets.exports.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
@@ -60,7 +61,7 @@ fun <T> writePropertyToField(prop: FPropertyTag, field: Field, obj: T) {
 private fun isContentValid(content: Any?, name: String, clazz: Class<*>): Boolean {
     if (content == null) {
         if (clazz != Lazy::class.java)
-            UClass.logger.warn { "Failed to get tag type value for field $name of type ${clazz.simpleName}" }
+            LOG_JFP.warn { "Failed to get tag type value for field $name of type ${clazz.simpleName}" }
         return false
     }
     val isValid = when {
@@ -76,7 +77,7 @@ private fun isContentValid(content: Any?, name: String, clazz: Class<*>): Boolea
         else -> false
     }
     if (!isValid) {
-        UClass.logger.error { "Invalid type for field $name, ${content::class.java.simpleName} is not assignable from ${clazz.simpleName}" }
+        LOG_JFP.error { "Invalid type for field $name, ${content::class.java.simpleName} is not assignable from ${clazz.simpleName}" }
     }
     return isValid
 }

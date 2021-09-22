@@ -1,8 +1,6 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.Package
-import me.fungames.jfortniteparse.ue4.assets.PakPackage
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
@@ -18,7 +16,7 @@ import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
  * Values less than zero indicate that this is an index into the ImportMap. The actual
  * array index will be (-FPackageIndex - 1)
  */
-class FPackageIndex : UClass {
+class FPackageIndex {
     /**
      * Values greater than zero indicate that this is an index into the ExportMap.  The
      * actual array index will be (FPackageIndex - 1).
@@ -28,28 +26,11 @@ class FPackageIndex : UClass {
      */
     var index: Int
     var owner: Package? = null
-    /*val importObject: FObjectImport?
-        get() = if (isImport()) owner?.importMap?.getOrNull(toImport()) else null
-    val outerImportObject: FObjectImport?
-        get() = this.importObject?.outerIndex?.importObject ?: this.importObject
-
-    val exportObject: FObjectExport?
-        get() = if (isExport()) owner?.exportMap?.getOrNull(toExport()) else null
-
-    val name: String
-        get() = importObject?.objectName?.text
-            ?: exportObject?.objectName?.text
-            ?: "null"
-
-    val resource: FObjectResource?
-        get() = importObject ?: exportObject*/
-    val name: String
-        get() = (owner as PakPackage).run { getResource() }?.objectName?.text ?: "null"
+    val resolvedObject get() = owner?.findObjectMinimal(this)
+    val name get() = resolvedObject?.getName() ?: FName.NAME_None
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         index = Ar.readInt32()
-        super.complete(Ar)
         owner = Ar.owner
     }
 
@@ -100,9 +81,7 @@ class FPackageIndex : UClass {
      * Serializes a package index value into an archive.
      */
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeInt32(index)
-        super.completeWrite(Ar)
     }
 
     override fun hashCode(): Int {
@@ -129,7 +108,7 @@ class FPackageIndex : UClass {
  * via FLinker's ImportMap (for resources contained in other packages) and ExportMap (for resources
  * contained within the same package)
  */
-abstract class FObjectResource : UClass() {
+abstract class FObjectResource {
     lateinit var objectName: FName
     lateinit var outerIndex: FPackageIndex
 }
@@ -160,7 +139,6 @@ class FObjectExport : FObjectResource {
     @Transient lateinit var exportObject: Lazy<UObject>
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         classIndex = FPackageIndex(Ar)
         superIndex = FPackageIndex(Ar)
         templateIndex = if (Ar.ver >= VER_UE4_TemplateIndex_IN_COOKED_EXPORTS) FPackageIndex(Ar) else FPackageIndex()
@@ -197,12 +175,9 @@ class FObjectExport : FObjectResource {
             serializationBeforeCreateDependencies = 0
             createBeforeCreateDependencies = 0
         }
-
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         classIndex.serialize(Ar)
         superIndex.serialize(Ar)
         if (Ar.ver >= VER_UE4_TemplateIndex_IN_COOKED_EXPORTS) templateIndex.serialize(Ar)
@@ -233,8 +208,6 @@ class FObjectExport : FObjectResource {
             Ar.writeInt32(serializationBeforeCreateDependencies)
             Ar.writeInt32(createBeforeCreateDependencies)
         }
-
-        super.completeWrite(Ar)
     }
 
     constructor(
@@ -293,21 +266,20 @@ class FObjectImport : FObjectResource {
     var className: FName
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         classPackage = Ar.readFName()
         className = Ar.readFName()
         outerIndex = FPackageIndex(Ar)
         objectName = Ar.readFName()
-        super.complete(Ar)
+        if (Ar.ver >= VER_UE4_NON_OUTER_PACKAGE_IMPORT && !Ar.isFilterEditorOnly) {
+            val packageName = Ar.readFName()
+        }
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeFName(classPackage)
         Ar.writeFName(className)
         outerIndex.serialize(Ar)
         Ar.writeFName(objectName)
-        super.completeWrite(Ar)
     }
 
     constructor(classPackage: FName, className: FName, outerIndex: FPackageIndex, objectName: FName) {

@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.converters
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.USoundWave
 
 data class SoundWave(var data: ByteArray, var format: String) {
@@ -23,13 +23,13 @@ data class SoundWave(var data: ByteArray, var format: String) {
 
 @Throws(IllegalArgumentException::class)
 fun USoundWave.convert(): SoundWave {
-    UClass.logger.debug("Starting to convert USoundWave")
+    LOG_JFP.debug("Starting to convert USoundWave")
     return if (!isStreaming()) {
         if (bCooked) {
-            UClass.logger.debug("Found cooked sound data, exporting...")
+            LOG_JFP.debug("Found cooked sound data, exporting...")
             val compressedFormatData = this.compressedFormatData?.formats ?: throw ParserException("Cooked sounds need compressed format data")
             require(!compressedFormatData.isNullOrEmpty())
-            UClass.logger.debug("Done")
+            LOG_JFP.debug("Done")
             val firstData = compressedFormatData.entries.first()
             var exportFormat = firstData.key.text
             if (exportFormat.startsWith("OGG1")) {
@@ -37,16 +37,16 @@ fun USoundWave.convert(): SoundWave {
             }
             SoundWave(firstData.value.data, exportFormat)
         } else {
-            UClass.logger.debug("Found non-cooked sound data, exporting...")
+            LOG_JFP.debug("Found non-cooked sound data, exporting...")
             val rawData = this.rawData ?: throw ParserException("Non-cooked sounds need raw data")
-            UClass.logger.debug("Done")
+            LOG_JFP.debug("Done")
             SoundWave(rawData.data, "ogg")
         }
     } else {
         val runningPlatformData = runningPlatformData ?: throw ParserException("Streamed sounds need streamed audio chunks")
         val streamedChunks = runningPlatformData.chunks
-        UClass.logger.debug("Found streamed sound data, exporting...")
-        val data = ByteArray(streamedChunks.sumBy { it.audioDataSize })
+        LOG_JFP.debug("Found streamed sound data, exporting...")
+        val data = ByteArray(streamedChunks.sumOf { it.audioDataSize })
         var dataOff = 0
         var exportFormat = runningPlatformData.audioFormat.text
         if (exportFormat.startsWith("OGG1")) {
@@ -56,7 +56,7 @@ fun USoundWave.convert(): SoundWave {
             System.arraycopy(it.data.data, 0, data, dataOff, it.audioDataSize)
             dataOff += it.audioDataSize
         }
-        UClass.logger.debug("Done")
+        LOG_JFP.debug("Done")
         SoundWave(data, exportFormat)
     }
 }

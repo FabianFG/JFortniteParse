@@ -3,21 +3,19 @@ package me.fungames.jfortniteparse.ue4.assets.writer
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.util.PayloadType
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectExport
 import me.fungames.jfortniteparse.ue4.objects.uobject.FObjectImport
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 
-@ExperimentalUnsignedTypes
 open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter() {
     override var littleEndian = true
 
     protected var pos = 0
 
     //Asset Specific Fields
-    lateinit var nameMap : MutableList<FNameEntry>
+    lateinit var nameMap : MutableList<String>
     lateinit var importMap : MutableList<FObjectImport>
     lateinit var exportMap : MutableList<FObjectExport>
 
@@ -40,14 +38,14 @@ open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter(
     fun toNormalPos(relativePos : Int) = relativePos - uassetSize - uexpSize
     fun toRelativePos(normalPos : Int) = normalPos + uassetSize + uexpSize
 
-    fun writeFName(i : FName) {
-        if (i is FName.FNameDummy)
+    override fun writeFName(name: FName) {
+        if (name.names.size == 1 && name.index == 0)
             return
-        if (nameMap[i.index].name != i.text) {
-            throw ParserException("FName does not have a valid value, value in name map : ${nameMap[i.index].name}, value in fname : ${i.text}", this)
+        if (nameMap[name.index] != name.text) {
+            throw ParserException("FName does not have a valid value, value in name map : ${nameMap[name.index]}, value in fname : ${name.text}", this)
         }
-        writeInt32(i.index)
-        writeInt32(i.number)
+        writeInt32(name.index)
+        writeInt32(name.number)
     }
 
     override fun write(buffer: ByteArray) {
@@ -70,7 +68,6 @@ open class FAssetArchiveWriter(val outputStream: OutputStream) : FArchiveWriter(
     override fun printError() = "FAssetArchiveWriter Info: pos $pos"
 }
 
-@ExperimentalUnsignedTypes
 internal class FByteArchiveWriter() : FAssetArchiveWriter(ByteArrayOutputStream()) {
 
     val bos = super.outputStream as ByteArrayOutputStream

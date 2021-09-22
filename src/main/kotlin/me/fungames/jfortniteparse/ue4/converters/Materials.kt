@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.converters
 
 import kotlinx.coroutines.*
-import me.fungames.jfortniteparse.ue4.UClass
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.ue4.assets.enums.EMobileSpecularMask
 import me.fungames.jfortniteparse.ue4.assets.enums.ETextureChannel
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstanceConstant
@@ -161,10 +161,10 @@ fun UUnrealMaterial.export() : MaterialExport {
     for (obj in toExport) {
         if (obj is UTexture2D && obj != this) //TODO might also work with non-textures, not sure whether that can happen
             exportJobs.add(scope.async {
-                runCatching { obj.toBufferedImage() }.onSuccess { textures[obj.name] = it }.onFailure { UClass.logger.warn(it) { "Conversion of texture ${obj.name} failed" } }
+                runCatching { obj.toBufferedImage() }.onSuccess { textures[obj.name] = it }.onFailure { LOG_JFP.warn(it) { "Conversion of texture ${obj.name} failed" } }
             })
         else
-            UClass.logger.error { "Material Export contained an toExport that was not an texture, please report this" }
+            LOG_JFP.error { "Material Export contained an toExport that was not an texture, please report this" }
     }
 
     val parentExport = if (this is UMaterialInstanceConstant) {

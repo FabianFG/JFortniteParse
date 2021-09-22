@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
 /** Rotation matrix no translation */
-@ExperimentalUnsignedTypes
 class FRotationMatrix : FRotationTranslationMatrix {
     /**
      * Constructor.

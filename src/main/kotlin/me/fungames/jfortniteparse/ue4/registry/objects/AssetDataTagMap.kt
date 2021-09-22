@@ -27,7 +27,7 @@ class FAssetRegistryExportPath(val `class`: FName, val `object`: FName, val `pac
 
         val path = StringBuilder()
         toString(path)
-        return FName.dummy(path.toString())
+        return FName(path.toString())
     }
 
     fun toString(out: StringBuilder) {
@@ -51,9 +51,9 @@ class FNumberlessExportPath(val `class`: FNameEntryId, val `object`: FNameEntryI
     constructor(Ar: FArchive, names: List<String>) : this(FNameEntryId(Ar), FNameEntryId(Ar), FNameEntryId(Ar), names)
 
     fun makeNumberedPath() = FAssetRegistryExportPath(
-        FName.dummy(names[`class`.value]),
-        FName.dummy(names[`object`.value]),
-        FName.dummy(names[`package`.value])
+        FName(names[`class`.value]),
+        FName(names[`object`.value]),
+        FName(names[`package`.value])
     )
 
     override fun toString() = makeNumberedPath().toString()
@@ -95,13 +95,8 @@ class FValueId {
     fun toInt() = type.ordinal.toUInt() or (index shl TYPE_BITS)
 }
 
-class FNumberedPair(val key: FName, val value: FValueId) {
-    constructor(Ar: FArchive) : this(Ar.readFName(), FValueId(Ar))
-}
-
-class FNumberlessPair(val key: FNameEntryId, val value: FValueId) {
-    constructor(Ar: FArchive) : this(FNameEntryId(Ar), FValueId(Ar))
-}
+typealias FNumberedPair = Pair<FName, FValueId>
+typealias FNumberlessPair = Pair<FNameEntryId, FValueId>
 
 /** Handle to a tag value owned by a managed FStore */
 class FValueHandle(val store: FStore, val id: FValueId) {
@@ -137,10 +132,10 @@ class FMapHandle(partialHandle: FPartialMapHandle, store: FStore) {
         return store.numberlessPairs.asList().subList(pairBegin.toInt(), (pairBegin + num).toInt())
     }
 
-    fun forEachPair(fn: (FNumberedPair) -> Unit) {
+    inline fun forEachPair(fn: (FNumberedPair) -> Unit) {
         if (bHasNumberlessKeys) {
-            getNumberlessView().forEach {
-                fn(FNumberedPair(FName.createFromDisplayId(store.nameMap[it.key.value], 0), it.value))
+            getNumberlessView().forEach { (key, value) ->
+                fn(FName(store.nameMap, key.value.toInt(), 0) to value)
             }
         } else {
             getNumberedView().forEach(fn)

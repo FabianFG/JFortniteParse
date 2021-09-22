@@ -1,18 +1,20 @@
 package me.fungames.jfortniteparse.ue4.objects.uobject
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.objects.FCompressedChunk
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FEngineVersion
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.core.serialization.FCustomVersion
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.GAME_VALORANT
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ADDED_PACKAGE_OWNER
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_NON_OUTER_PACKAGE_IMPORT
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /**
  * Revision data for an Unreal package file.
  */
-@ExperimentalUnsignedTypes
-class FGenerationInfo : UClass {
+class FGenerationInfo {
     /**
      * Number of exports in the linker's ExportMap for this generation.
      */
@@ -24,17 +26,13 @@ class FGenerationInfo : UClass {
     var nameCount: Int
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         exportCount = Ar.readInt32()
         nameCount = Ar.readInt32()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeInt32(exportCount)
         Ar.writeInt32(nameCount)
-        super.completeWrite(Ar)
     }
 
     constructor(exportCount: Int, nameCount: Int) {
@@ -46,8 +44,7 @@ class FGenerationInfo : UClass {
 /**
  * A "table of contents" for an Unreal package file.  Stored at the top of the file.
  */
-@ExperimentalUnsignedTypes
-class FPackageFileSummary : UClass {
+class FPackageFileSummary {
     var tag: UInt
     var legacyFileVersion: Int
     var legacyUE3Version: Int
@@ -86,7 +83,6 @@ class FPackageFileSummary : UClass {
     var preloadDependencyOffset: Int
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         tag = Ar.readUInt32()
         legacyFileVersion = Ar.readInt32()
         legacyUE3Version = Ar.readInt32()
@@ -96,8 +92,16 @@ class FPackageFileSummary : UClass {
         totalHeaderSize = Ar.readInt32()
         folderName = Ar.readString()
         packageFlags = Ar.readUInt32()
+        if (packageFlags.toInt() and EPackageFlags.PKG_FilterEditorOnly.value != 0) {
+            Ar.isFilterEditorOnly = true
+        }
         nameCount = Ar.readInt32()
         nameOffset = Ar.readInt32()
+        if (!Ar.isFilterEditorOnly) {
+            if (fileVersionUE4 >= VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID) {
+                val localizationId = Ar.readString()
+            }
+        }
         gatherableTextDataCount = Ar.readInt32()
         gatherableTextDataOffset = Ar.readInt32()
         exportCount = Ar.readInt32()
@@ -109,7 +113,18 @@ class FPackageFileSummary : UClass {
         softPackageReferencesOffset = Ar.readInt32()
         searchableNamesOffset = Ar.readInt32()
         thumbnailTableOffset = Ar.readInt32()
+        if (Ar.game == GAME_VALORANT) {
+            Ar.skip(8)
+        }
         guid = FGuid(Ar)
+        if (!Ar.isFilterEditorOnly) {
+            if (fileVersionUE4 >= VER_UE4_ADDED_PACKAGE_OWNER) {
+                val persistentGuid = FGuid(Ar)
+            }
+            if (fileVersionUE4 in VER_UE4_ADDED_PACKAGE_OWNER until VER_UE4_NON_OUTER_PACKAGE_IMPORT) {
+                val ownerPersistentGuid = FGuid(Ar)
+            }
+        }
         generations = Ar.readTArray { FGenerationInfo(Ar) }
         savedByEngineVersion = FEngineVersion(Ar)
         compatibleWithEngineVersion = FEngineVersion(Ar)
@@ -123,11 +138,9 @@ class FPackageFileSummary : UClass {
         chunkIds = Ar.readTArray { Ar.readInt32() }
         preloadDependencyCount = Ar.readInt32()
         preloadDependencyOffset = Ar.readInt32()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeUInt32(tag)
         Ar.writeInt32(legacyFileVersion)
         Ar.writeInt32(legacyUE3Version)
@@ -164,7 +177,6 @@ class FPackageFileSummary : UClass {
         Ar.writeTArray(chunkIds) { Ar.writeInt32(it) }
         Ar.writeInt32(preloadDependencyCount)
         Ar.writeInt32(preloadDependencyOffset)
-        super.completeWrite(Ar)
     }
 
     constructor(

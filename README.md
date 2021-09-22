@@ -146,32 +146,29 @@ val translatedString = text.textForLocres(locres)
 ```xml
 <repositories>
 	<repository>
-		<id>bintray-fungamesleaks-mavenRepo</id>
-		<name>bintray</name>
-		<url>https://dl.bintray.com/fungamesleaks/mavenRepo</url>
+		<id>jitpack.io</id>
+		<url>https://jitpack.io</url>
 	</repository>
 </repositories>
 ```
 - Add the dependency
 ```xml
 <dependency>
-	<groupId>me.fungames</groupId>
+	<groupId>com.github.FabianFG</groupId>
 	<artifactId>JFortniteParse</artifactId>
-	<version>3.2.7</version>
+	<version>3.6.5</version>
 </dependency>
 ```
 ##### Gradle
 - Add the repository
 ```groovy
 repositories {
-	maven {
-		url  "https://dl.bintray.com/fungamesleaks/mavenRepo"
-	}
+	maven { url "https://jitpack.io" }
 }
 ```
 - Add the dependency
 ```groovy
-implementation 'me.fungames:JFortniteParse:3.2.7'
+implementation 'com.github.FabianFG:JFortniteParse:3.6.5'
 ```
 
 ### Fortnite Text Hotfixes
@@ -187,18 +184,18 @@ This method will replace all entries from the locres that are overwritten by the
 Afterwards you can use the locres and apply it to instances of Package etc.
 Texts will be exported with the hotfixed ones
 - Add the dependency
-**Its located in the same repository as the main parser**
+**It's located in the same repository as the main parser**
 ##### Maven
 ```xml
 <dependency>
-  <groupId>me.fungames</groupId>
+  <groupId>com.github.FabianFG</groupId>
   <artifactId>JFortniteParseTextHotfixes</artifactId>
-  <version>1.5</version>
+  <version>1.5.1</version>
 </dependency>
 ```
 ##### Gradle
 ```groovy
-implementation 'me.fungames:JFortniteParseTextHotfixes:1.5'
+implementation 'com.github.FabianFG:JFortniteParseTextHotfixes:1.5.1'
 ```
 
 ### Contributors

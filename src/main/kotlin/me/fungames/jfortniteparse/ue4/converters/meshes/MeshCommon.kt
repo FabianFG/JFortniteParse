@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE", "EXPERIMENTAL_UNSIGNED_LITERALS")
-
 package me.fungames.jfortniteparse.ue4.converters.meshes
 
 import me.fungames.jfortniteparse.exceptions.ParserException
@@ -13,11 +11,6 @@ import kotlin.math.round
 internal const val MAX_MESH_UV_SETS = 8
 
 class CMeshSection(val material: Lazy<UMaterialInterface>?, val firstIndex: Int, val numFaces: Int)
-
-class CMeshUVFloat(var u: Float, var v: Float) {
-    constructor() : this(0f, 0f)
-    constructor(other: FMeshUVFloat) : this(other.u, other.v)
-}
 
 class CIndexBuffer(indices16: Array<UShort>, indices32: Array<UInt>) {
     val indices16: Array<UShort>
@@ -68,13 +61,14 @@ open class CBaseMeshLod {
     // geometry
     lateinit var sections: Array<CMeshSection>
     var numVerts = 0
-    lateinit var extraUV: Array<Array<CMeshUVFloat>>
+    lateinit var extraUV: Array<Array<FMeshUVFloat>>
     var vertexColors: Array<FColor>? = null
     lateinit var indices: CIndexBuffer
+    val skipLod get() = !::sections.isInitialized || sections.isEmpty() || !::indices.isInitialized
 
     fun allocateUVBuffers() {
         extraUV = Array(numTexCoords - 1) {
-            Array(numVerts) { CMeshUVFloat() }
+            Array(numVerts) { FMeshUVFloat() }
         }
     }
 
@@ -83,7 +77,7 @@ open class CBaseMeshLod {
     }
 }
 
-open class CMeshVertex(var position: FVector, var normal: CPackedNormal, var tangent: CPackedNormal, var uv: CMeshUVFloat)
+open class CMeshVertex(var position: FVector, var normal: CPackedNormal, var tangent: CPackedNormal, var uv: FMeshUVFloat)
 
 internal fun unpackNormals(srcNormal: Array<FPackedNormal>, v: CMeshVertex) {
     // tangents: convert to FVector (unpack) then cast to CVec3

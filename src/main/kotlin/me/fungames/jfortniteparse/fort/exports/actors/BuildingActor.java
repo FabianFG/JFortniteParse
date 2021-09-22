@@ -8,7 +8,7 @@ import me.fungames.jfortniteparse.fort.objects.FortAttributeInitializationKey;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle;
-import me.fungames.jfortniteparse.ue4.assets.exports.UClassReal;
+import me.fungames.jfortniteparse.ue4.assets.exports.UClass;
 import me.fungames.jfortniteparse.ue4.assets.exports.USoundBase;
 import me.fungames.jfortniteparse.ue4.assets.exports.actors.AActor;
 import me.fungames.jfortniteparse.ue4.assets.exports.components.UPrimitiveComponent;
@@ -32,11 +32,11 @@ public class BuildingActor extends AActor {
     public Short OwnerPersistentID;
     public Boolean bUseMinLifeSpan;
     public FSoftObjectPath /*SoftClassPath*/ AreaClass;
-    public Lazy<UClassReal> NavigationLinksClass;
+    public Lazy<UClass> NavigationLinksClass;
     public List<FPackageIndex /*FortAthenaVehicle*/> InitialOverlappingVehicles;
     public Integer CurrentBuildingLevel;
     public Integer MaximumBuildingLevel;
-    public Lazy<UClassReal> BuildingAttributeSetClass;
+    public Lazy<UClass> BuildingAttributeSetClass;
     public FPackageIndex /*FortBuildingActorSet*/ BuildingAttributeSet;
     public FPackageIndex /*FortBuildingActorSet*/ ReplicatedBuildingAttributeSet;
     public Float MaxHealthInitializationValue;
@@ -163,7 +163,7 @@ public class BuildingActor extends AActor {
     public FVector CentroidOffset;
     public FVector BaseLocToPivotOffset;
     public String CustomState;
-    public List<Lazy<UClassReal>> ComponentTypesWhitelistedForReplication;
+    public List<Lazy<UClass>> ComponentTypesWhitelistedForReplication;
     public List<Lazy<UPrimitiveComponent>> OverridePrimitivesToExcludeFoliage;
     public FPackageIndex /*BuildingActorHotSpotConfig*/ HotSpotConfig;
     public FMulticastScriptDelegate OnBuildingHealthChanged;
@@ -223,7 +223,7 @@ public class BuildingActor extends AActor {
     public static class MarkedActorDisplayInfo {
         public FText DisplayName;
         public FSoftObjectPath Icon;
-        public Lazy<UClassReal> CustomIndicatorClass;
+        public Lazy<UClass> CustomIndicatorClass;
         public FLinearColor PrimaryColor;
         public Lazy<USoundBase> Sound;
         public EFortMarkedActorScreenClamping ScreenClamping;

@@ -1,13 +1,11 @@
 package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.FRenderingObjectVersion
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FStaticMeshSection : UClass {
+class FStaticMeshSection {
     var materialIndex: Int
     var firstIndex : Int
     var numTriangles : Int
@@ -19,7 +17,6 @@ class FStaticMeshSection : UClass {
     var visibleInRayTracing : Boolean
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         materialIndex = Ar.readInt32()
         firstIndex = Ar.readInt32()
         numTriangles = Ar.readInt32()
@@ -27,19 +24,11 @@ class FStaticMeshSection : UClass {
         maxVertexIndex = Ar.readInt32()
         enableCollision = Ar.readBoolean()
         castShadow = Ar.readBoolean()
-        forceOpaque = if (FRenderingObjectVersion.get(Ar) >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField)
-            Ar.readBoolean()
-        else
-            false
-        visibleInRayTracing = if (Ar.game >= GAME_UE4(26))
-            Ar.readBoolean()
-        else
-            false
-        super.complete(Ar)
+        forceOpaque = FRenderingObjectVersion.get(Ar) >= FRenderingObjectVersion.StaticMeshSectionForceOpaqueField && Ar.readBoolean()
+        visibleInRayTracing = Ar.versions["StaticMesh.HasVisibleInRayTracing"] && Ar.readBoolean()
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeInt32(materialIndex)
         Ar.writeInt32(firstIndex)
         Ar.writeInt32(numTriangles)
@@ -49,7 +38,6 @@ class FStaticMeshSection : UClass {
         Ar.writeBoolean(castShadow)
         if (Ar.game >= GAME_UE4(25))
             Ar.writeBoolean(forceOpaque)
-        super.completeWrite(Ar)
     }
 
     constructor(

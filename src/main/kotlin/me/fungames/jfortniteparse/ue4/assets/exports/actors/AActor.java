@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.ue4.assets.exports.actors;
 import kotlin.Lazy;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
+import me.fungames.jfortniteparse.ue4.assets.enums.ETickingGroup;
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject;
 import me.fungames.jfortniteparse.ue4.assets.exports.components.UActorComponent;
 import me.fungames.jfortniteparse.ue4.assets.exports.components.USceneComponent;
@@ -55,11 +56,10 @@ public class AActor extends UObject {
     @UProperty(skipPrevious = 1)
     public Lazy<AActor> Owner;
     public FName NetDriverName;
-    /*public ENetRole Role;
+    public ENetRole Role;
     public ENetDormancy NetDormancy;
     public ESpawnActorCollisionHandlingMethod SpawnCollisionHandlingMethod;
-    public EAutoReceiveInput AutoReceiveInput;*/
-    @UProperty(skipPrevious = 4)
+    public EAutoReceiveInput AutoReceiveInput;
     public Integer InputPriority;
     public FPackageIndex /*InputComponent*/ InputComponent;
     public Float NetCullDistanceSquared;
@@ -104,18 +104,42 @@ public class AActor extends UObject {
         public Float TickInterval;
     }
 
-    public enum ETickingGroup {
-        TG_PrePhysics,
-        TG_StartPhysics,
-        TG_DuringPhysics,
-        TG_EndPhysics,
-        TG_PostPhysics,
-        TG_PostUpdateWork,
-        TG_LastDemotable,
-        TG_NewlySpawned,
-    }
-
     @UStruct
     public static class FActorTickFunction extends FTickFunction {
+    }
+
+    public enum ENetRole {
+        ROLE_None,
+        ROLE_SimulatedProxy,
+        ROLE_AutonomousProxy,
+        ROLE_Authority
+    }
+
+    public enum ENetDormancy {
+        DORM_Never,
+        DORM_Awake,
+        DORM_DormantAll,
+        DORM_DormantPartial,
+        DORM_Initial
+    }
+
+    public enum ESpawnActorCollisionHandlingMethod {
+        Undefined,
+        AlwaysSpawn,
+        AdjustIfPossibleButAlwaysSpawn,
+        AdjustIfPossibleButDontSpawnIfColliding,
+        DontSpawnIfColliding
+    }
+
+    public enum EAutoReceiveInput {
+        Disabled,
+        Player0,
+        Player1,
+        Player2,
+        Player3,
+        Player4,
+        Player5,
+        Player6,
+        Player7
     }
 }

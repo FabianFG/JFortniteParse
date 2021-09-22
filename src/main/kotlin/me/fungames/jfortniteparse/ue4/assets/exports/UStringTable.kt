@@ -6,7 +6,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 typealias FMetaDataMap = MutableMap<FName, String>
 
-@ExperimentalUnsignedTypes
 class UStringTable : UObject() {
     lateinit var tableNamespace: String
     lateinit var entries: MutableMap<String, String>
@@ -17,7 +16,6 @@ class UStringTable : UObject() {
         tableNamespace = Ar.readString()
         entries = Ar.readTMap { Ar.readString() to Ar.readString() }
         keysToMetadata = Ar.readTMap { Ar.readString() to Ar.readTMap { Ar.readFName() to Ar.readString() } }
-        super.complete(Ar)
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
@@ -34,6 +32,5 @@ class UStringTable : UObject() {
                 Ar.writeString(metaValue)
             }
         }
-        super.completeWrite(Ar)
     }
 }

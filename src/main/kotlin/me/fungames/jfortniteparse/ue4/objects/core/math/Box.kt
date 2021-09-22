@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import kotlin.math.max
@@ -12,30 +11,26 @@ import kotlin.math.min
  * Boxes describe an axis-aligned extent in three dimensions. They are used for many different things in the
  * Engine and in games, such as bounding volumes, collision detection and visibility calculation.
  */
-class FBox : UClass {
+class FBox {
     /** Holds the box's minimum point. */
-    var min: FVector
+    val min: FVector
 
     /** Holds the box's maximum point. */
-    var max: FVector
+    val max: FVector
 
     /** Holds a flag indicating whether this box is valid. */
     var isValid: Boolean
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         min = FVector(Ar)
         max = FVector(Ar)
         isValid = Ar.readFlag()
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         min.serialize(Ar)
         max.serialize(Ar)
         Ar.writeFlag(isValid)
-        super.completeWrite(Ar)
     }
 
     /**
@@ -111,8 +106,8 @@ class FBox : UClass {
             max.y = max(max.y, other.y)
             max.z = max(max.z, other.z)
         } else {
-            min = other
-            max = other
+            min.set(other)
+            max.set(other)
             isValid = true
         }
     }
@@ -145,8 +140,8 @@ class FBox : UClass {
             max.y = max(max.y, other.max.y)
             max.z = max(max.z, other.max.z)
         } else if (other.isValid) {
-            min = other.min
-            max = other.max
+            min.set(other.min)
+            max.set(other.max)
             isValid = other.isValid
         }
     }
@@ -164,10 +159,10 @@ class FBox : UClass {
     }
 
     /**
-     * Gets reference to the min or max of this bounding volume.
+     * Gets the min or max of this bounding volume.
      *
      * @param index the index into points of the bounding volume.
-     * @return a reference to a point of the bounding volume.
+     * @return a point of the bounding volume.
      */
     operator fun get(index: Int) = when (index) {
         0 -> min
@@ -328,18 +323,18 @@ class FBox : UClass {
      */
     fun intersect(other: FBox): Boolean {
         if ((min.x > other.max.x) || (other.min.x > max.x)) {
-            return false;
+            return false
         }
 
         if ((min.y > other.max.y) || (other.min.y > max.y)) {
-            return false;
+            return false
         }
 
         if ((min.z > other.max.z) || (other.min.z > max.z)) {
-            return false;
+            return false
         }
 
-        return true;
+        return true
     }
 
     /**
@@ -350,14 +345,14 @@ class FBox : UClass {
      */
     fun intersectXY(other: FBox): Boolean {
         if ((min.x > other.max.x) || (other.min.x > max.x)) {
-            return false;
+            return false
         }
 
         if ((min.y > other.max.y) || (other.min.y > max.y)) {
-            return false;
+            return false
         }
 
-        return true;
+        return true
     }
 
     /**

@@ -1,144 +1,148 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
-import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
-import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.Companion.valueOr
+import me.fungames.jfortniteparse.LOG_JFP
+import me.fungames.jfortniteparse.fort.objects.FFortActorRecord
 import me.fungames.jfortniteparse.ue4.assets.objects.FProperty.ReadType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
+import me.fungames.jfortniteparse.ue4.objects.ai.navigation.FNavAgentSelector
 import me.fungames.jfortniteparse.ue4.objects.core.math.*
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.detailcustomizations.FNavAgentSelectorCustomization
 import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.objects.engine.animation.FSmartName
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FRichCurveKey
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.FSimpleCurveKey
+import me.fungames.jfortniteparse.ue4.objects.engine.gameframework.FUniqueNetIdRepl
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
 import me.fungames.jfortniteparse.ue4.objects.levelsequence.FLevelSequenceObjectReferenceMap
 import me.fungames.jfortniteparse.ue4.objects.moviescene.FMovieSceneFrameRange
-import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationKey
-import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneEvaluationTemplate
-import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FMovieSceneSegment
-import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.FSectionEvaluationDataTree
+import me.fungames.jfortniteparse.ue4.objects.moviescene.channels.FMovieSceneFloatChannel
+import me.fungames.jfortniteparse.ue4.objects.moviescene.channels.FMovieSceneFloatValue
+import me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation.*
+import me.fungames.jfortniteparse.ue4.objects.niagara.FNiagaraVariable
+import me.fungames.jfortniteparse.ue4.objects.niagara.FNiagaraVariableBase
+import me.fungames.jfortniteparse.ue4.objects.niagara.FNiagaraVariableWithOffset
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftClassPath
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath
-import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
-class UScriptStruct : UClass {
+class UScriptStruct {
     val structName: FName
     var structType: Any
 
     constructor(Ar: FAssetArchive, typeData: PropertyType, type: ReadType = ReadType.NORMAL) {
-        super.init(Ar)
-        structName = typeData.structType
-        structType = when (structName.text) { // TODO please complete the zero constructors
-            "Box" -> valueOr({ FBox(Ar) }, { FBox() }, type)
-            "Box2D" -> valueOr({ FBox2D(Ar) }, { FBox2D() }, type)
-            "Color" -> valueOr({ FColor(Ar) }, { FColor() }, type)
+        structName = typeData.structName
+        val nz = type != ReadType.ZERO
+        structType = when (structName.text) {
+            "Box" -> if (nz) FBox(Ar) else FBox(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f))
+            "Box2D" -> if (nz) FBox2D(Ar) else FBox2D(FVector2D(0f, 0f), FVector2D(0f, 0f))
+            "Color" -> if (nz) FColor(Ar) else FColor()
             "ColorMaterialInput" -> FColorMaterialInput(Ar)
+            "DateTime", "Timespan" -> if (nz) FDateTime(Ar) else FDateTime()
             "ExpressionInput" -> FExpressionInput(Ar)
             "FrameNumber" -> FFrameNumber(Ar)
-            "GameplayTagContainer" -> valueOr({ FGameplayTagContainer(Ar) }, { FGameplayTagContainer() }, type)
-            "Guid" -> valueOr({ FGuid(Ar) }, { FGuid() }, type)
+            "GameplayTagContainer" -> if (nz) FGameplayTagContainer(Ar) else FGameplayTagContainer()
+            "Guid", "GUID" -> if (nz) FGuid(Ar) else FGuid()
             "IntPoint" -> FIntPoint(Ar)
             "IntVector" -> FIntVector(Ar)
             "LevelSequenceObjectReferenceMap" -> FLevelSequenceObjectReferenceMap(Ar)
-            "LinearColor" -> valueOr({ FLinearColor(Ar) }, { FLinearColor() }, type)
+            "LinearColor" -> if (nz) FLinearColor(Ar) else FLinearColor()
             "MaterialAttributesInput" -> FMaterialAttributesInput(Ar)
+            "MovieSceneEvalTemplatePtr" -> FMovieSceneEvalTemplatePtr(Ar)
+            "MovieSceneEvaluationFieldEntityTree" -> FMovieSceneEvaluationFieldEntityTree(Ar)
             "MovieSceneEvaluationKey" -> FMovieSceneEvaluationKey(Ar)
-            "MovieSceneEvaluationTemplate" -> FMovieSceneEvaluationTemplate(Ar)
-            "MovieSceneFloatValue" -> FRichCurveKey(Ar)
+            "MovieSceneFloatChannel" -> FMovieSceneFloatChannel(Ar)
+            "MovieSceneFloatValue" -> FMovieSceneFloatValue(Ar)
             "MovieSceneFrameRange" -> FMovieSceneFrameRange(Ar)
             "MovieSceneSegment" -> FMovieSceneSegment(Ar)
             "MovieSceneSegmentIdentifier" -> FFrameNumber(Ar)
             "MovieSceneSequenceID" -> FFrameNumber(Ar)
             "MovieSceneTrackIdentifier" -> FFrameNumber(Ar)
-            "NavAgentSelector" -> FNavAgentSelectorCustomization(Ar)
+            "MovieSceneTrackImplementationPtr" -> FMovieSceneTrackImplementationPtr(Ar)
+            "NavAgentSelector" -> FNavAgentSelector(Ar)
+            "NiagaraVariable" -> FNiagaraVariable(Ar)
+            "NiagaraVariableBase" -> FNiagaraVariableBase(Ar)
+            "NiagaraVariableWithOffset" -> FNiagaraVariableWithOffset(Ar)
             "PerPlatformBool" -> FPerPlatformBool(Ar)
             "PerPlatformFloat" -> FPerPlatformFloat(Ar)
             "PerPlatformInt" -> FPerPlatformInt(Ar)
+            "PerQualityLevelInt" -> FPerQualityLevelInt(Ar)
+            "Plane" -> if (nz) FPlane(Ar) else FPlane()
             "Quat" -> FQuat(Ar)
             "RichCurveKey" -> FRichCurveKey(Ar)
-            "Rotator" -> valueOr({ FRotator(Ar) }, { FRotator() }, type)
+            "Rotator" -> if (nz) FRotator(Ar) else FRotator()
             "ScalarMaterialInput" -> FScalarMaterialInput(Ar)
             "SectionEvaluationDataTree" -> FSectionEvaluationDataTree(Ar)
             "SimpleCurveKey" -> FSimpleCurveKey(Ar)
             "SkeletalMeshSamplingLODBuiltData" -> FWeightedRandomSampler(Ar)
             "SmartName" -> FSmartName(Ar)
-            "SoftObjectPath" -> valueOr({ FSoftObjectPath(Ar) }, { FSoftObjectPath() }, type).apply { owner = Ar.owner }
-            "SoftClassPath" -> valueOr({ FSoftClassPath(Ar) }, { FSoftClassPath() }, type).apply { owner = Ar.owner }
-            "Timespan", "DateTime" -> valueOr({ FDateTime(Ar) }, { FDateTime() }, type)
-            "Vector" -> valueOr({ FVector(Ar) }, { FVector() }, type)
-            "Vector2D" -> valueOr({ FVector2D(Ar) }, { FVector2D() }, type)
+            "SoftObjectPath" -> (if (nz) FSoftObjectPath(Ar) else FSoftObjectPath()).apply { owner = Ar.owner }
+            "SoftClassPath" -> (if (nz) FSoftClassPath(Ar) else FSoftClassPath()).apply { owner = Ar.owner }
+            "UniqueNetIdRepl" -> FUniqueNetIdRepl(Ar)
+            "Vector" -> if (nz) FVector(Ar) else FVector()
+            "Vector2D" -> if (nz) FVector2D(Ar) else FVector2D()
             "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
-            "Vector4" -> valueOr({ FVector4(Ar) }, { FVector4() }, type)
+            "Vector4" -> if (nz) FVector4(Ar) else FVector4()
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)
+            "Vector_NetQuantize" -> if (nz) FVector(Ar) else FVector()
+            "Vector_NetQuantize10" -> if (nz) FVector(Ar) else FVector()
+            "Vector_NetQuantize100" -> if (nz) FVector(Ar) else FVector()
+            "Vector_NetQuantizeNormal" -> if (nz) FVector(Ar) else FVector()
+            "FortActorRecord" -> FFortActorRecord(Ar)
 
             else -> {
-                logger.debug("Using FStructFallback for struct $structName")
+                LOG_JFP.debug { "Using property serialization for struct $structName" }
                 //TODO this should in theory map the struct fallbacks directly to their target, not implemented yet
                 //For now it will be done with the getTagTypeValue method, not optimal though
-                if (Ar.useUnversionedPropertySerialization) {
-                    val properties = mutableListOf<FPropertyTag>()
-                    if (type != ReadType.ZERO) {
-                        val structClass = typeData.structClass
-                            ?: throw ParserException("Unknown struct type $structName, can't proceed with serialization", Ar)
-                        deserializeUnversionedProperties(properties, structClass.value, Ar)
-                    }
-                    FStructFallback(properties)
-                } else {
-                    FStructFallback(Ar)
-                }
+                FStructFallback(Ar, typeData.structClass, structName)
             }
         }
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         when (val structType = structType) {
-            is FIntPoint -> structType.serialize(Ar)
-            is FGuid -> structType.serialize(Ar)
-            is FGameplayTagContainer -> structType.serialize(Ar)
-            is FColor -> structType.serialize(Ar)
-            is FLinearColor -> structType.serialize(Ar)
-            is FSoftObjectPath -> structType.serialize(Ar)
-            is FVector -> structType.serialize(Ar)
-            is FVector2D -> structType.serialize(Ar)
-            is FVector4 -> structType.serialize(Ar)
             is FBox -> structType.serialize(Ar)
             is FBox2D -> structType.serialize(Ar)
-            is FRotator -> structType.serialize(Ar)
-            is FQuat -> structType.serialize(Ar)
-            is FIntVector -> structType.serialize(Ar)
-            is FPerPlatformInt -> structType.serialize(Ar)
-            is FPerPlatformFloat -> structType.serialize(Ar)
-            is FPerPlatformBool -> structType.serialize(Ar)
-            is FWeightedRandomSampler -> structType.serialize(Ar)
-            is FLevelSequenceObjectReferenceMap -> structType.serialize(Ar)
-            is FStructFallback -> structType.serialize(Ar)
-            is FFrameNumber -> structType.serialize(Ar)
-            is FSmartName -> structType.serialize(Ar)
-            is FRichCurveKey -> structType.serialize(Ar)
-            is FSimpleCurveKey -> structType.serialize(Ar)
-            is FDateTime -> structType.serialize(Ar)
-            is FNavAgentSelectorCustomization -> structType.serialize(Ar)
-            is FExpressionInput -> structType.serialize(Ar)
+            is FColor -> structType.serialize(Ar)
             is FColorMaterialInput -> structType.serialize(Ar)
-            is FScalarMaterialInput -> structType.serialize(Ar)
-            is FVectorMaterialInput -> structType.serialize(Ar)
-            is FVector2MaterialInput -> structType.serialize(Ar)
+            is FDateTime -> structType.serialize(Ar)
+            is FExpressionInput -> structType.serialize(Ar)
+            is FFrameNumber -> structType.serialize(Ar)
+            is FGameplayTagContainer -> structType.serialize(Ar)
+            is FGuid -> structType.serialize(Ar)
+            is FIntPoint -> structType.serialize(Ar)
+            is FIntVector -> structType.serialize(Ar)
+            is FLevelSequenceObjectReferenceMap -> structType.serialize(Ar)
+            is FLinearColor -> structType.serialize(Ar)
             is FMaterialAttributesInput -> structType.serialize(Ar)
-            is FMovieSceneSegment -> structType.serialize(Ar)
-            is FSectionEvaluationDataTree -> structType.serialize(Ar)
-            is FMovieSceneFrameRange -> structType.serialize(Ar)
             is FMovieSceneEvaluationKey -> structType.serialize(Ar)
-            is FMovieSceneEvaluationTemplate -> structType.serialize(Ar)
+            is FMovieSceneFrameRange -> structType.serialize(Ar)
+            is FMovieSceneSegment -> structType.serialize(Ar)
+            is FNavAgentSelector -> structType.serialize(Ar)
+            is FNiagaraVariable -> structType.serialize(Ar)
+            is FNiagaraVariableBase -> structType.serialize(Ar)
+            is FNiagaraVariableWithOffset -> structType.serialize(Ar)
+            is FPerPlatformBool -> structType.serialize(Ar)
+            is FPerPlatformFloat -> structType.serialize(Ar)
+            is FPerPlatformInt -> structType.serialize(Ar)
+            is FQuat -> structType.serialize(Ar)
+            is FRichCurveKey -> structType.serialize(Ar)
+            is FRotator -> structType.serialize(Ar)
+            is FScalarMaterialInput -> structType.serialize(Ar)
+            is FSectionEvaluationDataTree -> structType.serialize(Ar)
+            is FSimpleCurveKey -> structType.serialize(Ar)
+            is FSmartName -> structType.serialize(Ar)
+            is FSoftObjectPath -> structType.serialize(Ar)
+            is FStructFallback -> structType.serialize(Ar)
+            is FVector -> structType.serialize(Ar)
+            is FVector2D -> structType.serialize(Ar)
+            is FVector2MaterialInput -> structType.serialize(Ar)
+            is FVector4 -> structType.serialize(Ar)
+            is FVectorMaterialInput -> structType.serialize(Ar)
+            is FWeightedRandomSampler -> structType.serialize(Ar)
         }
-        super.completeWrite(Ar)
     }
 
     constructor(structName: FName, structType: Any) {

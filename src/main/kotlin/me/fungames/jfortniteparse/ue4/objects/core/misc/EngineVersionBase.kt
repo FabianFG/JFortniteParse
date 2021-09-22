@@ -1,7 +1,5 @@
 package me.fungames.jfortniteparse.ue4.objects.core.misc
 
-import me.fungames.jfortniteparse.ue4.UClass
-
 /** Enum for the components of a version string. */
 enum class EVersionComponent {
     /** Major version increments introduce breaking API changes. */
@@ -19,8 +17,7 @@ enum class EVersionComponent {
 enum class EVersionComparison { Neither, First, Second }
 
 /** Base class for the EngineVersion class. Holds basic version numbers. */
-@ExperimentalUnsignedTypes
-open class FEngineVersionBase : UClass {
+open class FEngineVersionBase {
     /** Major version number. */
     var major: UShort
 

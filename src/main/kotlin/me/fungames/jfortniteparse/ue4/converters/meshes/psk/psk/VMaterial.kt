@@ -1,19 +1,17 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package me.fungames.jfortniteparse.ue4.converters.meshes.psk.psk
 
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 class VMaterial(
-    val materialName : String,
-    val textureIndex : Int,
-    val polyFlags : UInt,
-    val auxMaterial : Int,
-    val auxFlags : UInt,
-    val lodBias : Int,
-    val lodStyle : Int
+    val materialName: String,
+    val textureIndex: Int,
+    val polyFlags: UInt,
+    val auxMaterial: Int,
+    val auxFlags: UInt,
+    val lodBias: Int,
+    val lodStyle: Int
 ) {
-    fun serialize(Ar : FArchiveWriter) {
+    fun serialize(Ar: FArchiveWriter) {
         Ar.write(materialName.toByteArray().copyOf(64))
         Ar.writeInt32(textureIndex)
         Ar.writeUInt32(polyFlags)

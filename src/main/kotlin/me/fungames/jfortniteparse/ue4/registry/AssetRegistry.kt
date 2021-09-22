@@ -33,7 +33,7 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
 
         if (version < FAssetRegistryVersion.Type.AddedDependencyFlags) {
             val localNumDependsNodes = Ar.readInt32()
-            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode() }
+            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode(it) }
             if (localNumDependsNodes > 0) {
                 loadDependenciesBeforeFlags(Ar, version)
             }
@@ -41,33 +41,25 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
             val dependencySectionSize = Ar.readInt64()
             val dependencySectionEnd = Ar.pos() + dependencySectionSize.toInt()
             val localNumDependsNodes = Ar.readInt32()
-            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode() }
+            preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode(it) }
             if (localNumDependsNodes > 0) {
                 loadDependencies(Ar)
             }
             Ar.seek(dependencySectionEnd)
         }
 
-        val serializeHash = version < FAssetRegistryVersion.Type.AddedCookedMD5Hash
-        preallocatedPackageDataBuffer = Ar.readTArray { FAssetPackageData(Ar, serializeHash) }
+        preallocatedPackageDataBuffer = Ar.readTArray { FAssetPackageData(Ar, version) }
     }
 
     private fun loadDependencies(Ar: FArchive) {
-        fun getNodeFromSerializeIndex(index: Int): FDependsNode? {
-            if (index < 0 || preallocatedDependsNodeDataBuffer.size <= index) {
-                return null
-            }
-            return preallocatedDependsNodeDataBuffer[index]
-        }
-
         for (dependsNode in preallocatedDependsNodeDataBuffer) {
-            dependsNode.serializeLoad(Ar, ::getNodeFromSerializeIndex)
+            dependsNode.serializeLoad(Ar, preallocatedDependsNodeDataBuffer)
         }
     }
 
     private fun loadDependenciesBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion) {
         for (dependsNode in preallocatedDependsNodeDataBuffer) {
-            dependsNode.serializeLoadBeforeFlags(Ar, version, preallocatedDependsNodeDataBuffer, preallocatedDependsNodeDataBuffer.size)
+            dependsNode.serializeLoadBeforeFlags(Ar, version, preallocatedDependsNodeDataBuffer)
         }
     }
 }

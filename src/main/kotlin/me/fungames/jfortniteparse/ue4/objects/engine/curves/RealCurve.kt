@@ -59,6 +59,9 @@ open class FRealCurve {
     /** Clear all keys. */
     open fun reset() {}
 
+    /** Remap inTime based on pre and post infinity extrapolation values */
+    open fun remapTimeValue(inTime: FloatRef, cycleValueOffset: FloatRef) {}
+
     /** Evaluate this curve at the specified time */
     @JvmOverloads
     open fun eval(inTime: Float, inDefaultValue: Float = 0.0f) = 0f

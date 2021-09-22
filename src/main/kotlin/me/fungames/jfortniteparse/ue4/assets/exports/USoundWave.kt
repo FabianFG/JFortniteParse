@@ -1,7 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.exports
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.OnlyAnnotated
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
@@ -14,6 +13,8 @@ import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FFormatContainer
+import me.fungames.jfortniteparse.ue4.versions.FFrameworkObjectVersion
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_SOUND_COMPRESSION_TYPE_ADDED
 
 @OnlyAnnotated
 class USoundWave : USoundBase() {
@@ -55,6 +56,11 @@ class USoundWave : USoundBase() {
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
         bCooked = Ar.readBoolean()
+
+        if (Ar.ver >= VER_UE4_SOUND_COMPRESSION_TYPE_ADDED && FFrameworkObjectVersion.get(Ar) < FFrameworkObjectVersion.RemoveSoundWaveCompressionName) {
+            val dummyCompressionName = Ar.readFName()
+        }
+
         val bShouldStreamSound = isStreaming()
 
         if (bCooked) {
@@ -72,8 +78,6 @@ class USoundWave : USoundBase() {
                 runningPlatformData = FStreamedAudioPlatformData(Ar)
             }
         }
-
-        super.complete(Ar)
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {
@@ -96,8 +100,6 @@ class USoundWave : USoundBase() {
                 runningPlatformData!!.serialize(Ar)
             }
         }
-
-        super.completeWrite(Ar)
     }
 
     fun isStreaming() = bStreaming || LoadingBehavior != ESoundWaveLoadingBehavior.ForceInline
@@ -167,14 +169,13 @@ class FSubtitleCue {
 /**
  * A chunk of streamed audio.
  */
-class FStreamedAudioChunk : UClass {
+class FStreamedAudioChunk {
     var bCooked: Boolean
     var data: FByteBulkData
     var dataSize: Int
     var audioDataSize: Int
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         bCooked = Ar.readBoolean()
         if (bCooked) {
             data = FByteBulkData(Ar)
@@ -182,11 +183,9 @@ class FStreamedAudioChunk : UClass {
             audioDataSize = Ar.readInt32()
         } else
             throw ParserException("StreamedAudioChunks must be cooked", Ar)
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeBoolean(bCooked)
         if (bCooked) {
             data.serialize(Ar)
@@ -194,7 +193,6 @@ class FStreamedAudioChunk : UClass {
             Ar.writeInt32(audioDataSize)
         } else
             throw ParserException("StreamedAudioChunks must be cooked", Ar)
-        super.completeWrite(Ar)
     }
 
     constructor(bCooked: Boolean, data: FByteBulkData, dataSize: Int, audioDataSize: Int) {

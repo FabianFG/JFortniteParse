@@ -2,26 +2,25 @@ package me.fungames.jfortniteparse.ue4.registry.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntry
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetBundleData
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetData
 import kotlin.math.min
 
 class FNameTableArchiveReader : FAssetRegistryArchive {
-    val nameMap: List<FNameEntry>
+    val nameMap: List<String>
 
     constructor(wrappedArchive: FArchive) : super(wrappedArchive) {
         this.nameMap = serializeNameMap()
     }
 
-    private constructor(wrappedArchive: FArchive, nameMap: List<FNameEntry>) : super(wrappedArchive) {
+    private constructor(wrappedArchive: FArchive, nameMap: List<String>) : super(wrappedArchive) {
         this.nameMap = nameMap
     }
 
     override fun clone() = FNameTableArchiveReader(wrappedAr, nameMap)
 
-    private fun serializeNameMap(): List<FNameEntry> {
+    private fun serializeNameMap(): List<String> {
         val nameOffset = wrappedAr.readInt64()
         if (nameOffset > wrappedAr.size())
             throw ParserException("This Name Table was corrupted. Name Offset $nameOffset > Size ${size()}")
@@ -36,9 +35,11 @@ class FNameTableArchiveReader : FAssetRegistryArchive {
 
             val minFNameEntrySize = 4 // sizeof(int32)
             val maxReservation = size() - pos() / minFNameEntrySize
-            val nameMap = ArrayList<FNameEntry>(min(nameCount, maxReservation))
-            for (nameMapIdx in 0 until nameCount)
-                nameMap.add(FNameEntry(wrappedAr))
+            val nameMap = MutableList(min(nameCount, maxReservation)) {
+                val name = wrappedAr.readString()
+                wrappedAr.skip(4) // skip nonCasePreservingHash (uint16) and casePreservingHash (uint16)
+                name
+            }
             wrappedAr.seek(originalOffset)
             return nameMap
         }

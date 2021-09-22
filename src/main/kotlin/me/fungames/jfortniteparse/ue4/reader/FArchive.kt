@@ -1,24 +1,41 @@
 package me.fungames.jfortniteparse.ue4.reader
 
 import me.fungames.jfortniteparse.exceptions.ParserException
+import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_GET_AR_VER
-import me.fungames.jfortniteparse.ue4.versions.LATEST_SUPPORTED_UE4_VERSION
+import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import me.fungames.jfortniteparse.util.toFloat16
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.experimental.and
 
 /**
  * UE4 Generic Binary reader
  */
-abstract class FArchive : Cloneable, InputStream() {
-    var game = GAME_UE4(LATEST_SUPPORTED_UE4_VERSION)
-    var ver = GAME_UE4_GET_AR_VER(game)
+abstract class FArchive : Cloneable, InputStream {
+    @JvmField
+    var versions: VersionContainer
+    var game: Int
+        inline get() = versions.game
+        set(value) {
+            versions.game = value
+        }
+    var ver: Int
+        inline get() = versions.ver
+        set(value) {
+            versions.ver = value
+        }
     /** Whether tagged property serialization is replaced by faster unversioned serialization. This assumes writer and reader share the same property definitions. */
     var useUnversionedPropertySerialization = false
+    /** Whether editor only properties are being filtered from the archive (or has been filtered). */
+    var isFilterEditorOnly = true
     abstract var littleEndian: Boolean
+
+    @JvmOverloads
+    constructor(versions: VersionContainer = VersionContainer.DEFAULT) {
+        this.versions = versions
+    }
 
     abstract override fun clone(): FArchive
 
@@ -29,7 +46,7 @@ abstract class FArchive : Cloneable, InputStream() {
     open fun readBuffer(size: Int): ByteBuffer {
         //if (!rangeCheck(pos() + size))
         //    throw ParserException("Serializing behind stopper (${pos()}+${size} > ${size()})", this)
-        val buffer = ByteBuffer.allocate(size).order(ByteOrder.LITTLE_ENDIAN)
+        val buffer = ByteBuffer.allocate(size).order(if (littleEndian) ByteOrder.LITTLE_ENDIAN else ByteOrder.BIG_ENDIAN)
         read(buffer.array())
         return buffer
     }
@@ -41,13 +58,7 @@ abstract class FArchive : Cloneable, InputStream() {
     }
 
     abstract override fun read(b: ByteArray, off: Int, len: Int): Int
-    override fun read(buffer: ByteArray) = read(buffer, 0, buffer.size)
     abstract override fun skip(n: Long): Long
-    override fun read() = try {
-        readUInt8().toInt()
-    } catch (t: Throwable) {
-        -1
-    }
 
     abstract fun printError(): String
 
@@ -59,75 +70,108 @@ abstract class FArchive : Cloneable, InputStream() {
         return res
     }
 
-    fun isAtStopper() = pos() == size()
+    open fun readBits(b: ByteArray, offBytes: Int, lenBits: Int) {
+        read(b, offBytes, (lenBits + 7) / 8)
+        if (lenBits % 8 != 0) {
+            b[offBytes + lenBits / 8] = b[offBytes + lenBits / 8] and ((1 shl (lenBits and 7)) - 1).toByte()
+        }
+    }
+
+    inline fun readInt(max: Int) = readInt(max.toUInt())
+    open fun readInt(max: UInt) = readUInt32()
+
+    open val atEnd get() = pos() == size()
     //protected open fun rangeCheck(pos: Int) = (0..size()).contains(pos)
 
-    open fun readInt8() = read(1)[0]
-
-    fun readUInt8() = readInt8().toUByte()
+    open fun readInt8() = read().toByte()
 
     open fun readInt16(): Short {
-        val data = read(2)
-        val bb = ByteBuffer.wrap(data)
-        if (this.littleEndian)
-            bb.order(ByteOrder.LITTLE_ENDIAN)
-        return bb.short
+        val b = read(2)
+        return if (littleEndian) {
+            ((b[1].toInt() and 0xFF) shl 8) or
+             (b[0].toInt() and 0xFF)
+        } else {
+            ((b[0].toInt() and 0xFF) shl 8) or
+             (b[1].toInt() and 0xFF)
+        }.toShort()
     }
-
-    fun readUInt16() = readInt16().toUShort()
 
     open fun readInt32(): Int {
-        val data = read(4)
-        val bb = ByteBuffer.wrap(data)
-        if (this.littleEndian)
-            bb.order(ByteOrder.LITTLE_ENDIAN)
-        return bb.int
+        val b = read(4)
+        return if (littleEndian) {
+            ((b[3].toInt() and 0xFF) shl 24) or
+            ((b[2].toInt() and 0xFF) shl 16) or
+            ((b[1].toInt() and 0xFF) shl 8) or
+             (b[0].toInt() and 0xFF)
+        } else {
+            ((b[0].toInt() and 0xFF) shl 24) or
+            ((b[1].toInt() and 0xFF) shl 16) or
+            ((b[2].toInt() and 0xFF) shl 8) or
+             (b[3].toInt() and 0xFF)
+        }
     }
-
-    fun readUInt32() = readInt32().toUInt()
 
     open fun readInt64(): Long {
-        val data = read(8)
-        val bb = ByteBuffer.wrap(data)
-        if (this.littleEndian)
-            bb.order(ByteOrder.LITTLE_ENDIAN)
-        return bb.long
+        val b = read(8)
+        return if (littleEndian) {
+            ((b[7].toLong() and 0xFF) shl 56) or
+            ((b[6].toLong() and 0xFF) shl 48) or
+            ((b[5].toLong() and 0xFF) shl 40) or
+            ((b[4].toLong() and 0xFF) shl 32) or
+            ((b[3].toLong() and 0xFF) shl 24) or
+            ((b[2].toLong() and 0xFF) shl 16) or
+            ((b[1].toLong() and 0xFF) shl 8) or
+             (b[0].toLong() and 0xFF)
+        } else {
+            ((b[0].toLong() and 0xFF) shl 56) or
+            ((b[1].toLong() and 0xFF) shl 48) or
+            ((b[2].toLong() and 0xFF) shl 40) or
+            ((b[3].toLong() and 0xFF) shl 32) or
+            ((b[4].toLong() and 0xFF) shl 24) or
+            ((b[5].toLong() and 0xFF) shl 16) or
+            ((b[6].toLong() and 0xFF) shl 8) or
+             (b[7].toLong() and 0xFF)
+        }
     }
 
+    fun readUInt8() = readInt8().toUByte()
+    fun readUInt16() = readInt16().toUShort()
+    fun readUInt32() = readInt32().toUInt()
     fun readUInt64() = readInt64().toULong()
 
-    open fun readFloat32(): Float {
-        val data = read(4)
-        val bb = ByteBuffer.wrap(data)
-        if (this.littleEndian)
-            bb.order(ByteOrder.LITTLE_ENDIAN)
-        return bb.float
-    }
-
-    open fun readDouble(): Double {
-        val data = read(8)
-        val bb = ByteBuffer.wrap(data)
-        if (this.littleEndian)
-            bb.order(ByteOrder.LITTLE_ENDIAN)
-        return bb.double
-    }
-
     fun readFloat16() = readUInt16().toFloat16()
+    open fun readFloat32() = java.lang.Float.intBitsToFloat(readInt32())
+    open fun readDouble() = java.lang.Double.longBitsToDouble(readInt64())
 
-    fun readBoolean(): Boolean {
-        val int = readInt32()
-        if (int != 0 && int != 1) {
-            throw ParserException("Invalid bool value ($int)")
-        }
-        return int != 0
+    fun readBoolean() = when (val i = readInt32()) {
+        0 -> false
+        1 -> true
+        else -> throw ParserException("Invalid bool value ($i)", this)
     }
 
-    fun readFlag() = readUInt8() != 0.toUByte()
+    fun readFlag() = when (val i = readUInt8().toInt()) {
+        0 -> false
+        1 -> true
+        else -> throw ParserException("Invalid bool value ($i)", this)
+    }
+
+    open fun readIntPacked(): UInt {
+        var value = 0u
+        var cnt = 0
+        var more = true
+        while (more) {
+            var nextByte = read()
+            more = nextByte and 1 != 0                  // Check 1 bit to see if theres more after this
+            nextByte = nextByte shr 1                   // Shift to get actual 7 bit value
+            value += nextByte.toUInt() shl (7 * cnt++)  // Add to total value
+        }
+        return value
+    }
 
     //FString
     fun readString(): String {
         val length = readInt32()
-        if (!(-65536..65536).contains(length))
+        if (length < -65536 || length > 65536)
             throw ParserException("Invalid String length '$length'", this)
         return if (length < 0) {
             val utf16length = -length
@@ -161,16 +205,36 @@ abstract class FArchive : Cloneable, InputStream() {
 
     inline fun <reified T> readTArray(init: (Int) -> T) = Array(readInt32()) { init(it) }
 
-    inline fun <reified T> readBulkTArray(init: (FArchive) -> T): Array<T> {
+    inline fun <reified T> readBulkTArray(init: (Int) -> T): Array<T> {
         val elementSize = readInt32()
+        val elementCount = readInt32()
         val savePos = pos()
-        val array = Array(readInt32()) { init(this) }
-        if (pos() != savePos + 4 + array.size * elementSize)
+        val array = Array(elementCount) { init(it) }
+        if (pos() != savePos + array.size * elementSize)
             throw ParserException("RawArray item size mismatch: expected %d, serialized %d".format(elementSize, (pos() - savePos) / array.size))
         return array
     }
 
-    inline fun <reified T> readArray(init: (FArchive) -> T) = MutableList(readInt32()) { init(this) }
+    inline fun readBulkByteArray(): ByteArray {
+        val elementSize = readInt32()
+        val elementCount = readInt32()
+        return read(elementCount)
+    }
 
-    open fun readFName() = FName.NAME_None
+    inline fun skipBulkArray() {
+        val elementSize = readInt32()
+        val elementCount = readInt32()
+        skip((elementSize * elementCount).toLong())
+    }
+
+    inline fun skipFixedArray(size: Int) {
+        val elementCount = readInt32()
+        skip((elementCount * size).toLong())
+    }
+
+    inline fun <reified T> readArray(init: (Int) -> T) = MutableList(readInt32()) { init(it) }
+
+    open fun readFName() = FName(readString())
+
+    fun customVer(guid: FGuid) = versions.customVersions?.firstOrNull { it.key == guid }?.version ?: -1
 }

@@ -3,17 +3,17 @@ package me.fungames.jfortniteparse.ue4.registry.objects
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 
-class FAssetIdentifier(Ar: FArchive) {
-    var packageName: FName? = null
+class FAssetIdentifier {
+    var packageName = FName.NAME_None
         private set
-    var primaryAssetType: FName? = null
+    var primaryAssetType = FName.NAME_None
         private set
-    var objectName: FName? = null
+    var objectName = FName.NAME_None
         private set
-    var valueName: FName? = null
+    var valueName = FName.NAME_None
         private set
 
-    init {
+    constructor(Ar: FArchive) {
         val fieldBits = Ar.readInt8().toInt()
 
         if (fieldBits and (1 shl 0) != 0)
@@ -25,4 +25,6 @@ class FAssetIdentifier(Ar: FArchive) {
         if (fieldBits and (1 shl 3) != 0)
             valueName = Ar.readFName()
     }
+
+    constructor()
 }

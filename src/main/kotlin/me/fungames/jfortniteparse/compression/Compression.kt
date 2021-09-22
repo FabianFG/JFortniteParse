@@ -1,69 +1,53 @@
 package me.fungames.jfortniteparse.compression
 
-import me.fungames.jfortniteparse.exceptions.UnknownCompressionMethodException
-import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.pak.CompressionMethod
 import me.fungames.oodle.Oodle
 import java.io.ByteArrayInputStream
 import java.util.zip.GZIPInputStream
 import java.util.zip.Inflater
 
 object Compression {
-    fun decompress(compressed: ByteArray, decompressedSize: Int, method: CompressionMethod): ByteArray {
-        val decompressed = ByteArray(decompressedSize)
-        decompress(compressed, decompressed, method)
-        return decompressed
-    }
+    val handlers = mutableMapOf<String, CompressionHandler>()
 
-    fun decompress(compressed: ByteArray, decompressed: ByteArray, method: CompressionMethod) {
-        when (method) {
-            CompressionMethod.None -> {
-                assert(compressed.size == decompressed.size)
-                compressed.copyInto(decompressed, 0, 0, compressed.size)
+    init {
+        handlers["None"] = CompressionHandler { dst, dstOff, dstLen, src, srcOff, srcLen ->
+            assert(srcLen == dstLen)
+            System.arraycopy(src, srcOff, dst, dstOff, srcLen)
+        }
+        handlers["Zlib"] = CompressionHandler { dst, dstOff, dstLen, src, srcOff, srcLen ->
+            Inflater().apply {
+                setInput(src, srcOff, srcLen)
+                inflate(dst, dstOff, dstLen)
+                end()
             }
-            CompressionMethod.Zlib -> {
-                val inflater = Inflater()
-                inflater.setInput(compressed, 0, compressed.size)
-                inflater.inflate(decompressed)
-                inflater.end()
+        }
+        handlers["Gzip"] = CompressionHandler { dst, dstOff, dstLen, src, srcOff, srcLen ->
+            GZIPInputStream(ByteArrayInputStream(src, srcOff, srcLen)).use {
+                it.read(dst, dstOff, dstLen)
             }
-            CompressionMethod.Gzip -> {
-                val gzipIn = GZIPInputStream(ByteArrayInputStream(compressed))
-                gzipIn.read(decompressed)
-                gzipIn.close()
-            }
-            CompressionMethod.Oodle -> {
-                Oodle.decompress(compressed, decompressed)
-            }
-            CompressionMethod.Unknown -> throw UnknownCompressionMethodException("Compression method is unknown")
-
+        }
+        handlers["Oodle"] = CompressionHandler { dst, dstOff, dstLen, src, srcOff, srcLen ->
+            Oodle.decompress(src, srcOff, srcLen, dst, dstOff, dstLen)
         }
     }
 
-    fun uncompressMemory(formatName: FName,
+    inline fun uncompressMemory(formatName: String, compressedBuffer: ByteArray, uncompressedSize: Int) =
+        ByteArray(uncompressedSize).also { uncompressMemory(formatName, it, compressedBuffer) }
+
+    inline fun uncompressMemory(formatName: String, uncompressedBuffer: ByteArray, compressedBuffer: ByteArray) {
+        uncompressMemory(formatName, uncompressedBuffer, 0, uncompressedBuffer.size, compressedBuffer, 0, compressedBuffer.size)
+    }
+
+    fun uncompressMemory(formatName: String,
                          uncompressedBuffer: ByteArray, uncompressedBufferOff: Int, uncompressedSize: Int,
                          compressedBuffer: ByteArray, compressedBufferOff: Int, compressedSize: Int) {
-        when (formatName.text) {
-            "None" -> {
-                assert(compressedSize == uncompressedSize)
-                System.arraycopy(compressedBuffer, compressedBufferOff, uncompressedBuffer, uncompressedBufferOff, compressedSize)
-            }
-            "Zlib" -> {
-                Inflater().apply {
-                    setInput(compressedBuffer, compressedBufferOff, compressedSize)
-                    inflate(uncompressedBuffer, uncompressedBufferOff, uncompressedSize)
-                    end()
-                }
-            }
-            "Gzip" -> {
-                GZIPInputStream(ByteArrayInputStream(compressedBuffer, compressedBufferOff, compressedSize)).use {
-                    it.read(uncompressedBuffer, uncompressedBufferOff, uncompressedSize)
-                }
-            }
-            "Oodle" -> {
-                Oodle.decompress(compressedBuffer, compressedBufferOff, compressedSize, uncompressedBuffer, uncompressedBufferOff, uncompressedSize)
-            }
-            else -> throw UnknownCompressionMethodException("Unknown compression method $formatName")
-        }
+        val handler = handlers[formatName]
+            ?: throw UnknownCompressionMethodException("Unknown compression method $formatName")
+        handler.decompress(uncompressedBuffer, uncompressedBufferOff, uncompressedSize, compressedBuffer, compressedBufferOff, compressedSize)
     }
 }
+
+fun interface CompressionHandler {
+    fun decompress(dst: ByteArray, dstOff: Int, dstLen: Int, src: ByteArray, srcOff: Int, srcLen: Int)
+}
+
+class UnknownCompressionMethodException(message: String?, cause: Throwable? = null) : RuntimeException(message, cause)

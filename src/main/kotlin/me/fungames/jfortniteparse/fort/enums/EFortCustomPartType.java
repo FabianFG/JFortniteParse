@@ -5,7 +5,8 @@ public enum EFortCustomPartType {
     Body,
     Hat,
     Backpack,
-    Charm,
+    MiscOrTail,
     Face,
+    Gameplay,
     NumTypes
 }

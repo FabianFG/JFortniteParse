@@ -13,7 +13,7 @@ open class UScriptStruct : UStruct {
                 return
             }
             val superclass = value?.superclass
-            if (superclass != null && superclass != UObject::class.java && superclass != UObject::class.java) {
+            if (superclass != null && superclass != UObject::class.java) {
                 superStruct = lazy { UScriptStruct(superclass) }
             }
         }
@@ -25,7 +25,7 @@ open class UScriptStruct : UStruct {
     }
 
     @JvmOverloads
-    constructor(clazz: Class<*>?, name: FName = clazz?.let { FName.dummy(it.simpleName.unprefix()) } ?: FName.NAME_None) : this(name) {
+    constructor(clazz: Class<*>?, name: FName = clazz?.let { FName(it.simpleName.unprefix()) } ?: FName.NAME_None) : this(name) {
         structClass = clazz
         useClassProperties = true
     }

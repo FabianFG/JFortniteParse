@@ -2,11 +2,14 @@ package me.fungames.jfortniteparse.ue4.assets.exports.components;
 
 import kotlin.Lazy;
 import kotlin.UInt;
+import me.fungames.jfortniteparse.Globals;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.UStruct;
 import me.fungames.jfortniteparse.ue4.assets.exports.UStaticMesh;
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FColor;
+import me.fungames.jfortniteparse.ue4.reader.FArchive;
+import me.fungames.jfortniteparse.ue4.versions.VersionsKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -45,7 +48,7 @@ public class UStaticMeshComponent extends UMeshComponent {
         super.deserialize(Ar, validPos);
         int lodDataNum = Ar.readInt32();
         if (lodDataNum > 0) {
-            Companion.getLogger().info("Skipping {} LODData entries", lodDataNum);
+            Globals.LOG_JFP.debug("Skipping {} LODData entries", lodDataNum);
             Ar.seek(validPos);
         }
     }
@@ -68,5 +71,21 @@ public class UStaticMeshComponent extends UMeshComponent {
         public Float EmissiveBoost;
         public Float DiffuseBoost;
         public Float FullyOccludedSamplesFraction;
+
+        public FLightmassPrimitiveSettings() { }
+
+        public FLightmassPrimitiveSettings(FArchive Ar) {
+            bUseTwoSidedLighting = Ar.readBoolean();
+            bShadowIndirectOnly = Ar.readBoolean();
+            FullyOccludedSamplesFraction = Ar.readFloat32();
+            bUseEmissiveForStaticLighting = Ar.readBoolean();
+            if (Ar.getVer() >= VersionsKt.VER_UE4_NEW_LIGHTMASS_PRIMITIVE_SETTING) {
+                bUseVertexNormalForHemisphereGather = Ar.readBoolean();
+            }
+            EmissiveLightFalloffExponent = Ar.readFloat32();
+            EmissiveLightExplicitInfluenceRadius = Ar.readFloat32();
+            EmissiveBoost = Ar.readFloat32();
+            DiffuseBoost = Ar.readFloat32();
+        }
     }
 }

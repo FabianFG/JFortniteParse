@@ -11,7 +11,7 @@ class FPackageId {
 
         @JvmStatic
         fun fromName(name: FName): FPackageId {
-            val nameStr = name.toString().toLowerCase(Locale.ENGLISH)
+            val nameStr = name.toString().toLowerCase(Locale.ROOT)
             val nameBuf = nameStr.toByteArray(Charsets.UTF_16LE)
             val hash = cityHash64(nameBuf, 0, nameBuf.size).toULong()
             check(hash != INVALID_ID) { "Package name hash collision \"$nameStr\" and InvalidId" }
@@ -23,7 +23,7 @@ class FPackageId {
 
     constructor()
 
-    private constructor(id: ULong) {
+    constructor(id: ULong) {
         this.id = id
     }
 

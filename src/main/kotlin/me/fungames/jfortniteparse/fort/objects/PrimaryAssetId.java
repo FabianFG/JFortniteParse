@@ -17,6 +17,6 @@ public class PrimaryAssetId {
 
     @Override
     public String toString() {
-        return PrimaryAssetType.Name.toString() + ':' + PrimaryAssetName.toString().toLowerCase(Locale.ENGLISH);
+        return PrimaryAssetType.Name.toString() + ':' + PrimaryAssetName.toString().toLowerCase(Locale.ROOT);
     }
 }

@@ -4,7 +4,6 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /** Combined rotation and translation matrix */
-@ExperimentalUnsignedTypes
 open class FRotationTranslationMatrix : FMatrix {
     /**
      * Constructor.

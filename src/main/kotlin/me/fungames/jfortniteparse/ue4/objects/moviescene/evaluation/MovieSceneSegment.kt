@@ -1,15 +1,14 @@
 package me.fungames.jfortniteparse.ue4.objects.moviescene.evaluation
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.assets.objects.FStructFallback
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.TRange
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FFrameNumber
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 
 /** Enumeration specifying how to evaluate a particular section when inside a segment */
-@ExperimentalUnsignedTypes
 enum class ESectionEvaluationFlags(val value: UByte) {
     /** No special flags - normal evaluation */
     None        (0x00u),
@@ -22,7 +21,6 @@ enum class ESectionEvaluationFlags(val value: UByte) {
 /**
  * Evaluation data that specifies information about what to evaluate for a given template
  */
-@ExperimentalUnsignedTypes
 @UStruct
 class FSectionEvaluationData(
     /** The implementation index we should evaluate (index into FMovieSceneEvaluationTrack::ChildTemplates) */
@@ -38,8 +36,7 @@ class FSectionEvaluationData(
 /**
  * Information about a single segment of an evaluation track
  */
-@ExperimentalUnsignedTypes
-class FMovieSceneSegment : UClass {
+class FMovieSceneSegment {
     /** The segment's range */
     var range: TRange<FFrameNumber>
     var id: Int
@@ -49,12 +46,10 @@ class FMovieSceneSegment : UClass {
     var impls: Array<FStructFallback> // Array<FSectionEvaluationData>
 
     constructor(Ar: FAssetArchive) {
-        super.init(Ar)
         range = TRange(Ar) { FFrameNumber(Ar) }
         id = Ar.readInt32()
         allowEmpty = Ar.readBoolean()
-        impls = Ar.readTArray { FStructFallback(Ar) }
-        super.complete(Ar)
+        impls = Ar.readTArray { FStructFallback(Ar, FName("SectionEvaluationData")) }
     }
 
     constructor(range: TRange<FFrameNumber>, id: Int, allowEmpty: Boolean, impls: Array<FStructFallback>) {
@@ -65,11 +60,9 @@ class FMovieSceneSegment : UClass {
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
         range.serialize(Ar) { it.serialize(Ar) }
         Ar.writeInt32(id)
         Ar.writeBoolean(allowEmpty)
         Ar.writeTArray(impls) { it.serialize(Ar) }
-        super.completeWrite(Ar)
     }
 }

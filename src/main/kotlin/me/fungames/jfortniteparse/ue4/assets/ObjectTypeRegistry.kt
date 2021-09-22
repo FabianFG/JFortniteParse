@@ -2,10 +2,12 @@ package me.fungames.jfortniteparse.ue4.assets
 
 import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.fort.exports.actors.*
+import me.fungames.jfortniteparse.fort.exports.components.FortPoiCollisionComponent
+import me.fungames.jfortniteparse.fort.exports.components.FortPoi_DiscoverableComponent
 import me.fungames.jfortniteparse.fort.exports.variants.*
 import me.fungames.jfortniteparse.fort.objects.rows.*
 import me.fungames.jfortniteparse.ue4.assets.exports.*
-import me.fungames.jfortniteparse.ue4.assets.exports.actors.AActor
+import me.fungames.jfortniteparse.ue4.assets.exports.actors.*
 import me.fungames.jfortniteparse.ue4.assets.exports.components.*
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterial
 import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInstance
@@ -14,8 +16,11 @@ import me.fungames.jfortniteparse.ue4.assets.exports.mats.UMaterialInterface
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.objects.FScalableFloat
+import me.fungames.jfortniteparse.ue4.objects.core.math.FRandomStream
 import me.fungames.jfortniteparse.ue4.objects.core.math.FTransform
 import me.fungames.jfortniteparse.ue4.objects.engine.curves.UCurveFloat
+import me.fungames.jfortniteparse.ue4.objects.engine.editorframework.UAssetImportData
+import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag
 import me.fungames.jfortniteparse.valorant.exports.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -31,24 +36,41 @@ object ObjectTypeRegistry {
     private inline fun registerEngine() {
         // -- Export classes --
         registerClass(UActorComponent::class.java)
+        registerClass(UAssetImportData::class.java)
+        registerClass(UAudioComponent::class.java)
         registerClass(UBlueprintGeneratedClass::class.java)
-        registerClass("Class", UClassReal::class.java)
+        registerClass(UBoxComponent::class.java)
+        registerClass(UCapsuleComponent::class.java)
+        registerClass(UChildActorComponent::class.java)
+        registerClass(UClass::class.java)
         registerClass(UCurveFloat::class.java)
         registerClass(UCurveTable::class.java)
         registerClass(UDataAsset::class.java)
         registerClass(UDataTable::class.java)
+        registerClass(UEnum::class.java)
         registerClass(UFunction::class.java)
         registerClass(ULevel::class.java)
+        registerClass(ULightComponent::class.java)
+        registerClass(ULightComponentBase::class.java)
+        registerClass(ULocalLightComponent::class.java)
         registerClass(UMaterial::class.java)
         registerClass(UMaterialInstance::class.java)
         registerClass(UMaterialInstanceConstant::class.java)
         registerClass(UMaterialInterface::class.java)
         registerClass(UMeshComponent::class.java)
+        //registerClass(UModel::class.java) not ready for production yet
         registerClass(UPaperSprite::class.java)
+        registerClass(UPointLightComponent::class.java)
         registerClass(UPrimaryDataAsset::class.java)
         registerClass(UPrimitiveComponent::class.java)
+        registerClass(USCS_Node::class.java)
         registerClass(USceneComponent::class.java)
+        registerClass(UShapeComponent::class.java)
+        registerClass(USimpleConstructionScript::class.java)
+        registerClass(USkeletalMesh::class.java)
         registerClass(USoundWave::class.java)
+        registerClass(USphereComponent::class.java)
+        registerClass(USpotLightComponent::class.java)
         registerClass(UStaticMesh::class.java)
         registerClass(UStaticMeshComponent::class.java)
         registerClass(UStreamableRenderAsset::class.java)
@@ -56,13 +78,23 @@ object ObjectTypeRegistry {
         registerClass(UTextRenderComponent::class.java)
         registerClass(UTexture2D::class.java)
         registerClass(UTexture::class.java)
+        registerClass(UTimelineComponent::class.java)
+        registerClass(UTimelineTemplate::class.java)
         registerClass(UUserDefinedEnum::class.java)
         registerClass(UUserDefinedStruct::class.java)
+        registerClass(UWorld::class.java)
 
         registerClass(AActor::class.java)
+        registerClass(ABrush::class.java)
+        registerClass(ALevelBounds::class.java)
+        registerClass(ALODActor::class.java)
+        registerClass(AStaticMeshActor::class.java)
+        registerClass(AVolume::class.java)
 
         // -- Structs --
+        registerStruct(FGameplayTag::class.java)
         registerStruct(FPointerToUberGraphFrame::class.java)
+        registerStruct(FRandomStream::class.java)
         registerStruct(FScalableFloat::class.java)
         registerStruct(FTransform::class.java)
     }
@@ -81,6 +113,7 @@ object ObjectTypeRegistry {
         registerClass(AthenaEmojiItemDefinition::class.java)
         registerClass(AthenaGadgetItemDefinition::class.java)
         registerClass(AthenaGliderItemDefinition::class.java)
+        registerClass(AthenaItemShopOfferDisplayData::class.java)
         registerClass(AthenaItemWrapDefinition::class.java)
         registerClass(AthenaLoadingScreenItemDefinition::class.java)
         registerClass(AthenaMusicPackItemDefinition::class.java)
@@ -89,7 +122,6 @@ object ObjectTypeRegistry {
         registerClass(AthenaPickaxeItemDefinition::class.java)
         registerClass(AthenaRewardEventGraph::class.java)
         registerClass(AthenaRewardEventGraphCosmeticItemDefinition::class.java)
-        registerClass(AthenaSeasonItemDefinition::class.java)
         registerClass(AthenaSkyDiveContrailItemDefinition::class.java)
         registerClass(AthenaSprayItemDefinition::class.java)
         registerClass(AthenaToyItemDefinition::class.java)
@@ -137,6 +169,7 @@ object ObjectTypeRegistry {
         registerClass(FortCosmeticDynamicVariant::class.java)
         registerClass(FortCosmeticFloatSliderVariant::class.java)
         registerClass(FortCosmeticItemTexture::class.java)
+        registerClass(FortCosmeticLoadoutTagDrivenVariant::class.java)
         registerClass(FortCosmeticLockerItemDefinition::class.java)
         registerClass(FortCosmeticMaterialVariant::class.java)
         registerClass(FortCosmeticMeshVariant::class.java)
@@ -184,6 +217,8 @@ object ObjectTypeRegistry {
         registerClass(FortPersistentResourceItemDefinition::class.java)
         registerClass(FortPersonalVehicleItemDefinition::class.java)
         registerClass(FortPlaysetGrenadeItemDefinition::class.java)
+        registerClass(FortPoiCollisionComponent::class.java)
+        registerClass(FortPoi_DiscoverableComponent::class.java)
         registerClass(FortPrerollDataItemDefinition::class.java)
         registerClass(FortProfileItemDefinition::class.java)
         registerClass(FortQuestItemDefinition::class.java)
@@ -192,7 +227,6 @@ object ObjectTypeRegistry {
         registerClass(FortRepeatableDailiesCardItemDefinition::class.java)
         registerClass(FortResourceItemDefinition::class.java)
         registerClass(FortSchematicItemDefinition::class.java)
-        registerClass(FortShopOfferDisplayData::class.java)
         registerClass(FortStatItemDefinition::class.java)
         registerClass(FortTandemCharacterData::class.java)
         registerClass(FortTeamPerkItemDefinition::class.java)
@@ -216,11 +250,19 @@ object ObjectTypeRegistry {
         registerClass(VariantTypeParticles::class.java)
         registerClass(VariantTypeSounds::class.java)
 
+        registerClass(BGAConsumableSpawner::class.java)
         registerClass(BuildingActor::class.java)
         registerClass(BuildingAutoNav::class.java)
         registerClass(BuildingContainer::class.java)
         registerClass(BuildingCorner::class.java)
+        registerClass(BuildingDeco::class.java)
         registerClass(BuildingFloor::class.java)
+        registerClass(BuildingFoundation::class.java)
+        registerClass(BuildingFoundation3x3::class.java)
+        registerClass(BuildingFoundation5x5::class.java)
+        registerClass(BuildingFoundation5x10::class.java)
+        registerClass(BuildingGameplayActor::class.java)
+        registerClass(BuildingGameplayActorSpawnMachine::class.java)
         registerClass(BuildingProp::class.java)
         registerClass(BuildingPropCorner::class.java)
         registerClass(BuildingPropSimpleInteract::class.java)
@@ -230,6 +272,8 @@ object ObjectTypeRegistry {
         registerClass(BuildingSMActor::class.java)
         registerClass(BuildingTimeOfDayLights::class.java)
         registerClass(BuildingWall::class.java)
+        //registerClass(FortPoiVolume::class.java)
+        registerClass(FortStaticMeshActor::class.java)
 
         // -- Data table row structs --
         registerStruct(AlterationGroup::class.java)
@@ -279,6 +323,7 @@ object ObjectTypeRegistry {
         registerStruct(HomebaseBannerCategoryData::class.java)
         registerStruct(HomebaseBannerColorData::class.java)
         registerStruct(HomebaseBannerIconData::class.java)
+        registerStruct(HomebaseNodeGameplayEffectDataTableRow::class.java)
         registerStruct(HomebaseSquad::class.java)
         registerStruct(ItemPromotionCosts::class.java)
         registerStruct(Recipe::class.java)
@@ -317,6 +362,8 @@ object ObjectTypeRegistry {
     fun registerStruct(serializedName: String, clazz: Class<*>) {
         structs[serializedName] = clazz
     }
+
+    fun get(name: String) = classes[name] ?: structs[name]
 }
 
 fun String.unprefix(): String {

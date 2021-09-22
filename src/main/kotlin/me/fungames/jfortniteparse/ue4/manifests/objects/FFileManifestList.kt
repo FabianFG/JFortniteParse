@@ -1,15 +1,12 @@
 package me.fungames.jfortniteparse.ue4.manifests.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FFileManifestList : UClass {
+class FFileManifestList {
+    var fileList: Array<FFileManifest>
 
-    var fileList : Array<FFileManifest>
-
-    constructor(Ar : FArchive) {
-        super.init(Ar)
+    constructor(Ar: FArchive) {
         val startPos = Ar.pos()
         val dataSize = Ar.readUInt32()
         /*val dataVersionInt = */Ar.readUInt8()
@@ -22,10 +19,7 @@ class FFileManifestList : UClass {
         for (fileManifest in fileList) fileManifest.installTags = Ar.readTArray { Ar.readString() }
         for (fileManifest in fileList) fileManifest.chunkParts = Ar.readTArray { FChunkPart(Ar) }
         Ar.seek(startPos + dataSize.toInt())
-        super.complete(Ar)
     }
 
-    fun serialize(Ar : FArchive) {
-
-    }
+    fun serialize(Ar: FArchiveWriter) {}
 }

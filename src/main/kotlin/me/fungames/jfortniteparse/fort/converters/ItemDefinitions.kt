@@ -1,12 +1,12 @@
 package me.fungames.jfortniteparse.fort.converters
 
+import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.fileprovider.FileProvider
 import me.fungames.jfortniteparse.fort.*
 import me.fungames.jfortniteparse.fort.exports.*
 import me.fungames.jfortniteparse.fort.exports.FortMtxOfferData.EFortMtxOfferDisplaySize
 import me.fungames.jfortniteparse.fort.exports.variants.FortCosmeticVariantBackedByArray
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UDataTable
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
@@ -114,7 +114,7 @@ fun FortItemDefinition.createContainer(
                 icon = FortResources.fallbackIcon
         }
     }
-    val seriesDef = Series?.load<FortItemSeriesDefinition>()
+    val seriesDef = Series?.value
     val seriesIcon = seriesDef?.BackgroundTexture?.load<UTexture2D>()?.toBufferedImage()
     return ItemDefinitionContainer(this, icon, Rarity.rarityName.copy(), isFeatured, set?.run { ItemDefinitionInfo.sets[text] }?.run { SetName(this) }, seriesIcon, seriesDef)
 }
@@ -134,7 +134,7 @@ class ItemDefinitionContainer(val itemDefinition: FortItemDefinition,
                               var seriesIcon: BufferedImage?,
                               var seriesDef: FortItemSeriesDefinition?) : Cloneable {
     val variantsLoaded: Boolean
-        get() = itemDefinition is AthenaCosmeticItemDefinition && itemDefinition.ItemVariants.firstOrNull { channel ->
+        get() = itemDefinition is AthenaCosmeticItemDefinition && itemDefinition.ItemVariants?.map { it.value }?.firstOrNull { channel ->
             channel is FortCosmeticVariantBackedByArray && channel.variants?.firstOrNull { variantDef ->
                 variantDef.PreviewImage != null && !variantDef.PreviewImage.assetPathName.isNone()
             } != null
@@ -164,7 +164,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
     val itemDef = container.itemDefinition as AthenaCosmeticItemDefinition
     var icon = container.icon
     //Don't include numeric and pattern channels (used for soccer skins, cannot be displayed properly)
-    val vars = itemDef.ItemVariants.filterIsInstance<FortCosmeticVariantBackedByArray>()
+    val vars = itemDef.ItemVariants.map { it.value }.filterIsInstance<FortCosmeticVariantBackedByArray>()
     if (icon.width != variantsIconSize || icon.height != variantsIconSize)
         icon = icon.scale(
             variantsIconSize,
@@ -188,14 +188,14 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
 
     if (numChannels > 2) {
         numChannels = 2
-        UClass.logger.warn("Dropped ${numChannels - 2} cosmetic channel(s)")
+        LOG_JFP.warn("Dropped ${numChannels - 2} cosmetic channel(s)")
     }
     val availableX = variantsX - (numChannels * g.fontMetrics.height)
 
-    val totalRows = vars.sumBy {
+    val totalRows = vars.sumOf {
         var count = it.variants?.size ?: 0
         if (count < variantsMaxPerRow)
-            return@sumBy 1
+            return@sumOf 1
         while (count % variantsMaxPerRow != 0)
             count++
         count / variantsMaxPerRow
@@ -274,8 +274,10 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
         g.drawString(displayName, rightX - fm.stringWidth(displayName), result.width - 52)
     }
 
-    val description = itemDef.Description?.textForLocres(locres)
+    var description = itemDef.Description?.textForLocres(locres)
     if (description != null) {
+        if (description.equals("TBD", true))
+            description = itemDef.name
         g.color = Color.WHITE
         var fontSize: Float
         var fm: FontMetrics
@@ -287,7 +289,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
         }
         if (lines.size > 2) {
             lines = lines.subList(0, 2)
-            UClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
+            LOG_JFP.warn("Dropped ${lines.size - 2} description line(s)")
         }
 
         if (lines.size == 1)
@@ -354,8 +356,10 @@ private fun getImageNoVariants(container: ItemDefinitionContainer, locres: Locre
         }
         g.drawCenteredString(displayName, result.width / 2, result.height - 95)
     }
-    val description = itemDef.Description?.textForLocres(locres)
+    var description = itemDef.Description?.textForLocres(locres)
     if (description != null) {
+        if (description.equals("TBD", true))
+            description = itemDef.name
         g.color = Color.LIGHT_GRAY
         var fontSize: Float
         var fm: FontMetrics
@@ -367,7 +371,7 @@ private fun getImageNoVariants(container: ItemDefinitionContainer, locres: Locre
         }
         if (lines.size > 2) {
             lines = lines.subList(0, 2)
-            UClass.logger.warn("Dropped ${lines.size - 2} description line(s)")
+            LOG_JFP.warn("Dropped ${lines.size - 2} description line(s)")
         }
 
         lines.forEach {

@@ -1,10 +1,9 @@
 package me.fungames.jfortniteparse.ue4.objects.core.misc
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
-import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 import me.fungames.jfortniteparse.util.parseHexBinary
+import java.nio.ByteBuffer
 
 /**
  * Enumerates known GUID formats.
@@ -67,7 +66,7 @@ enum class EGuidFormats {
     Base36Encoded,
 }
 
-class FGuid : UClass {
+class FGuid : Comparable<FGuid> {
     companion object {
         @JvmStatic
         val mainGuid = FGuid()
@@ -86,12 +85,10 @@ class FGuid : UClass {
     var d: UInt
 
     constructor(Ar: FArchive) {
-        super.init(Ar)
         a = Ar.readUInt32()
         b = Ar.readUInt32()
         c = Ar.readUInt32()
         d = Ar.readUInt32()
-        super.complete(Ar)
     }
 
     /** Default constructor. */
@@ -113,11 +110,11 @@ class FGuid : UClass {
     }
 
     constructor(hexString: String) {
-        val ar = FByteArchive(hexString.parseHexBinary())
-        a = ar.readUInt32()
-        b = ar.readUInt32()
-        c = ar.readUInt32()
-        d = ar.readUInt32()
+        val ar = ByteBuffer.wrap(hexString.parseHexBinary())
+        a = ar.int.toUInt()
+        b = ar.int.toUInt()
+        c = ar.int.toUInt()
+        d = ar.int.toUInt()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -128,6 +125,12 @@ class FGuid : UClass {
 
         return ((a xor other.a) or (b xor other.b) or (c xor other.c) or (d xor other.d)) == 0u
     }
+
+    override operator fun compareTo(other: FGuid) =
+        (if (a < other.a) -1 else (if (a > other.a) 1 else
+        (if (b < other.b) -1 else (if (b > other.b) 1 else
+        (if (c < other.c) -1 else (if (c > other.c) 1 else
+        (if (d < other.d) -1 else (if (d > other.d) 1 else 1))))))))
 
     /**
      * Provides read-only access to the GUIDs components.
@@ -149,12 +152,10 @@ class FGuid : UClass {
      * @param Ar The archive to serialize into.
      */
     fun serialize(Ar: FArchiveWriter) {
-        super.initWrite(Ar)
         Ar.writeUInt32(a)
         Ar.writeUInt32(b)
         Ar.writeUInt32(c)
         Ar.writeUInt32(d)
-        super.completeWrite(Ar)
     }
 
     /**

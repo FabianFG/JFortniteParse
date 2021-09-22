@@ -1,51 +1,50 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 
-class UScriptMap : UClass {
-    var numKeysToRemove: Int
-    val mapData: MutableMap<FProperty, FProperty>
+class UScriptMap {
+    var keysToRemove: MutableList<FProperty>
+    val entries: MutableMap<FProperty, FProperty>
 
     constructor(Ar: FAssetArchive, typeData: PropertyType) {
-        super.init(Ar)
-        numKeysToRemove = Ar.readInt32()
-        if (numKeysToRemove != 0) {
-            for (i in 0 until numKeysToRemove) {
-                FProperty.readPropertyValue(Ar, typeData.innerType!!, FProperty.ReadType.MAP)
+        val numKeysToRemove = Ar.readInt32()
+        keysToRemove = ArrayList(numKeysToRemove)
+        repeat(numKeysToRemove) {
+            try {
+                keysToRemove.add(FProperty.readPropertyValue(Ar, typeData.innerType!!, FProperty.ReadType.MAP)!!)
+            } catch (e: ParserException) {
+                throw ParserException("Failed to read property for index $it in map keys to remove", Ar, e)
             }
         }
-        val length = Ar.readInt32()
-        mapData = mutableMapOf()
-        for (i in 0 until length) {
+        val numEntries = Ar.readInt32()
+        entries = mutableMapOf()
+        repeat(numEntries) {
             var isReadingValue = false
             try {
                 val key = FProperty.readPropertyValue(Ar, typeData.innerType!!, FProperty.ReadType.MAP)!!
                 isReadingValue = true
                 val value = FProperty.readPropertyValue(Ar, typeData.valueType!!, FProperty.ReadType.MAP)!!
-                mapData[key] = value
+                entries[key] = value
             } catch (e: ParserException) {
-                throw ParserException("Failed to read ${if (isReadingValue) "value" else "key"} for index $i in map", Ar, e)
+                throw ParserException("Failed to read ${if (isReadingValue) "value" else "key"} for index $it in map", Ar, e)
             }
         }
-        super.complete(Ar)
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        super.initWrite(Ar)
-        Ar.writeInt32(numKeysToRemove)
-        Ar.writeInt32(mapData.size)
-        mapData.forEach {
+        Ar.writeInt32(keysToRemove.size)
+        keysToRemove.forEach { FProperty.writePropertyValue(Ar, it, FProperty.ReadType.MAP) }
+        Ar.writeInt32(entries.size)
+        entries.forEach {
             FProperty.writePropertyValue(Ar, it.key, FProperty.ReadType.MAP)
             FProperty.writePropertyValue(Ar, it.value, FProperty.ReadType.MAP)
         }
-        super.completeWrite(Ar)
     }
 
-    constructor(numKeysToRemove: Int, mapData: MutableMap<FProperty, FProperty>) {
-        this.numKeysToRemove = numKeysToRemove
-        this.mapData = mapData
+    constructor(keysToRemove: MutableList<FProperty>, entries: MutableMap<FProperty, FProperty>) {
+        this.keysToRemove = keysToRemove
+        this.entries = entries
     }
 }

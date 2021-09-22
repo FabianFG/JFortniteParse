@@ -1,25 +1,22 @@
 package me.fungames.jfortniteparse.ue4.manifests.objects
 
-import me.fungames.jfortniteparse.ue4.UClass
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
-@ExperimentalUnsignedTypes
-class FManifestHeader : UClass {
-
-    var magic : UInt
-    var headerSize : UInt
-    var dataSizeUncompressed : UInt
-    var dataSizeCompressed : UInt
-    var shaHash : ByteArray
-    var storedAs : UByte
-    var version : Int
+class FManifestHeader {
+    var magic: UInt
+    var headerSize: UInt
+    var dataSizeUncompressed: UInt
+    var dataSizeCompressed: UInt
+    var shaHash: ByteArray
+    var storedAs: UByte
+    var version: Int
 
     companion object {
         const val MANIFEST_HEADER_MAGIC = 0x44BEC00Cu
     }
 
-    constructor(Ar : FArchive) {
-        super.init(Ar)
+    constructor(Ar: FArchive) {
         val startPos = Ar.pos()
         magic = Ar.readUInt32()
         headerSize = Ar.readUInt32()
@@ -29,10 +26,7 @@ class FManifestHeader : UClass {
         storedAs = Ar.readUInt8()
         version = Ar.readInt32()
         Ar.seek(startPos + headerSize.toInt())
-        super.complete(Ar)
     }
 
-    fun serialize(Ar : FArchive) {
-
-    }
+    fun serialize(Ar: FArchiveWriter) {}
 }

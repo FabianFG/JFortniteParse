@@ -7,7 +7,6 @@ package me.fungames.jfortniteparse.ue4.objects.core.math
  * opposed to `res = mat1 * mat2`.
  * Matrix elements are accessed with `m[rowIndex][columnIndex]`.
  */
-@ExperimentalUnsignedTypes
 open class FMatrix {
     val m: Array<FloatArray> = Array(4) { FloatArray(4) }
 

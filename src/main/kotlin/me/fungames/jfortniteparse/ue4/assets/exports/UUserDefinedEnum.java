@@ -5,6 +5,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 
 import java.util.Map;
 
-public class UUserDefinedEnum extends UObject {
+public class UUserDefinedEnum extends UEnum {
     public Map<FName, FText> DisplayNameMap;
 }
