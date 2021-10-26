@@ -48,7 +48,13 @@ fun <T> writePropertyToField(prop: FPropertyTag, field: Field, obj: T) {
         }
         val content = prop.getTagTypeValue(componentType, (field.genericType as? GenericArrayType)?.genericComponentType)
         if (isContentValid(content, prop.name.text, componentType)) {
-            Array.set(array, prop.arrayIndex, content)
+            val arrayLength = Array.getLength(array)
+            val arrayIndex = prop.arrayIndex
+            if (arrayIndex >= 0 && arrayIndex < arrayLength) {
+                Array.set(array, prop.arrayIndex, content)
+            } else {
+                LOG_JFP.warn { "Failed to write property ${prop.name} to field. Invalid array index ${prop.arrayIndex}, length of array in field is $arrayLength" }
+            }
         }
     } else {
         val content = prop.getTagTypeValue(fieldType, field.genericType)
