@@ -84,16 +84,23 @@ class FLinearColor {
  * This can be done with FLinearColor.toFColor(true)
  */
 class FColor {
+    var a: UByte
     var r: UByte
     var g: UByte
     var b: UByte
-    var a: UByte
 
     constructor(Ar: FArchive) {
-        r = Ar.readUInt8()
-        g = Ar.readUInt8()
-        b = Ar.readUInt8()
-        a = Ar.readUInt8()
+        if (Ar.littleEndian) {
+            b = Ar.readUInt8()
+            g = Ar.readUInt8()
+            r = Ar.readUInt8()
+            a = Ar.readUInt8()
+        } else {
+            a = Ar.readUInt8()
+            r = Ar.readUInt8()
+            g = Ar.readUInt8()
+            b = Ar.readUInt8()
+        }
     }
 
     constructor() : this(0u, 0u, 0u, 0u)
@@ -101,10 +108,17 @@ class FColor {
     fun toColor() = Color(r.toInt(), g.toInt(), b.toInt(), a.toInt())
 
     fun serialize(Ar: FArchiveWriter) {
-        Ar.writeUInt8(r)
-        Ar.writeUInt8(g)
-        Ar.writeUInt8(b)
-        Ar.writeUInt8(a)
+        if (Ar.littleEndian) {
+            Ar.writeUInt8(b)
+            Ar.writeUInt8(g)
+            Ar.writeUInt8(r)
+            Ar.writeUInt8(a)
+        } else {
+            Ar.writeUInt8(a)
+            Ar.writeUInt8(r)
+            Ar.writeUInt8(g)
+            Ar.writeUInt8(b)
+        }
     }
 
     constructor(r: UByte, g: UByte, b: UByte, a: UByte = 255u) {
@@ -141,15 +155,15 @@ class FColor {
     /**
      * Gets the color in a packed int32 format packed in the order ABGR.
      */
-    inline fun toPackedABGR() = (a.toInt() shl 24) or (r.toInt() shl 16) or (g.toInt() shl 8) or (b.toInt() shl 0)
+    inline fun toPackedABGR() = (a.toInt() shl 24) or (b.toInt() shl 16) or (g.toInt() shl 8) or (r.toInt() shl 0)
 
     /**
      * Gets the color in a packed int32 format packed in the order RGBA.
      */
-    inline fun toPackedRGBA() = (r.toInt() shl 24) or (r.toInt() shl 16) or (b.toInt() shl 8) or (b.toInt() shl 0)
+    inline fun toPackedRGBA() = (r.toInt() shl 24) or (g.toInt() shl 16) or (b.toInt() shl 8) or (a.toInt() shl 0)
 
     /**
      * Gets the color in a packed int32 format packed in the order BGRA.
      */
-    inline fun toPackedBGRA() = (b.toInt() shl 24) or (r.toInt() shl 16) or (r.toInt() shl 8) or (b.toInt() shl 0)
+    inline fun toPackedBGRA() = (b.toInt() shl 24) or (g.toInt() shl 16) or (r.toInt() shl 8) or (a.toInt() shl 0)
 }
