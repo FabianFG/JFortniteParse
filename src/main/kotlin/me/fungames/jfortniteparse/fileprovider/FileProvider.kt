@@ -147,7 +147,7 @@ abstract class FileProvider {
 
     open fun loadLocres(ln: FnLanguage): Locres? {
         val files = files.values
-            .filter { it.path.startsWith("${gameName}Game/Content/Localization", ignoreCase = true) && it.path.contains("/${ln.languageCode}/", ignoreCase = true) && it.path.endsWith(".locres") }
+            .filter { it.path.startsWith("${gameName}/Content/Localization", ignoreCase = true) && it.path.contains("/${ln.languageCode}/", ignoreCase = true) && it.path.endsWith(".locres") }
         if (files.isEmpty()) return null
         var first: Locres? = null
         files.forEach { file ->

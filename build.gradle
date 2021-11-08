@@ -1,5 +1,5 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.5.30-M1'
+    id 'org.jetbrains.kotlin.jvm' version '1.5.31'
     id 'maven-publish'
     id 'org.jetbrains.dokka' version '0.10.0'
 }
@@ -7,7 +7,7 @@ plugins {
 group 'me.fungames'
 version '3.6.5'
 
-sourceCompatibility = 1.8
+sourceCompatibility = 11
 
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
@@ -62,7 +62,7 @@ dependencies {
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "11"
         freeCompilerArgs += [
                 '-Xallow-result-return-type',
                 '-Xno-call-assertions',
