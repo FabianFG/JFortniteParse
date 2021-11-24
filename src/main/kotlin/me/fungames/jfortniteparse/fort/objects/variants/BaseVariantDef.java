@@ -14,9 +14,9 @@ import java.util.List;
 
 @UStruct
 public class BaseVariantDef {
-    public Boolean bStartUnlocked;
-    public Boolean bIsDefault;
-    public Boolean bHideIfNotOwned;
+    public Boolean bStartUnlocked = true;
+    public Boolean bIsDefault = true;
+    public Boolean bHideIfNotOwned = false;
     public FGameplayTag CustomizationVariantTag;
     public FText VariantName;
     public FSoftObjectPath PreviewImage;

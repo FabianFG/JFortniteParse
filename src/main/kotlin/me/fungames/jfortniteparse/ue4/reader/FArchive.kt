@@ -171,7 +171,7 @@ abstract class FArchive : Cloneable, InputStream {
     //FString
     fun readString(): String {
         val length = readInt32()
-        if (length < -65536 || length > 65536)
+        if (length < -131072 || length > 131072)
             throw ParserException("Invalid String length '$length'", this)
         return if (length < 0) {
             val utf16length = -length

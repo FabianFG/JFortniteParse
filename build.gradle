@@ -44,7 +44,7 @@ publishing {
 
 dependencies {
     implementation 'androidx.collection:collection-ktx:1.1.0'
-    implementation 'com.github.FabianFG:JOodle:1.2'
+    implementation 'com.github.FabianFG:JOodle:master-SNAPSHOT'
     implementation 'com.github.FabianFG:KotlinASTC:1.3'
     implementation 'com.github.FabianFG:KotlinPointers:1.1'
     //implementation 'com.github.FabianFG:KotlinSquish:1.0' Somehow broken with alpha values

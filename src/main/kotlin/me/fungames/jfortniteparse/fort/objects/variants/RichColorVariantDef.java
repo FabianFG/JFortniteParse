@@ -12,13 +12,19 @@ public class RichColorVariantDef extends BaseVariantDef {
     public CosmeticMetaTagContainer MetaTags;
     public RichColorVariant RichColorVar;
 
+    public RichColorVariantDef() {
+        PreviewImage = new FSoftObjectPath(new FName("/Game/Characters/Fortress_Character/Textures/T_All_White.T_All_White"), "");
+    }
+
     @UStruct
     public static class RichColorVariant {
-        public FLinearColor DefaultStartingColor;
+        public static final FName NAME_PlayerChosenColor = new FName("PlayerChosenColor");
+
+        public FLinearColor DefaultStartingColor = new FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
         public FSoftObjectPath ColorSwatchForChoices;
-        public Boolean bVariantPickerShouldShowHSV;
+        public Boolean bVariantPickerShouldShowHSV = false;
         public List<FSoftObjectPath> MaterialsToAlter;
         public List<FSoftObjectPath> ParticlesToAlter;
-        public FName ColorParamName;
+        public FName ColorParamName = NAME_PlayerChosenColor;
     }
 }

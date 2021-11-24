@@ -7,5 +7,5 @@ import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTag;
 public class FortCosmeticVariant extends UObject {
     public FGameplayTag VariantChannelTag;
     public FText VariantChannelName;
-    public FGameplayTag ActiveChannelTag;
+    public FGameplayTag ActiveVariantTag;
 }
