@@ -1,4 +1,4 @@
-package me.fungames.jfortniteparse.ue4.asyncloading2
+package me.fungames.jfortniteparse.ue4.io
 
 import me.fungames.jfortniteparse.ue4.objects.core.serialization.FCustomVersion
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FMappedName

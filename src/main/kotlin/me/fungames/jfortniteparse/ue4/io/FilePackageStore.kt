@@ -1,8 +1,7 @@
-package me.fungames.jfortniteparse.ue4.asyncloading2
+package me.fungames.jfortniteparse.ue4.io
 
 import me.fungames.jfortniteparse.LOG_STREAMING
 import me.fungames.jfortniteparse.fileprovider.PakFileProvider
-import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.objects.uobject.FMinimalName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageId
@@ -12,7 +11,6 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
 import me.fungames.jfortniteparse.util.await
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 

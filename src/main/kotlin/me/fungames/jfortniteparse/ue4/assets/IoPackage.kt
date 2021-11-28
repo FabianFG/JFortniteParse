@@ -9,8 +9,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
-import me.fungames.jfortniteparse.ue4.asyncloading2.*
-import me.fungames.jfortniteparse.ue4.io.FFilePackageStoreEntry
+import me.fungames.jfortniteparse.ue4.io.*
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.EPackageFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
