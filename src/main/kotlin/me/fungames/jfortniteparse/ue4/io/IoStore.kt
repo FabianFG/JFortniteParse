@@ -28,7 +28,9 @@ enum class EIoStoreTocVersion {
     Invalid,
     Initial,
     DirectoryIndex,
-    PartitionSize
+    PartitionSize,
+    PerfectHash,
+    PerfectHashWithOverflow,
 }
 
 const val IO_CONTAINER_FLAG_COMPRESSED = 1 shl 0
@@ -62,9 +64,11 @@ class FIoStoreTocHeader {
     var containerFlags: Int //EIoContainerFlags
     var reserved3: UByte
     var reserved4: UShort
-    var reserved5: UInt
+    var tocChunkPerfectHashSeedsCount: UInt
     var partitionSize: ULong
-    var reserved6: ULongArray //size: 6
+    var tocChunksWithoutPerfectHashCount: UInt
+    var reserved7: UInt
+    var reserved8: ULongArray //size: 5
 
     constructor(Ar: FArchive) {
         Ar.read(tocMagic)
@@ -91,9 +95,11 @@ class FIoStoreTocHeader {
         containerFlags = Ar.read()
         reserved3 = Ar.readUInt8()
         reserved4 = Ar.readUInt16()
-        reserved5 = Ar.readUInt32()
+        tocChunkPerfectHashSeedsCount = Ar.readUInt32()
         partitionSize = Ar.readUInt64()
-        reserved6 = ULongArray(6) { Ar.readUInt64() }
+        tocChunksWithoutPerfectHashCount = Ar.readUInt32()
+        reserved7 = Ar.readUInt32()
+        reserved8 = ULongArray(5) { Ar.readUInt64() }
     }
 
     fun makeMagic() {
@@ -264,7 +270,7 @@ class FIoStoreReaderImpl(var versions: VersionContainer = VersionContainer.DEFAU
     var concurrent = false
 
     fun initialize(utocReader: FArchive, ucasReader: FPakArchive, decryptionKeys: Map<FGuid, ByteArray>) {
-        this.environment = FIoStoreEnvironment(ucasReader.fileName.substringBeforeLast('.'))
+        environment = FIoStoreEnvironment(ucasReader.fileName.substringBeforeLast('.'))
         tocResource.read(utocReader, TOC_READ_OPTION_READ_ALL)
         utocReader.close()
         if (tocResource.header.partitionCount > 1u) {
@@ -304,9 +310,9 @@ class FIoStoreReaderImpl(var versions: VersionContainer = VersionContainer.DEFAU
 
         PakFileReader.logger.info("IoStore \"{}\": {} {}, version {} in {}ms",
             environment.path,
-            this.tocResource.header.tocEntryCount,
+            tocResource.header.tocEntryCount,
             if (decryptionKey != null) "encrypted chunks" else "chunks",
-            this.tocResource.header.version.ordinal,
+            tocResource.header.version.ordinal,
             System.currentTimeMillis() - start)
     }
 
@@ -325,7 +331,7 @@ class FIoStoreReaderImpl(var versions: VersionContainer = VersionContainer.DEFAU
 
     fun getChunkInfo(chunkId: FIoChunkId): FIoStoreTocChunkInfo {
         val tocEntryIndex = tocResource.getTocEntryIndex(chunkId)
-        if (tocEntryIndex != null) {
+        if (tocEntryIndex != -1) {
             return getTocChunkInfo(tocEntryIndex)
         } else {
             throw FIoStatusException(EIoErrorCode.NotFound, "Not found")
@@ -508,6 +514,8 @@ class FIoStoreTocResource {
     lateinit var header: FIoStoreTocHeader
     lateinit var chunkIds: Array<FIoChunkId>
     lateinit var chunkOffsetLengths: Array<FIoOffsetAndLength>
+    var chunkPerfectHashSeeds: Array<Int>? = null
+    var chunkIndicesWithoutPerfectHash: Array<Int>? = null
     lateinit var compressionBlocks: Array<FIoStoreTocCompressedBlockEntry>
     lateinit var compressionMethods: Array<String>
     //lateinit var chunkBlockSignatures: Array<ByteArray> // FSHAHash
@@ -541,15 +549,39 @@ class FIoStoreTocResource {
         }
 
         // Chunk IDs
-        chunkIdToIndex = HashMap(header.tocEntryCount.toInt(), 1f)
-        chunkIds = Array(header.tocEntryCount.toInt()) {
-            val id = FIoChunkId(tocBuffer)
-            chunkIdToIndex[id] = it
-            id
+        if (header.version >= EIoStoreTocVersion.PerfectHash) {
+            chunkIdToIndex = hashMapOf()
+            chunkIds = Array(header.tocEntryCount.toInt()) { FIoChunkId(tocBuffer) }
+        } else {
+            chunkIdToIndex = HashMap(header.tocEntryCount.toInt(), 1f)
+            chunkIds = Array(header.tocEntryCount.toInt()) {
+                val id = FIoChunkId(tocBuffer)
+                chunkIdToIndex[id] = it
+                id
+            }
         }
 
         // Chunk offsets
         chunkOffsetLengths = Array(header.tocEntryCount.toInt()) { FIoOffsetAndLength(tocBuffer) }
+
+        // Chunk perfect hash map
+        var perfectHashSeedsCount = 0u
+        var chunksWithoutPerfectHashCount = 0u
+        if (header.version >= EIoStoreTocVersion.PerfectHashWithOverflow) {
+            perfectHashSeedsCount = header.tocChunkPerfectHashSeedsCount
+            chunksWithoutPerfectHashCount = header.tocChunksWithoutPerfectHashCount
+        } else if (header.version >= EIoStoreTocVersion.PerfectHash) {
+            perfectHashSeedsCount = header.tocChunkPerfectHashSeedsCount
+        }
+        if (perfectHashSeedsCount > 0u) {
+            chunkPerfectHashSeeds = Array(perfectHashSeedsCount.toInt()) { tocBuffer.readInt32() }
+        }
+        if (chunksWithoutPerfectHashCount > 0u) {
+            chunkIndicesWithoutPerfectHash = Array(chunksWithoutPerfectHashCount.toInt()) { tocBuffer.readInt32() }
+            for (chunkIndexWithoutPerfectHash in chunkIndicesWithoutPerfectHash!!) {
+                chunkIdToIndex[chunkIds[chunkIndexWithoutPerfectHash]] = chunkIndexWithoutPerfectHash
+            }
+        }
 
         // Compression blocks
         compressionBlocks = Array(header.tocCompressedBlockEntryCount.toInt()) { FIoStoreTocCompressedBlockEntry(tocBuffer) }
@@ -597,6 +629,40 @@ class FIoStoreTocResource {
         }
     }
 
-    fun getTocEntryIndex(chunkId: FIoChunkId) = chunkIdToIndex[chunkId]
-    fun getOffsetAndLength(chunkId: FIoChunkId) = chunkIdToIndex[chunkId]?.let { chunkOffsetLengths[it] }
+    fun getTocEntryIndex(chunkId: FIoChunkId): Int {
+        val chunkPerfectHashSeeds = chunkPerfectHashSeeds
+        if (chunkPerfectHashSeeds != null) {
+            val chunkCount = header.tocEntryCount
+            if (chunkCount == 0u) {
+                return -1
+            }
+            val seedCount = chunkPerfectHashSeeds.size.toUInt()
+            val seedIndex = (chunkId.hashWithSeed(0) % seedCount).toUInt()
+            val seed = chunkPerfectHashSeeds[seedIndex.toInt()]
+            if (seed == 0) {
+                return -1
+            }
+            val slot = if (seed < 0) {
+                val seedAsIndex = (-seed - 1).toUInt()
+                if (seedAsIndex < chunkCount) {
+                    seedAsIndex
+                } else {
+                    // Entry without perfect hash
+                    return chunkIdToIndex[chunkId] ?: -1
+                }
+            } else {
+                (chunkId.hashWithSeed(seed) % chunkCount).toUInt()
+            }
+            if (chunkIds[slot.toInt()] == chunkId) {
+                return slot.toInt()
+            }
+            return -1
+        }
+        return chunkIdToIndex[chunkId] ?: -1
+    }
+
+    fun getOffsetAndLength(chunkId: FIoChunkId): FIoOffsetAndLength? {
+        val tocEntryIndex = getTocEntryIndex(chunkId)
+        return if (tocEntryIndex != -1) chunkOffsetLengths[tocEntryIndex] else null
+    }
 }

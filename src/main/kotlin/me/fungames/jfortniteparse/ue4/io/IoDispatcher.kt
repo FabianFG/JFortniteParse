@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.io
 
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.util.printHexBinary
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -81,48 +82,51 @@ class FIoChunkId {
     companion object {
         val INVALID_CHUNK_ID = createEmptyId()
 
-        private inline fun createEmptyId() = FIoChunkId(0u, 0u, 0u)
+        private inline fun createEmptyId() = FIoChunkId(ByteArray(12))
     }
 
     val chunkId: ULong
-    val chunkIndex: UShort
+        get() = ByteBuffer.wrap(id).order(ByteOrder.LITTLE_ENDIAN).long.toULong()
     val chunkType: UByte
+        get() = id[11].toUByte()
 
-    val id: ByteArray get() = ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
-        .putLong(chunkId.toLong())
-        .putShort(chunkIndex.toShort())
-        .put(11, chunkType.toByte())
-        .array()
+    /*private*/ var id = ByteArray(12)
 
-    constructor(chunkId: ULong, chunkIndex: UShort, chunkType: UByte) {
-        this.chunkId = chunkId
-        this.chunkIndex = chunkIndex
-        this.chunkType = chunkType
+    constructor(id: ByteArray) {
+        check(id.size == 12)
+        this.id = id
     }
 
-    constructor(chunkId: ULong, chunkIndex: UShort, chunkType: Enum<*>) : this(chunkId, chunkIndex, chunkType.ordinal.toUByte())
+    constructor(chunkId: ULong, chunkIndex: UShort, ioChunkType: Enum<*>) : this(
+        ByteBuffer.allocate(12).order(ByteOrder.LITTLE_ENDIAN)
+            .putLong(chunkId.toLong())
+            .putShort(chunkIndex.toShort())
+            .put(11, ioChunkType.ordinal.toByte())
+            .array())
 
     constructor(Ar: FArchive) {
-        chunkId = Ar.readUInt64()
-        chunkIndex = Ar.readUInt16()
-        Ar.skip(1)
-        chunkType = Ar.readUInt8()
+        Ar.read(id)
     }
 
-    override fun hashCode(): Int {
-        var result = chunkId.hashCode()
-        result = 31 * result + chunkIndex.hashCode()
-        result = 31 * result + chunkType.hashCode()
-        return result
+    fun hashWithSeed(seed: Int): ULong {
+        var hash = if (seed != 0) seed.toULong() else 0xcbf29ce484222325u
+        id.forEach {
+            hash = (hash * 0x00000100000001B3u) xor it.toUByte().toULong()
+        }
+        return hash
     }
+
+    override fun hashCode() = id.contentHashCode()
+
+    override fun toString() = id.printHexBinary()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is FIoChunkId) return false
+        if (javaClass != other?.javaClass) return false
 
-        if (chunkId != other.chunkId) return false
-        if (chunkIndex != other.chunkIndex) return false
-        if (chunkType != other.chunkType) return false
+        other as FIoChunkId
+
+        if (!id.contentEquals(other.id)) return false
 
         return true
     }
@@ -171,7 +175,7 @@ enum class EIoChunkType5 {
 //////////////////////////////////////////////////////////////////////////
 
 interface FOnContainerMountedListener {
-    fun onContainerMounted(container: FIoContainerId)
+    fun onContainerMounted(container: FIoStoreReaderImpl)
 }
 
 class FIoDirectoryIndexHandle private constructor(val handle: UInt) {

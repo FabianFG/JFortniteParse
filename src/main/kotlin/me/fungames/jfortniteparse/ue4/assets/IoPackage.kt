@@ -10,6 +10,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UScriptStruct
 import me.fungames.jfortniteparse.ue4.assets.exports.UStruct
 import me.fungames.jfortniteparse.ue4.assets.reader.FExportArchive
 import me.fungames.jfortniteparse.ue4.asyncloading2.*
+import me.fungames.jfortniteparse.ue4.io.FFilePackageStoreEntry
 import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.uobject.EPackageFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
@@ -30,6 +31,7 @@ class IoPackage : Package {
     val packageId: FPackageId
     val globalPackageStore: FPackageStore
     val nameMap: FNameMap
+    var importedPublicExportHashes: Array<Long>? = null
     val importMap: Array<FPackageObjectIndex>
     val exportMap: Array<FExportMapEntry>
     val exportBundleHeaders: Array<FExportBundleHeader>
@@ -40,7 +42,7 @@ class IoPackage : Package {
 
     constructor(uasset: ByteArray,
                 packageId: FPackageId,
-                storeEntry: FPackageStoreEntry,
+                storeEntry: FFilePackageStoreEntry,
                 globalPackageStore: FPackageStore,
                 provider: FileProvider,
                 versions: VersionContainer = provider.versions) : super("", provider, versions) {
@@ -51,7 +53,14 @@ class IoPackage : Package {
         val allExportDataOffset: Int
 
         if (versions.game >= GAME_UE5_BASE) {
-            val summary = FPackageSummary5(Ar)
+            val summary = FZenPackageSummary(Ar)
+            if (summary.bHasVersioningInfo) {
+                val versioningInfo = FZenPackageVersioningInfo(Ar)
+                if (!versions.explicitVer) {
+                    versions.ver = versioningInfo.packageVersion.value
+                    versions.customVersions = versioningInfo.customVersions.toList()
+                }
+            }
 
             // Name map
             nameMap = FNameMap()
@@ -61,6 +70,10 @@ class IoPackage : Package {
             fileName = diskPackageName.text
             packageFlags = summary.packageFlags.toInt()
             name = fileName
+
+            // Imported public export hashes
+            Ar.seek(summary.importedPublicExportHashesOffset)
+            importedPublicExportHashes = Array((summary.importMapOffset - summary.importedPublicExportHashesOffset) / 8) { Ar.readInt64() }
 
             // Import map
             Ar.seek(summary.importMapOffset)
@@ -205,11 +218,12 @@ class IoPackage : Package {
             index.isPackageImport() -> {
                 val localProvider = provider
                 if (localProvider != null) {
-                    if (localProvider.game >= GAME_UE5_BASE) {
+                    val localImportedPublicExportHashes = importedPublicExportHashes
+                    if (localImportedPublicExportHashes != null) {
                         val packageImportRef = index.toPackageImportRef()
                         val pkg = importedPackages.value.getOrNull(packageImportRef.importedPackageIndex.toInt())
                         pkg?.exportMap?.forEachIndexed { exportIndex, exportMapEntry ->
-                            if (exportMapEntry.exportHash == packageImportRef.exportHash) {
+                            if (exportMapEntry.publicExportHash == localImportedPublicExportHashes[packageImportRef.importedPublicExportHashIndex]) {
                                 return ResolvedExportObject(exportIndex, pkg)
                             }
                         }

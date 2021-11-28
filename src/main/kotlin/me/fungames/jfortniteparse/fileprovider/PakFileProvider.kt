@@ -83,7 +83,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
                 ioStoreReader.files.associateByTo(files) { it.path.toLowerCase() }
                 mountedIoStoreReaders.add(ioStoreReader)
                 if (globalPackageStore.isInitialized()) {
-                    globalPackageStore.value.onContainerMounted(ioStoreReader.containerId)
+                    globalPackageStore.value.onContainerMounted(ioStoreReader)
                 }
             } catch (e: FIoStatusException) {
                 PakFileReader.logger.warn("Failed to mount IoStore environment \"{}\" [{}]", ioStoreEnvironment.path, e.message)
