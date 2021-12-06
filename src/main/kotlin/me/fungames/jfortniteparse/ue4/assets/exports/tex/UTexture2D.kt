@@ -10,6 +10,10 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.FIntPoint
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_TEXTURE_DERIVED_DATA2
+import me.fungames.jfortniteparse.ue4.versions.VER_UE4_TEXTURE_SOURCE_ART_REFACTOR
 
 @OnlyAnnotated
 class UTexture2D : UTexture() {
@@ -34,7 +38,11 @@ class UTexture2D : UTexture() {
             while (true) {
                 val pixelFormat = Ar.readFName()
                 if (pixelFormat.isNone()) break
-                val skipOffset = Ar.readInt64()
+                val skipOffset = when {
+                    Ar.game >= GAME_UE5_BASE -> Ar.relativePos() + Ar.readInt64()
+                    Ar.game >= GAME_UE4(20) -> Ar.readInt64()
+                    else -> Ar.readInt32()
+                }
                 textures[FTexturePlatformData(Ar)] = pixelFormat
                 if (Ar.relativePos().toLong() != skipOffset) {
                     LOG_JFP.warn("Texture read incorrectly. Current relative pos ${Ar.relativePos()}, skip offset $skipOffset")
@@ -80,6 +88,9 @@ class FTexturePlatformData {
     var isVirtual: Boolean = false
 
     constructor(Ar: FAssetArchive) {
+        if (Ar.game >= GAME_UE5_BASE) {
+            Ar.skip(16)
+        }
         sizeX = Ar.readInt32()
         sizeY = Ar.readInt32()
         numSlices = Ar.readInt32()
@@ -131,16 +142,17 @@ class FTexture2DMipMap {
     var sizeX: Int
     var sizeY: Int
     var sizeZ: Int
-    var u: String? = null
+    var derivedDataKey: String? = null
 
     constructor(Ar: FAssetArchive) {
-        cooked = Ar.readBoolean()
+        cooked = if (Ar.ver >= VER_UE4_TEXTURE_SOURCE_ART_REFACTOR && Ar.game < GAME_UE5_BASE) Ar.readBoolean() else Ar.isFilterEditorOnly
         data = FByteBulkData(Ar)
         sizeX = Ar.readInt32()
         sizeY = Ar.readInt32()
         sizeZ = Ar.readInt32()
-        if (!cooked)
-            u = Ar.readString()
+        if (Ar.ver >= VER_UE4_TEXTURE_DERIVED_DATA2 && !cooked) {
+            derivedDataKey = Ar.readString()
+        }
     }
 
     fun serialize(Ar: FAssetArchiveWriter) {
