@@ -45,6 +45,8 @@ class FAssetRegistryVersion(Ar: FArchive) : Comparable<FAssetRegistryVersion.Typ
         WorkspaceDomain,
         /** Added ImportedClasses to AssetPackageData */
         PackageImportedClasses,
+        /** A new version number of UE5 was added to FPackageFileSummary */
+        PackageFileSummaryVersionChange,
     }
 
     val guid = FGuid(Ar)
