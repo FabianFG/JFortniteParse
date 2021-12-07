@@ -57,7 +57,7 @@ open class DefaultFileProvider : PakFileProvider, Closeable {
                 }
                 unloadedPaks.add(reader)
             } catch (e: Exception) {
-                logger.error("Failed to open pak file \"{}\" [{}]", file.path, e.message)
+                logger.error("Failed to open pak file \"${file.path}\"", e)
             }
         } else if (ext == "utoc") {
             val path = file.path.substringBeforeLast('.')
@@ -69,7 +69,7 @@ open class DefaultFileProvider : PakFileProvider, Closeable {
                 }
                 unloadedPaks.add(reader)
             } catch (e: Exception) {
-                logger.error("Failed to open IoStore environment \"{}\" [{}]", path, e.message)
+                logger.error("Failed to open IoStore environment \"$path\"", e)
             }
         } else {
             var gamePath = file.absolutePath.substringAfter(folder.absolutePath)
