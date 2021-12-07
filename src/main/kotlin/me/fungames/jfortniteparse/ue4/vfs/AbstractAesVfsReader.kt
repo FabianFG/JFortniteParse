@@ -8,6 +8,7 @@ abstract class AbstractAesVfsReader(path: String, versions: VersionContainer) : 
     abstract val encryptionKeyGuid: FGuid
     var length = 0L
         protected set
+    var customEncryption: CustomEncryption? = null
     var aesKey: ByteArray? = null
 
     abstract fun isEncrypted(): Boolean
@@ -52,6 +53,10 @@ abstract class AbstractAesVfsReader(path: String, versions: VersionContainer) : 
      * Test whether the given encryption key is valid by attempting to read the pak mount point and validating it
      */
     fun testAesKey(key: String) = testAesKey(Aes.parseKey(key))
+
+    interface CustomEncryption {
+        fun decryptData(contents: ByteArray, offBytes: Int, numBytes: Int, reader: AbstractAesVfsReader)
+    }
 
     companion object {
         fun testAesKey(bytes: ByteArray, key: ByteArray): Boolean {

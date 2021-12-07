@@ -256,7 +256,7 @@ class FIoStoreReaderImpl : AbstractAesVfsReader {
         override fun initialValue() = FThreadBuffers()
     }
 
-    constructor(utocReader: FArchive, ucasReader: FPakArchive, versions: VersionContainer = VersionContainer.DEFAULT) : super(ucasReader.fileName.substringBeforeLast('.'), versions) {
+    constructor(utocReader: FArchive, ucasReader: FPakArchive) : super(ucasReader.fileName.substringBeforeLast('.'), ucasReader.versions) {
         tocResource = FIoStoreTocResource(utocReader, TOC_READ_OPTION_READ_ALL)
         utocReader.close()
         if (tocResource.header.partitionCount > 1u) {

@@ -1,6 +1,5 @@
 package me.fungames.jfortniteparse.fileprovider
 
-import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.mappings.ReflectionTypeMappingsProvider
 import me.fungames.jfortniteparse.ue4.assets.mappings.TypeMappingsProvider
 import me.fungames.jfortniteparse.ue4.io.FIoStoreReaderImpl
@@ -52,23 +51,25 @@ open class DefaultFileProvider : PakFileProvider, Closeable {
         if (ext == "pak") {
             try {
                 val reader = PakFileReader(file, versions)
+                reader.customEncryption = customEncryption
                 if (reader.isEncrypted()) {
                     requiredKeys.addIfAbsent(reader.encryptionKeyGuid)
                 }
                 unloadedPaks.add(reader)
-            } catch (e: ParserException) {
-                logger.error(e.message)
+            } catch (e: Exception) {
+                logger.error("Failed to open pak file \"{}\" [{}]", file.path, e.message)
             }
         } else if (ext == "utoc") {
             val path = file.path.substringBeforeLast('.')
             try {
                 val reader = FIoStoreReaderImpl(path, ioStoreTocReadOptions, versions)
+                reader.customEncryption = customEncryption
                 if (reader.isEncrypted()) {
                     requiredKeys.addIfAbsent(reader.encryptionKeyGuid)
                 }
                 unloadedPaks.add(reader)
-            } catch (e: ParserException) {
-                logger.error("Failed to mount IoStore environment \"{}\" [{}]", path, e.message)
+            } catch (e: Exception) {
+                logger.error("Failed to open IoStore environment \"{}\" [{}]", path, e.message)
             }
         } else {
             var gamePath = file.absolutePath.substringAfter(folder.absolutePath)

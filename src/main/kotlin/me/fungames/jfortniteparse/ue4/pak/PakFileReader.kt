@@ -94,10 +94,11 @@ class PakFileReader : AbstractAesVfsReader {
                     val compressedBuffer = if (gameFile.isEncrypted) {
                         // The compressed block is encrypted, align it and then decrypt
                         if (useDecryptedBuffers) throw ParserException("Decrypting encrypted files does not work on decrypted buffers mode")
-                        val key = aesKey
-                            ?: throw ParserException("Decrypting an encrypted file requires an encryption key to be set")
                         srcSize = align(srcSize, Aes.BLOCK_SIZE)
-                        exAr.read(srcSize).also { Aes.decryptData(it, key) }
+                        exAr.read(srcSize).also {
+                            customEncryption?.decryptData(it, 0, it.size, this)
+                                ?: Aes.decryptData(it, aesKey ?: throw ParserException("Decrypting an encrypted file requires an encryption key to be set"))
+                        }
                     } else {
                         // Read the block data
                         exAr.read(srcSize)
@@ -114,13 +115,12 @@ class PakFileReader : AbstractAesVfsReader {
             gameFile.isEncrypted -> {
                 logger.debug("${gameFile.getName()} is encrypted, decrypting")
                 if (useDecryptedBuffers) throw ParserException("Decrypting encrypted files does not work on decrypted buffers mode")
-                val key = aesKey
-                    ?: throw ParserException("Decrypting an encrypted file requires an encryption key to be set")
                 // AES is block encryption, all encrypted blocks need to be 16 bytes long,
                 // fix the game file length by growing it to the next multiple of 16 bytes
                 val newLength = align(gameFile.size.toInt(), Aes.BLOCK_SIZE)
                 val buffer = exAr.read(newLength)
-                Aes.decryptData(buffer, key)
+                customEncryption?.decryptData(buffer, 0, buffer.size, this)
+                    ?: Aes.decryptData(buffer, aesKey ?: throw ParserException("Decrypting an encrypted file requires an encryption key to be set"))
                 return ByteBuffer.wrap(buffer, 0, gameFile.size.toInt())
             }
             else -> return exAr.readBuffer(gameFile.size.toInt())
@@ -378,9 +378,8 @@ class PakFileReader : AbstractAesVfsReader {
         Ar.seek(offset)
         val data = Ar.read(length.toInt())
         if (isEncrypted()) {
-            val key = aesKey
-                ?: throw ParserException("Reading an encrypted index requires a valid encryption key")
-            Aes.decryptData(data, key)
+            customEncryption?.decryptData(data, 0, data.size, this)
+                ?: Aes.decryptData(data, aesKey ?: throw ParserException("Reading an encrypted index requires a valid encryption key"))
         }
 
         val Ar = Ar.createReader(data, offset)

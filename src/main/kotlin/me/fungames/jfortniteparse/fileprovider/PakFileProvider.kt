@@ -23,6 +23,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     protected abstract val keys: MutableMap<FGuid, ByteArray>
     protected val mountListeners = mutableListOf<PakMountListener>()
     open val globalPackageStore = lazy { FPackageStore(this) }
+    var customEncryption: AbstractAesVfsReader.CustomEncryption? = null
     open fun keys(): Map<FGuid, ByteArray> = keys
     fun keysStr(): Map<FGuid, String> = keys.mapValues { it.value.printAesKey() }
     open fun requiredKeys(): List<FGuid> = requiredKeys
