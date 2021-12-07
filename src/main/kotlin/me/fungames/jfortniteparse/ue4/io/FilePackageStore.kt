@@ -66,7 +66,7 @@ class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener
         }
 
         //currentCultureNames.add(Locale.getDefault().toString().replace('_', '-'))
-        loadContainers(provider.mountedIoStoreReaders())
+        loadContainers(provider.mountedPaks().filterIsInstance<FIoStoreReaderImpl>())
     }
 
     fun loadContainers(containers: List<FIoStoreReaderImpl>) {

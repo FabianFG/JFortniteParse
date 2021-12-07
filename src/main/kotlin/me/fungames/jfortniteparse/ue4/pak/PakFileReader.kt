@@ -13,12 +13,12 @@ import me.fungames.jfortniteparse.ue4.pak.reader.FPakArchive
 import me.fungames.jfortniteparse.ue4.pak.reader.FPakFileArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.VersionContainer
+import me.fungames.jfortniteparse.ue4.vfs.AbstractAesVfsReader
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.align
 import me.fungames.jfortniteparse.util.printAesKey
 import me.fungames.jfortniteparse.util.printHexBinary
 import mu.KotlinLogging
-import java.io.Closeable
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
@@ -32,67 +32,45 @@ private typealias FPathHashIndex = Map<ULong, Int>
 private typealias FPakDirectory = Map<String, Int>
 private typealias FDirectoryIndex = Map<String, FPakDirectory>
 
-class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : Closeable {
-    constructor(file: File, versions: VersionContainer = VersionContainer.DEFAULT) : this(FPakFileArchive(RandomAccessFile(file, "r"), file, versions))
-    constructor(filePath: String, versions: VersionContainer = VersionContainer.DEFAULT) : this(File(filePath), versions)
+class PakFileReader : AbstractAesVfsReader {
+    val Ar: FPakArchive
+    val pakInfo: FPakInfo
+
+    override val hasDirectoryIndex = true
+    override val encryptionKeyGuid get() = pakInfo.encryptionKeyGuid
+    override fun isEncrypted() = pakInfo.encryptedIndex
 
     //var encodedPakEntries: ByteArray = byteArrayOf()
     //    private set
 
-    var concurrent = false
-
-    val fileName = Ar.fileName
-
-    val pakInfo : FPakInfo = FPakInfo.readPakInfo(Ar)
-    var aesKey : ByteArray? = null
-    var aesKeyStr : String?
-        get() = aesKey?.printAesKey()
-        set(value) {
-            aesKey = value?.let { Aes.parseKey(it) }
-        }
-
-    lateinit var mountPrefix : String
-
-    val fileCount get() = files.size
-    var encryptedFileCount = 0
-        private set
-    lateinit var files : List<GameFile>
-        private set
-
     //var pathHashSeed = 0UL
 
     //var hasPathHashIndex = false
-    lateinit var pathHashIndex : FPathHashIndex
+    lateinit var pathHashIndex: FPathHashIndex
 
     //var hasFullDirectoryIndex = false
-    lateinit var directoryIndex : FDirectoryIndex
+    lateinit var directoryIndex: FDirectoryIndex
 
-    val useDecryptedBuffers = !pakInfo.encryptionKeyGuid.isValid() && isEncrypted() && decryptedBuffersDir.exists()
+    val keepIndexData: Boolean
+    val useDecryptedBuffers: Boolean
 
-    init {
+    constructor(Ar: FPakArchive, keepIndexData: Boolean = false) : super(if (Ar is FPakFileArchive) Ar.file.absolutePath else Ar.fileName, Ar.versions) {
+        this.Ar = Ar
+        this.keepIndexData = keepIndexData
+        length = Ar.pakSize()
+        pakInfo = FPakInfo.readPakInfo(Ar)
+        useDecryptedBuffers = !pakInfo.encryptionKeyGuid.isValid() && isEncrypted() && decryptedBuffersDir.exists()
         if (pakInfo.version > PakVersion_Latest)
-            logger.warn("Pak file \"$fileName\" has unsupported version ${pakInfo.version}")
+            logger.warn("Pak file \"$name\" has unsupported version ${pakInfo.version}")
         Ar.pakInfo = pakInfo
     }
 
-    override fun toString() = fileName
+    constructor(file: File, versions: VersionContainer = VersionContainer.DEFAULT) : this(FPakFileArchive(RandomAccessFile(file, "r"), file, versions))
+    constructor(filePath: String, versions: VersionContainer = VersionContainer.DEFAULT) : this(File(filePath), versions)
 
-    fun isEncrypted() = pakInfo.encryptedIndex
-
-    fun extract(gameFile: GameFile) : ByteArray {
-        val result = extractBuffer(gameFile)
-        return if (result.hasArray())
-            result.array()
-        else {
-            val buf = ByteArray(result.remaining())
-            result[buf]
-            buf
-        }
-    }
-
-    fun extractBuffer(gameFile: GameFile) : ByteBuffer {
-        require(gameFile.pakFileName == fileName) { "Wrong pak file reader, required ${gameFile.pakFileName}, this is $fileName" }
-        logger.debug("Extracting ${gameFile.getName()} from $fileName at ${gameFile.pos} with size ${gameFile.size}")
+    override fun extractBuffer(gameFile: GameFile): ByteBuffer {
+        require(gameFile.pakFileName == name) { "Wrong pak file reader, required ${gameFile.pakFileName}, this is $name" }
+        logger.debug("Extracting ${gameFile.getName()} from $name at ${gameFile.pos} with size ${gameFile.size}")
         // If this reader is used as a concurrent reader create a clone of the main reader to
         // provide thread safety
         val exAr = if (concurrent) Ar.clone() else Ar
@@ -117,7 +95,7 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
                         // The compressed block is encrypted, align it and then decrypt
                         if (useDecryptedBuffers) throw ParserException("Decrypting encrypted files does not work on decrypted buffers mode")
                         val key = aesKey
-                            ?: throw ParserException("Decrypting a encrypted file requires an encryption key to be set")
+                            ?: throw ParserException("Decrypting an encrypted file requires an encryption key to be set")
                         srcSize = align(srcSize, Aes.BLOCK_SIZE)
                         exAr.read(srcSize).also { Aes.decryptData(it, key) }
                     } else {
@@ -137,7 +115,7 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
                 logger.debug("${gameFile.getName()} is encrypted, decrypting")
                 if (useDecryptedBuffers) throw ParserException("Decrypting encrypted files does not work on decrypted buffers mode")
                 val key = aesKey
-                    ?: throw ParserException("Decrypting a encrypted file requires an encryption key to be set")
+                    ?: throw ParserException("Decrypting an encrypted file requires an encryption key to be set")
                 // AES is block encryption, all encrypted blocks need to be 16 bytes long,
                 // fix the game file length by growing it to the next multiple of 16 bytes
                 val newLength = align(gameFile.size.toInt(), Aes.BLOCK_SIZE)
@@ -149,59 +127,29 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         }
     }
 
-    fun indexCheckBytes() : ByteArray {
-        Ar.seek(pakInfo.indexOffset)
-        return Ar.read(128)
+    override fun readIndex(): List<GameFile> {
+        val start = System.currentTimeMillis()
+        val files = if (pakInfo.version >= PakVersion_PathHashIndex) readIndexUpdated() else readIndexLegacy()
+
+        // Print statistics
+        var stats = "Pak \"%s\": %d files".format(path, fileCount)
+        if (encryptedFileCount != 0)
+            stats += " (%d encrypted)".format(encryptedFileCount)
+        if (mountPoint.contains('/'))
+            stats += ", mount point: \"%s\"".format(mountPoint)
+        logger.info(stats + ", version %d in %dms".format(pakInfo.version, System.currentTimeMillis() - start))
+
+        return files
     }
 
-    /**
-     * Test all keys from a collection and return the working one if there is one
-     */
-    fun testAesKeys(keys : Iterable<ByteArray>) : ByteArray? {
-        if (!isEncrypted())
-            return null
-        keys.forEach {
-            if (testAesKey(it))
-                return it
-        }
-        return null
-    }
-
-    /**
-     * Test all keys from a collection and return the working one if there is one
-     */
-    @JvmName("testAesKeysStr")
-    fun testAesKeys(keys : Iterable<String>) : String? {
-        if (!isEncrypted())
-            return null
-        keys.forEach {
-            if (testAesKey(it))
-                return it
-        }
-        return null
-    }
-
-    /**
-     * Test whether the given encryption key is valid by attempting to read the pak mount point and validating it
-     */
-    fun testAesKey(key : ByteArray) : Boolean {
-        if (!isEncrypted())
-            return true
-        return testAesKey(indexCheckBytes(), key)
-    }
-
-    /**
-     * Test whether the given encryption key is valid by attempting to read the pak mount point and validating it
-     */
-    fun testAesKey(key : String) = testAesKey(Aes.parseKey(key))
-
-    private fun readIndexUpdated() : List<GameFile> {
+    private fun readIndexUpdated(): List<GameFile> {
         // Prepare primary index and decrypt if necessary
         val primaryIndexAr = readIndexData(pakInfo.indexOffset, pakInfo.indexSize, pakInfo.indexHash)
 
-        mountPrefix = runCatching { primaryIndexAr.readString().substringAfter("../../../") }.getOrElse {
-            throw InvalidAesKeyException("Given encryption key '$aesKeyStr' is not working with '$fileName'", it)
+        val mountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
+            throw InvalidAesKeyException("Given encryption key '${aesKey?.printAesKey()}' is not working with '$name'", it)
         }
+        this.mountPoint = validateMountPoint(mountPoint)
 
         val fileCount = primaryIndexAr.readInt32()
         primaryIndexAr.skip(8) // PathHashSeed
@@ -242,10 +190,10 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
                 encodedPakEntriesAr.seek(begin + offset)
                 val entry = readBitEntry(encodedPakEntriesAr)
                 entry.name = path
-                if(entry.isEncrypted)
+                if (entry.isEncrypted)
                     encryptedFileCount++
-                val gameFile = GameFile(entry, mountPrefix, this.fileName)
-                tempMap[mountPrefix + path] = gameFile
+                val gameFile = GameFile(entry, mountPoint, name)
+                tempMap[mountPoint + path] = gameFile
                 if (!path.endsWith(".uexp") && !path.endsWith(".ubulk"))
                     finalFileCount++
             }
@@ -255,10 +203,10 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         tempMap.values.forEach {
             if (it.isUE4Package()) {
                 val uexp = tempMap[it.path.substringBeforeLast(".") + ".uexp"]
-                if(uexp != null)
+                if (uexp != null)
                     it.uexp = uexp
                 val ubulk = tempMap[it.path.substringBeforeLast(".") + ".ubulk"]
-                if(ubulk != null)
+                if (ubulk != null)
                     it.ubulk = ubulk
                 files.add(it)
             } else {
@@ -379,53 +327,25 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         return FPakEntry(pakInfo, "", offset, size, uncompressedSize, compressionMethodIndex.toInt(), compressionBlocks, encrypted, compressionBlockSize.toInt())
     }
 
-    fun readIndex(): List<GameFile> {
-        val start = System.currentTimeMillis()
-        val files = if (pakInfo.version >= PakVersion_PathHashIndex) readIndexUpdated() else readIndexLegacy()
-
-        // Print statistics
-        var stats = "Pak \"%s\": %d files".format(if (Ar is FPakFileArchive) Ar.file else fileName, fileCount)
-        if (encryptedFileCount != 0)
-            stats += " (%d encrypted)".format(encryptedFileCount)
-        if (mountPrefix.contains('/'))
-            stats += ", mount point: \"%s\"".format(mountPrefix)
-        logger.info(stats + ", version %d in %dms".format(pakInfo.version, System.currentTimeMillis() - start))
-
-        return files
-    }
-
-    private fun readIndexLegacy() : List<GameFile> {
+    private fun readIndexLegacy(): List<GameFile> {
         // Prepare index and decrypt if necessary
         val indexAr = readIndexData(pakInfo.indexOffset, pakInfo.indexSize, pakInfo.indexHash)
 
         // Read the index
-        var mountPoint = runCatching { indexAr.readString() }.getOrElse {
-            throw InvalidAesKeyException("Given encryption key '$aesKeyStr' is not working with '$fileName'", it)
+        val mountPoint = runCatching { indexAr.readString() }.getOrElse {
+            throw InvalidAesKeyException("Given encryption key '${aesKey?.printAesKey()}' is not working with '$name'", it)
         }
-        var badMountPoint = false
-        if (!mountPoint.startsWith("../../.."))
-            badMountPoint = true
-        else
-            mountPoint = mountPoint.replaceFirst("../../..", "")
-        if (mountPoint[0] != '/' || (mountPoint.length > 1 && mountPoint[1] == '.'))
-            badMountPoint = true
-        if (badMountPoint) {
-            logger.warn("Pak \"$fileName\" has strange mount point \"$mountPoint\", mounting to root")
-            mountPoint = "/"
-        }
-        if (mountPoint.startsWith('/'))
-            mountPoint = mountPoint.substring(1)
-        this.mountPrefix = mountPoint
+        this.mountPoint = validateMountPoint(mountPoint)
 
         val fileCount = indexAr.readInt32()
-        this.encryptedFileCount = 0
+        encryptedFileCount = 0
 
         val tempMap = mutableMapOf<String, GameFile>()
         for (indexCount in 0 until fileCount) {
             val entry = FPakEntry(indexAr, true)
-            val gameFile = GameFile(entry, mountPrefix, fileName)
+            val gameFile = GameFile(entry, this.mountPoint, name)
             if (gameFile.isEncrypted)
-                this.encryptedFileCount++
+                encryptedFileCount++
             tempMap[gameFile.path] = gameFile
         }
 
@@ -433,10 +353,10 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         tempMap.values.forEach {
             if (it.isUE4Package()) {
                 val uexp = tempMap[it.path.substringBeforeLast(".") + ".uexp"]
-                if(uexp != null)
+                if (uexp != null)
                     it.uexp = uexp
                 val ubulk = tempMap[it.path.substringBeforeLast(".") + ".ubulk"]
-                if(ubulk != null)
+                if (ubulk != null)
                     it.ubulk = ubulk
                 files.add(it)
             } else {
@@ -448,7 +368,7 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         return this.files
     }
 
-    inline fun readIndexData(offset: Long, length: Long, hash: ByteArray): FPakArchive {
+    private fun readIndexData(offset: Long, length: Long, hash: ByteArray): FPakArchive {
         if (useDecryptedBuffers) {
             val Ar = Ar.createReader(File(decryptedBuffersDir, hash.printHexBinary() + ".bin").readBytes(), offset)
             Ar.pakInfo = pakInfo
@@ -468,38 +388,16 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         return Ar
     }
 
+    override fun indexCheckBytes(): ByteArray {
+        Ar.seek(pakInfo.indexOffset)
+        return Ar.read(128)
+    }
+
+    override fun close() = Ar.close()
+
     companion object {
         val logger = KotlinLogging.logger("PakFile")
         val decryptedBuffersDir = File("DecryptedBuffers")
-
-        fun isValidIndex(bytes: ByteArray): Boolean {
-            val testAr = FByteArchive(bytes)
-            val stringLength = testAr.readInt32()
-            if (stringLength > 128 || stringLength < -128)
-                return false
-            // Calculate the pos of the null terminator for this string
-            // Then read the null terminator byte and check whether it is actually 0
-            return when {
-                stringLength == 0 -> testAr.readInt8() == 0.toByte()
-                stringLength < 0 -> {
-                    // UTF16
-                    val nullTerminatorPos = 4 - (stringLength - 1) * 2
-                    testAr.seek(nullTerminatorPos)
-                    testAr.readInt16() == 0.toShort()
-                }
-                else -> {
-                    // UTF8
-                    val nullTerminatorPos = 4 + stringLength - 1
-                    testAr.seek(nullTerminatorPos)
-                    testAr.readInt8() == 0.toByte()
-                }
-            }
-        }
-
-        fun testAesKey(bytes: ByteArray, key: ByteArray): Boolean {
-            Aes.decryptData(bytes, key)
-            return isValidIndex(bytes)
-        }
     }
 
 
@@ -511,31 +409,18 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
      * This method is following the ue reading of the index.
      * Therefore it might be more stable but it's slower
      */
-    private fun readIndexInternal() : List<GameFile> {
+    private fun readIndexInternal(): List<GameFile> {
         // Prepare primary index and decrypt if necessary
         val primaryIndexAr = readIndexData(pakInfo.indexOffset, pakInfo.indexSize, pakInfo.indexHash)
 
         // Read the index
-        var mountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
-            throw InvalidAesKeyException("Given encryption key '$aesKeyStr' is not working with '$fileName'", it)
+        val mountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
+            throw InvalidAesKeyException("Given encryption key '${aesKey?.printAesKey()}' is not working with '$name'", it)
         }
-        var badMountPoint = false
-        if (!mountPoint.startsWith("../../.."))
-            badMountPoint = true
-        else
-            mountPoint = mountPoint.replaceFirst("../../..", "")
-        if (mountPoint[0] != '/' || (mountPoint.length > 1 && mountPoint[1] == '.'))
-            badMountPoint = true
-        if (badMountPoint) {
-            logger.warn("Pak \"$fileName\" has strange mount point \"$mountPoint\", mounting to root")
-            mountPoint = "/"
-        }
-        if (mountPoint.startsWith('/'))
-            mountPoint = mountPoint.substring(1)
-        this.mountPrefix = mountPoint
+        this.mountPoint = validateMountPoint(mountPoint)
 
         val fileCount = primaryIndexAr.readInt32()
-        this.encryptedFileCount = 0
+        encryptedFileCount = 0
         val pathHashSeed = primaryIndexAr.readUInt64()
 
         var readerHasPathHashIndex = primaryIndexAr.readBoolean()
@@ -570,16 +455,16 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         val tempMap = mutableMapOf<String, GameFile>()
         for (indexCount in 0 until filesNum) {
             val entry = FPakEntry(primaryIndexAr, false)
-            val gameFile = GameFile(entry, mountPrefix, fileName)
+            val gameFile = GameFile(entry, this.mountPoint, name)
             if (gameFile.isEncrypted)
-                this.encryptedFileCount++
+                encryptedFileCount++
             tempMap[gameFile.path] = gameFile
         }
 
         // Decide which SecondaryIndex(es) to load
-        val willUseFullDirectoryIndex : Boolean
-        val willUsePathHashIndex : Boolean
-        val readFullDirectoryIndex : Boolean
+        val willUseFullDirectoryIndex: Boolean
+        val willUsePathHashIndex: Boolean
+        val readFullDirectoryIndex: Boolean
         if (readerHasPathHashIndex && readerHasFullDirectoryIndex) {
             willUseFullDirectoryIndex = /*IsPakKeepFullDirectory() seems to be false */ false
             willUsePathHashIndex = !willUseFullDirectoryIndex
@@ -602,21 +487,21 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         var pathHashIndexAr: FPakArchive? = null
 
         if (willUsePathHashIndex) {
-            if (pathHashIndexOffset < 0 || Ar.pakSize() < (pathHashIndexOffset + pathHashIndexSize) ) {
+            if (pathHashIndexOffset < 0 || Ar.pakSize() < (pathHashIndexOffset + pathHashIndexSize)) {
                 throw ParserException("PathHashIndex out of range: ${Ar.pakSize()} < $pathHashIndexOffset + $pathHashIndexSize")
             }
 
             // Prepare path hash index and decrypt if necessary
             pathHashIndexAr = readIndexData(pathHashIndexOffset, pathHashIndexSize, pathHashIndexHash)
-            this.pathHashIndex = pathHashIndexAr.readTMap { it.readUInt64() to it.readInt32() }
+            pathHashIndex = pathHashIndexAr.readTMap { it.readUInt64() to it.readInt32() }
             //hasPathHashIndex = true
         }
 
         if (!readFullDirectoryIndex) {
             require(willUsePathHashIndex)
             directoryIndex = pathHashIndexAr!!.readTMap {
-                it.readString() to it.readTMap {
-                        it2 -> it2.readString() to it2.readInt32()
+                it.readString() to it.readTMap { it2 ->
+                    it2.readString() to it2.readInt32()
                 }
             }
             //hasFullDirectoryIndex = false
@@ -628,8 +513,8 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
             val secondaryIndexAr = readIndexData(fullDirectoryIndexOffset, fullDirectoryIndexSize, fullDirectoryIndexHash)
             secondaryIndexAr.pakInfo = Ar.pakInfo
             directoryIndex = secondaryIndexAr.readTMap {
-                it.readString() to it.readTMap {
-                        it2 -> it2.readString() to it2.readInt32()
+                it.readString() to it.readTMap { it2 ->
+                    it2.readString() to it2.readInt32()
                 }
             }
             //hasFullDirectoryIndex = true
@@ -642,10 +527,10 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
                 encodedPakEntriesAr.seek(offset)
                 val entry = readBitEntry(encodedPakEntriesAr)
                 entry.name = path
-                if(entry.isEncrypted)
+                if (entry.isEncrypted)
                     encryptedFileCount++
-                val gameFile = GameFile(entry, mountPrefix, this.fileName)
-                tempMap[mountPrefix + path] = gameFile
+                val gameFile = GameFile(entry, this.mountPoint, name)
+                tempMap[this.mountPoint + path] = gameFile
             }
         }
 
@@ -653,10 +538,10 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
         tempMap.values.forEach {
             if (it.isUE4Package()) {
                 val uexp = tempMap[it.path.substringBeforeLast(".") + ".uexp"]
-                if(uexp != null)
+                if (uexp != null)
                     it.uexp = uexp
                 val ubulk = tempMap[it.path.substringBeforeLast(".") + ".ubulk"]
-                if(ubulk != null)
+                if (ubulk != null)
                     it.ubulk = ubulk
                 files.add(it)
             } else {
@@ -668,12 +553,10 @@ class PakFileReader(val Ar: FPakArchive, val keepIndexData: Boolean = false) : C
 
         if (!keepIndexData) {
             //this.encodedPakEntries = byteArrayOf()
-            this.directoryIndex = emptyMap()
-            this.pathHashIndex = emptyMap()
+            directoryIndex = emptyMap()
+            pathHashIndex = emptyMap()
         }
 
         return this.files
     }
-
-    override fun close() = Ar.close()
 }
