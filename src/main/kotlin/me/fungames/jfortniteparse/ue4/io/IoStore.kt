@@ -308,7 +308,7 @@ class FIoStoreReaderImpl : AbstractAesVfsReader {
         PakFileReader.logger.info("IoStore \"{}\": {} {}, version {} in {}ms",
             path,
             tocResource.header.tocEntryCount,
-            if (aesKey != null) "encrypted chunks" else "chunks",
+            if (isEncrypted()) "encrypted chunks" else "chunks",
             tocResource.header.version.ordinal,
             System.currentTimeMillis() - start)
 
