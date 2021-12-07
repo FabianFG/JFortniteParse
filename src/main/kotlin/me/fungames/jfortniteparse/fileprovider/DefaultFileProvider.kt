@@ -33,14 +33,17 @@ open class DefaultFileProvider : PakFileProvider, Closeable {
     constructor(folder: File, versions: VersionContainer = VersionContainer.DEFAULT) {
         this.folder = folder
         this.versions = versions
-        val initialMountTasks = mutableListOf<Deferred<Boolean>>()
-        scanFiles(folder, initialMountTasks)
-        runBlocking { initialMountTasks.awaitAll() }
     }
 
     @JvmOverloads
     constructor(folder: File, game: Ue4Version, mappingsProvider: TypeMappingsProvider = ReflectionTypeMappingsProvider()) : this(folder, VersionContainer(game.game)) {
         this.mappingsProvider = mappingsProvider
+    }
+
+    fun initialize() {
+        val initialMountTasks = mutableListOf<Deferred<Boolean>>()
+        scanFiles(folder, initialMountTasks)
+        runBlocking { initialMountTasks.awaitAll() }
     }
 
     private fun scanFiles(folder: File, initialMountTasks: MutableList<Deferred<Boolean>>) {
