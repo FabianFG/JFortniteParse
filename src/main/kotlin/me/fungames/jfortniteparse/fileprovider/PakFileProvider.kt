@@ -54,7 +54,7 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
                     if (it is InvalidAesKeyException)
                         keys.remove(guid)
                     else
-                        logger.warn(it) { "Uncaught exception while loading pak file ${reader.name.substringAfterLast('/')}" }
+                        logger.warn(it) { "Uncaught exception while loading ${reader.name.substringAfterLast('/')}" }
                 }
             }
         }
@@ -67,6 +67,14 @@ abstract class PakFileProvider : AbstractFileProvider(), CoroutineScope {
     protected open fun mount(reader: AbstractAesVfsReader) {
         reader.readIndex().associateByTo(files) { it.path.toLowerCase() }
         mountedPaks.add(reader)
+        if (reader is FIoStoreReaderImpl) {
+            if (reader.name == "global") {
+                globalDataLoaded = true
+            }
+            if (globalPackageStore.isInitialized()) {
+                globalPackageStore.value.onContainerMounted(reader)
+            }
+        }
         mountListeners.forEach { it.onMount(reader) }
     }
 

@@ -1,9 +1,5 @@
 package me.fungames.jfortniteparse.fileprovider
 
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
 import me.fungames.jfortniteparse.exceptions.ParserException
 import me.fungames.jfortniteparse.ue4.assets.mappings.ReflectionTypeMappingsProvider
 import me.fungames.jfortniteparse.ue4.assets.mappings.TypeMappingsProvider
@@ -33,6 +29,7 @@ open class DefaultFileProvider : PakFileProvider, Closeable {
     constructor(folder: File, versions: VersionContainer = VersionContainer.DEFAULT) {
         this.folder = folder
         this.versions = versions
+        scanFiles(folder)
     }
 
     @JvmOverloads
@@ -40,65 +37,39 @@ open class DefaultFileProvider : PakFileProvider, Closeable {
         this.mappingsProvider = mappingsProvider
     }
 
-    fun initialize() {
-        val initialMountTasks = mutableListOf<Deferred<Boolean>>()
-        scanFiles(folder, initialMountTasks)
-        runBlocking { initialMountTasks.awaitAll() }
-    }
-
-    private fun scanFiles(folder: File, initialMountTasks: MutableList<Deferred<Boolean>>) {
+    private fun scanFiles(folder: File) {
         for (file in folder.listFiles() ?: emptyArray()) {
             if (file.isDirectory) {
-                scanFiles(file, initialMountTasks)
+                scanFiles(file)
             } else if (file.isFile) {
-                registerFile(file, initialMountTasks)
+                registerFile(file)
             }
         }
     }
 
-    private fun registerFile(file: File, initialMountTasks: MutableList<Deferred<Boolean>>) {
+    private fun registerFile(file: File) {
         val ext = file.extension.toLowerCase()
         if (ext == "pak") {
-            initialMountTasks.add(async {
-                try {
-                    val reader = PakFileReader(file, versions)
-                    if (!reader.isEncrypted()) {
-                        mount(reader)
-                        true
-                    } else {
-                        unloadedPaks.add(reader)
-                        requiredKeys.addIfAbsent(reader.encryptionKeyGuid)
-                        false
-                    }
-                } catch (e: ParserException) {
-                    logger.error { e.message }
-                    false
+            try {
+                val reader = PakFileReader(file, versions)
+                if (reader.isEncrypted()) {
+                    requiredKeys.addIfAbsent(reader.encryptionKeyGuid)
                 }
-            })
+                unloadedPaks.add(reader)
+            } catch (e: ParserException) {
+                logger.error(e.message)
+            }
         } else if (ext == "utoc") {
-            initialMountTasks.add(async {
-                val path = file.path.substringBeforeLast('.')
-                try {
-                    val reader = FIoStoreReaderImpl(path, ioStoreTocReadOptions, versions)
-                    if (!reader.isEncrypted()) {
-                        mount(reader)
-                        if (reader.name == "global") {
-                            globalDataLoaded = true
-                        }
-                        if (globalPackageStore.isInitialized()) {
-                            globalPackageStore.value.onContainerMounted(reader)
-                        }
-                        true
-                    } else {
-                        unloadedPaks.add(reader)
-                        requiredKeys.addIfAbsent(reader.encryptionKeyGuid)
-                        false
-                    }
-                } catch (e: ParserException) {
-                    logger.error("Failed to mount IoStore environment \"{}\" [{}]", path, e.message)
-                    false
+            val path = file.path.substringBeforeLast('.')
+            try {
+                val reader = FIoStoreReaderImpl(path, ioStoreTocReadOptions, versions)
+                if (reader.isEncrypted()) {
+                    requiredKeys.addIfAbsent(reader.encryptionKeyGuid)
                 }
-            })
+                unloadedPaks.add(reader)
+            } catch (e: ParserException) {
+                logger.error("Failed to mount IoStore environment \"{}\" [{}]", path, e.message)
+            }
         } else {
             var gamePath = file.absolutePath.substringAfter(folder.absolutePath)
             if (gamePath.startsWith('\\') || gamePath.startsWith('/'))

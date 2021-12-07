@@ -242,10 +242,10 @@ class FIoStoreReaderImpl : AbstractAesVfsReader {
             if ((tocResource.header.containerFlags and IO_CONTAINER_FLAG_INDEXED) == 0 || tocResource.directoryIndexBuffer == null) {
                 return null
             }
-            if (isEncrypted() && aesKey == null) {
-                throw ParserException("Reading an encrypted index requires a valid encryption key")
-            }
-            val out = FIoDirectoryIndexReaderImpl(tocResource.directoryIndexBuffer!!, aesKey)
+            val decryptionKey = if (isEncrypted()) {
+                aesKey ?: throw ParserException("Reading an encrypted index requires a valid encryption key")
+            } else null
+            val out = FIoDirectoryIndexReaderImpl(tocResource.directoryIndexBuffer!!, decryptionKey)
             tocResource.directoryIndexBuffer = null
             _directoryIndexReader = out
             return out
