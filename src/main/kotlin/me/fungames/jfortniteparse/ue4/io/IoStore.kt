@@ -256,8 +256,8 @@ class FIoStoreReaderImpl : AbstractAesVfsReader {
         override fun initialValue() = FThreadBuffers()
     }
 
-    constructor(utocReader: FArchive, ucasReader: FPakArchive) : super(ucasReader.fileName.substringBeforeLast('.'), ucasReader.versions) {
-        tocResource = FIoStoreTocResource(utocReader, TOC_READ_OPTION_READ_ALL)
+    constructor(utocReader: FArchive, ucasReader: FPakArchive, readOptions: Int) : super(ucasReader.fileName.substringBeforeLast('.'), ucasReader.versions) {
+        tocResource = FIoStoreTocResource(utocReader, readOptions)
         utocReader.close()
         if (tocResource.header.partitionCount > 1u) {
             throw FIoStatusException(EIoErrorCode.CorruptToc, "This method does not support IoStore environments with multiple partitions")
