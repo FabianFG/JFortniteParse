@@ -146,10 +146,10 @@ class PakFileReader : AbstractAesVfsReader {
         // Prepare primary index and decrypt if necessary
         val primaryIndexAr = readIndexData(pakInfo.indexOffset, pakInfo.indexSize, pakInfo.indexHash)
 
-        val mountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
+        val rawMountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
             throw InvalidAesKeyException("Given encryption key '${aesKey?.printAesKey()}' is not working with '$name'", it)
         }
-        this.mountPoint = validateMountPoint(mountPoint)
+        mountPoint = validateMountPoint(rawMountPoint)
 
         val fileCount = primaryIndexAr.readInt32()
         primaryIndexAr.skip(8) // PathHashSeed
@@ -332,10 +332,10 @@ class PakFileReader : AbstractAesVfsReader {
         val indexAr = readIndexData(pakInfo.indexOffset, pakInfo.indexSize, pakInfo.indexHash)
 
         // Read the index
-        val mountPoint = runCatching { indexAr.readString() }.getOrElse {
+        val rawMountPoint = runCatching { indexAr.readString() }.getOrElse {
             throw InvalidAesKeyException("Given encryption key '${aesKey?.printAesKey()}' is not working with '$name'", it)
         }
-        this.mountPoint = validateMountPoint(mountPoint)
+        this.mountPoint = validateMountPoint(rawMountPoint)
 
         val fileCount = indexAr.readInt32()
         encryptedFileCount = 0
@@ -343,7 +343,7 @@ class PakFileReader : AbstractAesVfsReader {
         val tempMap = mutableMapOf<String, GameFile>()
         for (indexCount in 0 until fileCount) {
             val entry = FPakEntry(indexAr, true)
-            val gameFile = GameFile(entry, this.mountPoint, name)
+            val gameFile = GameFile(entry, mountPoint, name)
             if (gameFile.isEncrypted)
                 encryptedFileCount++
             tempMap[gameFile.path] = gameFile
@@ -413,10 +413,10 @@ class PakFileReader : AbstractAesVfsReader {
         val primaryIndexAr = readIndexData(pakInfo.indexOffset, pakInfo.indexSize, pakInfo.indexHash)
 
         // Read the index
-        val mountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
+        val rawMountPoint = runCatching { primaryIndexAr.readString() }.getOrElse {
             throw InvalidAesKeyException("Given encryption key '${aesKey?.printAesKey()}' is not working with '$name'", it)
         }
-        this.mountPoint = validateMountPoint(mountPoint)
+        this.mountPoint = validateMountPoint(rawMountPoint)
 
         val fileCount = primaryIndexAr.readInt32()
         encryptedFileCount = 0
@@ -454,7 +454,7 @@ class PakFileReader : AbstractAesVfsReader {
         val tempMap = mutableMapOf<String, GameFile>()
         for (indexCount in 0 until filesNum) {
             val entry = FPakEntry(primaryIndexAr, false)
-            val gameFile = GameFile(entry, this.mountPoint, name)
+            val gameFile = GameFile(entry, mountPoint, name)
             if (gameFile.isEncrypted)
                 encryptedFileCount++
             tempMap[gameFile.path] = gameFile
@@ -528,8 +528,8 @@ class PakFileReader : AbstractAesVfsReader {
                 entry.name = path
                 if (entry.isEncrypted)
                     encryptedFileCount++
-                val gameFile = GameFile(entry, this.mountPoint, name)
-                tempMap[this.mountPoint + path] = gameFile
+                val gameFile = GameFile(entry, mountPoint, name)
+                tempMap[mountPoint + path] = gameFile
             }
         }
 

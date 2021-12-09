@@ -44,12 +44,8 @@ abstract class AbstractVfsReader(val path: String, val versions: VersionContaine
     abstract fun extractBuffer(gameFile: GameFile): ByteBuffer
 
     protected fun validateMountPoint(mountPoint: String): String {
-        var mountPoint = mountPoint
-        var badMountPoint = false
-        if (!mountPoint.startsWith("../../.."))
-            badMountPoint = true
-        else
-            mountPoint = mountPoint.replaceFirst("../../..", "")
+        var badMountPoint = !mountPoint.startsWith("../../..")
+        var mountPoint = mountPoint.substringAfter("../../..")
         if (mountPoint[0] != '/' || (mountPoint.length > 1 && mountPoint[1] == '.'))
             badMountPoint = true
         if (badMountPoint) {
