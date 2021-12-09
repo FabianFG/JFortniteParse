@@ -291,9 +291,9 @@ class FIoStoreReaderImpl : AbstractAesVfsReader {
     override fun readIndex(): List<GameFile> {
         val start = System.currentTimeMillis()
         val files = mutableListOf<GameFile>()
-        val exportBundleDataChunkType = (if (game >= GAME_UE5_BASE) EIoChunkType5.ExportBundleData else EIoChunkType.ExportBundleData).ordinal.toUByte()
         val directoryIndex = directoryIndexReader
         if (directoryIndex != null) {
+            val exportBundleDataChunkType = (if (game >= GAME_UE5_BASE) EIoChunkType5.ExportBundleData else EIoChunkType.ExportBundleData).ordinal.toUByte()
             directoryIndex.iterateDirectoryIndex(FIoDirectoryIndexHandle.rootDirectory(), "") { filename, tocEntryIndex ->
                 val chunkId = tocResource.chunkIds[tocEntryIndex.toInt()]
                 if (chunkId.chunkType == exportBundleDataChunkType) {
