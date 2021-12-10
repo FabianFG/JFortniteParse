@@ -183,7 +183,7 @@ object FUE5MainStreamObjectVersion {
     // -----<new versions can be added above this line>-------------------------------------------------
     const val LatestVersion = ConvertReductionBaseSkeletalMeshBulkDataToInlineReductionCacheData
 
-    @JvmField val GUID = FGuid(0xD89B5E42u, 0x24BD4D46u, 0x8412ACA8u, 0xDF641779u)
+    @JvmField val GUID = FGuid(0x697DD581u, 0xE64f41ABu, 0xAA4A51ECu, 0xBEB7B628u)
 
     @JvmStatic
     fun get(Ar: FArchive): Int {
