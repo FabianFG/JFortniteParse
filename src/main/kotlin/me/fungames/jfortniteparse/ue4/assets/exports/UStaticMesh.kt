@@ -11,8 +11,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FBoxSphereBounds
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator
 import me.fungames.jfortniteparse.ue4.objects.core.math.FVector
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
-import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
-import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
+import me.fungames.jfortniteparse.ue4.objects.engine.*
 import me.fungames.jfortniteparse.ue4.versions.*
 
 internal const val MAX_STATIC_UV_SETS_UE4 = 8
@@ -71,6 +70,12 @@ class UStaticMesh : UStaticMesh_Properties() {
             if (Ar.game >= GAME_UE4(23))
                 Ar.readUInt8() // NumInlinedLODs
 
+            if (Ar.game >= GAME_UE5_BASE) {
+                val naniteResourcesStripFlags = FStripDataFlags(Ar)
+                val naniteResources = if (!naniteResourcesStripFlags.isDataStrippedForServer()) FNaniteResources(Ar) else null
+                deserializeInlineDataRepresentations(Ar)
+            }
+
             if (cooked) {
                 if (Ar.ver >= VER_UE4_RENAME_CROUCHMOVESCHARACTERDOWN) {
                     var stripped = false
@@ -87,8 +92,13 @@ class UStaticMesh : UStaticMesh_Properties() {
                         // serialize FDistanceFieldVolumeData for each LOD
                         for (i in lods.indices) {
                             val hasDistanceDataField = Ar.readBoolean()
-                            if (hasDistanceDataField)
-                                FDistanceFieldVolumeData(Ar) // VolumeData
+                            if (hasDistanceDataField) {
+                                if (Ar.game >= GAME_UE5_BASE) {
+                                    val volumeData = FDistanceFieldVolumeData5(Ar)
+                                } else {
+                                    val volumeData = FDistanceFieldVolumeData(Ar)
+                                }
+                            }
                         }
                     }
                 }
@@ -122,7 +132,7 @@ class UStaticMesh : UStaticMesh_Properties() {
             }
         } // end of FStaticMeshRenderData
 
-        if (cooked && Ar.game >= GAME_UE4(20)) {
+        if (cooked && Ar.game >= GAME_UE4(20) && Ar.game < GAME_UE5_BASE) {
             val hasOccluderData = Ar.readBoolean()
             if (hasOccluderData) {
                 Ar.readTArray { FVector(Ar) } // Vertices
@@ -150,6 +160,21 @@ class UStaticMesh : UStaticMesh_Properties() {
 
         //Drop remaining SpeedTree data
         if (validPos > 0) Ar.seek(validPos)
+    }
+
+    fun deserializeInlineDataRepresentations(Ar: FAssetArchive) {
+        // Defined class flags for possible stripping
+        val cardRepresentationDataStripFlag: UByte = 2u
+
+        val stripFlags = FStripDataFlags(Ar)
+        if (!stripFlags.isDataStrippedForServer() && !stripFlags.isClassDataStripped(cardRepresentationDataStripFlag)) {
+            for (lod in lods) {
+                val valid = Ar.readBoolean()
+                if (valid) {
+                    lod.cardRepresentationData = FCardRepresentationData(Ar)
+                }
+            }
+        }
     }
 
     override fun serialize(Ar: FAssetArchiveWriter) {

@@ -20,7 +20,9 @@ class FSkelMeshSection {
     var maxBoneInfluences = 0
     var hasClothData = false
     // UE4.14
-    var castShadow = false
+    var castShadow = true
+    // UE5.0
+    var visibleInRayTracing = true
 
     constructor()
 
@@ -56,6 +58,8 @@ class FSkelMeshSection {
         if (FRecomputeTangentCustomVersion.get(Ar) >= FRecomputeTangentCustomVersion.RecomputeTangentVertexColorMask) {
             Ar.skip(1) // RecomputeTangentsVertexMaskChannel
         }
+        castShadow = FEditorObjectVersion.get(Ar) < FEditorObjectVersion.RefactorMeshEditorMaterials || Ar.readBoolean()
+        visibleInRayTracing = FUE5MainStreamObjectVersion.get(Ar) < FUE5MainStreamObjectVersion.SkelMeshSectionVisibleInRayTracingFlagAdded || Ar.readBoolean()
         hasClothData = false
         if (skelMeshVer >= FSkeletalMeshCustomVersion.CombineSectionWithChunk) {
             if (!stripFlags.isDataStrippedForServer()) {
@@ -75,7 +79,7 @@ class FSkelMeshSection {
                 Ar.skip(8) // NumRigidVerts, NumSoftVerts
             }
             maxBoneInfluences = Ar.readInt32()
-            val clothMappingData = Ar.readTArray { FMeshToMeshVertData(Ar) }
+            val clothMappingData = if (Ar.game >= GAME_UE5_BASE && FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) arrayOf(FMeshToMeshVertData(Ar)) else Ar.readTArray { FMeshToMeshVertData(Ar) }
             if (skelMeshVer < FSkeletalMeshCustomVersion.RemoveDuplicatedClothingSections) {
                 val physicalMeshVertices = Ar.readTArray { FVector(Ar) }
                 val physicalMeshNormals = Ar.readTArray { FVector(Ar) }
@@ -97,6 +101,10 @@ class FSkelMeshSection {
             if (FSkeletalMeshCustomVersion.get(Ar) >= FSkeletalMeshCustomVersion.SectionIgnoreByReduceAdded) {
                 generateUpToLodIndex = Ar.readInt32()
             }
+            if (FEditorObjectVersion.get(Ar) >= FEditorObjectVersion.SkeletalMeshBuildRefactor) {
+                val originalDataSectionIndex = Ar.readInt32()
+                val chunkedParentSectionIndex = Ar.readInt32()
+            }
         }
     }
 
@@ -112,10 +120,11 @@ class FSkelMeshSection {
             Ar.skip(1) // RecomputeTangentsVertexMaskChannel
         }
 
-        castShadow = Ar.readBoolean()
+        castShadow = FEditorObjectVersion.get(Ar) < FEditorObjectVersion.RefactorMeshEditorMaterials || Ar.readBoolean()
+        visibleInRayTracing = FUE5MainStreamObjectVersion.get(Ar) < FUE5MainStreamObjectVersion.SkelMeshSectionVisibleInRayTracingFlagAdded || Ar.readBoolean()
         baseVertexIndex = Ar.readUInt32()
 
-        val clothMappingData = Ar.readTArray { FMeshToMeshVertData(Ar) }
+        val clothMappingData = if (Ar.game >= GAME_UE5_BASE && FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) arrayOf(FMeshToMeshVertData(Ar)) else Ar.readTArray { FMeshToMeshVertData(Ar) }
         hasClothData = clothMappingData.isNotEmpty()
 
         boneMap = UShortArray(Ar.readInt32()) { Ar.readUInt16() }

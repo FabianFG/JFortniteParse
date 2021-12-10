@@ -38,8 +38,26 @@ object FUE5ReleaseStreamObjectVersion {
     // PackedLevelInstance bounds fix
     const val PackedLevelInstanceBoundsFix = 10
 
+    // Custom property anim graph nodes (linked anim graphs, control rig etc.) now use optional pin manager
+    const val CustomPropertyAnimGraphNodesUseOptionalPinManager = 11
+
+    // Add native double and int64 support to FFormatArgumentData
+    const val TextFormatArgumentData64bitSupport = 12
+
+    // Material layer stacks are no longer considered 'static parameters'
+    const val MaterialLayerStacksAreNotParameters = 13
+
+    // CachedExpressionData is moved from UMaterial to UMaterialInterface
+    const val MaterialInterfaceSavedCachedData = 14
+
+    // Add support for multiple cloth deformer LODs to be able to raytrace cloth with a different LOD than the one it is rendered with
+    const val AddClothMappingLODBias = 15
+
+    // Add support for different external actor packaging schemes
+    const val AddLevelActorPackagingScheme = 16
+
     // -----<new versions can be added above this line>-------------------------------------------------
-    const val LatestVersion = PackedLevelInstanceBoundsFix
+    const val LatestVersion = AddLevelActorPackagingScheme
 
     @JvmField val GUID = FGuid(0xD89B5E42u, 0x24BD4D46u, 0x8412ACA8u, 0xDF641779u)
 

@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets.objects.meshes
 
 import me.fungames.jfortniteparse.ue4.assets.objects.FByteBulkData
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.objects.engine.FCardRepresentationData
 import me.fungames.jfortniteparse.ue4.objects.engine.FDistanceFieldVolumeData
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.reader.FArchive
@@ -16,8 +17,10 @@ internal val CDSF_RaytracingResources: UByte = 8u
 
 class FStaticMeshLODResources {
     var sections: Array<FStaticMeshSection>
-    lateinit var vertexBuffer: FStaticMeshVertexBuffer
+    var cardRepresentationData: FCardRepresentationData? = null
+    var maxDeviation: Float
     lateinit var positionVertexBuffer: FPositionVertexBuffer
+    lateinit var vertexBuffer: FStaticMeshVertexBuffer
     lateinit var colorVertexBuffer: FColorVertexBuffer
     lateinit var indexBuffer: FRawStaticIndexBuffer
     var reversedIndexBuffer = FRawStaticIndexBuffer()
@@ -25,9 +28,6 @@ class FStaticMeshLODResources {
     var reversedDepthOnlyIndexBuffer = FRawStaticIndexBuffer()
     var wireframeIndexBuffer = FRawStaticIndexBuffer()
     var adjacencyIndexBuffer = FRawStaticIndexBuffer()
-    var maxDeviation: Float
-    var isLODCookedOut = false
-    var inlined = false
     val skipLod get() = !::vertexBuffer.isInitialized || !::indexBuffer.isInitialized || !::positionVertexBuffer.isInitialized || !::colorVertexBuffer.isInitialized
 
     constructor(Ar: FAssetArchive) {
@@ -42,8 +42,8 @@ class FStaticMeshLODResources {
         }
 
         // UE4.23+
-        isLODCookedOut = Ar.readBoolean()
-        inlined = Ar.readBoolean()
+        val isLODCookedOut = Ar.readBoolean()
+        val inlined = Ar.readBoolean()
 
         if (!stripFlags.isDataStrippedForServer() && !isLODCookedOut) {
             if (inlined) {
