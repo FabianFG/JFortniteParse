@@ -312,6 +312,7 @@ class FIoStoreReaderImpl : AbstractAesVfsReader {
             tocResource.header.version.ordinal,
             System.currentTimeMillis() - start)
 
+        this.files = files
         return files
     }
 
