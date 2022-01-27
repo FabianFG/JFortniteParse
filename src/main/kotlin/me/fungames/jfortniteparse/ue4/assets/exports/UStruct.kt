@@ -74,6 +74,7 @@ open class FField {
             "ByteProperty" -> FByteProperty()
             "ClassProperty" -> FClassProperty()
             "DelegateProperty" -> FDelegateProperty()
+            "DoubleProperty" -> FDoubleProperty()
             "EnumProperty" -> FEnumProperty()
             "FieldPathProperty" -> FFieldPathProperty()
             "FloatProperty" -> FFloatProperty()
@@ -174,6 +175,8 @@ class FDelegateProperty : FPropertySerialized() {
         signatureFunction = Ar.readObject()
     }
 }
+
+class FDoubleProperty : FNumericProperty()
 
 class FEnumProperty : FPropertySerialized() {
     var underlyingProp: FNumericProperty? = null
