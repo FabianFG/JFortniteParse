@@ -256,13 +256,22 @@ class FIoStoreReaderImpl : AbstractAesVfsReader {
         override fun initialValue() = FThreadBuffers()
     }
 
-    constructor(utocReader: FArchive, ucasReader: FPakArchive, readOptions: Int) : super(ucasReader.fileName.substringBeforeLast('.'), ucasReader.versions) {
+    constructor(utocReader: FArchive, path: String, openContainerFunc: (String) -> FPakArchive, readOptions: Int) : super(path, utocReader.versions) {
         tocResource = FIoStoreTocResource(utocReader, readOptions)
         utocReader.close()
-        if (tocResource.header.partitionCount > 1u) {
-            throw FIoStatusException(EIoErrorCode.CorruptToc, "This method does not support IoStore environments with multiple partitions")
+        for (partitionIndex in 0u until tocResource.header.partitionCount) {
+            val containerFilePath = StringBuilder(256)
+            containerFilePath.append(path)
+            if (partitionIndex > 0u) {
+                containerFilePath.append("_s").append(partitionIndex.toInt())
+            }
+            containerFilePath.append(".ucas")
+            try {
+                containerFileHandles.add(openContainerFunc(containerFilePath.toString()))
+            } catch (e: FileNotFoundException) {
+                throw FIoStatusException(EIoErrorCode.FileOpenFailed, "Failed to open IoStore container file '$containerFilePath'")
+            }
         }
-        containerFileHandles.add(ucasReader)
     }
 
     constructor(path: String, readOptions: Int, versions: VersionContainer = VersionContainer.DEFAULT) : super(path, versions) {
@@ -305,10 +314,11 @@ class FIoStoreReaderImpl : AbstractAesVfsReader {
         }
 
         // Print statistics
-        PakFileReader.logger.info("IoStore \"{}\": {} {}, version {} in {}ms",
+        PakFileReader.logger.info("IoStore \"{}\": {} {}, {}version {} in {}ms",
             path,
             tocResource.header.tocEntryCount,
             if (isEncrypted()) "encrypted chunks" else "chunks",
+            if (tocResource.header.partitionCount > 1u) tocResource.header.partitionCount.toString() + " partitions, " else "",
             tocResource.header.version.ordinal,
             System.currentTimeMillis() - start)
 
