@@ -79,7 +79,11 @@ class FSkelMeshSection {
                 Ar.skip(8) // NumRigidVerts, NumSoftVerts
             }
             maxBoneInfluences = Ar.readInt32()
-            val clothMappingData = if (Ar.game >= GAME_UE5_BASE && FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) arrayOf(FMeshToMeshVertData(Ar)) else Ar.readTArray { FMeshToMeshVertData(Ar) }
+            val clothMappingData = if (FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) {
+                arrayOf(Ar.readTArray { FMeshToMeshVertData(Ar) })
+            } else {
+                Ar.readTArray { Ar.readTArray { FMeshToMeshVertData(Ar) } }
+            }
             if (skelMeshVer < FSkeletalMeshCustomVersion.RemoveDuplicatedClothingSections) {
                 val physicalMeshVertices = Ar.readTArray { FVector(Ar) }
                 val physicalMeshNormals = Ar.readTArray { FVector(Ar) }
@@ -91,7 +95,7 @@ class FSkelMeshSection {
                 // UE4.16+
                 val clothingData = Ar.readTArray { FClothingSectionData(Ar) }
             }
-            hasClothData = clothMappingData.isNotEmpty()
+            hasClothData = clothMappingData.sumOf { it.size } > 0
             if (FOverlappingVerticesCustomVersion.get(Ar) >= FOverlappingVerticesCustomVersion.DetectOVerlappingVertices) {
                 val overlappingVertices = Ar.readTMap { Ar.readInt32() to Ar.readTArray { Ar.readInt32() } }
             }
@@ -124,8 +128,12 @@ class FSkelMeshSection {
         visibleInRayTracing = FUE5MainStreamObjectVersion.get(Ar) < FUE5MainStreamObjectVersion.SkelMeshSectionVisibleInRayTracingFlagAdded || Ar.readBoolean()
         baseVertexIndex = Ar.readUInt32()
 
-        val clothMappingData = if (Ar.game >= GAME_UE5_BASE && FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) arrayOf(FMeshToMeshVertData(Ar)) else Ar.readTArray { FMeshToMeshVertData(Ar) }
-        hasClothData = clothMappingData.isNotEmpty()
+        val clothMappingData = if (FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) {
+            arrayOf(Ar.readTArray { FMeshToMeshVertData(Ar) })
+        } else {
+            Ar.readTArray { Ar.readTArray { FMeshToMeshVertData(Ar) } }
+        }
+        hasClothData = clothMappingData.sumOf { it.size } > 0
 
         boneMap = UShortArray(Ar.readInt32()) { Ar.readUInt16() }
         numVertices = Ar.readInt32()
