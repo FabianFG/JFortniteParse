@@ -95,7 +95,7 @@ class FSkelMeshSection {
                 // UE4.16+
                 val clothingData = Ar.readTArray { FClothingSectionData(Ar) }
             }
-            hasClothData = clothMappingData.sumOf { it.size } > 0
+            hasClothData = clothMappingData.any { it.isNotEmpty() }
             if (FOverlappingVerticesCustomVersion.get(Ar) >= FOverlappingVerticesCustomVersion.DetectOVerlappingVertices) {
                 val overlappingVertices = Ar.readTMap { Ar.readInt32() to Ar.readTArray { Ar.readInt32() } }
             }
@@ -133,7 +133,7 @@ class FSkelMeshSection {
         } else {
             Ar.readTArray { Ar.readTArray { FMeshToMeshVertData(Ar) } }
         }
-        hasClothData = clothMappingData.sumOf { it.size } > 0
+        hasClothData = clothMappingData.any { it.isNotEmpty() }
 
         boneMap = UShortArray(Ar.readInt32()) { Ar.readUInt16() }
         numVertices = Ar.readInt32()
