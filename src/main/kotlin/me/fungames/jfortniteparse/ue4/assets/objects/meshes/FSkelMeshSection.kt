@@ -79,7 +79,7 @@ class FSkelMeshSection {
                 Ar.skip(8) // NumRigidVerts, NumSoftVerts
             }
             maxBoneInfluences = Ar.readInt32()
-            val clothMappingData = if (FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) {
+            val clothMappingDataLODs = if (FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) {
                 arrayOf(Ar.readTArray { FMeshToMeshVertData(Ar) })
             } else {
                 Ar.readTArray { Ar.readTArray { FMeshToMeshVertData(Ar) } }
@@ -95,7 +95,7 @@ class FSkelMeshSection {
                 // UE4.16+
                 val clothingData = Ar.readTArray { FClothingSectionData(Ar) }
             }
-            hasClothData = clothMappingData.any { it.isNotEmpty() }
+            hasClothData = clothMappingDataLODs.any { it.isNotEmpty() }
             if (FOverlappingVerticesCustomVersion.get(Ar) >= FOverlappingVerticesCustomVersion.DetectOVerlappingVertices) {
                 val overlappingVertices = Ar.readTMap { Ar.readInt32() to Ar.readTArray { Ar.readInt32() } }
             }
@@ -128,12 +128,12 @@ class FSkelMeshSection {
         visibleInRayTracing = FUE5MainStreamObjectVersion.get(Ar) < FUE5MainStreamObjectVersion.SkelMeshSectionVisibleInRayTracingFlagAdded || Ar.readBoolean()
         baseVertexIndex = Ar.readUInt32()
 
-        val clothMappingData = if (FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) {
+        val clothMappingDataLODs = if (FUE5ReleaseStreamObjectVersion.get(Ar) < FUE5ReleaseStreamObjectVersion.AddClothMappingLODBias) {
             arrayOf(Ar.readTArray { FMeshToMeshVertData(Ar) })
         } else {
             Ar.readTArray { Ar.readTArray { FMeshToMeshVertData(Ar) } }
         }
-        hasClothData = clothMappingData.any { it.isNotEmpty() }
+        hasClothData = clothMappingDataLODs.any { it.isNotEmpty() }
 
         boneMap = UShortArray(Ar.readInt32()) { Ar.readUInt16() }
         numVertices = Ar.readInt32()
