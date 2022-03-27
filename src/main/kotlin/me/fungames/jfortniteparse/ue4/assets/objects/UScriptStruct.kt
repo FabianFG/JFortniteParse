@@ -37,7 +37,7 @@ class UScriptStruct {
         val nz = type != ReadType.ZERO
         structType = when (structName.text) {
             "Box" -> if (nz) FBox(Ar) else FBox(FVector(0f, 0f, 0f), FVector(0f, 0f, 0f))
-            "Box2D" -> if (nz) FBox2D(Ar) else FBox2D(FVector2D(0f, 0f), FVector2D(0f, 0f))
+            "Box2D", "Box2f" -> if (nz) FBox2D(Ar) else FBox2D(FVector2D(0f, 0f), FVector2D(0f, 0f))
             "Color" -> if (nz) FColor(Ar) else FColor()
             "ColorMaterialInput" -> FColorMaterialInput(Ar)
             "DateTime", "Timespan" -> if (nz) FDateTime(Ar) else FDateTime()
