@@ -14,7 +14,7 @@ public class ItemTextureVariantDef extends BaseVariantDef {
     public FGameplayTagContainer FilterOutItemsWithTags;
     public Boolean bWantsSprays;
     public Boolean bWantsEmoji;
-    public boolean bAllowClear = true;
+    public Boolean bAllowClear;
 
     @UStruct
     public static class ItemTextureVariant {
