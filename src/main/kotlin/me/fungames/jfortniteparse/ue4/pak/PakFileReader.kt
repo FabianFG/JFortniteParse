@@ -54,7 +54,7 @@ class PakFileReader : AbstractAesVfsReader {
     val keepIndexData: Boolean
     val useDecryptedBuffers: Boolean
 
-    constructor(Ar: FPakArchive, keepIndexData: Boolean = false) : super(if (Ar is FPakFileArchive) Ar.file.absolutePath else Ar.fileName, Ar.versions) {
+    constructor(Ar: FPakArchive, keepIndexData: Boolean = false) : super(if (Ar is FPakFileArchive) Ar.file.path else Ar.fileName, Ar.versions) {
         this.Ar = Ar
         this.keepIndexData = keepIndexData
         length = Ar.pakSize()
