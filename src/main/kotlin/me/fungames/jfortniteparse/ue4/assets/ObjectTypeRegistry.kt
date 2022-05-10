@@ -65,6 +65,7 @@ object ObjectTypeRegistry {
         registerClass(UPrimitiveComponent::class.java)
         registerClass(USCS_Node::class.java)
         registerClass(USceneComponent::class.java)
+        registerClass(UScriptStruct::class.java)
         registerClass(UShapeComponent::class.java)
         registerClass(USimpleConstructionScript::class.java)
         registerClass(USkeletalMesh::class.java)

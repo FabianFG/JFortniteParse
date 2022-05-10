@@ -10,6 +10,7 @@ import me.fungames.jfortniteparse.ue4.locres.Locres
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FDateTime
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.FEditorObjectVersion
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 enum class EFormatArgumentType { Int, UInt, Float, Double, Text, Gender }
@@ -31,10 +32,10 @@ class FText {
             ETextHistoryType.ArgumentFormat -> TODO()
             ETextHistoryType.AsNumber,
             ETextHistoryType.AsPercent,
-            ETextHistoryType.AsCurrency -> FTextHistory.FormatNumber(Ar)
+            ETextHistoryType.AsCurrency -> FTextHistory.AsCurrency(Ar)
             ETextHistoryType.AsDate -> TODO()
             ETextHistoryType.AsTime -> TODO()
-            ETextHistoryType.AsDateTime -> TODO()
+            ETextHistoryType.AsDateTime -> FTextHistory.AsDateTime(Ar)
             ETextHistoryType.Transform -> TODO()
             ETextHistoryType.StringTableEntry -> FTextHistory.StringTableEntry(Ar)
             ETextHistoryType.TextGenerator -> TODO()
@@ -106,9 +107,9 @@ sealed class FTextHistory {
             get() = sourceString
 
         constructor(Ar: FArchive) {
-            this.namespace = Ar.readString()
-            this.key = Ar.readString()
-            this.sourceString = Ar.readString()
+            namespace = Ar.readString()
+            key = Ar.readString()
+            sourceString = Ar.readString()
         }
 
         constructor(namespace: String, key: String, sourceString: String) {
@@ -124,7 +125,73 @@ sealed class FTextHistory {
         }
     }
 
-    class DateTime : FTextHistory {
+    class OrderedFormat : FTextHistory {
+        var sourceFmt: FText
+        var arguments: Array<FFormatArgumentValue>
+
+        override val text: String
+            get() = sourceFmt.text //TODO
+
+        constructor(Ar: FArchive) {
+            sourceFmt = FText(Ar)
+            arguments = Ar.readTArray { FFormatArgumentValue(Ar) }
+        }
+
+        constructor(sourceFmt: FText, arguments: Array<FFormatArgumentValue>) {
+            this.sourceFmt = sourceFmt
+            this.arguments = arguments
+        }
+
+        override fun serialize(Ar: FArchiveWriter) {
+            sourceFmt.serialize(Ar)
+            Ar.writeTArray(arguments) { it.serialize(Ar) }
+        }
+    }
+
+    class AsCurrency : FTextHistory {
+        /** The currency used to format the number. */
+        var currencyCode = ""
+        /** The source value to format from */
+        var sourceValue: FFormatArgumentValue
+        /** All the formatting options available to format using. This can be empty. */
+        var formatOptions: FNumberFormattingOptions? = null
+        /** The culture to format using */
+        var targetCulture: String
+
+        override val text: String
+            get() = sourceValue.toString()
+
+        constructor(Ar: FArchive) {
+            if (Ar.ver >= 389) { // VER_UE4_ADDED_CURRENCY_CODE_TO_FTEXT
+                currencyCode = Ar.readString()
+            }
+            sourceValue = FFormatArgumentValue(Ar)
+            val hasFormatOptions = Ar.readBoolean()
+            if (hasFormatOptions) {
+                formatOptions = FNumberFormattingOptions(Ar)
+            }
+            targetCulture = Ar.readString()
+        }
+
+        constructor(currencyCode: String, sourceValue: FFormatArgumentValue, formatOptions: FNumberFormattingOptions?, targetCulture: String) : super() {
+            this.currencyCode = currencyCode
+            this.sourceValue = sourceValue
+            this.formatOptions = formatOptions
+            this.targetCulture = targetCulture
+        }
+
+        override fun serialize(Ar: FArchiveWriter) {
+            if (Ar.ver >= 389) { // VER_UE4_ADDED_CURRENCY_CODE_TO_FTEXT
+                Ar.writeString(currencyCode)
+            }
+            sourceValue.serialize(Ar)
+            Ar.writeBoolean(formatOptions != null)
+            formatOptions?.serialize(Ar)
+            Ar.writeString(targetCulture)
+        }
+    }
+
+    class AsDateTime : FTextHistory {
         var sourceDateTime: FDateTime
         var dateStyle: EDateTimeStyle
         var timeStyle: EDateTimeStyle
@@ -134,11 +201,11 @@ sealed class FTextHistory {
             get() = "$timeZone: ${sourceDateTime.date}"
 
         constructor(Ar: FArchive) {
-            this.sourceDateTime = FDateTime(Ar)
-            this.dateStyle = EDateTimeStyle.values()[Ar.readInt8().toInt()]
-            this.timeStyle = EDateTimeStyle.values()[Ar.readInt8().toInt()]
-            this.timeZone = Ar.readString()
-            this.targetCulture = Ar.readString()
+            sourceDateTime = FDateTime(Ar)
+            dateStyle = EDateTimeStyle.values()[Ar.readInt8().toInt()]
+            timeStyle = EDateTimeStyle.values()[Ar.readInt8().toInt()]
+            timeZone = Ar.readString()
+            targetCulture = Ar.readString()
         }
 
         constructor(
@@ -164,58 +231,6 @@ sealed class FTextHistory {
         }
     }
 
-    class OrderedFormat : FTextHistory {
-        var sourceFmt: FText
-        var arguments: Array<FFormatArgumentValue>
-
-        override val text: String
-            get() = sourceFmt.text //TODO
-
-        constructor(Ar: FArchive) {
-            this.sourceFmt = FText(Ar)
-            this.arguments = Ar.readTArray { FFormatArgumentValue(Ar) }
-        }
-
-        constructor(sourceFmt: FText, arguments: Array<FFormatArgumentValue>) {
-            this.sourceFmt = sourceFmt
-            this.arguments = arguments
-        }
-
-        override fun serialize(Ar: FArchiveWriter) {
-            sourceFmt.serialize(Ar)
-            Ar.writeTArray(arguments) { it.serialize(Ar) }
-        }
-    }
-
-    class FormatNumber : FTextHistory {
-        /** The source value to format from */
-        var sourceValue: FFormatArgumentValue
-        /** The culture to format using */
-        var timeZone: String
-        var targetCulture: String
-
-        override val text: String
-            get() = sourceValue.toString()
-
-        constructor(Ar: FArchive) {
-            this.sourceValue = FFormatArgumentValue(Ar)
-            this.timeZone = Ar.readString()
-            this.targetCulture = Ar.readString()
-        }
-
-        constructor(sourceValue: FFormatArgumentValue, timeZone: String, targetCulture: String) {
-            this.sourceValue = sourceValue
-            this.timeZone = timeZone
-            this.targetCulture = targetCulture
-        }
-
-        override fun serialize(Ar: FArchiveWriter) {
-            sourceValue.serialize(Ar)
-            Ar.writeString(timeZone)
-            Ar.writeString(targetCulture)
-        }
-    }
-
     class StringTableEntry : FTextHistory {
         /** The string table ID being referenced */
         var tableId: FName
@@ -228,8 +243,8 @@ sealed class FTextHistory {
             if (Ar !is FAssetArchive) {
                 throw ParserException("Tried to load a string table entry with wrong archive type")
             }
-            this.tableId = Ar.readFName()
-            this.key = Ar.readString()
+            tableId = Ar.readFName()
+            key = Ar.readString()
             val table = Ar.provider?.loadObject<UStringTable>(tableId.text) ?: throw ParserException("Failed to load string table '$tableId'")
             text = table.entries[key] ?: throw ParserException("Didn't find needed in key in string table")
         }
@@ -251,6 +266,63 @@ sealed class FTextHistory {
 
     abstract fun serialize(Ar: FArchiveWriter)
     abstract val text: String
+}
+
+enum class ERoundingMode {
+    /** Rounds to the nearest place, equidistant ties go to the value which is closest to an even value: 1.5 becomes 2, 0.5 becomes 0 */
+    HalfToEven,
+    /** Rounds to nearest place, equidistant ties go to the value which is further from zero: -0.5 becomes -1.0, 0.5 becomes 1.0 */
+    HalfFromZero,
+    /** Rounds to nearest place, equidistant ties go to the value which is closer to zero: -0.5 becomes 0, 0.5 becomes 0. */
+    HalfToZero,
+    /** Rounds to the value which is further from zero, "larger" in absolute value: 0.1 becomes 1, -0.1 becomes -1 */
+    FromZero,
+    /** Rounds to the value which is closer to zero, "smaller" in absolute value: 0.1 becomes 0, -0.1 becomes 0 */
+    ToZero,
+    /** Rounds to the value which is more negative: 0.1 becomes 0, -0.1 becomes -1 */
+    ToNegativeInfinity,
+    /** Rounds to the value which is more positive: 0.1 becomes 1, -0.1 becomes 0 */
+    ToPositiveInfinity,
+}
+
+class FNumberFormattingOptions {
+    var alwaysSign: Boolean
+    var useGrouping: Boolean
+    var roundingMode: ERoundingMode
+    var minimumIntegralDigits: Int
+    var maximumIntegralDigits: Int
+    var minimumFractionalDigits: Int
+    var maximumFractionalDigits: Int
+
+    constructor(Ar: FArchive) {
+        alwaysSign = FEditorObjectVersion.get(Ar) >= FEditorObjectVersion.AddedAlwaysSignNumberFormattingOption && Ar.readBoolean()
+        useGrouping = Ar.readBoolean()
+        roundingMode = ERoundingMode.values()[Ar.read()]
+        minimumIntegralDigits = Ar.readInt32()
+        maximumIntegralDigits = Ar.readInt32()
+        minimumFractionalDigits = Ar.readInt32()
+        maximumFractionalDigits = Ar.readInt32()
+    }
+
+    constructor(alwaysSign: Boolean, useGrouping: Boolean, roundingMode: ERoundingMode, minimumIntegralDigits: Int, maximumIntegralDigits: Int, minimumFractionalDigits: Int, maximumFractionalDigits: Int) {
+        this.alwaysSign = alwaysSign
+        this.useGrouping = useGrouping
+        this.roundingMode = roundingMode
+        this.minimumIntegralDigits = minimumIntegralDigits
+        this.maximumIntegralDigits = maximumIntegralDigits
+        this.minimumFractionalDigits = minimumFractionalDigits
+        this.maximumFractionalDigits = maximumFractionalDigits
+    }
+
+    fun serialize(Ar: FArchiveWriter) {
+        Ar.writeBoolean(alwaysSign)
+        Ar.writeBoolean(useGrouping)
+        Ar.write(roundingMode.ordinal)
+        Ar.writeInt32(minimumIntegralDigits)
+        Ar.writeInt32(maximumIntegralDigits)
+        Ar.writeInt32(minimumFractionalDigits)
+        Ar.writeInt32(maximumFractionalDigits)
+    }
 }
 
 class FFormatArgumentValue {
