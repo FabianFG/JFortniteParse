@@ -27,9 +27,10 @@ public class FortChallengeBundleScheduleDefinition extends FortAccountItemDefini
 
     @UStruct
     public static class FortChallengeBundleScheduleEntry {
-        public FSoftObjectPath FortChallengeBundleScheduleEntry;
+        public FSoftObjectPath ChallengeBundle;
         public EChallengeScheduleUnlockType UnlockType;
         public Integer UnlockValue;
+        public ChallengeGiftBoxData GiftBox;
     }
 
     public enum EChallengeScheduleUnlockType {
