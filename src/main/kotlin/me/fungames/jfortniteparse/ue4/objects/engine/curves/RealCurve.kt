@@ -40,15 +40,15 @@ open class FRealCurve {
     /** Default value */
     @JvmField
     @UProperty("DefaultValue")
-    val defaultValue = Float.MAX_VALUE
+    var defaultValue = Float.MAX_VALUE
     /** Pre-infinity extrapolation state */
     @JvmField
     @UProperty("PreInfinityExtrap")
-    val preInfinityExtrap = ERichCurveExtrapolation.RCCE_Constant
+    var preInfinityExtrap = ERichCurveExtrapolation.RCCE_Constant
     /** Pre-infinity extrapolation state */
     @JvmField
     @UProperty("PostInfinityExtrap")
-    val postInfinityExtrap = ERichCurveExtrapolation.RCCE_Constant
+    var postInfinityExtrap = ERichCurveExtrapolation.RCCE_Constant
 
     /** Get range of input time values. Outside this region curve continues constantly the start/end values. */
     open fun getTimeRange(minTime: FloatRef, maxTime: FloatRef) {}
