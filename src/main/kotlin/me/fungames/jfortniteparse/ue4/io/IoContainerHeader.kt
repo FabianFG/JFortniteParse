@@ -102,8 +102,10 @@ class FIoContainerHeader {
             version = Ar.readInt32()
         }
         containerId = FIoContainerId(Ar)
-        if (version == EIoContainerHeaderVersion.BeforeVersionWasAdded) {
+        if (version < EIoContainerHeaderVersion.OptionalSegmentPackages) {
             val packageCount = Ar.readUInt32()
+        }
+        if (version == EIoContainerHeaderVersion.BeforeVersionWasAdded) {
             val names = Ar.read(Ar.readInt32())
             val nameHashes = Ar.read(Ar.readInt32())
             if (names.isNotEmpty()) {
