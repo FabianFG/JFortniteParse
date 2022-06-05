@@ -56,8 +56,8 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
     }
 
     private fun deserializePropData(Ar: FUsmapNameTableArchive): PropertyType {
-        val propType = values()[Ar.read()]
-        val type = PropertyType(FName(propType.name))
+        val propType = values().getOrNull(Ar.read())
+        val type = PropertyType(FName(propType?.name ?: "Unknown"))
         when (propType) {
             EnumProperty -> {
                 type.innerType = deserializePropData(Ar).also {
