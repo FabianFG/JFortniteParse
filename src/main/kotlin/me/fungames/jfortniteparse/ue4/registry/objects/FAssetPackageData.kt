@@ -24,6 +24,10 @@ class FAssetPackageData {
         if (version >= FAssetRegistryVersion.Type.AddedCookedMD5Hash) {
             cookedHash = FMD5Hash(Ar)
         }
+        if (version >= FAssetRegistryVersion.Type.AddedChunkHashes) {
+            //chunkHashes = Ar.readTMap { FIoChunkId(Ar) to Ar.read(20) }
+            Ar.skip((Ar.readInt32() * (12 + 20)).toLong())
+        }
         if (version >= FAssetRegistryVersion.Type.WorkspaceDomain) {
             fileVersionUE = if (version >= FAssetRegistryVersion.Type.PackageFileSummaryVersionChange) {
                 FPackageFileVersion(Ar)

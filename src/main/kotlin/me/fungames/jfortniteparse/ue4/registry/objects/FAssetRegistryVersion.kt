@@ -47,6 +47,10 @@ class FAssetRegistryVersion(Ar: FArchive) : Comparable<FAssetRegistryVersion.Typ
         PackageImportedClasses,
         /** A new version number of UE5 was added to FPackageFileSummary */
         PackageFileSummaryVersionChange,
+        /** Change to linker export/import resource serialization */
+        ObjectResourceOptionalVersionChange,
+        /** Added FIoHash for each FIoChunkId in the package to the AssetPackageData. */
+        AddedChunkHashes,
     }
 
     val guid = FGuid(Ar)

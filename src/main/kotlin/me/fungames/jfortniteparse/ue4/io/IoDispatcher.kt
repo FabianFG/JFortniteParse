@@ -169,7 +169,9 @@ enum class EIoChunkType5 {
     ExternalFile,
     ShaderCodeLibrary,
     ShaderCode,
-    PackageStoreEntry
+    PackageStoreEntry,
+    DerivedData,
+    EditorDerivedData,
 }
 
 //////////////////////////////////////////////////////////////////////////

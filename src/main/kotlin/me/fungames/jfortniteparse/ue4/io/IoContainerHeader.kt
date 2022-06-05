@@ -72,6 +72,7 @@ object EIoContainerHeaderVersion {
     const val BeforeVersionWasAdded = -1 // Custom constant to indicate pre-UE5 data
     const val Initial = 0
     const val LocalizedPackages = 1
+    const val OptionalSegmentPackages = 2
 
     const val Latest = LocalizedPackages
 }
@@ -82,9 +83,10 @@ class FIoContainerHeader {
     }
 
     var containerId: FIoContainerId
-    var packageCount = 0u
     var packageIds: Array<FPackageId>
     var storeEntries: Array<FFilePackageStoreEntry>
+    var optionalSegmentPackageIds: Array<FPackageId>? = null
+    var optionalSegmentStoreEntries: Array<FFilePackageStoreEntry>? = null
     val redirectsNameMap = FNameMap()
     var localizedPackages: Array<FIoContainerHeaderLocalizedPackage>? = null
     var culturePackageMap: FCulturePackageMap? = null
@@ -100,8 +102,8 @@ class FIoContainerHeader {
             version = Ar.readInt32()
         }
         containerId = FIoContainerId(Ar)
-        packageCount = Ar.readUInt32()
         if (version == EIoContainerHeaderVersion.BeforeVersionWasAdded) {
+            val packageCount = Ar.readUInt32()
             val names = Ar.read(Ar.readInt32())
             val nameHashes = Ar.read(Ar.readInt32())
             if (names.isNotEmpty()) {
@@ -111,8 +113,15 @@ class FIoContainerHeader {
         packageIds = Ar.readTArray { FPackageId(Ar) }
         val storeEntriesNum = Ar.readInt32()
         val storeEntriesEnd = Ar.pos() + storeEntriesNum
-        storeEntries = Array(packageCount.toInt()) { FFilePackageStoreEntry(Ar) }
+        storeEntries = Array(packageIds.size) { FFilePackageStoreEntry(Ar) }
         Ar.seek(storeEntriesEnd)
+        if (version >= EIoContainerHeaderVersion.OptionalSegmentPackages) {
+            optionalSegmentPackageIds = Ar.readTArray { FPackageId(Ar) }
+            val optionalSegmentStoreEntriesNum = Ar.readInt32()
+            val optionalSegmentStoreEntriesEnd = Ar.pos() + optionalSegmentStoreEntriesNum
+            optionalSegmentStoreEntries = Array(optionalSegmentPackageIds!!.size) { FFilePackageStoreEntry(Ar) }
+            Ar.seek(optionalSegmentStoreEntriesEnd)
+        }
         if (version >= EIoContainerHeaderVersion.Initial) {
             redirectsNameMap.load(Ar, FMappedName.EType.Container)
         }

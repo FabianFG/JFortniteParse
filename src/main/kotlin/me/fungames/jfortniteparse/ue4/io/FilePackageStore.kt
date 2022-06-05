@@ -90,7 +90,6 @@ class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener
             Thread {
                 val containerHeader = FIoContainerHeader(FByteArchive(ioBuffer, provider.versions))
                 loadedContainer.containerNameMap = containerHeader.redirectsNameMap
-                loadedContainer.packageCount = containerHeader.packageCount
                 loadedContainer.storeEntries = containerHeader.storeEntries
                 synchronized(packageNameMapsCritical) {
                     loadedContainer.storeEntries.forEachIndexed { index, containerEntry ->
@@ -160,6 +159,5 @@ class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener
     class FLoadedContainer {
         lateinit var containerNameMap: FNameMap
         lateinit var storeEntries: Array<FFilePackageStoreEntry>
-        var packageCount = 0u
     }
 }
