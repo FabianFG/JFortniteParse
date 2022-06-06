@@ -60,7 +60,7 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public Float Weight;
     public UShort GranterWindowPeriodMinutes;
     public UShort GranterCooldownPeriodSeconds;
-    public FDataTableRowHandle Category;
+    public FDataTableRowHandle category;
     public FSoftObjectPath IntroConversation;
     public FSoftObjectPath SelectRewardsConversation;
     public FSoftObjectPath ClaimConversation;
