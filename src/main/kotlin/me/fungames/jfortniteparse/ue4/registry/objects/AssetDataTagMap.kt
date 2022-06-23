@@ -2,7 +2,9 @@ package me.fungames.jfortniteparse.ue4.registry.objects
 
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FNameEntryId
+import me.fungames.jfortniteparse.ue4.objects.uobject.FTopLevelAssetPath
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryArchive
 import me.fungames.jfortniteparse.util.get
 
 /**
@@ -12,7 +14,11 @@ import me.fungames.jfortniteparse.util.get
  * * [package]
  */
 class FAssetRegistryExportPath(val `class`: FName, val `object`: FName, val `package`: FName) {
-    constructor(Ar: FArchive) : this(Ar.readFName(), Ar.readFName(), Ar.readFName())
+    constructor(Ar: FAssetRegistryArchive) : this(
+        if (Ar.version >= FAssetRegistryVersion.Type.ClassPaths) FTopLevelAssetPath(Ar).assetName else Ar.readFName(),
+        Ar.readFName(),
+        Ar.readFName()
+    )
 
     override fun toString(): String {
         val path = StringBuilder()
@@ -47,11 +53,17 @@ class FAssetRegistryExportPath(val `class`: FName, val `object`: FName, val `pac
 }
 
 /** Compact FAssetRegistryExportPath equivalent for when all FNames are numberless */
-class FNumberlessExportPath(val `class`: FNameEntryId, val `object`: FNameEntryId, val `package`: FNameEntryId, val names: List<String>) {
-    constructor(Ar: FArchive, names: List<String>) : this(FNameEntryId(Ar), FNameEntryId(Ar), FNameEntryId(Ar), names)
+class FNumberlessExportPath(val classPackage: FNameEntryId, val classObject: FNameEntryId, val `object`: FNameEntryId, val `package`: FNameEntryId, val names: List<String>) {
+    constructor(Ar: FAssetRegistryArchive, names: List<String>) : this(
+        if (Ar.version >= FAssetRegistryVersion.Type.ClassPaths) FNameEntryId(Ar) else FNameEntryId(),
+        FNameEntryId(Ar),
+        FNameEntryId(Ar),
+        FNameEntryId(Ar),
+        names
+    )
 
     fun makeNumberedPath() = FAssetRegistryExportPath(
-        FName(names[`class`.value]),
+        FName(names[classObject.value]),
         FName(names[`object`.value]),
         FName(names[`package`.value])
     )

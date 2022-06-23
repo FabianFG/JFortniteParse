@@ -15,7 +15,7 @@ import me.fungames.jfortniteparse.ue4.versions.FFrameworkObjectVersion
 @OnlyAnnotated
 open class UStruct : UObject() {
     /** Struct this inherits from, may be null */
-    var superStruct: Lazy<UStruct>? = null
+    var superStruct: Lazy<UStruct?>? = null
     lateinit var children: Array<FPackageIndex> // UField
     var childProperties = emptyArray<FField>()
     var childProperties2 = emptyList<PropertyInfo>()

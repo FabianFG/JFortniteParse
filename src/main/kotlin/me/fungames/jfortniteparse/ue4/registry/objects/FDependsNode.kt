@@ -1,7 +1,7 @@
 package me.fungames.jfortniteparse.ue4.registry.objects
 
 import me.fungames.jfortniteparse.exceptions.ParserException
-import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryArchive
 import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.ref
 import java.util.*
@@ -30,7 +30,7 @@ class FDependsNode(private val index: Int) {
     var manageFlags: BitSet? = null
         private set
 
-    fun serializeLoad(Ar: FArchive, preallocatedDependsNodeDataBuffer: Array<FDependsNode>) {
+    fun serializeLoad(Ar: FAssetRegistryArchive, preallocatedDependsNodeDataBuffer: Array<FDependsNode>) {
         identifier = FAssetIdentifier(Ar)
 
         fun readDependencies(outDependencies: ObjectRef<MutableList<FDependsNode>?>, outFlagBits: ObjectRef<BitSet?>?, flagSetWidth: Int) {
@@ -93,14 +93,14 @@ class FDependsNode(private val index: Int) {
         referencers = referencersRef.element
     }
 
-    fun serializeLoadBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion, preallocatedDependsNodeDataBuffer: Array<FDependsNode>) {
+    fun serializeLoadBeforeFlags(Ar: FAssetRegistryArchive, preallocatedDependsNodeDataBuffer: Array<FDependsNode>) {
         identifier = FAssetIdentifier(Ar)
 
         val numHard = Ar.readInt32()
         val numSoft = Ar.readInt32()
         val numName = Ar.readInt32()
         val numSoftManage = Ar.readInt32()
-        val numHardManage = if (version >= FAssetRegistryVersion.Type.AddedHardManage) Ar.readInt32() else 0
+        val numHardManage = if (Ar.version >= FAssetRegistryVersion.Type.AddedHardManage) Ar.readInt32() else 0
         val numReferencers = Ar.readInt32()
 
         // Empty dependency arrays and reserve space

@@ -5,7 +5,8 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 const val NAME_NO_NUMBER_INTERNAL = 0
 
 /** Opaque id to a deduplicated name */
-class FNameEntryId(var value: UInt = 0u) {
+@JvmInline
+value class FNameEntryId(val value: UInt = 0u) {
     constructor(Ar: FArchive) : this(Ar.readUInt32())
 
     operator fun compareTo(rhs: FNameEntryId) = value.compareTo(rhs.value)

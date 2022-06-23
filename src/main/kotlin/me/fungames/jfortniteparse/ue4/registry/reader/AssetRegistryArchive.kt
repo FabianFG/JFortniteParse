@@ -7,14 +7,11 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchiveProxy
 import me.fungames.jfortniteparse.ue4.registry.objects.*
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.mutableMapOf
 import kotlin.collections.set
 
 val ASSET_REGISTRY_NUMBERED_NAME_BIT = 0x80000000u
 
-abstract class FAssetRegistryArchive(wrappedAr: FArchive) : FArchiveProxy(wrappedAr) {
+abstract class FAssetRegistryArchive(wrappedAr: FArchive, val version: FAssetRegistryVersion) : FArchiveProxy(wrappedAr) {
     abstract fun serializeTagsAndBundles(out: FAssetData)
 }
 
@@ -22,17 +19,17 @@ class FAssetRegistryReader : FAssetRegistryArchive {
     val names: List<String>
     val tags: FStore
 
-    constructor(inner: FArchive) : super(inner) {
+    constructor(inner: FArchive, version: FAssetRegistryVersion) : super(inner, version) {
         names = loadNameBatch(inner)
         tags = FStore(this)
     }
 
-    private constructor(inner: FArchive, names: List<String>, tags: FStore) : super(inner) {
+    private constructor(inner: FArchive, version: FAssetRegistryVersion, names: List<String>, tags: FStore) : super(inner, version) {
         this.names = names
         this.tags = tags
     }
 
-    override fun clone() = FAssetRegistryReader(wrappedAr, names, tags)
+    override fun clone() = FAssetRegistryReader(wrappedAr, version, names, tags)
 
     override fun readFName(): FName {
         var index = readUInt32()

@@ -7,6 +7,7 @@ import me.fungames.jfortniteparse.ue4.registry.objects.FAssetData
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetPackageData
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetRegistryVersion
 import me.fungames.jfortniteparse.ue4.registry.objects.FDependsNode
+import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryArchive
 import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryReader
 import me.fungames.jfortniteparse.ue4.registry.reader.FNameTableArchiveReader
 import java.io.File
@@ -25,8 +26,8 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
         val version = FAssetRegistryVersion(originalAr)
         val Ar = when {
             version < FAssetRegistryVersion.Type.RemovedMD5Hash -> throw ParserException("Cannot read states before this version")
-            version < FAssetRegistryVersion.Type.FixedTags -> FNameTableArchiveReader(originalAr)
-            else -> FAssetRegistryReader(originalAr)
+            version < FAssetRegistryVersion.Type.FixedTags -> FNameTableArchiveReader(originalAr, version)
+            else -> FAssetRegistryReader(originalAr, version)
         }
 
         preallocatedAssetDataBuffer = Ar.readTArray { FAssetData(Ar) }
@@ -35,7 +36,7 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
             val localNumDependsNodes = Ar.readInt32()
             preallocatedDependsNodeDataBuffer = Array(localNumDependsNodes) { FDependsNode(it) }
             if (localNumDependsNodes > 0) {
-                loadDependenciesBeforeFlags(Ar, version)
+                loadDependenciesBeforeFlags(Ar)
             }
         } else {
             val dependencySectionSize = Ar.readInt64()
@@ -48,18 +49,18 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
             Ar.seek(dependencySectionEnd)
         }
 
-        preallocatedPackageDataBuffer = Ar.readTArray { FAssetPackageData(Ar, version) }
+        preallocatedPackageDataBuffer = Ar.readTArray { FAssetPackageData(Ar) }
     }
 
-    private fun loadDependencies(Ar: FArchive) {
+    private fun loadDependencies(Ar: FAssetRegistryArchive) {
         for (dependsNode in preallocatedDependsNodeDataBuffer) {
             dependsNode.serializeLoad(Ar, preallocatedDependsNodeDataBuffer)
         }
     }
 
-    private fun loadDependenciesBeforeFlags(Ar: FArchive, version: FAssetRegistryVersion) {
+    private fun loadDependenciesBeforeFlags(Ar: FAssetRegistryArchive) {
         for (dependsNode in preallocatedDependsNodeDataBuffer) {
-            dependsNode.serializeLoadBeforeFlags(Ar, version, preallocatedDependsNodeDataBuffer)
+            dependsNode.serializeLoadBeforeFlags(Ar, preallocatedDependsNodeDataBuffer)
         }
     }
 }

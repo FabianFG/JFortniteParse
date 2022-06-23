@@ -5,20 +5,21 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetBundleData
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetData
+import me.fungames.jfortniteparse.ue4.registry.objects.FAssetRegistryVersion
 import kotlin.math.min
 
 class FNameTableArchiveReader : FAssetRegistryArchive {
     val nameMap: List<String>
 
-    constructor(wrappedArchive: FArchive) : super(wrappedArchive) {
+    constructor(wrappedArchive: FArchive, version: FAssetRegistryVersion) : super(wrappedArchive, version) {
         this.nameMap = serializeNameMap()
     }
 
-    private constructor(wrappedArchive: FArchive, nameMap: List<String>) : super(wrappedArchive) {
+    private constructor(wrappedArchive: FArchive, version: FAssetRegistryVersion, nameMap: List<String>) : super(wrappedArchive, version) {
         this.nameMap = nameMap
     }
 
-    override fun clone() = FNameTableArchiveReader(wrappedAr, nameMap)
+    override fun clone() = FNameTableArchiveReader(wrappedAr, version, nameMap)
 
     private fun serializeNameMap(): List<String> {
         val nameOffset = wrappedAr.readInt64()

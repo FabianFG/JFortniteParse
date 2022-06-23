@@ -51,6 +51,8 @@ class FAssetRegistryVersion(Ar: FArchive) : Comparable<FAssetRegistryVersion.Typ
         ObjectResourceOptionalVersionChange,
         /** Added FIoHash for each FIoChunkId in the package to the AssetPackageData. */
         AddedChunkHashes,
+        /** Classes are serialized as path names rather than short object names, e.g. /Script/Engine.StaticMesh */
+        ClassPaths,
     }
 
     val guid = FGuid(Ar)

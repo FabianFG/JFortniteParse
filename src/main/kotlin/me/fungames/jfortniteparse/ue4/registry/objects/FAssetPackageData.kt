@@ -3,7 +3,7 @@ package me.fungames.jfortniteparse.ue4.registry.objects
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.core.serialization.FCustomVersion
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryArchive
 import me.fungames.jfortniteparse.ue4.versions.FPackageFileVersion
 
 class FAssetPackageData {
@@ -17,7 +17,8 @@ class FAssetPackageData {
     var customVersions: Array<FCustomVersion>? = null
     var flags = 0u
 
-    constructor(Ar: FArchive, version: FAssetRegistryVersion) {
+    constructor(Ar: FAssetRegistryArchive) {
+        val version = Ar.version
         packageName = Ar.readFName()
         diskSize = Ar.readInt64()
         packageGuid = FGuid(Ar)

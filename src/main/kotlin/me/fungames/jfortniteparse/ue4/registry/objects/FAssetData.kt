@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.registry.objects
 
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
+import me.fungames.jfortniteparse.ue4.objects.uobject.FTopLevelAssetPath
 import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryArchive
 
 class FAssetData {
@@ -18,7 +19,7 @@ class FAssetData {
         // Serialize out the asset info
         this.objectPath = Ar.readFName()
         this.packagePath = Ar.readFName()
-        this.assetClass = Ar.readFName()
+        this.assetClass = if (Ar.version >= FAssetRegistryVersion.Type.ClassPaths) FTopLevelAssetPath(Ar).assetName else Ar.readFName()
 
         // These are derived from ObjectPath, we manually serialize them because they get pooled
         this.packageName = Ar.readFName()
