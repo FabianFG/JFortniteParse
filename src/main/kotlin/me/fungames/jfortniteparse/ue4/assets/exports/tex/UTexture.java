@@ -13,10 +13,10 @@ import java.util.List;
 public class UTexture extends UStreamableRenderAsset implements UUnrealMaterial {
     public FGuid LightingGuid;
     public Integer LodBias;
-    public ETextureCompressionSettings CompressionSettings;
-    public ETextureFilter Filter;
+    public TextureCompressionSettings CompressionSettings;
+    public TextureFilter Filter;
     public ETextureMipLoadOptions MipLoadOptions;
-    public ETextureGroup LODGroup;
+    public TextureGroup LODGroup;
     public FPerPlatformFloat Downscale;
     public ETextureDownscaleOptions DownscaleOptions;
     public Boolean SRGB;
@@ -38,7 +38,7 @@ public class UTexture extends UStreamableRenderAsset implements UUnrealMaterial 
         return getName();
     }
 
-    public enum ETextureCompressionSettings {
+    public enum TextureCompressionSettings {
         TC_Default,
         TC_Normalmap,
         TC_Masks,
@@ -54,7 +54,7 @@ public class UTexture extends UStreamableRenderAsset implements UUnrealMaterial 
         TC_HalfFloat
     }
 
-    public enum ETextureFilter {
+    public enum TextureFilter {
         TF_Nearest,
         TF_Bilinear,
         TF_Trilinear,
@@ -67,7 +67,7 @@ public class UTexture extends UStreamableRenderAsset implements UUnrealMaterial 
         OnlyFirstMip
     }
 
-    public enum ETextureGroup {
+    public enum TextureGroup {
         TEXTUREGROUP_World,
         TEXTUREGROUP_WorldNormalMap,
         TEXTUREGROUP_WorldSpecular,

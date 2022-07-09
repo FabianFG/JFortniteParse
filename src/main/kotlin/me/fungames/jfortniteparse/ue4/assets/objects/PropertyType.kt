@@ -33,7 +33,7 @@ class PropertyType {
     constructor(json: JsonObject) {
         var type = json["type"].asString
         when (type) { // Replace unsupported property type names in usmap format
-            "ClassProperty" -> type = "ObjectProperty"
+            "ClassProperty", "ObjectPtrProperty", "ClassPtrProperty" -> type = "ObjectProperty"
             "MulticastInlineDelegateProperty" -> type = "MulticastDelegateProperty"
             "MulticastSparseDelegateProperty" -> type = "MulticastDelegateProperty"
             "SoftClassProperty" -> type = "SoftObjectProperty"

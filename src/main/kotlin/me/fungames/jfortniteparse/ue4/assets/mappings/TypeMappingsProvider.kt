@@ -19,7 +19,7 @@ abstract class TypeMappingsProvider {
         return struct
     }
 
-    open fun getEnumValues(enumName: FName) = mappings.enums[enumName.text]
+    open fun getEnumValues(enumName: FName) = mappings.enums[enumName.text] ?: mappings.enums['E' + enumName.text]
 
     fun getEnum(enumName: FName): UEnum? {
         val enumValues = getEnumValues(enumName)
