@@ -46,12 +46,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         val compData = ByteArray(compSize)
         Ar.read(compData)
         val data = ByteArray(decompSize)
-        Compression.uncompressMemory(when (method) {
-            0 -> "None"
-            1 -> "Oodle"
-            2 -> "Brotli"
-            else -> throw UnknownCompressionMethodException("Unknown compression method index $method")
-        }, data, 0, decompSize, compData, 0, compSize)
+        Compression.uncompressMemory(EUsmapCompressionMethod.fromIndex(method).name, data, 0, decompSize, compData, 0, compSize)
         return data
     }
 
@@ -123,6 +118,17 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
 
         companion object {
             fun latest() = values().last()
+        }
+    }
+
+    enum class EUsmapCompressionMethod(val suffix: String) {
+        None("xx"),
+        Oodle("oo"),
+        Brotli("br");
+
+        companion object {
+            fun fromIndex(index: Int) = values().getOrNull(index)
+                ?: throw UnknownCompressionMethodException("Unknown compression method index $index")
         }
     }
 
