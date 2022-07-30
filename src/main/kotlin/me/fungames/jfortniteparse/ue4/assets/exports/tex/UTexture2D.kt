@@ -20,8 +20,8 @@ class UTexture2D : UTexture() {
     @JvmField @UProperty var LevelIndex: Int? = null
     @JvmField @UProperty var FirstResourceMemMip: Int? = null
     @JvmField @UProperty var bTemporarilyDisableStreaming: Boolean? = null
-    @JvmField @UProperty var AddressX: ETextureAddress? = null
-    @JvmField @UProperty var AddressY: ETextureAddress? = null
+    @JvmField @UProperty var AddressX: TextureAddress? = null
+    @JvmField @UProperty var AddressY: TextureAddress? = null
     @JvmField @UProperty var ImportedSize: FIntPoint? = null
     lateinit var flag1: FStripDataFlags
     lateinit var flag2: FStripDataFlags
@@ -72,7 +72,7 @@ class UTexture2D : UTexture() {
     }
 }
 
-enum class ETextureAddress {
+enum class TextureAddress {
     TA_Wrap,
     TA_Clamp,
     TA_Mirror

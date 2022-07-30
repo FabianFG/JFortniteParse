@@ -67,6 +67,8 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public FText RewardHeaderText;
     public FText RewardDescription;
     public FText CompletionText;
+    public Boolean bCanDisplayLockWidget;
+    public FText LockedDisplayTextOverride;
     public List<FortQuestMissionCreationContext> MissionCreationContexts;
     public FortMissionConfigDataParams MissionConfigMetadata;
     public UInt ClaimPriority;

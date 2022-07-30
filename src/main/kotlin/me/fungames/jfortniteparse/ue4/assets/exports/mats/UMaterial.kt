@@ -21,14 +21,21 @@ class UMaterial : UMaterial_Properties() {
             scanForTextures(Ar)
             if (validPos > 0) Ar.seek(validPos)
             /*if (Ar.ver >= 260) { // VER_UE4_PURGED_FMATERIAL_COMPILE_OUTPUTS
-                val numLoadedResources = Ar.readInt32()
-                if (numLoadedResources > 0) {
-                    val resourceAr = FMaterialResourceProxyReader(Ar)
-                    repeat(numLoadedResources) { resourceIndex ->
-                        FMaterialResource().serializeInlineShaderMap(resourceAr)
-                    }
-                }
+                val loadedResources = mutableListOf<FMaterialResource>()
+                deserializeInlineShaderMaps(Ar, loadedResources)
             }*/
+        }
+    }
+
+    private fun deserializeInlineShaderMaps(Ar: FAssetArchive, loadedResources: MutableList<FMaterialResource>) {
+        val numLoadedResources = Ar.readInt32()
+        if (numLoadedResources > 0) {
+            val resourceAr = FMaterialResourceProxyReader(Ar)
+            repeat(numLoadedResources) {
+                val loadedResource = FMaterialResource()
+                loadedResource.serializeInlineShaderMap(resourceAr)
+                loadedResources.add(loadedResource)
+            }
         }
     }
 

@@ -32,6 +32,7 @@ public class FortChallengeBundleItemDefinition extends FortAccountItemDefinition
     public Integer MaxChainDepth;
     public FSoftObjectPath BundleHidenImageMaterial;
     public FText UniqueLockedMessage;
+    public FText LockedDisplayTextOverride;
     public Boolean bHideFromMapChallenges;
     public Boolean bHideFromMapChallengeUntilBundleExists;
     public Boolean bHideWhenCompleted;
