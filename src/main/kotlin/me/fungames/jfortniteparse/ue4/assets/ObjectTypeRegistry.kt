@@ -83,6 +83,7 @@ object ObjectTypeRegistry {
         registerClass(UTimelineTemplate::class.java)
         registerClass(UUserDefinedEnum::class.java)
         registerClass(UUserDefinedStruct::class.java)
+        registerClass(UWidgetBlueprintGeneratedClass::class.java)
         registerClass(UWorld::class.java)
 
         registerClass(AActor::class.java)

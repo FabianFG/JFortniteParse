@@ -5,4 +5,4 @@ import me.fungames.jfortniteparse.ue4.assets.UStruct
 @UStruct
 class FPointerToUberGraphFrame
 
-class UBlueprintGeneratedClass : UBlueprintGeneratedClass_Properties()
+open class UBlueprintGeneratedClass : UBlueprintGeneratedClass_Properties()
