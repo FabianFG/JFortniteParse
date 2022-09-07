@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.uobject.EObjectFlags
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
 enum class EUserDefinedStructureStatus {
@@ -28,7 +29,7 @@ class UUserDefinedStruct : UScriptStruct() {
         }
         if (false && EUserDefinedStructureStatus.UDSS_UpToDate == Status) {
             // UScriptStruct::SerializeItem
-            val defaultProperties = mutableListOf<FPropertyTag>() // TODO should we save this?
+            val defaultProperties = linkedMapOf<FName, FPropertyTag>() // TODO should we save this?
             if (Ar.useUnversionedPropertySerialization) {
                 deserializeUnversionedProperties(defaultProperties, this, Ar)
             } else {

@@ -31,7 +31,7 @@ open class UDataTable : UObject {
         super.deserialize(Ar, validPos)
         rows = Ar.readTMap {
             val key = Ar.readFName()
-            val rowProperties = mutableListOf<FPropertyTag>()
+            val rowProperties = linkedMapOf<FName, FPropertyTag>()
             if (Ar.useUnversionedPropertySerialization) {
                 deserializeUnversionedProperties(rowProperties, RowStruct!!.value, Ar)
             } else {

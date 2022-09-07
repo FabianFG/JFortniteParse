@@ -17,12 +17,14 @@ import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyInfo
 import me.fungames.jfortniteparse.ue4.assets.objects.PropertyType
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.util.INDEX_NONE
 import me.fungames.jfortniteparse.util.divideAndRoundUp
 import me.fungames.jfortniteparse.util.indexOfFirst
 import java.lang.reflect.Modifier
 import java.util.*
+import kotlin.collections.LinkedHashMap
 
 class FUnversionedPropertySerializer(val info: PropertyInfo, val arrayIndex: Int) {
     fun deserialize(Ar: FAssetArchive, type: ReadType) = FPropertyTag(Ar, info, arrayIndex, type)
@@ -216,7 +218,7 @@ class FUnversionedHeader {
     }
 }
 
-fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, struct: UStruct?, Ar: FAssetArchive) {
+fun deserializeUnversionedProperties(properties: LinkedHashMap<FName, FPropertyTag>, struct: UStruct?, Ar: FAssetArchive) {
     if (struct == null) {
         throw ParserException("Cannot read unversioned properties without a struct", Ar)
     }
@@ -236,11 +238,12 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
                     if (GDebugProperties) println("Val: ${it.schemaIt} (IsNonZero: ${it.isNonZero()})")
                     if (it.isNonZero()) {
                         val element = serializer.deserialize(Ar, ReadType.NORMAL)
-                        properties.add(element)
+                        properties[element.name] = element
                         if (GDebugProperties) println(element.toString())
                     } else {
                         val start = Ar.pos()
-                        properties.add(serializer.deserialize(Ar, ReadType.ZERO))
+                        val element = serializer.deserialize(Ar, ReadType.ZERO)
+                        properties[element.name] = element
                         if (Ar.pos() != start) {
                             throw ParserException("Zero property $serializer should not advance the archive's position", Ar)
                         }
@@ -257,7 +260,7 @@ fun deserializeUnversionedProperties(properties: MutableList<FPropertyTag>, stru
             val it = FUnversionedHeader.FIterator(header, schemas)
             while (!it.done) {
                 check(!it.isNonZero())
-                it.serializer?.run { properties.add(deserialize(Ar, ReadType.ZERO)) }
+                it.serializer?.run { val element = deserialize(Ar, ReadType.ZERO); properties[element.name] = element }
                     ?: LOG_JFP.warn("${struct.name}: Unknown property with value ${it.schemaIt} but it's zero so we are good")
                 it.next()
             }

@@ -11,10 +11,10 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeUnversionedProperties
 
 class FStructFallback : IPropertyHolder {
-    override var properties: MutableList<FPropertyTag>
+    override var properties: LinkedHashMap<FName, FPropertyTag>
 
     constructor(Ar: FAssetArchive, struct: Lazy<out UStruct>?, structName: FName = FName.NAME_None) {
-        properties = mutableListOf()
+        properties = linkedMapOf()
         if (Ar.useUnversionedPropertySerialization) {
             val structClass = struct?.value
                 ?: throw MissingSchemaException("Unknown struct $structName")
@@ -36,15 +36,16 @@ class FStructFallback : IPropertyHolder {
     }, structName)
 
     fun serialize(Ar: FAssetArchiveWriter) {
-        properties.forEach {
+        properties.values.forEach {
             it.serialize(Ar, true)
         }
         Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
     }
 
     inline fun <reified T> set(name: String, value: T) {
-        if (getOrNull<T>(name) != null)
-            properties.first { it.name.text == name }.setTagTypeValue(value)
+        val fname = FName(name)
+        if (properties.containsKey(fname))
+            properties[fname]?.setTagTypeValue(value)
     }
 
     inline fun <reified T> getOrDefault(name: String, default: T): T {
@@ -52,13 +53,13 @@ class FStructFallback : IPropertyHolder {
         return value ?: default
     }
 
-    fun <T> getOrNull(name: String, clazz: Class<T>): T? = properties.firstOrNull { it.name.text == name }?.getTagTypeValue(clazz)
+    fun <T> getOrNull(name: String, clazz: Class<T>): T? = properties[FName(name)]?.getTagTypeValue(clazz)
 
     inline fun <reified T> getOrNull(name: String) = getOrNull(name, T::class.java)
 
     inline fun <reified T> get(name: String): T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
 
-    constructor(properties: MutableList<FPropertyTag>) {
+    constructor(properties: LinkedHashMap<FName, FPropertyTag>) {
         this.properties = properties
     }
 }

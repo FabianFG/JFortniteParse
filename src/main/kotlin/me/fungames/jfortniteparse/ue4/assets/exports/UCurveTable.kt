@@ -63,7 +63,7 @@ class UCurveTable : UObject() {
                 ECurveTableMode.SimpleCurves -> FSimpleCurve()
                 ECurveTableMode.RichCurves -> FRichCurve()
             }.apply {
-                val properties = mutableListOf<FPropertyTag>()
+                val properties = linkedMapOf<FName, FPropertyTag>()
                 if (Ar.useUnversionedPropertySerialization) {
                     deserializeUnversionedProperties(properties, rowStruct, Ar)
                 } else {

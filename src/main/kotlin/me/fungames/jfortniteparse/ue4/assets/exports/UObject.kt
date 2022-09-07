@@ -26,7 +26,7 @@ open class UObject : IPropertyHolder {
     var outer: UObject? = null
     var clazz: UStruct? = null
     var template: ResolvedObject? = null
-    final override var properties: MutableList<FPropertyTag>
+    final override var properties: LinkedHashMap<FName, FPropertyTag>
     var objectGuid: FGuid? = null
     var flags = 0
 
@@ -42,13 +42,14 @@ open class UObject : IPropertyHolder {
     val exportType get() = clazz?.name ?: javaClass.simpleName.unprefix()
 
     @JvmOverloads
-    constructor(properties: MutableList<FPropertyTag> = mutableListOf()) {
+    constructor(properties: LinkedHashMap<FName, FPropertyTag> = linkedMapOf()) {
         this.properties = properties
     }
 
     inline fun <reified T> set(name: String, value: T) {
-        if (getOrNull<T>(name) != null)
-            properties.first { it.name.text == name }.setTagTypeValue(value)
+        val fname = FName(name)
+        if (properties.containsKey(fname))
+            properties[fname]?.setTagTypeValue(value)
     }
 
     inline fun <reified T> getOrDefault(name: String, default: T): T {
@@ -56,14 +57,14 @@ open class UObject : IPropertyHolder {
         return value ?: default
     }
 
-    fun <T> getOrNull(name: String, clazz: Class<T>): T? = properties.firstOrNull { it.name.text == name }?.getTagTypeValue(clazz)
+    fun <T> getOrNull(name: String, clazz: Class<T>): T? = properties[FName(name)]?.getTagTypeValue(clazz)
 
     inline fun <reified T> getOrNull(name: String) = getOrNull(name, T::class.java)
 
     inline fun <reified T> get(name: String): T = getOrNull(name) ?: throw KotlinNullPointerException("$name must be not-null")
 
     open fun deserialize(Ar: FAssetArchive, validPos: Int) {
-        properties = mutableListOf()
+        properties = linkedMapOf()
         if (javaClass != UClass::class.java) {
             if (Ar.useUnversionedPropertySerialization) {
                 deserializeUnversionedProperties(properties, clazz, Ar)
@@ -85,9 +86,9 @@ open class UObject : IPropertyHolder {
 
     open fun toJson(context: Gson = Package.gson, locres: Locres? = null): JsonObject {
         val ob = jsonObject("exportType" to exportType)
-        properties.forEach { pTag ->
+        properties.forEach { (name, pTag) ->
             val tagValue = pTag.prop ?: return@forEach
-            ob[pTag.name.text] = tagValue.toJson(context, locres)
+            ob[name.text] = tagValue.toJson(context, locres)
         }
         return ob
     }
@@ -169,16 +170,16 @@ open class UObject : IPropertyHolder {
     override fun toString() = name
 }
 
-fun deserializeVersionedTaggedProperties(properties: MutableList<FPropertyTag>, Ar: FAssetArchive) {
+fun deserializeVersionedTaggedProperties(properties: LinkedHashMap<FName, FPropertyTag>, Ar: FAssetArchive) {
     while (true) {
         val tag = FPropertyTag(Ar, true)
         if (tag.name.isNone())
             break
-        properties.add(tag)
+        properties[tag.name] = tag
     }
 }
 
-fun serializeProperties(Ar: FAssetArchiveWriter, properties: List<FPropertyTag>) {
-    properties.forEach { it.serialize(Ar, true) }
+fun serializeProperties(Ar: FAssetArchiveWriter, properties: Map<FName, FPropertyTag>) {
+    properties.values.forEach { it.serialize(Ar, true) }
     Ar.writeFName(FName.getByNameMap("None", Ar.nameMap) ?: throw ParserException("NameMap must contain \"None\""))
 }

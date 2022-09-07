@@ -82,7 +82,7 @@ object JsonSerializer {
             is FLinearColor -> jsonObject("R" to ob.r, "G" to ob.g, "B" to ob.b, "A" to ob.a)
             is FStructFallback -> {
                 val jsOb = JsonObject()
-                ob.properties.forEach { jsOb[it.name.text] = it.prop!!.toJson(context) }
+                ob.properties.forEach { jsOb[it.key.text] = it.value.prop!!.toJson(context) }
                 jsOb
             }
             is FVector2D -> jsonObject("X" to ob.x, "Y" to ob.y)

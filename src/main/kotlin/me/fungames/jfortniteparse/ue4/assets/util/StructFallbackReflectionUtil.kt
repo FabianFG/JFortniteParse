@@ -11,6 +11,7 @@ import me.fungames.jfortniteparse.ue4.assets.exports.UClass
 import me.fungames.jfortniteparse.ue4.assets.exports.UObject
 import me.fungames.jfortniteparse.ue4.assets.objects.FPropertyTag
 import me.fungames.jfortniteparse.ue4.assets.objects.IPropertyHolder
+import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import org.objenesis.ObjenesisStd
 import java.lang.reflect.Array
 import java.lang.reflect.Field
@@ -20,15 +21,15 @@ import java.util.*
 inline fun <reified T> IPropertyHolder.mapToClass() = mapToClass(properties, T::class.java)
 inline fun <T> IPropertyHolder.mapToClass(clazz: Class<T>): T = mapToClass(properties, clazz)
 
-inline fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>): T = mapToClass(properties, clazz, ObjenesisStd().newInstance(clazz))
-fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
+inline fun <T> mapToClass(properties: Map<FName, FPropertyTag>, clazz: Class<T>): T = mapToClass(properties, clazz, ObjenesisStd().newInstance(clazz))
+fun <T> mapToClass(properties: Map<FName, FPropertyTag>, clazz: Class<T>, obj: T): T {
     if (properties.isEmpty()) {
         return obj
     }
     try {
         val boundFields = getBoundFields(TypeToken.get(clazz), clazz)
-        for (prop in properties) {
-            val field = boundFields[prop.name.text] ?: continue
+        for ((name, prop) in properties) {
+            val field = boundFields[name.text] ?: continue
             writePropertyToField(prop, field, obj)
         }
         return obj
