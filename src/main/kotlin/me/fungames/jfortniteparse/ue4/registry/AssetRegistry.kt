@@ -8,6 +8,7 @@ import me.fungames.jfortniteparse.ue4.registry.objects.FAssetPackageData
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetRegistryVersion
 import me.fungames.jfortniteparse.ue4.registry.objects.FDependsNode
 import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryArchive
+import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryHeader
 import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryReader
 import me.fungames.jfortniteparse.ue4.registry.reader.FNameTableArchiveReader
 import java.io.File
@@ -23,11 +24,12 @@ class AssetRegistry(originalAr: FArchive, val fileName: String) {
     constructor(file: File) : this(file.readBytes(), file.name)
 
     init {
-        val version = FAssetRegistryVersion(originalAr)
+        val header = FAssetRegistryHeader(originalAr)
+        val version = header.version
         val Ar = when {
             version < FAssetRegistryVersion.Type.RemovedMD5Hash -> throw ParserException("Cannot read states before this version")
-            version < FAssetRegistryVersion.Type.FixedTags -> FNameTableArchiveReader(originalAr, version)
-            else -> FAssetRegistryReader(originalAr, version)
+            version < FAssetRegistryVersion.Type.FixedTags -> FNameTableArchiveReader(originalAr, header)
+            else -> FAssetRegistryReader(originalAr, header)
         }
 
         preallocatedAssetDataBuffer = Ar.readTArray { FAssetData(Ar) }

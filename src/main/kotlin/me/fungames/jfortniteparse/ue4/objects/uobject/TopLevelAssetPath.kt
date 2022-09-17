@@ -20,4 +20,15 @@ class FTopLevelAssetPath {
         packageName = Ar.readFName()
         assetName = Ar.readFName()
     }
+
+    override fun toString(): String {
+        val builder = StringBuilder()
+        if (!packageName.isNone()) {
+            builder.append(packageName)
+            if (!assetName.isNone()) {
+                builder.append('.').append(assetName)
+            }
+        }
+        return builder.toString()
+    }
 }

@@ -7,11 +7,41 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchiveProxy
 import me.fungames.jfortniteparse.ue4.registry.objects.*
+import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
 import kotlin.collections.set
 
 val ASSET_REGISTRY_NUMBERED_NAME_BIT = 0x80000000u
 
-abstract class FAssetRegistryArchive(wrappedAr: FArchive, val version: FAssetRegistryVersion) : FArchiveProxy(wrappedAr) {
+/** Header containing versioning & data stripping information for a serialized asset registry state. */
+class FAssetRegistryHeader {
+    var version: FAssetRegistryVersion
+    var filterEditorOnlyData: Boolean
+
+    constructor(Ar: FArchive) {
+        version = FAssetRegistryVersion(Ar)
+        if (version >= FAssetRegistryVersion.Type.AddedHeader) {
+            filterEditorOnlyData = Ar.readBoolean()
+        } else {
+            filterEditorOnlyData = false
+        }
+    }
+
+    constructor(version: FAssetRegistryVersion, filterEditorOnlyData: Boolean) {
+        this.version = version
+        this.filterEditorOnlyData = filterEditorOnlyData
+    }
+}
+
+abstract class FAssetRegistryArchive(wrappedAr: FArchive, val header: FAssetRegistryHeader) : FArchiveProxy(wrappedAr) {
+    init {
+        if (header.version >= FAssetRegistryVersion.Type.RemoveAssetPathFNames) {
+            ver = EUnrealEngineObjectUE5Version.FSOFTOBJECTPATH_REMOVE_ASSET_PATH_FNAMES
+        }
+        isFilterEditorOnly = header.filterEditorOnlyData
+    }
+
+    val version get() = header.version
+
     abstract fun serializeTagsAndBundles(out: FAssetData)
 }
 
@@ -19,17 +49,17 @@ class FAssetRegistryReader : FAssetRegistryArchive {
     val names: List<String>
     val tags: FStore
 
-    constructor(inner: FArchive, version: FAssetRegistryVersion) : super(inner, version) {
+    constructor(inner: FArchive, header: FAssetRegistryHeader) : super(inner, header) {
         names = loadNameBatch(inner)
         tags = FStore(this)
     }
 
-    private constructor(inner: FArchive, version: FAssetRegistryVersion, names: List<String>, tags: FStore) : super(inner, version) {
+    private constructor(inner: FArchive, header: FAssetRegistryHeader, names: List<String>, tags: FStore) : super(inner, header) {
         this.names = names
         this.tags = tags
     }
 
-    override fun clone() = FAssetRegistryReader(wrappedAr, version, names, tags)
+    override fun clone() = FAssetRegistryReader(wrappedAr, header, names, tags)
 
     override fun readFName(): FName {
         var index = readUInt32()

@@ -97,6 +97,7 @@ fun getArVer(game: Int): Int {
         game < GAME_UE4(26) -> VER_UE4_25
         game < GAME_UE4(27) -> VER_UE4_26
         game < GAME_UE5(0) -> VER_UE4_27
-        else -> VER_UE5_0
+        game < GAME_UE5(1) -> VER_UE5_0
+        else -> VER_UE5_1
     }
 }

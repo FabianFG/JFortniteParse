@@ -2,6 +2,7 @@ package me.fungames.jfortniteparse.ue4.objects.uobject
 
 import me.fungames.jfortniteparse.ue4.assets.Package
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /**
@@ -19,7 +20,11 @@ open class FSoftObjectPath {
     var owner: Package? = null
 
     constructor(Ar: FArchive) {
-        assetPathName = Ar.readFName()
+        assetPathName = if (Ar.ver >= EUnrealEngineObjectUE5Version.FSOFTOBJECTPATH_REMOVE_ASSET_PATH_FNAMES) {
+            FName(FTopLevelAssetPath(Ar).toString())
+        } else {
+            Ar.readFName()
+        }
         subPathString = Ar.readString()
     }
 

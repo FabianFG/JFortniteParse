@@ -95,6 +95,7 @@ internal const val VER_UE4_ASSETREGISTRY_DEPENDENCYFLAGS = 521
 internal const val VER_UE4_26 = 522
 internal const val VER_UE4_CORRECT_LICENSEE_FLAG = 522
 internal const val VER_UE4_27 = 523 // actually 522 but we bumped it by one for comparison when reading MinMobileLODIdx in UStaticMesh & USkeletalMesh
-internal const val VER_UE5_0 = 523 // TODO check this again when UE5 is released
+internal const val VER_UE5_0 = EUnrealEngineObjectUE5Version.LARGE_WORLD_COORDINATES
+internal const val VER_UE5_1 = EUnrealEngineObjectUE5Version.AUTOMATIC_VERSION
 // look for NEW_ENGINE_VERSION over the code to find places where version constants should be inserted.
 // LATEST_SUPPORTED_UE4_VERSION should be updated too.

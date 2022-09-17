@@ -5,21 +5,20 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetBundleData
 import me.fungames.jfortniteparse.ue4.registry.objects.FAssetData
-import me.fungames.jfortniteparse.ue4.registry.objects.FAssetRegistryVersion
 import kotlin.math.min
 
 class FNameTableArchiveReader : FAssetRegistryArchive {
     val nameMap: List<String>
 
-    constructor(wrappedArchive: FArchive, version: FAssetRegistryVersion) : super(wrappedArchive, version) {
-        this.nameMap = serializeNameMap()
+    constructor(wrappedArchive: FArchive, header: FAssetRegistryHeader) : super(wrappedArchive, header) {
+        nameMap = serializeNameMap()
     }
 
-    private constructor(wrappedArchive: FArchive, version: FAssetRegistryVersion, nameMap: List<String>) : super(wrappedArchive, version) {
+    private constructor(wrappedArchive: FArchive, header: FAssetRegistryHeader, nameMap: List<String>) : super(wrappedArchive, header) {
         this.nameMap = nameMap
     }
 
-    override fun clone() = FNameTableArchiveReader(wrappedAr, version, nameMap)
+    override fun clone() = FNameTableArchiveReader(wrappedAr, header, nameMap)
 
     private fun serializeNameMap(): List<String> {
         val nameOffset = wrappedAr.readInt64()
@@ -49,8 +48,8 @@ class FNameTableArchiveReader : FAssetRegistryArchive {
 
     // This is kinda duplicate of FAssetArchive
     override fun readFName(): FName {
-        val nameIndex = this.readInt32()
-        val extraIndex = this.readInt32()
+        val nameIndex = readInt32()
+        val extraIndex = readInt32()
         if (nameIndex in nameMap.indices)
             return FName(nameMap, nameIndex, extraIndex)
         else

@@ -5,7 +5,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FTopLevelAssetPath
 import me.fungames.jfortniteparse.ue4.registry.reader.FAssetRegistryArchive
 
 class FAssetData {
-    val objectPath: FName
     val packagePath: FName
     val assetClass: FName
     val packageName: FName
@@ -17,17 +16,20 @@ class FAssetData {
 
     constructor(Ar: FAssetRegistryArchive) {
         // Serialize out the asset info
-        this.objectPath = Ar.readFName()
-        this.packagePath = Ar.readFName()
-        this.assetClass = if (Ar.version >= FAssetRegistryVersion.Type.ClassPaths) FTopLevelAssetPath(Ar).assetName else Ar.readFName()
+        if (Ar.version < FAssetRegistryVersion.Type.RemoveAssetPathFNames) {
+            val oldObjectPath = Ar.readFName()
+        }
+        packagePath = Ar.readFName()
+        assetClass = if (Ar.version >= FAssetRegistryVersion.Type.ClassPaths) FTopLevelAssetPath(Ar).assetName else Ar.readFName()
 
-        // These are derived from ObjectPath, we manually serialize them because they get pooled
-        this.packageName = Ar.readFName()
-        this.assetName = Ar.readFName()
+        packageName = Ar.readFName()
+        assetName = Ar.readFName()
 
         Ar.serializeTagsAndBundles(this)
 
-        this.chunkIDs = Ar.readTArray { Ar.readInt32() }
-        this.packageFlags = Ar.readUInt32()
+        chunkIDs = Ar.readTArray { Ar.readInt32() }
+        packageFlags = Ar.readUInt32()
     }
+
+    val objectPath get() = "$packageName.$assetName"
 }

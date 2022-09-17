@@ -53,6 +53,10 @@ class FAssetRegistryVersion(Ar: FArchive) : Comparable<FAssetRegistryVersion.Typ
         AddedChunkHashes,
         /** Classes are serialized as path names rather than short object names, e.g. /Script/Engine.StaticMesh */
         ClassPaths,
+        /** Asset bundles are serialized as FTopLevelAssetPath instead of FSoftObjectPath, deprecated FAssetData::ObjectPath */
+        RemoveAssetPathFNames,
+        /** Added header with bFilterEditorOnlyData flag */
+        AddedHeader,
     }
 
     val guid = FGuid(Ar)
