@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /**
@@ -14,8 +15,13 @@ class FVector2D {
     var y: Float
 
     constructor(Ar: FArchive) {
-        x = Ar.readFloat32()
-        y = Ar.readFloat32()
+        if (Ar.ver >= EUnrealEngineObjectUE5Version.LARGE_WORLD_COORDINATES) {
+            x = Ar.readDouble().toFloat()
+            y = Ar.readDouble().toFloat()
+        } else {
+            x = Ar.readFloat32()
+            y = Ar.readFloat32()
+        }
     }
 
     fun serialize(Ar: FArchiveWriter) {

@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /**
@@ -15,7 +16,7 @@ class FPlane : FVector {
     var w: Float
 
     constructor(Ar: FArchive) : super(Ar) {
-        w = Ar.readFloat32()
+        w = if (Ar.ver >= EUnrealEngineObjectUE5Version.LARGE_WORLD_COORDINATES) Ar.readDouble().toFloat() else Ar.readFloat32()
     }
 
     override fun serialize(Ar: FArchiveWriter) {

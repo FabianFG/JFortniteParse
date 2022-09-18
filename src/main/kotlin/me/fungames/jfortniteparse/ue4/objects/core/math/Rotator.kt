@@ -1,6 +1,7 @@
 package me.fungames.jfortniteparse.ue4.objects.core.math
 
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 /**
@@ -19,9 +20,15 @@ class FRotator {
     var roll: Float
 
     constructor(Ar: FArchive) {
-        pitch = Ar.readFloat32()
-        yaw = Ar.readFloat32()
-        roll = Ar.readFloat32()
+        if (Ar.ver >= EUnrealEngineObjectUE5Version.LARGE_WORLD_COORDINATES) {
+            pitch = Ar.readDouble().toFloat()
+            yaw = Ar.readDouble().toFloat()
+            roll = Ar.readDouble().toFloat()
+        } else {
+            pitch = Ar.readFloat32()
+            yaw = Ar.readFloat32()
+            roll = Ar.readFloat32()
+        }
     }
 
     fun serialize(Ar: FArchiveWriter) {

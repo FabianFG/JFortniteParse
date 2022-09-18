@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.ue4.objects.core.math
 import me.fungames.jfortniteparse.ue4.assets.UProperty
 import me.fungames.jfortniteparse.ue4.assets.UStruct
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
 
 @UStruct
@@ -17,7 +18,7 @@ class FBoxSphereBounds {
     constructor(Ar: FArchive) {
         origin = FVector(Ar)
         boxExtent = FVector(Ar)
-        sphereRadius = Ar.readFloat32()
+        sphereRadius = if (Ar.ver >= EUnrealEngineObjectUE5Version.LARGE_WORLD_COORDINATES) Ar.readDouble().toFloat() else Ar.readFloat32()
     }
 
     fun serialize(Ar: FArchiveWriter) {
