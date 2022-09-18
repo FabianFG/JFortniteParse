@@ -7,7 +7,6 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.loadNameBatch
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FArchiveProxy
 import me.fungames.jfortniteparse.ue4.registry.objects.*
-import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
 import kotlin.collections.set
 
 val ASSET_REGISTRY_NUMBERED_NAME_BIT = 0x80000000u
@@ -34,9 +33,6 @@ class FAssetRegistryHeader {
 
 abstract class FAssetRegistryArchive(wrappedAr: FArchive, val header: FAssetRegistryHeader) : FArchiveProxy(wrappedAr) {
     init {
-        if (header.version >= FAssetRegistryVersion.Type.RemoveAssetPathFNames) {
-            ver = EUnrealEngineObjectUE5Version.FSOFTOBJECTPATH_REMOVE_ASSET_PATH_FNAMES
-        }
         isFilterEditorOnly = header.filterEditorOnlyData
     }
 
