@@ -67,7 +67,7 @@ fun <T> writePropertyToField(prop: FPropertyTag, field: Field, obj: T) {
 private fun isContentValid(content: Any?, name: String, clazz: Class<*>): Boolean {
     if (content == null) {
         if (clazz != Lazy::class.java)
-            LOG_JFP.warn { "Failed to get tag type value for field $name of type ${clazz.simpleName}" }
+            LOG_JFP.debug { "Failed to get tag type value for field $name of type ${clazz.simpleName}" }
         return false
     }
     val isValid = when {
