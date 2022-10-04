@@ -10,7 +10,7 @@ import java.util.List;
 public class FortVariantTokenType extends FortAccountItemDefinition {
     public EItemProfileType ProfileType;
     public FPackageIndex /*FortItemDefinition*/ cosmetic_item;
-    public FGameplayTag VariantChanelTag;
+    public FGameplayTag VariantChannelTag;
     public FGameplayTag VariantNameTag;
     public List<CosmeticVariantInfo> VariantPreviewOverrides;
     public Boolean bAutoEquipVariant;
