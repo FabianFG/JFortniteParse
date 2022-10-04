@@ -2,7 +2,7 @@ package me.fungames.jfortniteparse.ue4.assets.util
 
 import com.google.gson.annotations.SerializedName
 import com.google.gson.internal.`$Gson$Types`
-import com.google.gson.internal.reflect.ReflectionAccessor
+import com.google.gson.internal.reflect.ReflectionHelper
 import com.google.gson.reflect.TypeToken
 import me.fungames.jfortniteparse.LOG_JFP
 import me.fungames.jfortniteparse.exceptions.ParserException
@@ -129,7 +129,7 @@ private fun getBoundFields(type: TypeToken<*>, raw: Class<*>): Map<String, Field
             if (field.declaringClass == UClass::class.java || field.declaringClass == UObject::class.java || field.declaringClass == UObject::class.java) {
                 continue
             }
-            ReflectionAccessor.getInstance().makeAccessible(field)
+            ReflectionHelper.makeAccessible(field)
             // val fieldType: Type = `$Gson$Types`.resolve(type.type, raw, field.genericType)
             val fieldNames = getFieldNames(field)
             var previous: Field? = null
