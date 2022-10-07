@@ -45,6 +45,7 @@ public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public Integer Threshold;
     public List<FortItemQuantityPair> Rewards;
     public Lazy<UDataTable> RewardsTable;
+    public List<FDataTableRowHandle> IndividualRewardTableRows;
     public String QuestPool;
     public List<FortHiddenRewardQuantityPair> HiddenRewards;
     public List<String> FeatureRewards;
