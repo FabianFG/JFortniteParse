@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.misc.FEngineVersion
 import me.fungames.jfortniteparse.ue4.objects.core.misc.FGuid
 import me.fungames.jfortniteparse.ue4.objects.core.serialization.FCustomVersion
 import me.fungames.jfortniteparse.ue4.reader.FArchive
+import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
 import me.fungames.jfortniteparse.ue4.versions.GAME_VALORANT
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ADDED_PACKAGE_OWNER
 import me.fungames.jfortniteparse.ue4.versions.VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID
@@ -56,6 +57,8 @@ class FPackageFileSummary {
     var packageFlags: UInt
     var nameCount: Int
     var nameOffset: Int
+    var softObjectPathsCount: Int
+    var softObjectPathsOffset: Int
     var gatherableTextDataCount: Int
     var gatherableTextDataOffset: Int
     var exportCount: Int
@@ -101,6 +104,10 @@ class FPackageFileSummary {
             if (fileVersionUE4 >= VER_UE4_ADDED_PACKAGE_SUMMARY_LOCALIZATION_ID) {
                 val localizationId = Ar.readString()
             }
+        }
+        if (Ar.ver >= EUnrealEngineObjectUE5Version.ADD_SOFTOBJECTPATH_LIST) {
+            softObjectPathsCount = Ar.readInt32()
+            softObjectPathsOffset = Ar.readInt32()
         }
         gatherableTextDataCount = Ar.readInt32()
         gatherableTextDataOffset = Ar.readInt32()
