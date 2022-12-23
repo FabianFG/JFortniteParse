@@ -1,5 +1,6 @@
 package me.fungames.jfortniteparse.ue4.assets.objects
 
+import me.fungames.jfortniteparse.ue4.assets.IoPackage
 import me.fungames.jfortniteparse.ue4.assets.enums.EBulkDataFlags
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.writer.FArchiveWriter
@@ -11,6 +12,23 @@ class FByteBulkDataHeader {
     var offsetInFile: Long
 
     constructor(Ar: FAssetArchive) {
+        val pkg = Ar.owner
+        if (pkg is IoPackage) {
+            val bulkDataMap = pkg.bulkDataMap
+            if (!bulkDataMap.isNullOrEmpty()) {
+                val dataIndex = Ar.readInt32()
+                if (dataIndex >= 0 && dataIndex < bulkDataMap.size) {
+                    val data = bulkDataMap[dataIndex]
+                    bulkDataFlags = data.flags
+                    elementCount = data.serialSize
+                    sizeOnDisk = data.serialOffset
+                    offsetInFile = data.serialSize // ??
+                    return
+                }
+                Ar.seek(Ar.pos() - 4)
+            }
+        }
+
         bulkDataFlags = Ar.readInt32()
         if (EBulkDataFlags.BULKDATA_Size64Bit.check(bulkDataFlags)) {
             elementCount = Ar.readInt64()

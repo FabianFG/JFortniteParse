@@ -18,6 +18,8 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FMappedName
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FNameMap
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
+import me.fungames.jfortniteparse.ue4.versions.EUnrealEngineObjectUE5Version
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
 import me.fungames.jfortniteparse.ue4.versions.VersionContainer
 import me.fungames.jfortniteparse.util.get
@@ -30,7 +32,10 @@ class IoPackage : Package {
     val packageId: FPackageId
     val globalPackageStore: FPackageStore
     val nameMap: FNameMap
+    var bulkDataMap: Array<FBulkDataMapEntry>? = null
+        private set
     var importedPublicExportHashes: Array<Long>? = null
+        private set
     val importMap: Array<FPackageObjectIndex>
     val exportMap: Array<FExportMapEntry>
     val exportBundleHeaders: Array<FExportBundleHeader>
@@ -38,6 +43,7 @@ class IoPackage : Package {
     val importedPackages: Lazy<List<IoPackage?>>
     override val exportsLazy: List<Lazy<UObject>>
     var bulkDataStartOffset = 0
+        private set
 
     constructor(uasset: ByteArray,
                 packageId: FPackageId,
@@ -69,6 +75,14 @@ class IoPackage : Package {
             fileName = diskPackageName.text
             packageFlags = summary.packageFlags.toInt()
             name = fileName
+
+            if (versions.game >= GAME_UE5(2) || versions.ver >= EUnrealEngineObjectUE5Version.DATA_RESOURCES) {
+                val bulkDataMapSize = Ar.readUInt64()
+                if (versions.game != GAME_UE5(2) || bulkDataMapSize < 65535u) { // Fortnite moment
+                    val bulkDataMapCount = bulkDataMapSize.toInt() / FBulkDataMapEntry.SIZE
+                    bulkDataMap = Array(bulkDataMapCount) { FBulkDataMapEntry(Ar) }
+                }
+            }
 
             // Imported public export hashes
             Ar.seek(summary.importedPublicExportHashesOffset)
