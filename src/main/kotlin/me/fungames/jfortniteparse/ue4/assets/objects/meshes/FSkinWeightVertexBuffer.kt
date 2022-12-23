@@ -5,6 +5,7 @@ import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.FAnimObjectVersion
 import me.fungames.jfortniteparse.ue4.versions.FSkeletalMeshCustomVersion
+import me.fungames.jfortniteparse.ue4.versions.FUE5MainStreamObjectVersion
 
 class FSkinWeightVertexBuffer {
     companion object {
@@ -44,6 +45,7 @@ class FSkinWeightVertexBuffer {
         var extraBoneInfluences: Boolean
         val maxBoneInfluences: UInt
         val use16BitBoneIndex: Boolean
+        val use16BitBoneWeight: Boolean
         val numVertices: UInt
         val numBones: UInt
 
@@ -69,6 +71,9 @@ class FSkinWeightVertexBuffer {
             // use16BitBoneIndex doesn't exist before version IncreaseBoneIndexLimitPerChunk
             if (FAnimObjectVersion.get(Ar) >= FAnimObjectVersion.IncreaseBoneIndexLimitPerChunk) {
                 use16BitBoneIndex = Ar.readBoolean()
+            }
+            if (FUE5MainStreamObjectVersion.get(Ar) >= FUE5MainStreamObjectVersion.IncreasedSkinWeightPrecision) {
+                use16BitBoneWeight = Ar.readBoolean()
             }
         }
         // endregion

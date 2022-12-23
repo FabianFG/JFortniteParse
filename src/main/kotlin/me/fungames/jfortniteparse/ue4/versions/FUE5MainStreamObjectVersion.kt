@@ -180,8 +180,148 @@ object FUE5MainStreamObjectVersion {
     // Remove the inline reduction bulkdata and replace it by a simple vertex and triangle count cache
     const val ConvertReductionBaseSkeletalMeshBulkDataToInlineReductionCacheData = 57
 
+    // Added some new MeshInfo to the FSkeletalMeshLODModel class.
+    const val SkeletalMeshLODModelMeshInfo = 58
+
+    // Add Texture DoScaleMipsForAlphaCoverage
+    const val TextureDoScaleMipsForAlphaCoverage = 59
+
+    // Fixed default value of volumetric cloud to be exact match with main view, more expenssive but we let user choosing how to lower the quality.
+    const val VolumetricCloudReflectionSampleCountDefaultUpdate = 60
+
+    // Use special BVH for TriangleMesh, instead of the AABBTree
+    const val UseTriangleMeshBVH = 61
+
+    // FDynamicMeshAttributeSet has Weight Maps. TDynamicAttributeBase serializes its name.
+    const val DynamicMeshAttributesWeightMapsAndNames = 62
+
+    // Switching FK control naming scheme to incorporate _CURVE for curve controls
+    const val FKControlNamingScheme = 63
+
+    // Fix-up for FRichCurveKey::TangentWeightMode, which were found to contain invalid value w.r.t the enum-type
+    const val RichCurveKeyInvalidTangentMode = 64
+
+    // Enforcing new automatic tangent behaviour, enforcing auto-tangents for Key0 and KeyN to be flat, for Animation Assets.
+    const val ForceUpdateAnimationAssetCurveTangents = 65
+
+    // SoundWave Update to use EditorBuildData for it's RawData
+    const val SoundWaveVirtualizationUpdate = 66
+
+    // Fix material feature level nodes to account for new SM6 input pin.
+    const val MaterialFeatureLevelNodeFixForSM6 = 67
+
+    // Fix material feature level nodes to account for new SM6 input pin.
+    const val GeometryCollectionPerChildDamageThreshold = 68
+
+    // Move some Chaos flags into a bitfield
+    const val AddRigidParticleControlFlags = 69
+
+    // Allow each LiveLink controller to specify its own component to control
+    const val LiveLinkComponentPickerPerController = 70
+
+    // Remove Faces in Triangle Mesh BVH
+    const val RemoveTriangleMeshBVHFaces = 71
+
+    // Moving all nodal offset handling to Lens Component
+    const val LensComponentNodalOffset = 72
+
+    // GPU none interpolated spawning no longer calls the update script
+    const val FixGpuAlwaysRunningUpdateScriptNoneInterpolated = 73
+
+    // World partition streaming policy serialization only for cooked builds
+    const val WorldPartitionSerializeStreamingPolicyOnCook = 74
+
+    // Remove serialization of bounds relevant from  WorldPartitionActorDesc
+    const val WorldPartitionActorDescRemoveBoundsRelevantSerialization = 75
+
+    // Added IAnimationDataModel interface and replace UObject based representation for Animation Assets
+    // This version had to be undone. Animation assets saved between this and the subsequent backout version
+    // will be unable to be loaded
+    const val AnimationDataModelInterface_BackedOut = 76
+
+    // Deprecate LandscapeSplineActorDesc
+    const val LandscapeSplineActorDescDeprecation = 77
+
+    // Revert the IAnimationDataModel changes. Animation assets
+    const val BackoutAnimationDataModelInterface = 78
+
+    // Made stationary local and skylights behave similar to SM5
+    const val MobileStationaryLocalLights = 79
+
+    // Made ManagedArrayCollection::FValueType::Value always serialize when FValueType is
+    const val ManagedArrayCollectionAlwaysSerializeValue = 80
+
+    // Moving all distortion handling to Lens Component
+    const val LensComponentDistortion = 81
+
+    // Updated image media source path resolution logic
+    const val ImgMediaPathResolutionWithEngineOrProjectTokens = 82
+
+    // Add low resolution data in Height Field
+    const val AddLowResolutionHeightField = 83
+
+    // Low resolution data in Height Field will store one height for (6x6) 36 cells
+    const val DecreaseLowResolutionHeightField = 84
+
+    // Add damage propagation settings to geometry collections
+    const val GeometryCollectionDamagePropagationData = 85
+
+    // Wheel friction forces are now applied at tire contact point
+    const val VehicleFrictionForcePositionChange = 86
+
+    // Add flag to override MeshDeformer on a SkinnedMeshComponent.
+    const val AddSetMeshDeformerFlag = 87
+
+    // Replace FNames for class/actor paths with FSoftObjectPath
+    const val WorldPartitionActorDescActorAndClassPaths = 88
+
+    // Reintroducing AnimationDataModelInterface_BackedOut changes
+    const val ReintroduceAnimationDataModelInterface = 89
+
+    // Support 16-bit skin weights on SkeletalMesh
+    const val IncreasedSkinWeightPrecision = 90
+
+    // bIsUsedWithVolumetricCloud flag auto conversion
+    const val MaterialHasIsUsedWithVolumetricCloudFlag = 91
+
+    // bIsUsedWithVolumetricCloud flag auto conversion
+    const val UpdateHairDescriptionBulkData = 92
+
+    // Added TransformScaleMethod pin to SpawnActorFromClass node
+    const val SpawnActorFromClassTransformScaleMethod = 93
+
+    // Added support for the RigVM to run branches lazily
+    const val RigVMLazyEvaluation = 94
+
+    // Adding additional object version to defer out-of-date pose asset warning until next resaves
+    const val PoseAssetRawDataGUIDUpdate = 95
+
+    // Store function information (and compilation data) in blueprint generated class
+    const val RigVMSaveFunctionAccessInModel = 96
+
+    // Store the RigVM execute context struct the VM uses in the archive
+    const val RigVMSerializeExecuteContextStruct = 97
+
+    // Store the Visual Logger timestamp as a double
+    const val VisualLoggerTimeStampAsDouble = 98
+
+    // Add ThinSurface instance override support
+    const val MaterialInstanceBasePropertyOverridesThinSurface = 99
+
+    // Add refraction mode None, converted from legacy when the refraction pin is not plugged.
+    const val MaterialRefractionModeNone = 100
+
+    // Store serialized graph function in the function data
+    const val RigVMSaveSerializedGraphInGraphFunctionData = 101
+
+    // Animation Sequence now stores its frame-rate on a per-platform basis
+    const val PerPlatformAnimSequenceTargetFrameRate = 102
+
+    // New default for number of attributes on 2d grids
+    const val NiagaraGrid2DDefaultUnnamedAttributesZero = 103
+
     // -----<new versions can be added above this line>-------------------------------------------------
-    const val LatestVersion = ConvertReductionBaseSkeletalMeshBulkDataToInlineReductionCacheData
+    const val LatestVersion = NiagaraGrid2DDefaultUnnamedAttributesZero
 
     @JvmField val GUID = FGuid(0x697DD581u, 0xE64f41ABu, 0xAA4A51ECu, 0xBEB7B628u)
 
@@ -194,7 +334,8 @@ object FUE5MainStreamObjectVersion {
         val game = Ar.game
         return when {
             game < GAME_UE5(0) -> BeforeCustomVersionWasAdded
-            else -> LatestVersion // TODO change this after they released UE5.0
+            game < GAME_UE5(1) -> WorldPartitionActorDescActorAndClassPaths
+            else -> LatestVersion
         }
     }
 }

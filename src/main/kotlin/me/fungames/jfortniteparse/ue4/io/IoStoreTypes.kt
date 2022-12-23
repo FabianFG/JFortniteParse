@@ -258,3 +258,23 @@ class FExportMapEntry {
         Ar.seek(start + SIZE)
     }
 }
+
+class FBulkDataMapEntry {
+    companion object {
+        const val SIZE = 32
+    }
+
+    var serialOffset: Long
+    var duplicateSerialOffset: Long
+    var serialSize: Long
+    var flags: Int
+
+    constructor(Ar: FArchive) {
+        val start = Ar.pos()
+        serialOffset = Ar.readInt64()
+        duplicateSerialOffset = Ar.readInt64()
+        serialSize = Ar.readInt64()
+        flags = Ar.readInt32()
+        Ar.seek(start + SIZE)
+    }
+}
