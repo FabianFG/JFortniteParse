@@ -21,8 +21,8 @@ class FByteBulkDataHeader {
                     val data = bulkDataMap[dataIndex]
                     bulkDataFlags = data.flags
                     elementCount = data.serialSize
-                    sizeOnDisk = data.serialOffset
-                    offsetInFile = data.serialSize // ??
+                    sizeOnDisk = data.serialSize
+                    offsetInFile = data.serialOffset
                     return
                 }
                 Ar.seek(Ar.pos() - 4)
