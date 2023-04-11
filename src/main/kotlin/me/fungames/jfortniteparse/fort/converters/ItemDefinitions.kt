@@ -499,14 +499,14 @@ private fun printPrice(price: Int, locres: Locres?) = NumberFormat.getNumberInst
 
 fun loadFeaturedIcon(itemDefinition: FortItemDefinition): BufferedImage? =
     itemDefinition.DisplayAssetPath?.load<FortMtxOfferData>()?.run {
-        val resource = DetailsImage?.ResourceObject
+        val resource = SoftDetailsImage
             ?: return null
         /*resource.outerImportObject?.objectName?.text?.apply {
             if (contains("Athena/Prototype/Textures") || contains("Placeholder"))
                 return null
         }*/
         // Some display assets use MaterialInstanceConstant for DetailsImage, so we only load it if it's Texture2D
-        return (resource.value as? UTexture2D)?.toBufferedImage()
+        return resource.load<UTexture2D>()?.toBufferedImage()
     }
 
 fun loadNormalIcon(itemDefinition: FortItemDefinition): BufferedImage? {
