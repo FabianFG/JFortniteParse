@@ -13,7 +13,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.deserializeU
 class FStructFallback : IPropertyHolder {
     override var properties: MutableList<FPropertyTag>
 
-    constructor(Ar: FAssetArchive, struct: Lazy<out UStruct>?, structName: FName = FName.NAME_None) {
+    constructor(Ar: FAssetArchive, struct: Lazy<UStruct?>?, structName: FName = FName.NAME_None) {
         properties = mutableListOf()
         if (Ar.useUnversionedPropertySerialization) {
             val structClass = struct?.value

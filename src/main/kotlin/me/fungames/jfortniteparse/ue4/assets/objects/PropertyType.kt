@@ -21,8 +21,8 @@ class PropertyType {
     @JvmField var isEnumAsByte = true
     @JvmField var innerType: PropertyType? = null
     @JvmField var valueType: PropertyType? = null
-    var structClass: Lazy<UStruct>? = null
-    var enumClass: Lazy<UEnum>? = null
+    var structClass: Lazy<UStruct?>? = null
+    var enumClass: Lazy<UEnum?>? = null
 
     constructor() : this(NAME_None)
 

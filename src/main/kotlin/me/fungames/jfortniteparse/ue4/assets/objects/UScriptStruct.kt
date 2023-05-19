@@ -90,6 +90,8 @@ class UScriptStruct {
             "Vector_NetQuantize10" -> if (nz) FVector(Ar) else FVector()
             "Vector_NetQuantize100" -> if (nz) FVector(Ar) else FVector()
             "Vector_NetQuantizeNormal" -> if (nz) FVector(Ar) else FVector()
+            "InstancedStruct" -> FInstancedStruct(Ar)
+
             "FortActorRecord" -> FFortActorRecord(Ar)
 
             else -> {
