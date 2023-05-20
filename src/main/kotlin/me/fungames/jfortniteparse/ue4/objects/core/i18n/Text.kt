@@ -84,9 +84,11 @@ sealed class FTextHistory {
         constructor()
 
         constructor(Ar: FArchive) {
-            val bHasCultureInvariantString = Ar.readBoolean()
-            if (bHasCultureInvariantString) {
-                cultureInvariantString = Ar.readString()
+            if (FEditorObjectVersion.get(Ar) >= FEditorObjectVersion.CultureInvariantTextSerializationKeyStability) {
+                val hasCultureInvariantString = Ar.readBoolean()
+                if (hasCultureInvariantString) {
+                    cultureInvariantString = Ar.readString()
+                }
             }
         }
 
