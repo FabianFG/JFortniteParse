@@ -6,7 +6,7 @@ import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
 
 class FInstancedStruct {
 	companion object {
-		val NAME_StructProperty = FName("StructProperty")
+		private val NAME_StructProperty = FName("StructProperty")
 	}
 
 	val struct: UScriptStruct?
