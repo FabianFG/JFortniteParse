@@ -56,6 +56,7 @@ class IoPackage : Package {
         this.globalPackageStore = globalPackageStore
         val Ar = FByteArchive(uasset, versions)
 
+        val cookedHeaderSize: Int
         val allExportDataOffset: Int
 
         if (versions.game >= GAME_UE5_BASE) {
@@ -67,6 +68,7 @@ class IoPackage : Package {
                     versions.customVersions = versioningInfo.customVersions.toList()
                 }
             }
+            cookedHeaderSize = summary.cookedHeaderSize.toInt()
 
             // Name map
             nameMap = FNameMap()
@@ -113,6 +115,7 @@ class IoPackage : Package {
             allExportDataOffset = summary.headerSize.toInt()
         } else {
             val summary = FPackageSummary(Ar)
+            cookedHeaderSize = summary.cookedHeaderSize.toInt()
 
             // Name map
             nameMap = FNameMap()
@@ -151,16 +154,12 @@ class IoPackage : Package {
         importedPackages = lazy { importedPackageIds.map { provider.loadGameFile(it) } }
 
         // Populate lazy exports
-        var currentExportDataOffset = allExportDataOffset
-
-        fun processEntry(entry: FExportBundleEntry) {
+        fun processEntry(entry: FExportBundleEntry, pos: Int, newPositioning: Boolean): Int {
             if (entry.commandType != FExportBundleEntry.EExportCommandType.ExportCommandType_Serialize) {
-                return
+                return 0
             }
-            val localExportIndex = entry.localExportIndex
-            val export = exportMap[localExportIndex]
-            val localExportDataOffset = currentExportDataOffset
-            exportsLazy[localExportIndex] = lazy {
+            val export = exportMap[entry.localExportIndex]
+            exportsLazy[entry.localExportIndex] = lazy {
                 // Create
                 val objectName = nameMap.getName(export.objectName)
                 val obj = constructExport(resolveObjectIndex(export.classIndex)?.getObject()?.value as UStruct?)
@@ -172,16 +171,16 @@ class IoPackage : Package {
                 // Serialize
                 val Ar = FExportArchive(ByteBuffer.wrap(uasset), obj, this)
                 Ar.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
-                Ar.uassetSize = export.cookedSerialOffset.toInt() - localExportDataOffset
+                Ar.uassetSize = if (newPositioning) cookedHeaderSize - allExportDataOffset else export.cookedSerialOffset.toInt() - pos
                 Ar.bulkDataStartOffset = bulkDataStartOffset
-                Ar.seek(localExportDataOffset)
+                Ar.seek(pos)
                 val validPos = Ar.pos() + export.cookedSerialSize.toInt()
                 try {
                     obj.deserialize(Ar, validPos)
                     if (validPos != Ar.pos()) {
                         LOG_STREAMING.warn { "Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining (${obj.getPathName()})" }
                     } else {
-                        LOG_STREAMING.debug { "Successfully read ${obj.exportType} at $localExportDataOffset with size ${export.cookedSerialSize}" }
+                        LOG_STREAMING.debug { "Successfully read ${obj.exportType} at $pos with size ${export.cookedSerialSize}" }
                     }
                 } catch (e: Throwable) {
                     if (GFatalObjectSerializationErrors) {
@@ -192,22 +191,23 @@ class IoPackage : Package {
                 }
                 obj
             }
-            currentExportDataOffset += export.cookedSerialSize.toInt()
+            return export.cookedSerialSize.toInt()
         }
 
         if (exportBundleHeaders != null) {
+            var currentExportDataOffset = allExportDataOffset
             for (exportBundle in exportBundleHeaders!!) {
                 for (i in 0u until exportBundle.entryCount) {
                     val entry = exportBundleEntries[exportBundle.firstEntryIndex + i]
-                    processEntry(entry)
+                    currentExportDataOffset += processEntry(entry, currentExportDataOffset, false)
                 }
             }
+            bulkDataStartOffset = currentExportDataOffset
         } else { // UE5.2+
             for (entry in exportBundleEntries) {
-                processEntry(entry)
+                processEntry(entry, allExportDataOffset + exportMap[entry.localExportIndex].cookedSerialOffset.toInt(), true)
             }
         }
-        bulkDataStartOffset = currentExportDataOffset
         //logger.info { "Successfully parsed package : $name" }
     }
 
