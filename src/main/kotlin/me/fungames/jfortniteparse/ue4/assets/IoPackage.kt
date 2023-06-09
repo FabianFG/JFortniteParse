@@ -38,7 +38,8 @@ class IoPackage : Package {
         private set
     val importMap: Array<FPackageObjectIndex>
     val exportMap: Array<FExportMapEntry>
-    val exportBundleHeaders: Array<FExportBundleHeader>
+    var exportBundleHeaders: Array<FExportBundleHeader>? = null
+        private set
     val exportBundleEntries: Array<FExportBundleEntry>
     val importedPackages: Lazy<List<IoPackage?>>
     override val exportsLazy: List<Lazy<UObject>>
@@ -95,7 +96,7 @@ class IoPackage : Package {
 
             // Export map
             Ar.seek(summary.exportMapOffset)
-            val exportCount = storeEntry.exportCount //(summary.exportBundleEntriesOffset - summary.exportMapOffset) / FExportMapEntry.SIZE
+            val exportCount = (summary.exportBundleEntriesOffset - summary.exportMapOffset) / FExportMapEntry.SIZE
             exportMap = Array(exportCount) { FExportMapEntry(Ar) }
             exportsLazy = (arrayOfNulls<Lazy<UObject>>(exportCount) as Array<Lazy<UObject>>).toMutableList()
 
@@ -103,9 +104,11 @@ class IoPackage : Package {
             Ar.seek(summary.exportBundleEntriesOffset)
             exportBundleEntries = Array(exportCount * 2) { FExportBundleEntry(Ar) }
 
-            // Export bundle headers
-            Ar.seek(summary.graphDataOffset)
-            exportBundleHeaders = Array(storeEntry.exportBundleCount) { FExportBundleHeader(Ar) }
+            if (Ar.game < GAME_UE5(2)) {
+                // Export bundle headers
+                Ar.seek(summary.graphDataOffset)
+                exportBundleHeaders = Array(storeEntry.exportBundleCount) { FExportBundleHeader(Ar) }
+            }
 
             allExportDataOffset = summary.headerSize.toInt()
         } else {
@@ -149,47 +152,59 @@ class IoPackage : Package {
 
         // Populate lazy exports
         var currentExportDataOffset = allExportDataOffset
-        for (exportBundle in exportBundleHeaders) {
-            for (i in 0u until exportBundle.entryCount) {
-                val entry = exportBundleEntries[exportBundle.firstEntryIndex + i]
-                if (entry.commandType == FExportBundleEntry.EExportCommandType.ExportCommandType_Serialize) {
-                    val localExportIndex = entry.localExportIndex
-                    val export = exportMap[localExportIndex]
-                    val localExportDataOffset = currentExportDataOffset
-                    exportsLazy[localExportIndex] = lazy {
-                        // Create
-                        val objectName = nameMap.getName(export.objectName)
-                        val obj = constructExport(resolveObjectIndex(export.classIndex)?.getObject()?.value as UStruct?)
-                        obj.name = objectName.text
-                        obj.outer = (resolveObjectIndex(export.outerIndex) as? ResolvedExportObject)?.exportObject?.value ?: this
-                        obj.template = resolveObjectIndex(export.templateIndex)
-                        obj.flags = export.objectFlags.toInt()
 
-                        // Serialize
-                        val Ar = FExportArchive(ByteBuffer.wrap(uasset), obj, this)
-                        Ar.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
-                        Ar.uassetSize = export.cookedSerialOffset.toInt() - localExportDataOffset
-                        Ar.bulkDataStartOffset = bulkDataStartOffset
-                        Ar.seek(localExportDataOffset)
-                        val validPos = Ar.pos() + export.cookedSerialSize.toInt()
-                        try {
-                            obj.deserialize(Ar, validPos)
-                            if (validPos != Ar.pos()) {
-                                LOG_STREAMING.warn { "Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining (${obj.getPathName()})" }
-                            } else {
-                                LOG_STREAMING.debug { "Successfully read ${obj.exportType} at $localExportDataOffset with size ${export.cookedSerialSize}" }
-                            }
-                        } catch (e: Throwable) {
-                            if (GFatalObjectSerializationErrors) {
-                                throw e
-                            } else {
-                                LOG_STREAMING.error(e) { "Could not read ${obj.exportType} correctly" }
-                            }
-                        }
-                        obj
+        fun processEntry(entry: FExportBundleEntry) {
+            if (entry.commandType != FExportBundleEntry.EExportCommandType.ExportCommandType_Serialize) {
+                return
+            }
+            val localExportIndex = entry.localExportIndex
+            val export = exportMap[localExportIndex]
+            val localExportDataOffset = currentExportDataOffset
+            exportsLazy[localExportIndex] = lazy {
+                // Create
+                val objectName = nameMap.getName(export.objectName)
+                val obj = constructExport(resolveObjectIndex(export.classIndex)?.getObject()?.value as UStruct?)
+                obj.name = objectName.text
+                obj.outer = (resolveObjectIndex(export.outerIndex) as? ResolvedExportObject)?.exportObject?.value ?: this
+                obj.template = resolveObjectIndex(export.templateIndex)
+                obj.flags = export.objectFlags.toInt()
+
+                // Serialize
+                val Ar = FExportArchive(ByteBuffer.wrap(uasset), obj, this)
+                Ar.useUnversionedPropertySerialization = (packageFlags and EPackageFlags.PKG_UnversionedProperties.value) != 0
+                Ar.uassetSize = export.cookedSerialOffset.toInt() - localExportDataOffset
+                Ar.bulkDataStartOffset = bulkDataStartOffset
+                Ar.seek(localExportDataOffset)
+                val validPos = Ar.pos() + export.cookedSerialSize.toInt()
+                try {
+                    obj.deserialize(Ar, validPos)
+                    if (validPos != Ar.pos()) {
+                        LOG_STREAMING.warn { "Did not read ${obj.exportType} correctly, ${validPos - Ar.pos()} bytes remaining (${obj.getPathName()})" }
+                    } else {
+                        LOG_STREAMING.debug { "Successfully read ${obj.exportType} at $localExportDataOffset with size ${export.cookedSerialSize}" }
                     }
-                    currentExportDataOffset += export.cookedSerialSize.toInt()
+                } catch (e: Throwable) {
+                    if (GFatalObjectSerializationErrors) {
+                        throw e
+                    } else {
+                        LOG_STREAMING.error(e) { "Could not read ${obj.exportType} correctly" }
+                    }
                 }
+                obj
+            }
+            currentExportDataOffset += export.cookedSerialSize.toInt()
+        }
+
+        if (exportBundleHeaders != null) {
+            for (exportBundle in exportBundleHeaders!!) {
+                for (i in 0u until exportBundle.entryCount) {
+                    val entry = exportBundleEntries[exportBundle.firstEntryIndex + i]
+                    processEntry(entry)
+                }
+            }
+        } else { // UE5.2+
+            for (entry in exportBundleEntries) {
+                processEntry(entry)
             }
         }
         bulkDataStartOffset = currentExportDataOffset

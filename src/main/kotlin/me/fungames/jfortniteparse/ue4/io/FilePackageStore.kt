@@ -12,7 +12,6 @@ import me.fungames.jfortniteparse.ue4.reader.FByteArchive
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
 import me.fungames.jfortniteparse.util.await
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicInteger
 
 class FScriptObjectEntry {
     var objectName: FMinimalName
@@ -76,10 +75,7 @@ class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener
             return
         }
 
-        val remaining = AtomicInteger(containersToLoad.size)
-        val event = CompletableFuture<Void>()
-
-        for (container in containersToLoad) {
+        val futures = containersToLoad.map { container ->
             val containerId = container.containerId
             val loadedContainer = loadedContainers.getOrPut(containerId) { FLoadedContainer() }
             LOG_STREAMING.debug("Loading mounted container ID '0x%016X'".format(containerId.value().toLong()))
@@ -87,7 +83,7 @@ class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener
             val headerChunkId = FIoChunkId(containerId.value(), 0u, if (provider.game >= GAME_UE5_BASE) EIoChunkType5.ContainerHeader else EIoChunkType.ContainerHeader)
             val ioBuffer = container.read(headerChunkId)
 
-            Thread {
+            CompletableFuture.supplyAsync {
                 val containerHeader = FIoContainerHeader(FByteArchive(ioBuffer, provider.versions))
                 loadedContainer.containerNameMap = containerHeader.redirectsNameMap
                 loadedContainer.storeEntries = containerHeader.storeEntries
@@ -110,14 +106,10 @@ class FPackageStore(val provider: PakFileProvider) : FOnContainerMountedListener
                         redirectsPackageMap[redirect.sourcePackageId] = sourcePackageName to redirect.targetPackageId
                     }
                 }
-
-                if (remaining.decrementAndGet() == 0) {
-                    event.complete(null)
-                }
-            }.start()
+            }
         }
 
-        event.await()
+        CompletableFuture.allOf(*futures.toTypedArray()).await()
     }
 
     override fun onContainerMounted(container: FIoStoreReaderImpl) {

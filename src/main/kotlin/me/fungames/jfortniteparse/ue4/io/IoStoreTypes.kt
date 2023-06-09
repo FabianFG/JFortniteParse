@@ -4,6 +4,7 @@ import me.fungames.jfortniteparse.ue4.objects.core.serialization.FCustomVersion
 import me.fungames.jfortniteparse.ue4.objects.uobject.serialization.FMappedName
 import me.fungames.jfortniteparse.ue4.reader.FArchive
 import me.fungames.jfortniteparse.ue4.versions.FPackageFileVersion
+import me.fungames.jfortniteparse.ue4.versions.GAME_UE5
 import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
 import me.fungames.jfortniteparse.util.CityHash.cityHash64
 
@@ -139,8 +140,11 @@ class FPackageSummary {
 
 object EZenPackageVersion {
     const val Initial = 0
+    const val DataResourceTable = 1
+    const val ImportedPackageNames = 2
+    const val ExportDependencies = 3
 
-    const val Latest = Initial
+    const val Latest = ExportDependencies
 }
 
 class FZenPackageVersioningInfo {
@@ -170,7 +174,10 @@ class FZenPackageSummary {
     var importMapOffset: Int
     var exportMapOffset: Int
     var exportBundleEntriesOffset: Int
-    var graphDataOffset: Int
+    var graphDataOffset = 0
+    var dependencyBundleHeadersOffset = 0
+    var dependencyBundleEntriesOffset = 0
+    var importedPackageNamesOffset = 0
 
     constructor(Ar: FArchive) {
         bHasVersioningInfo = Ar.readBoolean()
@@ -182,7 +189,16 @@ class FZenPackageSummary {
         importMapOffset = Ar.readInt32()
         exportMapOffset = Ar.readInt32()
         exportBundleEntriesOffset = Ar.readInt32()
-        graphDataOffset = Ar.readInt32()
+        if (Ar.game >= GAME_UE5(2)) {
+            // (April 6) https://github.com/EpicGames/UnrealEngine/commit/ecfc01c258d889dc82ef8e4bc3f8acbacb313930
+            dependencyBundleHeadersOffset = Ar.readInt32()
+            dependencyBundleEntriesOffset = Ar.readInt32()
+
+            // (March 31) https://github.com/EpicGames/UnrealEngine/commit/462cc2a438a13bcb2392d7a3c7485541d5b70fb7
+            importedPackageNamesOffset = Ar.readInt32()
+        } else {
+            graphDataOffset = Ar.readInt32()
+        }
     }
 }
 

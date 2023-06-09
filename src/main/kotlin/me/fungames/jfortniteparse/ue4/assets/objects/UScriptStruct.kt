@@ -83,6 +83,7 @@ class UScriptStruct {
             "UniqueNetIdRepl" -> FUniqueNetIdRepl(Ar)
             "Vector" -> if (nz) FVector(Ar) else FVector()
             "Vector2D" -> if (nz) FVector2D(Ar) else FVector2D()
+            "DeprecateSlateVector2D" -> if (nz) FVector2D(Ar.readFloat32(), Ar.readFloat32()) else FVector2D()
             "Vector2MaterialInput" -> FVector2MaterialInput(Ar)
             "Vector4" -> if (nz) FVector4(Ar) else FVector4()
             "VectorMaterialInput" -> FVectorMaterialInput(Ar)

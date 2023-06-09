@@ -16,10 +16,12 @@ class FFilePackageStoreEntry {
     var importedPackages: Array<FPackageId>
     //var shaderMapHashes: Array<ByteArray>
 
-    constructor(Ar: FArchive) {
-        if (Ar.game >= GAME_UE5_BASE) {
-            exportCount = Ar.readInt32()
-            exportBundleCount = Ar.readInt32()
+    constructor(Ar: FArchive, version: Int) {
+        if (version >= EIoContainerHeaderVersion.Initial) {
+            if (version < EIoContainerHeaderVersion.NoExportInfo) {
+                exportCount = Ar.readInt32()
+                exportBundleCount = Ar.readInt32()
+            }
             importedPackages = Ar.readCArrayView { FPackageId(Ar) }
             Ar.skip(8) //shaderMapHashes = Ar.readCArrayView { Ar.read(20) }
         } else {
@@ -51,10 +53,10 @@ class FIoContainerHeaderPackageRedirect {
     var targetPackageId: FPackageId
     var sourcePackageName: FMappedName?
 
-    constructor(Ar: FArchive) {
+    constructor(Ar: FArchive, version: Int) {
         sourcePackageId = FPackageId(Ar)
         targetPackageId = FPackageId(Ar)
-        sourcePackageName = if (Ar.game >= GAME_UE5_BASE) FMappedName(Ar) else null
+        sourcePackageName = if (version >= EIoContainerHeaderVersion.Initial) FMappedName(Ar) else null
     }
 }
 
@@ -73,6 +75,7 @@ object EIoContainerHeaderVersion {
     const val Initial = 0
     const val LocalizedPackages = 1
     const val OptionalSegmentPackages = 2
+    const val NoExportInfo = 3
 
     const val Latest = LocalizedPackages
 }
@@ -115,13 +118,13 @@ class FIoContainerHeader {
         packageIds = Ar.readTArray { FPackageId(Ar) }
         val storeEntriesNum = Ar.readInt32()
         val storeEntriesEnd = Ar.pos() + storeEntriesNum
-        storeEntries = Array(packageIds.size) { FFilePackageStoreEntry(Ar) }
+        storeEntries = Array(packageIds.size) { FFilePackageStoreEntry(Ar, version) }
         Ar.seek(storeEntriesEnd)
         if (version >= EIoContainerHeaderVersion.OptionalSegmentPackages) {
             optionalSegmentPackageIds = Ar.readTArray { FPackageId(Ar) }
             val optionalSegmentStoreEntriesNum = Ar.readInt32()
             val optionalSegmentStoreEntriesEnd = Ar.pos() + optionalSegmentStoreEntriesNum
-            optionalSegmentStoreEntries = Array(optionalSegmentPackageIds!!.size) { FFilePackageStoreEntry(Ar) }
+            optionalSegmentStoreEntries = Array(optionalSegmentPackageIds!!.size) { FFilePackageStoreEntry(Ar, version) }
             Ar.seek(optionalSegmentStoreEntriesEnd)
         }
         if (version >= EIoContainerHeaderVersion.Initial) {
@@ -130,8 +133,8 @@ class FIoContainerHeader {
         if (version >= EIoContainerHeaderVersion.LocalizedPackages) {
             localizedPackages = Ar.readTArray { FIoContainerHeaderLocalizedPackage(Ar) }
         } else {
-            culturePackageMap = Ar.readTMap { Ar.readString() to Ar.readTArray { FIoContainerHeaderPackageRedirect(Ar) } }
+            culturePackageMap = Ar.readTMap { Ar.readString() to Ar.readTArray { FIoContainerHeaderPackageRedirect(Ar, version) } }
         }
-        packageRedirects = Ar.readTArray { FIoContainerHeaderPackageRedirect(Ar) }
+        packageRedirects = Ar.readTArray { FIoContainerHeaderPackageRedirect(Ar, version) }
     }
 }
