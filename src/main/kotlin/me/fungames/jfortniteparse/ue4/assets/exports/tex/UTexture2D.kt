@@ -32,7 +32,7 @@ class UTexture2D : UTexture() {
         cooked = Ar.readBoolean()
         textures = mutableMapOf()
         if (cooked) {
-            val serializeMipData = Ar.game >= GAME_UE5(3) && Ar.readBoolean() // Present in Fortnite v25.10+
+            val serializeMipData = Ar.game >= GAME_UE5(2) && Ar.readBoolean() // Present in Fortnite v25.10+
             while (true) {
                 val pixelFormat = Ar.readFName()
                 if (pixelFormat.isNone()) break
