@@ -10,10 +10,7 @@ import me.fungames.jfortniteparse.ue4.assets.writer.FAssetArchiveWriter
 import me.fungames.jfortniteparse.ue4.objects.core.math.FIntPoint
 import me.fungames.jfortniteparse.ue4.objects.engine.FStripDataFlags
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE4
-import me.fungames.jfortniteparse.ue4.versions.GAME_UE5_BASE
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_TEXTURE_DERIVED_DATA2
-import me.fungames.jfortniteparse.ue4.versions.VER_UE4_TEXTURE_SOURCE_ART_REFACTOR
+import me.fungames.jfortniteparse.ue4.versions.*
 
 @OnlyAnnotated
 class UTexture2D : UTexture() {
@@ -35,6 +32,7 @@ class UTexture2D : UTexture() {
         cooked = Ar.readBoolean()
         textures = mutableMapOf()
         if (cooked) {
+            val serializeMipData = Ar.game >= GAME_UE5(3) && Ar.readBoolean() // Present in Fortnite v25.10+
             while (true) {
                 val pixelFormat = Ar.readFName()
                 if (pixelFormat.isNone()) break
