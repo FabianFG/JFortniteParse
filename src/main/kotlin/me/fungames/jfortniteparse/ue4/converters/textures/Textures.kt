@@ -5,6 +5,8 @@ import me.fungames.jfortniteparse.ue4.assets.exports.tex.FTexture2DMipMap
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.FTexturePlatformData
 import me.fungames.jfortniteparse.ue4.assets.exports.tex.UTexture2D
 import me.fungames.jfortniteparse.ue4.assets.writer.FByteArchiveWriter
+import me.fungames.jfortniteparse.ue4.converters.textures.Detex.DetexPixelFormat
+import me.fungames.jfortniteparse.ue4.converters.textures.Detex.DetexTextureFormat
 import me.fungames.jfortniteparse.ue4.converters.textures.PixelFormatInfo.*
 import me.fungames.jfortniteparse.ue4.converters.textures.dds.DDSCaps
 import me.fungames.jfortniteparse.ue4.converters.textures.dds.DDSHeader
@@ -18,27 +20,37 @@ import java.awt.image.BufferedImage
 import kotlin.math.floor
 import kotlin.math.sqrt
 
-enum class PixelFormatInfo(val blockSizeX: Int, val blockSizeY: Int, val bytesPerBlock: Int, val x360AlignX: Int, val x360AlignY: Int, val float: Boolean) {
-    PF_G8          (1, 1, 1, 64, 64, false),
-    PF_RGB8        (1, 1, 3, 0, 0, false),
-    PF_RGBA8       (1, 1, 4, 32, 32, false),
-    PF_R8G8B8A8    (1, 1, 4, 32, 32, false),
-    PF_BGRA8       (1, 1, 4, 32, 32, false),
-    PF_B8G8R8A8    (1, 1, 4, 32, 32, false),
-    PF_DXT1        (4, 4, 8, 128, 128, false),
-    PF_DXT3        (4, 4, 16, 128, 128, false),
-    PF_DXT5        (4, 4, 16, 128, 128, false),
-    PF_DXT5N       (4, 4, 16, 128, 128, false),
-    PF_V8U8        (1, 1, 2, 64, 32, false),
-    PF_V8U8_2      (1, 1, 2, 64, 32, false),
-    PF_BC5         (4, 4, 16, 0, 0, false),
-    PF_RGBA4       (1, 1, 2, 0, 0, false),
-    PF_ASTC_4x4    (4, 4, 16, 0, 0, false),
-    PF_ASTC_6x6    (6, 6, 16, 0, 0, false),
-    PF_ASTC_8x8    (8, 8, 16, 0, 0, false),
-    PF_ASTC_10x10  (10, 10, 16, 0, 0, false),
-    PF_ASTC_12x12  (12, 12, 16, 0, 0, false),
-
+enum class PixelFormatInfo(val blockSizeX: Int, val blockSizeY: Int, val bytesPerBlock: Int, val float: Boolean) {
+    PF_G8               (1, 1, 1, false),
+    PF_RGB8             (1, 1, 3, false),
+    PF_RGBA8            (1, 1, 4, false),
+    PF_R8G8B8A8         (1, 1, 4, false),
+    PF_BGRA8            (1, 1, 4, false),
+    PF_B8G8R8A8         (1, 1, 4, false),
+    PF_DXT1             (4, 4, 8, false),
+    PF_DXT3             (4, 4, 16, false),
+    PF_DXT5             (4, 4, 16, false),
+    PF_DXT5N            (4, 4, 16, false),
+    PF_V8U8             (1, 1, 2, false),
+    PF_V8U8_2           (1, 1, 2, false),
+    PF_BC5              (4, 4, 16, false),
+    PF_RGBA4            (1, 1, 2, false),
+    PF_ATC_RGB          (4, 4, 8, false),
+    PF_ATC_RGBA_E       (4, 4, 16, false),
+    PF_ATC_RGBA_I       (4, 4, 16, false),
+    PF_X24_G8           (1, 1, 1, false),
+    PF_ETC1             (4, 4, 8, false),
+    PF_ETC2_RGB         (4, 4, 8, false),
+    PF_ETC2_RGBA        (4, 4, 16, false),
+    PF_R32G32B32A32_UINT(1, 1, 16, false),
+    PF_R16G16_UINT      (1, 1, 4, false),
+    PF_ASTC_4x4         (4, 4, 16, false),
+    PF_ASTC_6x6         (6, 6, 16, false),
+    PF_ASTC_8x8         (8, 8, 16, false),
+    PF_ASTC_10x10       (10, 10, 16, false),
+    PF_ASTC_12x12       (12, 12, 16, false),
+    PF_BC6H             (4, 4, 16, true),
+    PF_BC7              (4, 4, 16, false),
 }
 
 private fun rgbaBufferToImage(rgba: ByteArray, width: Int, height: Int): BufferedImage {
@@ -68,10 +80,10 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
 
     val pixelSize = if (format.float) 16 else 4
     val size = width * height * pixelSize
-    val dst = ByteArray(size)
 
     when (format) {
         PF_RGB8 -> {
+            val dst = ByteArray(size)
             var s = data.asPointer()
             var d = dst.asPointer()
             for (i in 0 until width * height) {
@@ -83,11 +95,13 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 d += 4
                 s += 3
             }
+            return rgbaBufferToImage(dst, width, height)
         }
         PF_RGBA8, PF_R8G8B8A8 -> {
-            data.copyInto(dst, 0, 0, width * height * 4)
+            return rgbaBufferToImage(data, width, height)
         }
         PF_BGRA8, PF_B8G8R8A8 -> {
+            val dst = ByteArray(size)
             var s = data.asPointer()
             var d = dst.asPointer()
             for (i in 0 until width * height) {
@@ -99,8 +113,10 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 d += 4
                 s += 4
             }
+            return rgbaBufferToImage(dst, width, height)
         }
         PF_RGBA4 -> {
+            val dst = ByteArray(size)
             var s = data.asPointer()
             var d = dst.asPointer()
             for (i in 0 until width * height) {
@@ -114,8 +130,10 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 d += 4
                 s += 2
             }
+            return rgbaBufferToImage(dst, width, height)
         }
         PF_G8 -> {
+            val dst = ByteArray(size)
             var s = data.asPointer()
             var d = dst.asPointer()
             for (i in 0 until width * height) {
@@ -127,8 +145,10 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 s += 1
                 d += 4
             }
+            return rgbaBufferToImage(dst, width, height)
         }
         PF_V8U8, PF_V8U8_2 -> {
+            val dst = ByteArray(size)
             var s = data.asPointer()
             var d = dst.asPointer()
             val offset = if (format == PF_V8U8) 128.toByte() else 0
@@ -148,12 +168,13 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 s += 2
                 d += 4
             }
+            return rgbaBufferToImage(dst, width, height)
         }
         PF_ASTC_4x4, PF_ASTC_6x6, PF_ASTC_8x8, PF_ASTC_10x10, PF_ASTC_12x12 -> {
             val img = ASTCCodecImage(Bitness.BITNESS_8, width, height, 1, 0, format.blockSizeX, format.blockSizeY)
             img.initializeImage()
             img.decode(data)
-            img.toBuffer().copyInto(dst, 0, 0, width * height * 4)
+            return rgbaBufferToImage(img.toBuffer(), width, height)
         }
         //All DXT formats
         PF_DXT1, PF_DXT3, PF_DXT5, PF_DXT5N -> {
@@ -162,15 +183,42 @@ fun UTexture2D.toBufferedImage(texture: FTexturePlatformData = getFirstTexture()
                 PF_DXT3 -> Squish.CompressionType.DXT3
                 else -> Squish.CompressionType.DXT1
             })
-            decompressed.copyInto(dst, 0, 0, width * height * 4)
+            return rgbaBufferToImage(decompressed, width, height)
         }
         PF_BC5 -> {
             val rgb = readBC5(data, width, height)
             return rgbBufferToImage(rgb, width, height)
         }
+        PF_BC7 -> {
+            val dst = ByteArray(size)
+            if (!Detex.decompressTextureLinear(data, dst, width, height, DetexTextureFormat.BPTC, DetexPixelFormat.RGBA8)) {
+                throw IllegalArgumentException("Failed to decode BC7 texture")
+            }
+            return rgbaBufferToImage(dst, width, height)
+        }
+        PF_ETC1 -> {
+            val dst = ByteArray(size)
+            if (!Detex.decompressTextureLinear(data, dst, width, height, DetexTextureFormat.ETC1, DetexPixelFormat.RGBA8)) {
+                throw IllegalArgumentException("Failed to decode ETC1 texture")
+            }
+            return rgbaBufferToImage(dst, width, height)
+        }
+        PF_ETC2_RGB -> {
+            val dst = ByteArray(size)
+            if (!Detex.decompressTextureLinear(data, dst, width, height, DetexTextureFormat.ETC2, DetexPixelFormat.RGBA8)) {
+                throw IllegalArgumentException("Failed to decode ETC2_RGB texture")
+            }
+            return rgbaBufferToImage(dst, width, height)
+        }
+        PF_ETC2_RGBA -> {
+            val dst = ByteArray(size)
+            if (!Detex.decompressTextureLinear(data, dst, width, height, DetexTextureFormat.ETC2_EAC, DetexPixelFormat.RGBA8)) {
+                throw IllegalArgumentException("Failed to decode ETC2_RGBA texture")
+            }
+            return rgbaBufferToImage(dst, width, height)
+        }
     }
-
-    return rgbaBufferToImage(dst, width, height)
+    throw IllegalArgumentException("Unsupported pixel format: $format")
 }
 
 fun FTexturePlatformData.getDdsFourCC() = when (pixelFormat) {
