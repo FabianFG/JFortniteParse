@@ -3,6 +3,7 @@ package me.fungames.jfortniteparse.ue4.assets.objects
 import me.fungames.jfortniteparse.ue4.assets.reader.FAssetArchive
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName
 import me.fungames.jfortniteparse.ue4.objects.uobject.FPackageIndex
+import me.fungames.jfortniteparse.ue4.versions.FInstancedStructCustomVersion
 
 class FInstancedStruct {
 	companion object {
@@ -12,7 +13,9 @@ class FInstancedStruct {
 	val struct: UScriptStruct?
 
 	constructor(Ar: FAssetArchive) {
-		val version = Ar.readUInt8()
+		if (FInstancedStructCustomVersion.get(Ar) < FInstancedStructCustomVersion.CustomVersionAdded) {
+			val version = Ar.readUInt8()
+		}
 
 		val structType = FPackageIndex(Ar)
 		val serialSize = Ar.readInt32()
