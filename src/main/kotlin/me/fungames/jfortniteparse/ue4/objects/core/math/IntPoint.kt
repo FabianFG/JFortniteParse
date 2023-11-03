@@ -23,6 +23,8 @@ class FIntPoint {
         Ar.writeInt32(y)
     }
 
+    constructor() : this(0, 0)
+
     constructor(x: Int, y: Int) {
         this.x = x
         this.y = y

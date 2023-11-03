@@ -20,6 +20,8 @@ class FIntVector {
         Ar.writeInt32(z)
     }
 
+    constructor() : this(0, 0, 0)
+
     constructor(x: Int, y: Int, z: Int) {
         this.x = x
         this.y = y
