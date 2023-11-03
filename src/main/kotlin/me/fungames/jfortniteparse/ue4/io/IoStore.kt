@@ -31,12 +31,14 @@ enum class EIoStoreTocVersion {
     PartitionSize,
     PerfectHash,
     PerfectHashWithOverflow,
+    OnDemandMetaData,
 }
 
 const val IO_CONTAINER_FLAG_COMPRESSED = 1 shl 0
 const val IO_CONTAINER_FLAG_ENCRYPTED  = 1 shl 1
 const val IO_CONTAINER_FLAG_SIGNED     = 1 shl 2
 const val IO_CONTAINER_FLAG_INDEXED    = 1 shl 3
+const val IO_CONTAINER_FLAG_ON_DEMAND  = 1 shl 4
 
 /**
  * I/O Store TOC header.

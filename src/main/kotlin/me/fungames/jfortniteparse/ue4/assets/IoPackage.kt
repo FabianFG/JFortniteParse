@@ -80,6 +80,10 @@ class IoPackage : Package {
             name = fileName
 
             if (versions.game >= GAME_UE5(2) || versions.ver >= EUnrealEngineObjectUE5Version.DATA_RESOURCES) {
+                if (versions.game >= GAME_UE5(4)) {
+                    val pad = Ar.readInt64()
+                    Ar.skip(pad)
+                }
                 val bulkDataMapSize = Ar.readUInt64()
                 if (versions.game != GAME_UE5(2) || bulkDataMapSize < 65535u) { // Fortnite moment
                     val bulkDataMapCount = bulkDataMapSize.toInt() / FBulkDataMapEntry.SIZE

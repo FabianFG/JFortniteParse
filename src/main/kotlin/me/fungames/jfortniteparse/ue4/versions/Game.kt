@@ -37,6 +37,7 @@ enum class Ue4Version(val game: Int) {
     GAME_UE5_1(GAME_UE5(1)),
     GAME_UE5_2(GAME_UE5(2)),
     GAME_UE5_3(GAME_UE5(3)),
+    GAME_UE5_4(GAME_UE5(4)),
 
     GAME_UE5_LATEST(GAME_UE5(LATEST_SUPPORTED_UE5_VERSION));
 
@@ -62,7 +63,7 @@ const val GAME_UE5_BASE = 0x2000000
 fun GAME_UE5(x: Int) = GAME_UE5_BASE + (x shl 4)
 fun GAME_UE5_GET_MINOR(x: Int) = (x - GAME_UE5_BASE) shr 4
 
-const val LATEST_SUPPORTED_UE5_VERSION = 3
+const val LATEST_SUPPORTED_UE5_VERSION = 4
 // endregion
 
 fun getArVer(game: Int): Int {
