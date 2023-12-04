@@ -49,6 +49,7 @@ class PropertyType {
                 }
                 enumName = FName(json["enumName"].asString)
             }
+            "OptionalProperty" -> innerType = PropertyType(json["innerType"].asJsonObject)
             "StructProperty" -> structName = FName(json["structType"].asString) // key name should be structName
             "SetProperty", "ArrayProperty" -> innerType = PropertyType(json["innerType"].asJsonObject)
             "MapProperty" -> {

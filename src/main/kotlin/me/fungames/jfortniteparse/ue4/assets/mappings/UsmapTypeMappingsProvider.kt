@@ -60,6 +60,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
                 }
                 type.enumName = Ar.readFName()
             }
+            OptionalProperty -> type.innerType = deserializePropData(Ar)
             StructProperty -> type.structName = Ar.readFName()
             SetProperty, ArrayProperty -> type.innerType = deserializePropData(Ar)
             MapProperty -> {
@@ -160,6 +161,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         MapProperty,
         SetProperty,
         EnumProperty,
-        FieldPathProperty
+        FieldPathProperty,
+        OptionalProperty,
     }
 }
