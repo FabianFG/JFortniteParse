@@ -12,7 +12,7 @@ import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
 
-public class FortItemDefinition extends McpItemDefinitionBase {
+public class FortItemDefinition extends ItemDefinitionBase {
     //public MulticastInlineDelegateProperty OnItemCountChanged;
     @UProperty(skipPrevious = 1)
     public EFortRarity Rarity = EFortRarity.Uncommon;
@@ -29,10 +29,6 @@ public class FortItemDefinition extends McpItemDefinitionBase {
     public Boolean bForceAutoPickup;
     public boolean bInventorySizeLimited = true;
     public FText ItemTypeNameOverride;
-    public FText DisplayName;
-    public FText ShortDescription;
-    public FText Description;
-    public FText DisplayNamePrefix;
     public FText SearchTags;
     public FGameplayTagContainer GameplayTags;
     public FGameplayTagContainer AutomationTags;
