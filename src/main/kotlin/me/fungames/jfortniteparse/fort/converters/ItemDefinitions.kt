@@ -257,7 +257,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
 
     g.drawImage(icon, result.width - 5 - variantsIconSize, result.height - 5 - variantsIconSize, null)
 
-    val displayName = itemDef.DisplayName?.textForLocres(locres)?.toUpperCase()
+    val displayName = itemDef.ItemName?.textForLocres(locres)?.toUpperCase()
 
     val rightX = result.width - 5 - variantsIconSize - 10
     val spaceForString = rightX - 5
@@ -274,7 +274,7 @@ private fun getImageWithVariants(container: ItemDefinitionContainer, locres: Loc
         g.drawString(displayName, rightX - fm.stringWidth(displayName), result.width - 52)
     }
 
-    var description = itemDef.Description?.textForLocres(locres)
+    var description = itemDef.ItemDescription?.textForLocres(locres)
     if (description != null) {
         if (description.equals("TBD", true))
             description = itemDef.name
@@ -343,7 +343,7 @@ private fun getImageNoVariants(container: ItemDefinitionContainer, locres: Locre
     g.paint = Color(0, 0, 0, 100)
     g.fillRect(5, 5 + 512 - barHeight, 512, barHeight)
     g.font = burbank
-    val displayName = itemDef.DisplayName?.textForLocres(locres)?.toUpperCase()
+    val displayName = itemDef.ItemName?.textForLocres(locres)?.toUpperCase()
     if (displayName != null) {
         g.color = Color.WHITE
         var fontSize = 60f
@@ -356,7 +356,7 @@ private fun getImageNoVariants(container: ItemDefinitionContainer, locres: Locre
         }
         g.drawCenteredString(displayName, result.width / 2, result.height - 95)
     }
-    var description = itemDef.Description?.textForLocres(locres)
+    var description = itemDef.ItemDescription?.textForLocres(locres)
     if (description != null) {
         if (description.equals("TBD", true))
             description = itemDef.name
@@ -434,7 +434,7 @@ private fun getShopImage(container: ItemDefinitionContainer, size: EFortMtxOffer
     val notoSans = FortResources.notoSans
     val notoSansBold = FortResources.notoSansBold
 
-    val displayName = itemDef.DisplayName?.textForLocres(locres)?.toUpperCase()
+    val displayName = itemDef.ItemName?.textForLocres(locres)?.toUpperCase()
     if (displayName != null) {
         g.color = Color.WHITE
         var fontSize = if (large) 80f else 60f
@@ -448,7 +448,7 @@ private fun getShopImage(container: ItemDefinitionContainer, size: EFortMtxOffer
         g.drawCenteredString(displayName, result.width / 2, icon.height - (if (large) 95 else 85))
     }
 
-    val shortDesc = itemDef.ShortDescription?.textForLocres(locres)
+    val shortDesc = itemDef.ItemShortDescription?.textForLocres(locres)
     if (shortDesc != null) {
         g.color = Color.LIGHT_GRAY
         var fontSize = if (large) 40f else 30f
