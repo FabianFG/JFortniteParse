@@ -23,7 +23,7 @@ public class FortHomebaseNodeItemDefinition extends FortAccountItemDefinition {
 
     @UStruct
     public static class HomebaseSquadSlotId {
-        public FName SquadId;
+        public FName SquadID;
         public Integer SquadSlotIndex;
     }
 
