@@ -9,7 +9,7 @@ import java.util.List;
 
 public class FortCollectionBookPageData extends FTableRowBase {
     public FText Name;
-    public FName CategoryId;
+    public FName CategoryID;
     public int SortPriority;
     public FName ProfileId;
     public List<FName> SectionRowNames;
