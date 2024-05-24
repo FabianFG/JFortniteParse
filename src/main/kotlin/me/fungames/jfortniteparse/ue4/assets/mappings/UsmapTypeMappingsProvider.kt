@@ -36,6 +36,11 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
             throw ParserException(".usmap file has invalid version $version")
         }
 
+        val hasVersioning = if (version >= EUsmapVersion.PackageVersioning.ordinal) Ar.readBoolean() else false
+        if (hasVersioning) {
+            throw ParserException("Package versioning is not supported")
+        }
+
         val method = Ar.read()
         val compSize = Ar.readInt32()
         val decompSize = Ar.readInt32()
