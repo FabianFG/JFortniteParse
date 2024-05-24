@@ -75,10 +75,15 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
     }
 
     private fun parseData(Ar: FUsmapNameTableArchive) {
-        Ar.nameMap = Ar.readArray { String(Ar.read(Ar.read())) }
+        Ar.nameMap = if (Ar.ver >= EUsmapVersion.LongFName.ordinal) {
+            Ar.readArray { String(Ar.read(Ar.readUInt16().toInt())) }
+        } else {
+            Ar.readArray { String(Ar.read(Ar.read())) }
+        }
         mappings.enums = Ar.readTMap {
             val enumName = Ar.readFName().text
-            val enumValues = List(Ar.read()) { Ar.readFName().text }
+            val enumValuesSize = if (Ar.ver >= EUsmapVersion.LargeEnums.ordinal) Ar.readUInt16().toInt() else Ar.read()
+            val enumValues = List(enumValuesSize) { Ar.readFName().text }
             enumName to enumValues
         }
         repeat(Ar.readInt32()) {
@@ -115,7 +120,10 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
     }
 
     enum class EUsmapVersion {
-        Initial;
+        Initial,
+        PackageVersioning,
+        LongFName,
+        LargeEnums;
 
         companion object {
             fun latest() = values().last()
