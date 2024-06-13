@@ -32,7 +32,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         }
 
         val version = Ar.read()
-        if (version != EUsmapVersion.latest().ordinal) {
+        if (version > EUsmapVersion.latest().ordinal) {
             throw ParserException(".usmap file has invalid version $version")
         }
 
