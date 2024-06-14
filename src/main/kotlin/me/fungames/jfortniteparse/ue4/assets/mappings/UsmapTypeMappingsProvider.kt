@@ -20,12 +20,12 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
     constructor(file: File) : this({ FByteArchive(file.readBytes()) })
 
     override fun reload(): Boolean {
-        val data = readCompressedUsmap(load())
-        parseData(FUsmapNameTableArchive(data))
+        val usmapAr = readCompressedUsmap(load())
+        parseData(usmapAr)
         return true
     }
 
-    protected fun readCompressedUsmap(Ar: FArchive): ByteArray {
+    protected fun readCompressedUsmap(Ar: FArchive): FUsmapNameTableArchive {
         val magic = Ar.readInt16()
         if (magic != FILE_MAGIC) {
             throw ParserException(".usmap file has an invalid magic constant")
@@ -52,7 +52,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         Ar.read(compData)
         val data = ByteArray(decompSize)
         Compression.uncompressMemory(EUsmapCompressionMethod.fromIndex(method).name, data, 0, decompSize, compData, 0, compSize)
-        return data
+        return FUsmapNameTableArchive(data, version)
     }
 
     private fun deserializePropData(Ar: FUsmapNameTableArchive): PropertyType {
@@ -109,8 +109,12 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         }
     }
 
-    class FUsmapNameTableArchive(data: ByteArray) : FByteArchive(data) {
+    class FUsmapNameTableArchive(data: ByteArray, version: Int) : FByteArchive(data) {
         lateinit var nameMap: List<String>
+
+        init {
+            ver = version
+        }
 
         override fun readFName(): FName {
             val nameIndex = readInt32()
