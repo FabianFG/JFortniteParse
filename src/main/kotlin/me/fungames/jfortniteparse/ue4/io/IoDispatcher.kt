@@ -231,7 +231,7 @@ interface FIoDirectoryIndexReader {
 
 class FIoStoreTocChunkInfo(
     val id: FIoChunkId,
-    val hash: FIoChunkHash,
+    val hash: ByteArray,
     val offset: ULong,
     val size: ULong,
     val compressedSize: ULong,

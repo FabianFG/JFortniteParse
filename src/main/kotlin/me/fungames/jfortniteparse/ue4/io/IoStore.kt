@@ -32,6 +32,8 @@ enum class EIoStoreTocVersion {
     PerfectHash,
     PerfectHashWithOverflow,
     OnDemandMetaData,
+    RemovedOnDemandMetaData,
+    ReplaceIoChunkHashWithIoHash,
 }
 
 const val IO_CONTAINER_FLAG_COMPRESSED = 1 shl 0
@@ -162,12 +164,14 @@ const val IO_STORE_TOC_ENTRY_META_FLAG_MEMORY_MAPPED = 1 shl 1
  * TOC entry meta data
  */
 class FIoStoreTocEntryMeta {
-    var chunkHash: FIoChunkHash
+    var chunkHash: ByteArray
     var flags: UByte
 
-    constructor(Ar: FArchive) {
-        chunkHash = FIoChunkHash(Ar)
+    constructor(Ar: FArchive, replacedIoChunkHashWithIoHash: Boolean) {
+        chunkHash = if (replacedIoChunkHashWithIoHash) Ar.read(20) else Ar.read(32)
         flags = Ar.readUInt8()
+        if (replacedIoChunkHashWithIoHash)
+            Ar.skip(3)
     }
 }
 
@@ -618,10 +622,20 @@ class FIoStoreTocResource {
         }
 
         // Meta
+        val replacedIoChunkHashWithIoHash = header.version >= EIoStoreTocVersion.ReplaceIoChunkHashWithIoHash
         chunkMetas = if ((readOptions and TOC_READ_OPTION_READ_TOC_META) != 0) {
-            Array(header.tocEntryCount.toInt()) { FIoStoreTocEntryMeta(tocBuffer) }
+            Array(header.tocEntryCount.toInt()) { FIoStoreTocEntryMeta(tocBuffer, replacedIoChunkHashWithIoHash) }
         } else {
             emptyArray()
+        }
+
+        // OnDemand
+        if (header.version == EIoStoreTocVersion.OnDemandMetaData && header.containerFlags and IO_CONTAINER_FLAG_ON_DEMAND != 0)
+        {
+            // FIoStoreTocOnDemandChunkMeta (FIoHash) OnDemandChunkMeta;
+            tocBuffer.skip(header.tocEntryCount.toLong() * 20) // sizeof(FSHAHash)
+            // FIoStoreTocOnDemandCompressedBlockMeta (FIoHash) OnDemandCompressedBlockMeta;
+            tocBuffer.skip(header.tocCompressedBlockEntryCount.toLong() * 20) // sizeof(FSHAHash)
         }
     }
 
