@@ -18,10 +18,12 @@ public class HomebaseNodeGameplayEffectDataTableRow extends FTableRowBase {
     public int AssociatedModifierIdx;
 
     public enum EGameplayModOp {
-        Additive,
-        Multiplicitive,
-        Division,
+        AddBase,
+        MultiplyAdditive,
+        DivideAdditive,
         Override,
+        MultiplyCompound,
+        AddFinal,
         Max
     }
 }
