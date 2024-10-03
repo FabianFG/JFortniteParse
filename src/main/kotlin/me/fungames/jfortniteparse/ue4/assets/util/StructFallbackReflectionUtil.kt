@@ -28,7 +28,7 @@ fun <T> mapToClass(properties: List<FPropertyTag>, clazz: Class<T>, obj: T): T {
     try {
         val boundFields = getBoundFields(TypeToken.get(clazz), clazz)
         for (prop in properties) {
-            val field = boundFields[prop.name.text] ?: continue
+            val field = boundFields[prop.name.text.lowercase()] ?: continue
             writePropertyToField(prop, field, obj)
         }
         return obj
@@ -139,7 +139,7 @@ private fun getBoundFields(type: TypeToken<*>, raw: Class<*>): Map<String, Field
                 val name = fieldNames[i]
                 // if (i != 0) serialize = false // only serialize the default name
                 val boundField = field
-                val replaced = result.put(name, boundField)
+                val replaced = result.put(name.lowercase(), boundField)
                 if (previous == null) previous = replaced
                 ++i
             }
