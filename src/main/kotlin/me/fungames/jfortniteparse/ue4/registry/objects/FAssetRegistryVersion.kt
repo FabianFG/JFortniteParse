@@ -57,6 +57,12 @@ class FAssetRegistryVersion(Ar: FArchive) : Comparable<FAssetRegistryVersion.Typ
         RemoveAssetPathFNames,
         /** Added header with bFilterEditorOnlyData flag */
         AddedHeader,
+        /** Added Extension to AssetPackageData */
+        AssetPackageDataHasExtension,
+        /** Added PackageLocation to AssetPackageData */
+        AssetPackageDataHasPackageLocation,
+        /** Replaced 2 byte wide string with UTF8 String */
+        MarshalledTextAsUTF8String,
     }
 
     val guid = FGuid(Ar)

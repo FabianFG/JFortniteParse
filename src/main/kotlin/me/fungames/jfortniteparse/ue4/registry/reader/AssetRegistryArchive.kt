@@ -39,6 +39,12 @@ abstract class FAssetRegistryArchive(wrappedAr: FArchive, val header: FAssetRegi
     val version get() = header.version
 
     abstract fun serializeTagsAndBundles(out: FAssetData)
+    override fun readString(): String {
+        if (version >= FAssetRegistryVersion.Type.MarshalledTextAsUTF8String) {
+            return String(read(readInt32()), Charsets.UTF_8)
+        }
+        return super.readString()
+    }
 }
 
 class FAssetRegistryReader : FAssetRegistryArchive {

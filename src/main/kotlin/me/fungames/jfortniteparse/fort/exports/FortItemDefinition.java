@@ -4,6 +4,7 @@ import kotlin.Lazy;
 import me.fungames.jfortniteparse.fort.enums.*;
 import me.fungames.jfortniteparse.ue4.assets.UProperty;
 import me.fungames.jfortniteparse.ue4.assets.exports.FCurveTableRowHandle;
+import me.fungames.jfortniteparse.ue4.assets.objects.FInstancedStruct;
 import me.fungames.jfortniteparse.ue4.objects.FScalableFloat;
 import me.fungames.jfortniteparse.ue4.objects.core.i18n.FText;
 import me.fungames.jfortniteparse.ue4.objects.core.math.FRotator;
@@ -11,6 +12,8 @@ import me.fungames.jfortniteparse.ue4.objects.core.math.FVector;
 import me.fungames.jfortniteparse.ue4.objects.gameplaytags.FGameplayTagContainer;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FName;
 import me.fungames.jfortniteparse.ue4.objects.uobject.FSoftObjectPath;
+
+import java.util.List;
 
 public class FortItemDefinition extends ItemDefinitionBase {
     //public MulticastInlineDelegateProperty OnItemCountChanged;
@@ -49,6 +52,7 @@ public class FortItemDefinition extends ItemDefinitionBase {
     public FRotator FrontendPreviewInitialRotation;
     public FSoftObjectPath FrontendPreviewMeshOverride;
     public FSoftObjectPath FrontendPreviewSkeletalMeshOverride;
+    public List<FInstancedStruct> DataList;
 
     public FName getSet() {
         return GameplayTags != null ? GameplayTags.getValue("Cosmetics.Set") : null;

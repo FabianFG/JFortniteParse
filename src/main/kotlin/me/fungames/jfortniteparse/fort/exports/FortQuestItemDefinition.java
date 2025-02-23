@@ -19,6 +19,7 @@ import java.util.List;
 public class FortQuestItemDefinition extends FortAccountItemDefinition {
     public EFortQuestType QuestType;
     public EFortQuestSubtype QuestSubtype;
+    public List<FSoftObjectPath> QuestDefinitionComponents;
     public Boolean bShouldDisplayOverallQuestInformation;
     public Boolean bAthenaUpdateObjectiveOncePerMatch;
     public Boolean bAthenaGrantRarityToken;

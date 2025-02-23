@@ -16,6 +16,7 @@ class FAssetPackageData {
     var fileVersionLicenseeUE = -1
     var customVersions: Array<FCustomVersion>? = null
     var flags = 0u
+    var extensionText: String? = null
 
     constructor(Ar: FAssetRegistryArchive) {
         val version = Ar.version
@@ -44,6 +45,9 @@ class FAssetPackageData {
         }
         if (version >= FAssetRegistryVersion.Type.PackageImportedClasses) {
             importedClasses = Ar.readTArray { Ar.readFName() }
+        }
+        if (Ar.header.version >= FAssetRegistryVersion.Type.AssetPackageDataHasExtension) {
+            extensionText = Ar.readString()
         }
     }
 }

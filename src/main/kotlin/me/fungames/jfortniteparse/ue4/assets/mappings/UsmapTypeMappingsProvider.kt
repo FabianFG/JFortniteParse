@@ -132,7 +132,8 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         Initial,
         PackageVersioning,
         LongFName,
-        LargeEnums;
+        LargeEnums,
+        Utf8AndAnsiStrProps;
 
         companion object {
             fun latest() = values().last()
@@ -180,5 +181,7 @@ open class UsmapTypeMappingsProvider(private val load: () -> FArchive) : TypeMap
         EnumProperty,
         FieldPathProperty,
         OptionalProperty,
+        Utf8StrProperty,
+        AnsiStrProperty,
     }
 }

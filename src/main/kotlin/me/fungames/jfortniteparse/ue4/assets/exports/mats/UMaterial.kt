@@ -9,11 +9,11 @@ import me.fungames.jfortniteparse.ue4.versions.GAME_UE4_BASE
 @OnlyAnnotated
 class UMaterial : UMaterial_Properties() {
     val ReferencedTextures = emptyArray<UTexture>()
-    var referencedTextures = mutableListOf<UTexture>()
+    var _referencedTextures = mutableListOf<UTexture>()
 
     override fun deserialize(Ar: FAssetArchive, validPos: Int) {
         super.deserialize(Ar, validPos)
-        referencedTextures = ReferencedTextures.toMutableList()
+        _referencedTextures = ReferencedTextures.toMutableList()
 
         if (Ar.game >= GAME_UE4_BASE) {
             // UE4 has complex FMaterialResource format, so avoid reading anything here, but
@@ -101,8 +101,8 @@ class UMaterial : UMaterial_Properties() {
             }
         }
 
-        for (i in 0 until referencedTextures.size) {
-            val tex = referencedTextures[i]
+        for (i in 0 until _referencedTextures.size) {
+            val tex = _referencedTextures[i]
             val name = tex.name
             if (name.contains("noise", true)) continue
             if (name.contains("detail", true)) continue
@@ -157,7 +157,7 @@ class UMaterial : UMaterial_Properties() {
             // default implementation does that
             super.appendReferencedTextures(outTextures, onlyRendered)
         } else {
-            for (tex in referencedTextures) {
+            for (tex in _referencedTextures) {
                 if (!outTextures.contains(tex))
                     outTextures.add(tex)
             }
